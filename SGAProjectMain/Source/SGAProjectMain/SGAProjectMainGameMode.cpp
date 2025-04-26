@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SGAProjectMainGameMode.h"
-#include "SGAProjectMainCharacter.h"
+#include "Character/SGAProjectMainCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 ASGAProjectMainGameMode::ASGAProjectMainGameMode()

@@ -1,0 +1,129 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "PlayerCharacter.h"
+
+#include "Kismet/KismetMathLibrary.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
+
+#include "Components/CapsuleComponent.h"
+
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+#include "Camera/CameraComponent.h"
+#include "Camera/CameraActor.h"
+
+#include "Engine/DamageEvents.h"
+#include "Engine/OverlapResult.h"
+APlayerCharacter::APlayerCharacter()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	_springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+
+
+	_springArm->SetupAttachment(GetCapsuleComponent());
+	_camera->SetupAttachment(_springArm);
+
+	_springArm->TargetArmLength = 500.0f;
+	_springArm->SetRelativeRotation(FRotator(-35.0f, 0.0f, 0.0f));
+	_springArm->bUsePawnControlRotation = true;
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+}
+
+void APlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* enhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (enhancedInputComponent)
+	{
+		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+	}
+}
+
+void APlayerCharacter::Move(const FInputActionValue& value)
+{
+	FVector2D moveVector = value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		if (moveVector.Length() > 0.01f)
+		{
+
+			UpDown(moveVector.Y);
+			RightLeft(moveVector.X);
+
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		}
+	}
+}
+
+void APlayerCharacter::Look(const FInputActionValue& value)
+{
+	FVector2D lookAxisVector = value.Get<FVector2D>();
+	if (Controller != nullptr)
+	{
+		AddControllerYawInput(lookAxisVector.X);
+		AddControllerPitchInput(-lookAxisVector.Y);
+
+		float degree = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+
+		// 카메라 오른쪽을 넘어감, 나는 정면
+		if (degree > 90.0f)
+		{
+			_isTurnRight = true;
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		}
+		// 카메라 왼쪽을 넘어감, 나는 정면
+		else if (degree < -90.0f)
+		{
+			_isTurnLeft = true;
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		}
+		// 움직이거나, 공격중일때..
+		else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
+			)
+		{
+			GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		}
+		// 카메라, 정면 각도 차이의 절대값이 0.1 미만
+		else if (FMath::Abs(degree) < 0.1f)
+		{
+			_isTurnLeft = false;
+			_isTurnRight = false;
+			GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		}
+	}
+}
+
+void APlayerCharacter::TryJump(const FInputActionValue& value)
+{
+	if (value.Get<bool>())
+	{
+		Jump();
+	}
+}
