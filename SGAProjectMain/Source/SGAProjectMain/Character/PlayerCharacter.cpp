@@ -62,6 +62,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartFiring);
+		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileFiring);
+		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopFiring);
 	}
 }
 
@@ -126,4 +129,16 @@ void APlayerCharacter::TryJump(const FInputActionValue& value)
 	{
 		Jump();
 	}
+}
+
+void APlayerCharacter::StartFiring(const FInputActionValue& value)
+{
+}
+
+void APlayerCharacter::WhileFiring(const FInputActionValue& value)
+{
+}
+
+void APlayerCharacter::StopFiring(const FInputActionValue& value)
+{
 }

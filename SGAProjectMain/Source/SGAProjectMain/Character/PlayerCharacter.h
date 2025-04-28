@@ -9,6 +9,30 @@
 /**
  * 
  */
+
+UENUM(BlueprintType)
+enum class EPlayerState : uint8
+{
+	Idle,
+	Firing,
+	CookingGrenade,
+	StratagemInputting,
+	Rolling,
+	Reloading,
+	// 필요하면 추가
+};
+
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	None,
+	PrimaryWeapon,
+	SecondaryWeapon,
+	Grenade,
+	StratagemDevice,
+	// 필요하면 추가
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API APlayerCharacter : public ACharacterBase
 {
@@ -38,6 +62,13 @@ public:
 	void Look(const  FInputActionValue& value);
 	UFUNCTION()
 	void TryJump(const  FInputActionValue& value);
+	UFUNCTION()
+	void StartFiring(const  FInputActionValue& value);
+	UFUNCTION()
+	void WhileFiring(const  FInputActionValue& value);
+	UFUNCTION()
+	void StopFiring(const  FInputActionValue& value);
+
 
 protected:
 
@@ -49,6 +80,8 @@ protected:
 	class UInputAction* _lookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _jumpAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _mouseLButtonAction;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
