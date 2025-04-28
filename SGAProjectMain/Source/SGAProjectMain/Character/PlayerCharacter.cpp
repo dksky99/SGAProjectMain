@@ -18,6 +18,9 @@
 
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
+
+#include "../GunBase.h"
+
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -45,6 +48,15 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (_gunClass)
+	{
+		_equippedGun = GetWorld()->SpawnActor<AGunBase>(_gunClass);
+		if (_equippedGun)
+		{
+			_equippedGun->SetOwner(this);
+		}
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -133,12 +145,76 @@ void APlayerCharacter::TryJump(const FInputActionValue& value)
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
+	switch (_playerState)
+	{
+	case EPlayerState::Idle:
+		_playerState = EPlayerState::Firing;
+		_equippedGun->StartFire();
+		break;
+
+	case EPlayerState::Firing:
+		break;
+
+	case EPlayerState::CookingGrenade:
+		break;
+
+	case EPlayerState::StratagemInputting:
+		break;
+
+	case EPlayerState::Rolling:
+		break;
+
+	case EPlayerState::Reloading:
+		break;
+	}
 }
 
 void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 {
+	switch (_playerState)
+	{
+	case EPlayerState::Idle:
+		break;
+
+	case EPlayerState::Firing:
+		break;
+
+	case EPlayerState::CookingGrenade:
+		break;
+
+	case EPlayerState::StratagemInputting:
+		break;
+
+	case EPlayerState::Rolling:
+		break;
+
+	case EPlayerState::Reloading:
+		break;
+	}
 }
 
 void APlayerCharacter::StopFiring(const FInputActionValue& value)
 {
+	switch (_playerState)
+	{
+	case EPlayerState::Idle:
+		break;
+
+	case EPlayerState::Firing:
+		_playerState = EPlayerState::Idle;
+		_equippedGun->StopFire();
+		break;
+
+	case EPlayerState::CookingGrenade:
+		break;
+
+	case EPlayerState::StratagemInputting:
+		break;
+
+	case EPlayerState::Rolling:
+		break;
+
+	case EPlayerState::Reloading:
+		break;
+	}
 }
