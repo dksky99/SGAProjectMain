@@ -21,7 +21,8 @@
 
 #include "../GunBase.h"
 
-APlayerCharacter::APlayerCharacter()
+APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
+	Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -103,7 +104,7 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 	if (Controller != nullptr)
 	{
 		AddControllerYawInput(lookAxisVector.X);
-		AddControllerPitchInput(-lookAxisVector.Y);
+		AddControllerPitchInput(lookAxisVector.Y);
 
 		float degree = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
 

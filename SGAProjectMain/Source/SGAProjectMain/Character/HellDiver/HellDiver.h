@@ -13,5 +13,7 @@ UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public APlayerCharacter
 {
 	GENERATED_BODY()
-	
+public:
+
+	AHellDiver(const FObjectInitializer& ObjectInitializer);
 };

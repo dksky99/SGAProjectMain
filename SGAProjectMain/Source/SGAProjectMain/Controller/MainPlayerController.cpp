@@ -17,6 +17,7 @@ AMainPlayerController::AMainPlayerController()
 
 void AMainPlayerController::PostInitializeComponents()
 {
+	Super::PostInitializeComponents();
 }
 
 void AMainPlayerController::BeginPlay()
@@ -35,8 +36,10 @@ void AMainPlayerController::BeginPlay()
 
 void AMainPlayerController::OnPossess(APawn* pawn)
 {
+	Super::OnPossess(pawn);
 }
 
 void AMainPlayerController::OnUnPossess()
 {
+	Super::OnUnPossess();
 }

@@ -13,7 +13,7 @@ class SGAPROJECTMAIN_API ACharacterBase : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	ACharacterBase();
+	ACharacterBase(const FObjectInitializer& ObjectInitializer);
 
 	void PostInitializeComponents() override;
 protected:

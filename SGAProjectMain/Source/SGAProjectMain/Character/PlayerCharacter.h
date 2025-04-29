@@ -40,7 +40,7 @@ class SGAPROJECTMAIN_API APlayerCharacter : public ACharacterBase
 
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PostInitializeComponents() override;
 
