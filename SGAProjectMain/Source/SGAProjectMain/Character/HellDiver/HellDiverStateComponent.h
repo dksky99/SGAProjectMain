@@ -30,6 +30,24 @@ enum class EActionState : uint8
 	MAX
 };
 
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	None,
+	PrimaryWeapon,
+	SecondaryWeapon,
+	Grenade,
+	StratagemDevice,
+	// 필요하면 추가
+};
+UENUM(BlueprintType)
+enum class ELifeState : uint8
+{
+	Alive,
+	Downed,
+	Dead,
+	Respawning
+};
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -58,7 +76,8 @@ public:
 	void StartProne();
 	void FinishProne();
 
-
+	ECharacterState GetCharacterState() { return _characterState; }
+	EActionState GetActionState() { return _actionState; }
 
 
 protected:

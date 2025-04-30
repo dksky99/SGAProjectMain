@@ -2,7 +2,6 @@
 
 
 #include "PlayerCharacter.h"
-
 #include "Kismet/KismetMathLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -20,6 +19,10 @@
 #include "Engine/OverlapResult.h"
 
 #include "../GunBase.h"
+
+
+#include "HellDiver/HellDiver.h"
+#include "HellDiver/HellDiverStateComponent.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
@@ -218,4 +221,16 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	case EPlayerState::Reloading:
 		break;
 	}
+}
+
+void APlayerCharacter::TrySprint(const FInputActionValue& value)
+{
+}
+
+void APlayerCharacter::TryCroutch(const FInputActionValue& value)
+{
+}
+
+void APlayerCharacter::TryProne(const FInputActionValue& value)
+{
 }

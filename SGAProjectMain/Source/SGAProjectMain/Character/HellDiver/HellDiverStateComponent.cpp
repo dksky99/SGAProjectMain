@@ -34,25 +34,39 @@ void UHellDiverStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UHellDiverStateComponent::StartSprint()
 {
+	if (_characterState != ECharacterState::Standing)
+		return;
+
 }
 
 void UHellDiverStateComponent::FinishSprint()
 {
+	if (_characterState != ECharacterState::Sprinting)
+		return;
 }
 
 void UHellDiverStateComponent::StartCroutch()
 {
+	if (_characterState == ECharacterState::Crouching)
+		return;
 }
 
 void UHellDiverStateComponent::FinishCroutch()
 {
+	if (_characterState != ECharacterState::Crouching)
+		return;
 }
 
 void UHellDiverStateComponent::StartProne()
 {
+
+	if (_characterState == ECharacterState::Proning)
+		return;
 }
 
 void UHellDiverStateComponent::FinishProne()
 {
+	if (_characterState != ECharacterState::Proning)
+		return;
 }
 

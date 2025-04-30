@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CharacterBase.h"
+#include "HellDiver/HellDiver.h"
 #include "PlayerCharacter.generated.h"
 
 /**
@@ -22,19 +22,8 @@ enum class EPlayerState : uint8
 	// 필요하면 추가
 };
 
-UENUM(BlueprintType)
-enum class EWeaponType : uint8
-{
-	None,
-	PrimaryWeapon,
-	SecondaryWeapon,
-	Grenade,
-	StratagemDevice,
-	// 필요하면 추가
-};
-
 UCLASS()
-class SGAPROJECTMAIN_API APlayerCharacter : public ACharacterBase
+class SGAPROJECTMAIN_API APlayerCharacter : public AHellDiver
 {
 	GENERATED_BODY()
 
@@ -70,6 +59,17 @@ public:
 	void StopFiring(const  FInputActionValue& value);
 
 
+	UFUNCTION()
+	void TrySprint(const  FInputActionValue& value);
+
+
+	UFUNCTION()
+	void TryCroutch(const  FInputActionValue& value);
+
+
+	UFUNCTION()
+	void TryProne(const  FInputActionValue& value);
+
 protected:
 
 
@@ -80,6 +80,12 @@ protected:
 	class UInputAction* _lookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _jumpAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _sprintAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _croutchAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _proneAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseLButtonAction;
 

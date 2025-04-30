@@ -26,7 +26,7 @@ public:
 	void JumpToSection(int32 sectionIndex);
 
 
-private:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pawn", meta = (AllowPrivateAccess = "true"))
 	float _speed;
 
