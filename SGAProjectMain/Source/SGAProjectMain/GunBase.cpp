@@ -29,6 +29,7 @@ void AGunBase::Tick(float DeltaTime)
 
 void AGunBase::StartFire()
 {
+	UE_LOG(LogTemp, Log, TEXT("STARTFIRE"));
 	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _fireInterval, true, 0.0f);
 }
 
@@ -37,28 +38,42 @@ void AGunBase::Fire()
 	FHitResult hitResult;
 	FCollisionQueryParams params(NAME_None, false, this);
 
-	FVector start = GetActorLocation() + GetActorForwardVector() * 100;
-	FVector end = start + GetActorForwardVector() * 10000;
-	bool bResult = GetWorld()->LineTraceSingleByChannel(
-		OUT hitResult,
-		start,
-		end,
-		ECC_Visibility,
-		params);
+	FVector playerLocation = FVector::ZeroVector;
 
-	FColor drawColor = FColor::Green;
+	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
+	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 
-	if (bResult)
+	if (player && camera)
 	{
-		drawColor = FColor::Red;
-		// TODO
-	}
+		{
+			FRotator cameraRotation = camera->GetCameraRotation();
 
-	DrawDebugLine(GetWorld(), start, end, drawColor, false, 1.0f);
+			FVector start = player->GetActorLocation() + cameraRotation.Vector() * 100;
+			FVector end = start + cameraRotation.Vector() * 10000;
+			bool bResult = GetWorld()->LineTraceSingleByChannel(
+				OUT hitResult,
+				start,
+				end,
+				ECC_Visibility,
+				params);
+
+			FColor drawColor = FColor::Green;
+
+			if (bResult)
+			{
+				drawColor = FColor::Red;
+				// TODO
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("FIRE"));
+			DrawDebugLine(GetWorld(), start, end, drawColor, false, 1.0f);
+		}
+	}
 }
 
 void AGunBase::StopFire()
 {
+	UE_LOG(LogTemp, Log, TEXT("STOPFIRE"));
 	GetWorldTimerManager().ClearTimer(_fireTimer);
 }
 
