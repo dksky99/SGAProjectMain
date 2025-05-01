@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GunBase.generated.h"
+#include "ImpactMarker.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API AGunBase : public AActor
+class SGAPROJECTMAIN_API AImpactMarker : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AGunBase();
+	AImpactMarker();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,25 +23,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void StartFire();
-	virtual void Fire();
-	virtual void StopFire();
-
+	void SetMarkerLocation(const FVector& Location);
 
 private:
-	// TODO (총별 속성 - 탄약, 반동...)
-
-	FTimerHandle _fireTimer; // 발사 타이머 관리
-	float _fireInterval = 0.2f; // 발사 간격
-
-
-	bool _isHit = false;
-	FVector start;
-	FVector _hitPoint;
-
-	UPROPERTY()
-	class AImpactMarker* _marker;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<AImpactMarker> _impactMarkerClass;
+	class UWidgetComponent* _markerWidget;
 };

@@ -4,6 +4,7 @@
 #include "GunBase.h"
 
 #include "Engine/DamageEvents.h"
+#include "ImpactMarker.h"
 
 // Sets default values
 AGunBase::AGunBase()
@@ -25,16 +26,6 @@ void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-}
-
-void AGunBase::StartFire()
-{
-	UE_LOG(LogTemp, Log, TEXT("STARTFIRE"));
-	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _fireInterval, true, 0.0f);
-}
-
-void AGunBase::Fire()
-{
 	FHitResult hitResult;
 	FCollisionQueryParams params(NAME_None, false, this);
 
@@ -45,30 +36,57 @@ void AGunBase::Fire()
 
 	if (player && camera)
 	{
+		FRotator cameraRotation = camera->GetCameraRotation();
+
+		start = player->GetActorLocation() + cameraRotation.Vector() * 100;
+		FVector end = start + cameraRotation.Vector() * 10000;
+		bool bResult = GetWorld()->LineTraceSingleByChannel(
+			OUT hitResult,
+			start,
+			end,
+			ECC_Visibility,
+			params);
+
+		if (bResult)
 		{
-			FRotator cameraRotation = camera->GetCameraRotation();
-
-			FVector start = player->GetActorLocation() + cameraRotation.Vector() * 100;
-			FVector end = start + cameraRotation.Vector() * 10000;
-			bool bResult = GetWorld()->LineTraceSingleByChannel(
-				OUT hitResult,
-				start,
-				end,
-				ECC_Visibility,
-				params);
-
-			FColor drawColor = FColor::Green;
-
-			if (bResult)
-			{
-				drawColor = FColor::Red;
-				// TODO
-			}
-
-			UE_LOG(LogTemp, Log, TEXT("FIRE"));
-			DrawDebugLine(GetWorld(), start, end, drawColor, false, 1.0f);
+			_hitPoint = hitResult.Location;
+			_isHit = true;
+		}
+		else
+		{
+			_hitPoint = end;
+			_isHit = false;
+		}
+		
+		if (!IsValid(_marker))
+		{
+			_marker = GetWorld()->SpawnActor<AImpactMarker>(_impactMarkerClass, _hitPoint, FRotator::ZeroRotator);
+		}
+		else
+		{
+			_marker->SetActorLocation(_hitPoint);
 		}
 	}
+}
+
+void AGunBase::StartFire()
+{
+	UE_LOG(LogTemp, Log, TEXT("STARTFIRE"));
+	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _fireInterval, true, 0.0f);
+}
+
+void AGunBase::Fire()
+{
+	FColor drawColor = FColor::Green;
+
+	if (_isHit)
+	{
+		drawColor = FColor::Red;
+		//TODO
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("FIRE"));
+	DrawDebugLine(GetWorld(), start, _hitPoint, drawColor, false, 1.0f);
 }
 
 void AGunBase::StopFire()
