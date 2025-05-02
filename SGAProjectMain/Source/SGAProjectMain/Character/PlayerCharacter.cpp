@@ -148,6 +148,11 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	switch (_playerState)
 	{
 	case EPlayerState::Idle:
+		if (_weaponType == EWeaponType::Grenade)
+		{
+			_playerState = EPlayerState::CookingGrenade;
+			break;
+		}
 		_playerState = EPlayerState::Firing;
 		_equippedGun->StartFire();
 		break;
@@ -218,3 +223,4 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 		break;
 	}
 }
+

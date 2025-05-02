@@ -69,7 +69,6 @@ public:
 	UFUNCTION()
 	void StopFiring(const  FInputActionValue& value);
 
-
 protected:
 
 
@@ -98,4 +97,5 @@ protected:
 	AGunBase* _equippedGun;
 
 	EPlayerState _playerState;
+	EWeaponType _weaponType;
 };
