@@ -56,6 +56,7 @@ void APlayerCharacter::BeginPlay()
 		if (_equippedGun)
 		{
 			_equippedGun->SetOwner(this);
+			_weaponType = EWeaponType::PrimaryWeapon;
 		}
 	}
 }
@@ -75,9 +76,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopFiring);
+
+		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartAiming);
+		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileAiming);
+		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
 	}
 }
 
@@ -216,6 +222,75 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 		break;
 
 	case EPlayerState::Reloading:
+		break;
+	}
+}
+
+void APlayerCharacter::StartAiming(const FInputActionValue& value)
+{
+	_isAiming = true;
+
+	switch (_weaponType)
+	{
+	case EWeaponType::PrimaryWeapon:
+		_equippedGun->StartAiming();
+		break;
+
+	case EWeaponType::SecondaryWeapon:
+		break;
+
+	case EWeaponType::Grenade:
+		break;
+
+	case EWeaponType::StratagemDevice:
+		break;
+
+	case EWeaponType::None:
+		break;
+	}
+}
+
+void APlayerCharacter::WhileAiming(const FInputActionValue& value)
+{
+	switch (_weaponType)
+	{
+	case EWeaponType::PrimaryWeapon:
+		break;
+
+	case EWeaponType::SecondaryWeapon:
+		break;
+
+	case EWeaponType::Grenade:
+		break;
+
+	case EWeaponType::StratagemDevice:
+		break;
+
+	case EWeaponType::None:
+		break;
+	}
+}
+
+void APlayerCharacter::StopAiming(const FInputActionValue& value)
+{
+	_isAiming = false;
+
+	switch (_weaponType)
+	{
+	case EWeaponType::PrimaryWeapon:
+		_equippedGun->StopAiming();
+		break;
+
+	case EWeaponType::SecondaryWeapon:
+		break;
+
+	case EWeaponType::Grenade:
+		break;
+
+	case EWeaponType::StratagemDevice:
+		break;
+
+	case EWeaponType::None:
 		break;
 	}
 }

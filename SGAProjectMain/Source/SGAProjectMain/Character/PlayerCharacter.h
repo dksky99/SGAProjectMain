@@ -68,6 +68,12 @@ public:
 	void WhileFiring(const  FInputActionValue& value);
 	UFUNCTION()
 	void StopFiring(const  FInputActionValue& value);
+	UFUNCTION()
+	void StartAiming(const  FInputActionValue& value);
+	UFUNCTION()
+	void WhileAiming(const  FInputActionValue& value);
+	UFUNCTION()
+	void StopAiming(const  FInputActionValue& value);
 
 
 protected:
@@ -82,12 +88,13 @@ protected:
 	class UInputAction* _jumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseLButtonAction;
-
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _mouseRButtonAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* _springArm;
 
 
@@ -98,4 +105,7 @@ protected:
 	AGunBase* _equippedGun;
 
 	EPlayerState _playerState;
+	EWeaponType _weaponType;
+
+	bool _isAiming = false;
 };

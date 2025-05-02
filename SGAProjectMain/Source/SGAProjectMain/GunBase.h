@@ -27,6 +27,8 @@ public:
 	virtual void Fire();
 	virtual void StopFire();
 
+	virtual void StartAiming();
+	virtual void StopAiming();
 
 private:
 	// TODO (ÃÑº° ¼Ó¼º - Åº¾à, ¹Ýµ¿...)
@@ -44,4 +46,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AImpactMarker> _impactMarkerClass;
+
+	bool _isAiming = false;
 };
