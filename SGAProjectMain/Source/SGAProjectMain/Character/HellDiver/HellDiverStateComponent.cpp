@@ -37,24 +37,32 @@ void UHellDiverStateComponent::StartSprint()
 	if (_characterState != ECharacterState::Standing)
 		return;
 
+	_characterState = ECharacterState::Sprinting;
+	
+
+
+
 }
 
 void UHellDiverStateComponent::FinishSprint()
 {
 	if (_characterState != ECharacterState::Sprinting)
 		return;
+	_characterState = ECharacterState::Standing;
 }
 
-void UHellDiverStateComponent::StartCroutch()
+void UHellDiverStateComponent::StartCrouch()
 {
 	if (_characterState == ECharacterState::Crouching)
 		return;
+	_characterState = ECharacterState::Crouching;
 }
 
-void UHellDiverStateComponent::FinishCroutch()
+void UHellDiverStateComponent::FinishCrouch()
 {
 	if (_characterState != ECharacterState::Crouching)
 		return;
+	_characterState = ECharacterState::Standing;
 }
 
 void UHellDiverStateComponent::StartProne()
@@ -62,11 +70,13 @@ void UHellDiverStateComponent::StartProne()
 
 	if (_characterState == ECharacterState::Proning)
 		return;
+	_characterState = ECharacterState::Proning;
 }
 
 void UHellDiverStateComponent::FinishProne()
 {
 	if (_characterState != ECharacterState::Proning)
 		return;
+	_characterState = ECharacterState::Standing;
 }
 

@@ -21,11 +21,14 @@ public:
 
  
 
+	void StartSprint();
+	void FinishSprint();
 
 protected: 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
+
 
 };

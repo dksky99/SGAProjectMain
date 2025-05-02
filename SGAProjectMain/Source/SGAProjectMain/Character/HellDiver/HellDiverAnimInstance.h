@@ -13,5 +13,11 @@ UCLASS()
 class SGAPROJECTMAIN_API UHellDiverAnimInstance : public UCharacterAnimInstance
 {
 	GENERATED_BODY()
-	
+public:
+
+
+protected:
+
+
+
 };

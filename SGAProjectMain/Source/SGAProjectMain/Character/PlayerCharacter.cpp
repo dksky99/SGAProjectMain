@@ -78,6 +78,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TrySprint);
+		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
+		enhancedInputComponent->BindAction(_crouchAction, ETriggerEvent::Started, this, &APlayerCharacter::TryCrouch);
+		enhancedInputComponent->BindAction(_proneAction, ETriggerEvent::Started, this, &APlayerCharacter::TryProne);
+		enhancedInputComponent->BindAction(_rollingAction, ETriggerEvent::Started, this, &APlayerCharacter::TryRolling);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopFiring);
@@ -225,12 +230,85 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
 {
+	switch (_stateComponent->GetCharacterState())
+	{
+
+	case ECharacterState::Standing:
+		_stateComponent->StartSprint();
+		break;
+	case ECharacterState::Sprinting:
+		break;
+	case ECharacterState::Crouching:
+		_stateComponent->FinishCrouch();
+		break;
+	case ECharacterState::Proning:
+		_stateComponent->FinishProne();
+		break;
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
 }
 
-void APlayerCharacter::TryCroutch(const FInputActionValue& value)
+void APlayerCharacter::StopSprint(const FInputActionValue& value)
 {
+	switch (_stateComponent->GetCharacterState())
+	{
+
+	case ECharacterState::Sprinting:
+		_stateComponent->FinishSprint();
+		break;
+	case ECharacterState::Standing:
+	case ECharacterState::Crouching:
+	case ECharacterState::Proning:
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
+}
+
+void APlayerCharacter::TryCrouch(const FInputActionValue& value)
+{
+	switch (_stateComponent->GetCharacterState())
+	{
+
+	case ECharacterState::Standing:
+	case ECharacterState::Proning:
+		_stateComponent->StartCrouch();
+		break;
+	case ECharacterState::Crouching:
+		_stateComponent->FinishCrouch();
+		break;
+	case ECharacterState::Sprinting:
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
 }
 
 void APlayerCharacter::TryProne(const FInputActionValue& value)
+{
+	switch (_stateComponent->GetCharacterState())
+	{
+
+	case ECharacterState::Standing:
+	case ECharacterState::Crouching:
+		_stateComponent->StartProne();
+		break;
+	case ECharacterState::Proning:
+		_stateComponent->FinishProne();
+		break;
+	case ECharacterState::Sprinting:
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
+}
+
+void APlayerCharacter::TryRolling(const FInputActionValue& value)
 {
 }

@@ -24,5 +24,11 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	float GetDefaultSpeed() { return _defaultSpeed; }
+
+protected:
+
+	float _defaultSpeed = 300.0f;
+
 		
 };

@@ -62,14 +62,20 @@ public:
 	UFUNCTION()
 	void TrySprint(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void StopSprint(const  FInputActionValue& value);
+	
+
 
 	UFUNCTION()
-	void TryCroutch(const  FInputActionValue& value);
+	void TryCrouch(const  FInputActionValue& value);
 
 
 	UFUNCTION()
 	void TryProne(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void TryRolling(const  FInputActionValue& value);
 protected:
 
 
@@ -83,9 +89,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _sprintAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* _croutchAction;
+	class UInputAction* _crouchAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _proneAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _rollingAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseLButtonAction;
 

@@ -21,3 +21,13 @@ UHellDiverStateComponent* AHellDiver::GetStateComponent()
 {
     return _stateComponent;
 }
+
+void AHellDiver::StartSprint()
+{
+    auto movement=GetMovementComponent();
+    GetCharacterMovement()->MaxWalkSpeed = 500.f;
+}
+
+void AHellDiver::FinishSprint()
+{
+}

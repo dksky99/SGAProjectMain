@@ -23,7 +23,6 @@ enum class EActionState : uint8
 	None,
 	TPSAim,
 	FPSAim,
-	ThrowAim,
 	Stratagem,
 	ViewMap,
 	InterActing,
@@ -67,11 +66,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	
 	void StartSprint();
 	void FinishSprint();
 
-	void StartCroutch();
-	void FinishCroutch();
+	void StartCrouch();
+	void FinishCrouch();
 	
 	void StartProne();
 	void FinishProne();
@@ -86,6 +86,11 @@ protected:
 
 	EActionState _actionState = EActionState::None;
 
+	EWeaponType _weaponState = EWeaponType::None;
 
+	ELifeState _lifeState = ELifeState::Alive;
+
+	bool _isFiring = false;
+	bool _isReloading = false;
 		
 };
