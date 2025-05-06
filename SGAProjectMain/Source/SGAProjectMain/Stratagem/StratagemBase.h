@@ -29,7 +29,10 @@ protected:
 	class APlayerCharacter* _owner;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratagem")
-	AActor* _targetActor; // 스트라타젬이 떨어질 위치
+	FVector _targetLocation; // 신호기 위치
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratagem")
+	AActor* _targetActor; // 신호기가 부착된 대상
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Stratagem")
 	float _deployDelay = 5.0f; // 몇초뒤에 떨어질지
