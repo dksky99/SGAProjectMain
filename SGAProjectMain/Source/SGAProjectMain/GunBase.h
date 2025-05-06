@@ -30,12 +30,18 @@ public:
 	virtual void StartAiming();
 	virtual void StopAiming();
 
+	void Reload();
+
 private:
 	// TODO (총별 속성 - 탄약, 반동...)
 
-	FTimerHandle _fireTimer; // 발사 타이머 관리
-	float _fireInterval = 0.2f; // 발사 간격
+	// 발사 간격
+	FTimerHandle _fireTimer;
+	float _fireInterval = 0.2f;
 
+	// 탄약
+	int32 _curAmmo;
+	int32 _maxAmmo = 45; 
 
 	bool _isHit = false;
 	FVector start;

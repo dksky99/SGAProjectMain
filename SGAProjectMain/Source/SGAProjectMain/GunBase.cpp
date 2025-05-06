@@ -19,6 +19,7 @@ void AGunBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	_curAmmo = _maxAmmo;
 }
 
 // Called every frame
@@ -71,6 +72,13 @@ void AGunBase::Fire()
 {
 	FColor drawColor = FColor::Green;
 	
+	// 탄약이 없을 경우
+	if (_curAmmo <= 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
+		return;
+	}
+
 	// 조준하지 않을 경우 탄퍼짐
 	if (!_isAiming)
 	{
@@ -85,7 +93,7 @@ void AGunBase::Fire()
 		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(15.0f));
 		_hitPoint = player->GetActorLocation() + dir * 10000.0f;
 	}
-	
+
 	FHitResult hitResult;
 	FCollisionQueryParams params(NAME_None, false, this);
 
@@ -102,6 +110,7 @@ void AGunBase::Fire()
 		// TODO (데미지)
 	}
 
+	_curAmmo--;
 	UE_LOG(LogTemp, Log, TEXT("FIRE"));
 	DrawDebugLine(GetWorld(), start, _hitPoint, drawColor, false, 1.0f);
 }
@@ -130,5 +139,10 @@ void AGunBase::StopAiming()
 		_marker->SetActorHiddenInGame(true);
 
 	UE_LOG(LogTemp, Log, TEXT("STOPAIMING"));
+}
+
+void AGunBase::Reload()
+{
+	_curAmmo = _maxAmmo;
 }
 

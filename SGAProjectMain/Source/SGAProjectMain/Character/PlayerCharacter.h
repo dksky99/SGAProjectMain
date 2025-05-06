@@ -63,6 +63,8 @@ public:
 	void WhileAiming(const  FInputActionValue& value);
 	UFUNCTION()
 	void StopAiming(const  FInputActionValue& value);
+	UFUNCTION()
+	void Reload(const  FInputActionValue& value);
 
 
 	UFUNCTION()
@@ -119,7 +121,7 @@ protected:
 	AGunBase* _equippedGun;
 
 	EPlayerState _playerState;
-	EWeaponType _weaponType;
+	//EWeaponType _weaponType;
 
 	bool _isAiming = false;
 };

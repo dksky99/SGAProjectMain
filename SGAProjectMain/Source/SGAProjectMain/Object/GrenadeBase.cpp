@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "../Character/PlayerCharacter.h"
+#include "Engine/OverlapResult.h"
 
 // Sets default values
 AGrenadeBase::AGrenadeBase()
