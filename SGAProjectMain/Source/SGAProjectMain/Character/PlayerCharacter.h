@@ -119,7 +119,7 @@ protected:
 	AGunBase* _equippedGun;
 
 	EPlayerState _playerState;
-	EWeaponType _weaponType;
+
 
 	bool _isAiming = false;
 };

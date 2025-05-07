@@ -59,7 +59,7 @@ void APlayerCharacter::BeginPlay()
 		if (_equippedGun)
 		{
 			_equippedGun->SetOwner(this);
-			_weaponType = EWeaponType::PrimaryWeapon;
+			_stateComponent->SetWeaponState( EWeaponType::PrimaryWeapon);
 		}
 	}
 }
@@ -119,16 +119,16 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerYawInput(lookAxisVector.X);
 		AddControllerPitchInput(lookAxisVector.Y);
 
-		float degree = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
-
+		 _deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+		
 		// 카메라 오른쪽을 넘어감, 나는 정면
-		if (degree > 90.0f)
+		if (_deltaAngle > 90.0f)
 		{
 			_isTurnRight = true;
 			GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		}
 		// 카메라 왼쪽을 넘어감, 나는 정면
-		else if (degree < -90.0f)
+		else if (_deltaAngle < -90.0f)
 		{
 			_isTurnLeft = true;
 			GetCharacterMovement()->bUseControllerDesiredRotation = true;
@@ -140,12 +140,15 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 			GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		}
 		// 카메라, 정면 각도 차이의 절대값이 0.1 미만
-		else if (FMath::Abs(degree) < 0.1f)
+		else if (FMath::Abs(_deltaAngle) < 0.1f)
 		{
 			_isTurnLeft = false;
 			_isTurnRight = false;
 			GetCharacterMovement()->bUseControllerDesiredRotation = false;
 		}
+
+
+
 	}
 }
 
@@ -259,7 +262,7 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
 	_isAiming = true;
 
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		_equippedGun->StartAiming();
@@ -299,7 +302,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		break;
@@ -365,7 +368,7 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {
 	_isAiming = false;
 
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		_equippedGun->StopAiming();
