@@ -86,6 +86,10 @@ public:
 	void SetLifeState(ELifeState state) { _lifeState = state; }
 
 
+	void StartTPSAiming();
+	void FinishTPSAiming();
+
+
 protected:
 
 	ECharacterState _characterState=ECharacterState::Standing;

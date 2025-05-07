@@ -24,6 +24,8 @@
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
 
+#include "../Data/PlayerControlDataAsset.h"
+
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
 {
@@ -363,6 +365,54 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 
 void APlayerCharacter::TryRolling(const FInputActionValue& value)
 {
+}
+void APlayerCharacter::SetFPSView()
+{
+	if (_defaultControl == nullptr)
+		return;
+	SetViewData(_fpsControl);
+
+}
+void APlayerCharacter::SetTPSView()
+{
+	if (_defaultControl == nullptr)
+		return;
+	SetViewData(_tpsControl);
+}
+void APlayerCharacter::SetDefaultView()
+{
+	if (_defaultControl == nullptr)
+		return;
+	SetViewData(_defaultControl);
+}
+void APlayerCharacter::SetViewData(const UPlayerControlDataAsset* characterControlData)
+{
+
+	//폰에 관한 설정
+	bUseControllerRotationPitch = characterControlData->bUseControlRotationPitch;
+	bUseControllerRotationYaw = characterControlData->bUseControlRotationYaw;
+	bUseControllerRotationRoll = characterControlData->bUseControlRotationRoll;
+
+
+	//캐릭터 무브먼트 설정
+	GetCharacterMovement()->bOrientRotationToMovement = characterControlData->bOrientRotationToMovement;
+	GetCharacterMovement()->bUseControllerDesiredRotation = characterControlData->bUseControllerDesiredRotation;
+	GetCharacterMovement()->RotationRate = characterControlData->RotationRate;
+
+
+
+	//카메라
+	_springArm->TargetArmLength = characterControlData->TargetArmLength;
+	_springArm->SetRelativeRotation(characterControlData->RelativeRotation);
+	_springArm->SetRelativeLocation(characterControlData->RelativeLocation);
+	_springArm->bUsePawnControlRotation = characterControlData->bUseControlRotationPitch;
+	_springArm->bDoCollisionTest = characterControlData->bDoCollisionTest;
+	_springArm->bInheritPitch = characterControlData->bInheritPitch;
+	_springArm->bInheritYaw = characterControlData->bInheritYaw;
+	_springArm->bInheritRoll = characterControlData->bInheritRoll;
+
+
+
 }
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {

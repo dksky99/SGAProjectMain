@@ -22,6 +22,15 @@ enum class EPlayerState : uint8
 	// 필요하면 추가
 };
 
+UENUM()
+enum class ECharacterViewType : uint8
+{
+	Default,
+	TPS,
+	FPS,
+	Max
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API APlayerCharacter : public AHellDiver
 {
@@ -82,6 +91,15 @@ public:
 
 	UFUNCTION()
 	void TryRolling(const  FInputActionValue& value);
+
+	void SetFPSView();
+	void SetTPSView();
+	void SetDefaultView();
+	
+	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
+
+
+
 protected:
 
 
@@ -119,6 +137,18 @@ protected:
 	AGunBase* _equippedGun;
 
 	EPlayerState _playerState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _defaultControl;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _fpsControl;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _tpsControl;
+
 
 
 	bool _isAiming = false;

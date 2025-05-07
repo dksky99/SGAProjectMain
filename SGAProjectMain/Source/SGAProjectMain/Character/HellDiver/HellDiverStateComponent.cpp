@@ -80,3 +80,11 @@ void UHellDiverStateComponent::FinishProne()
 	_characterState = ECharacterState::Standing;
 }
 
+void UHellDiverStateComponent::StartTPSAiming()
+{
+}
+
+void UHellDiverStateComponent::FinishTPSAiming()
+{
+}
+
