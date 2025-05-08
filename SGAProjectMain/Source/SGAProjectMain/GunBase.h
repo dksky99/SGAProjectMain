@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "GunBase.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
+
 UCLASS()
 class SGAPROJECTMAIN_API AGunBase : public AActor
 {
@@ -31,6 +33,8 @@ public:
 	virtual void StopAiming();
 
 	void Reload();
+
+	FAmmoChanged _ammoChanged;
 
 private:
 	// TODO (ÃÑº° ¼Ó¼º - Åº¾à, ¹Ýµ¿...)
