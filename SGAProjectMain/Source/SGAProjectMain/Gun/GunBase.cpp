@@ -4,7 +4,7 @@
 #include "GunBase.h"
 
 #include "Engine/DamageEvents.h"
-#include "UI/ImpactMarker.h"
+#include "../UI/ImpactMarker.h"
 
 // Sets default values
 AGunBase::AGunBase()
@@ -111,6 +111,7 @@ void AGunBase::Fire()
 	}
 
 	_curAmmo--;
+	
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _maxAmmo);
 
@@ -142,6 +143,12 @@ void AGunBase::StopAiming()
 		_marker->SetActorHiddenInGame(true);
 
 	UE_LOG(LogTemp, Log, TEXT("STOPAIMING"));
+}
+
+void AGunBase::UpdateGun()
+{
+	if (_ammoChanged.IsBound())
+		_ammoChanged.Broadcast(_curAmmo, _maxAmmo);
 }
 
 void AGunBase::Reload()

@@ -84,6 +84,16 @@ public:
 
 	UFUNCTION()
 	void TryRolling(const  FInputActionValue& value);
+
+	UFUNCTION()
+	void SwitchWeapon1(const  FInputActionValue& value) { SwitchWeapon(0); }
+	UFUNCTION()
+	void SwitchWeapon2(const  FInputActionValue& value) { SwitchWeapon(1); }
+	UFUNCTION()
+	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2); }
+
+	void SwitchWeapon(int32 index);
+
 protected:
 
 
@@ -108,6 +118,12 @@ protected:
 	class UInputAction* _mouseRButtonAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _reloadAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _weapon1ChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _weapon2ChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _weapon3ChangeAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
@@ -122,8 +138,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	AGunBase* _equippedGun;
 
+	UPROPERTY()
+	TArray<AGunBase*> _gunSlot;
+
+
 	EPlayerState _playerState;
-	//EWeaponType _weaponType;
 
 	bool _isAiming = false;
 

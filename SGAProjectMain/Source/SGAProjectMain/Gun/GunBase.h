@@ -32,6 +32,7 @@ public:
 	virtual void StartAiming();
 	virtual void StopAiming();
 
+	void UpdateGun();
 	void Reload();
 
 	FAmmoChanged _ammoChanged;

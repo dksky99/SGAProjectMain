@@ -18,7 +18,7 @@
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 
-#include "../GunBase.h"
+#include "../Gun/GunBase.h"
 #include "../UI/GunUI.h"
 
 #include "HellDiver/HellDiver.h"
@@ -48,6 +48,8 @@ void APlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	_gunSlot.SetNum(3);
+
 	if (_gunWidgetClass)
 	{
 		_gunWidget = CreateWidget<UGunUI>(GetWorld(), _gunWidgetClass);
@@ -60,18 +62,23 @@ void APlayerCharacter::BeginPlay()
 
 	if (_gunClass)
 	{
-		_equippedGun = GetWorld()->SpawnActor<AGunBase>(_gunClass);
+		// 임시 세팅
+		_gunSlot[0] = GetWorld()->SpawnActor<AGunBase>(_gunClass);
+		_gunSlot[1] = GetWorld()->SpawnActor<AGunBase>(_gunClass);
+
+		_equippedGun = _gunSlot[0];
 		if (_equippedGun)
 		{
 			_equippedGun->SetOwner(this);
-			_stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon); // 임시 세팅
-
-			//if (_gunWidget)
-			{
-				_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
-				_gunWidget->AddToViewport();
-			}
+			_equippedGun->UpdateGun();
+			_stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon);
 		}
+	}
+
+	if (_gunWidget)
+	{
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_gunWidget->AddToViewport();
 	}
 
 }
@@ -103,6 +110,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
 		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Reload);
+		enhancedInputComponent->BindAction(_weapon1ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon1);
+		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon2);
+		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon3);
 	}
 }
 
@@ -373,6 +383,21 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 void APlayerCharacter::TryRolling(const FInputActionValue& value)
 {
 }
+void APlayerCharacter::SwitchWeapon(int32 index)
+{
+	if (index > 2 || index < 0)
+		return;
+
+	if (_gunSlot[index] == nullptr)
+		return;
+
+	_equippedGun->_ammoChanged.Clear();
+	_equippedGun = _gunSlot[index];
+
+	_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+	_equippedGun->UpdateGun();
+}
+
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {
 	_isAiming = false;
