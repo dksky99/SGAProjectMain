@@ -41,6 +41,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Throwable")
 	float _lifeTime = 10.0f; //액터 제거까지 남은 시간
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwable")
 	class AHellDiver* _owner;
 
 	FTimerHandle _destroyTimerHandle;
