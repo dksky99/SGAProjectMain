@@ -35,11 +35,12 @@ void ACharacterBase::UpDown(float value)
 {
 	if (abs(value) < 0.01f)
 	{
-		_vertical = 0.0f;
 		return;
 	}
 	_vertical = value;
-	FVector forward = GetControlRotation().Vector();
+	FRotator yawOnly = FRotator(0.f, GetControlRotation().Yaw, 0.f);
+	FVector forward = FRotationMatrix(yawOnly).GetUnitAxis(EAxis::X); // 傈规 规氢
+
 	AddMovementInput(forward * value * 10.0f);
 }
 
@@ -47,12 +48,12 @@ void ACharacterBase::RightLeft(float value)
 {
 	if (abs(value) < 0.01f)
 	{
-		_horizontal = 0.0f;
 		return;
 	}
 	_horizontal = value;
-	FRotator controlRot = GetControlRotation();
-	FVector right = FRotationMatrix(controlRot).GetUnitAxis(EAxis::Y);
+	FRotator yawOnly = FRotator(0.f, GetControlRotation().Yaw, 0.f);
+	FVector right = FRotationMatrix(yawOnly).GetUnitAxis(EAxis::Y); // 快螟 规氢
+
 	AddMovementInput(right * value * 10.0f);
 }
 

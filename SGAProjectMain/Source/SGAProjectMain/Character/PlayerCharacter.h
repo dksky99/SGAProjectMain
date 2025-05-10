@@ -85,6 +85,8 @@ public:
 	UFUNCTION()
 	void TryCrouch(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void TryChangeControl(const  FInputActionValue& value);
 
 	UFUNCTION()
 	void TryProne(const  FInputActionValue& value);
@@ -98,7 +100,8 @@ public:
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
 
-
+	void FocusMove(FVector2D moveVector);
+	void DefaultMove(FVector2D moveVector);
 
 protected:
 
@@ -118,6 +121,8 @@ protected:
 	class UInputAction* _proneAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _rollingAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _testingViewAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseLButtonAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
@@ -149,6 +154,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
 	class UPlayerControlDataAsset* _tpsControl;
 
+	ECharacterViewType _viewType = ECharacterViewType::Default;
 
 
 	bool _isAiming = false;
