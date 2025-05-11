@@ -78,6 +78,9 @@ public:
 
 	ECharacterState GetCharacterState() { return _characterState; }
 	EActionState GetActionState() { return _actionState; }
+	EWeaponType GetWeaponState() { return _weaponState; }
+
+	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
 
 
 protected:

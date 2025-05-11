@@ -19,7 +19,7 @@
 #include "Engine/OverlapResult.h"
 
 #include "../GunBase.h"
-
+#include "../UI/GunUI.h"
 
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
@@ -47,6 +47,11 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 void APlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
+	if (_gunWidgetClass)
+	{
+		_gunWidget = CreateWidget<UGunUI>(GetWorld(), _gunWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -59,9 +64,16 @@ void APlayerCharacter::BeginPlay()
 		if (_equippedGun)
 		{
 			_equippedGun->SetOwner(this);
-			_weaponType = EWeaponType::PrimaryWeapon;
+			_stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon); // 임시 세팅
+
+			//if (_gunWidget)
+			{
+				_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+				_gunWidget->AddToViewport();
+			}
 		}
 	}
+
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -87,10 +99,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopFiring);
-
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
+		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Reload);
 	}
 }
 
@@ -259,7 +271,7 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
 	_isAiming = true;
 
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		_equippedGun->StartAiming();
@@ -299,7 +311,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		break;
@@ -365,7 +377,7 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {
 	_isAiming = false;
 
-	switch (_weaponType)
+	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
 		_equippedGun->StopAiming();
@@ -383,4 +395,9 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 	case EWeaponType::None:
 		break;
 	}
+}
+
+void APlayerCharacter::Reload(const FInputActionValue& value)
+{
+	_equippedGun->Reload();
 }
