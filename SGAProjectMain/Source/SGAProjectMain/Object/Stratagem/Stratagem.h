@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Stratagem")
 	float _deployDelay = 5.0f; // 투척 후 몇 초 뒤에 스폰
 
+	UPROPERTY(EditAnywhere, Category = "Stratagem")
+	bool _isAttackStratagem = false; // 투척 후 몇 초 뒤에 스폰
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stratagem")
 	AActor* _targetActor = nullptr;
 

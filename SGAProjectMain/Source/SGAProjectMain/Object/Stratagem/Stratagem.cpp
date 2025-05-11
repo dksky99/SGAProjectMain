@@ -10,16 +10,44 @@ void AStratagem::DeployStratagem()
 	{
 		FActorSpawnParameters spawnParams;
 		spawnParams.Owner = this;
+		spawnParams.Instigator = Cast<APawn>(_owner); // 플레이어를 Instigator로 설정
 
-		FVector spawnLocation = GetActorLocation(); // 또는 _targetActor->GetActorLocation()
-		FRotator spawnRotation = FRotator::ZeroRotator;
+		FVector targetLocation = GetActorLocation();
 
-		GetWorld()->SpawnActor<AActor>(
+		// 스폰 위치 결정
+		FVector dropOrigin;
+		if (_isAttackStratagem)
+		{
+			dropOrigin = FVector(0, 0, 0); // 맵 중앙 기준
+		}
+		else
+		{
+			dropOrigin = targetLocation; // 신호기 바로 위
+		}
+
+		// 낙하 시작 위치 = 기준점 + 위로 높이
+		FVector spawnLocation = dropOrigin + FVector(0, 0, 1500.f);
+
+		// 방향 = 타겟 - 스폰 위치
+		FVector direction = (targetLocation - spawnLocation).GetSafeNormal();
+		FRotator spawnRotation = direction.Rotation();
+
+		// 스폰
+		AActor* spawned = GetWorld()->SpawnActor<AActor>(
 			_objectToSpawn,
 			spawnLocation,
 			spawnRotation,
 			spawnParams
 		);
+
+		// 속도 설정
+		if (spawned)
+		{
+			if (UProjectileMovementComponent* projectile = spawned->FindComponentByClass<UProjectileMovementComponent>())
+			{
+				projectile->Velocity = direction * 2000.f;
+			}
+		}
 	}
 
 	DestroySelf();
