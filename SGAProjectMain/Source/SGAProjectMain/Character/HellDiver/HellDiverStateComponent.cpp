@@ -86,11 +86,32 @@ bool UHellDiverStateComponent::FinishProne()
 	return true;
 }
 
+bool UHellDiverStateComponent::StartRolling()
+{
+	if (_characterState == ECharacterState::Proning||_isRolling)
+		return false;
+
+	_isRolling = true;
+	return true;
+}
+
+bool UHellDiverStateComponent::FinishRolling()
+{
+	bool temp = _isRolling;
+	_isRolling = false;
+	return temp;
+
+}
+
 bool UHellDiverStateComponent::StartTPSAiming()
 {
+
+	return true;
+
 }
 
 bool UHellDiverStateComponent::FinishTPSAiming()
 {
+	return true;
 }
 

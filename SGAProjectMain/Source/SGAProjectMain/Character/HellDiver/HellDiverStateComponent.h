@@ -77,6 +77,9 @@ public:
 	bool StartProne();
 	bool FinishProne();
 
+	bool StartRolling();
+	bool FinishRolling();
+
 	ECharacterState GetCharacterState() { return _characterState; }
 	void SetCharacterState(ECharacterState state) { _characterState=state; }
 	EActionState GetActionState() { return _actionState; }
@@ -85,6 +88,9 @@ public:
 	void SetWeaponState(EWeaponType state) { _weaponState = state; }
 	ELifeState GetLifeState() { return _lifeState; }
 	void SetLifeState(ELifeState state) { _lifeState = state; }
+	bool IsRolling() { return _isRolling; }
+	bool IsReloading() { return _isReloading; }
+	bool IsFiring() { return _isFiring; }
 
 
 	bool StartTPSAiming();

@@ -34,6 +34,7 @@ public:
 	void StopRolling();
 
 
+	virtual void Landed(const FHitResult& Hit) override;
 
 protected: 
 

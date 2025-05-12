@@ -81,11 +81,19 @@ void AHellDiver::FinishProne()
 void AHellDiver::Rolling()
 {
 
+    _stateComponent->StartRolling();
+    Jump();
     StartProne();
 
-
 }
 
-void AHellDiver::StopRolling()
+void AHellDiver::Landed(const FHitResult& Hit)
 {
+    Super::Landed(Hit);
+
+
+    _stateComponent->FinishRolling();
+
+
 }
+

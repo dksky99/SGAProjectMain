@@ -38,5 +38,14 @@ protected:
 	ELifeState _lifeState;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isFiring = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isReloading = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isRolling = false;
+
+
+
 
 };

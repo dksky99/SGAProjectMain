@@ -67,6 +67,23 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
+void ACharacterBase::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	float zVelocity = GetCharacterMovement()->Velocity.Z;
+
+	UE_LOG(LogTemp, Log, TEXT("착지 시 Z 속도: %f"), zVelocity);
+
+	if (zVelocity < -1200.f)
+	{
+		// 하드랜딩
+	}
+	else if (zVelocity < -400.f)
+	{
+		// 일반 착지
+	}
+}
+
 void ACharacterBase::KnockDown(float time)
 {
 	// 이동 멈추기
@@ -84,7 +101,7 @@ void ACharacterBase::KnockDown(float time)
 
 	// 일정 시간 후 복구
 	GetWorld()->GetTimerManager().SetTimer(
-		KnockDownTimerHandle, this, &ACharacterBase::KnockDownRecovery, time, false
+		_knockDownTimerHandle, this, &ACharacterBase::KnockDownRecovery, time, false
 	);
 }
 
@@ -106,7 +123,7 @@ void ACharacterBase::KnockDownRecovery()
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()));
 	GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
 
-	// 충돌 및 이동 복원
+	// 충돌 및 이동 복원 : 나중에 확인하고 다시 확인.
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);

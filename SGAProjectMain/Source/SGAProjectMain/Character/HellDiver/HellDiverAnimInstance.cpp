@@ -33,6 +33,11 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_actionState= _hellDiver->GetStateComponent()->GetActionState();
 			_weaponState= _hellDiver->GetStateComponent()->GetWeaponState();
 			_lifeState= _hellDiver->GetStateComponent()->GetLifeState();
+			_isFiring= _hellDiver->GetStateComponent()->IsFiring();
+			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
+			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
+
+			
 
 
 		}

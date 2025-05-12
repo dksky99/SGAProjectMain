@@ -39,6 +39,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
+	virtual void Landed(const FHitResult& Hit) override;
+
 	bool _isTurnLeft = false;
 	bool _isTurnRight = false;
 
@@ -57,7 +59,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
 
-	FTimerHandle KnockDownTimerHandle;
+	FTimerHandle _knockDownTimerHandle;
 
 
 

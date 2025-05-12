@@ -405,9 +405,8 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 	{
 
 	case ECharacterState::Standing:
-		StartSprint();
-		break;
 	case ECharacterState::Sprinting:
+		Rolling();
 		break;
 	case ECharacterState::Crouching:
 		FinishCrouch();
