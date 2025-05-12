@@ -67,14 +67,15 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	
-	void StartSprint();
-	void FinishSprint();
+	bool StartSprint();
+	bool FinishSprint();
 
-	void StartCrouch();
-	void FinishCrouch();
+	bool StartCrouch();
+	bool FinishCrouch();
 	
-	void StartProne();
-	void FinishProne();
+
+	bool StartProne();
+	bool FinishProne();
 
 	ECharacterState GetCharacterState() { return _characterState; }
 	void SetCharacterState(ECharacterState state) { _characterState=state; }
@@ -86,11 +87,14 @@ public:
 	void SetLifeState(ELifeState state) { _lifeState = state; }
 
 
-	void StartTPSAiming();
-	void FinishTPSAiming();
+	bool StartTPSAiming();
+	bool FinishTPSAiming();
 
 
 protected:
+
+
+
 
 	ECharacterState _characterState=ECharacterState::Standing;
 
@@ -102,5 +106,6 @@ protected:
 
 	bool _isFiring = false;
 	bool _isReloading = false;
+	bool _isRolling = false;
 		
 };

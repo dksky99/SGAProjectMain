@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "CharacterBase.generated.h"
 
+
+
 UCLASS()
 class SGAPROJECTMAIN_API ACharacterBase : public ACharacter
 {
@@ -39,6 +41,11 @@ public:
 
 	bool _isTurnLeft = false;
 	bool _isTurnRight = false;
+
+	void KnockDown(float time);
+
+	void KnockDownRecovery();
+
 protected:
 
 	float _vertical = 0;
@@ -49,5 +56,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
+
+	FTimerHandle KnockDownTimerHandle;
+
+
 
 };

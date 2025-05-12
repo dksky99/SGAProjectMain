@@ -32,59 +32,65 @@ void UHellDiverStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	// ...
 }
 
-void UHellDiverStateComponent::StartSprint()
+bool UHellDiverStateComponent::StartSprint()
 {
 	if (_characterState != ECharacterState::Standing)
-		return;
+		return false;
 
 	_characterState = ECharacterState::Sprinting;
 	
 
+	return true;
 
 
 }
 
-void UHellDiverStateComponent::FinishSprint()
+bool UHellDiverStateComponent::FinishSprint()
 {
 	if (_characterState != ECharacterState::Sprinting)
-		return;
+		return false;
 	_characterState = ECharacterState::Standing;
+	return true;
 }
 
-void UHellDiverStateComponent::StartCrouch()
+bool UHellDiverStateComponent::StartCrouch()
 {
 	if (_characterState == ECharacterState::Crouching)
-		return;
+		return false;
 	_characterState = ECharacterState::Crouching;
+	return true;
 }
 
-void UHellDiverStateComponent::FinishCrouch()
+bool UHellDiverStateComponent::FinishCrouch()
 {
 	if (_characterState != ECharacterState::Crouching)
-		return;
+		return false;
 	_characterState = ECharacterState::Standing;
+	return true;
 }
 
-void UHellDiverStateComponent::StartProne()
+bool UHellDiverStateComponent::StartProne()
 {
 
 	if (_characterState == ECharacterState::Proning)
-		return;
+		return false;
 	_characterState = ECharacterState::Proning;
+	return true;
 }
 
-void UHellDiverStateComponent::FinishProne()
+bool UHellDiverStateComponent::FinishProne()
 {
 	if (_characterState != ECharacterState::Proning)
-		return;
+		return false;
 	_characterState = ECharacterState::Standing;
+	return true;
 }
 
-void UHellDiverStateComponent::StartTPSAiming()
+bool UHellDiverStateComponent::StartTPSAiming()
 {
 }
 
-void UHellDiverStateComponent::FinishTPSAiming()
+bool UHellDiverStateComponent::FinishTPSAiming()
 {
 }
 

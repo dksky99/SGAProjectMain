@@ -258,15 +258,15 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 	{
 
 	case ECharacterState::Standing:
-		_stateComponent->StartSprint();
+		StartSprint();
 		break;
 	case ECharacterState::Sprinting:
 		break;
 	case ECharacterState::Crouching:
-		_stateComponent->FinishCrouch();
+		FinishCrouch();
 		break;
 	case ECharacterState::Proning:
-		_stateComponent->FinishProne();
+		FinishProne();
 		break;
 	case ECharacterState::knockdown:
 	case ECharacterState::MAX:
@@ -305,7 +305,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 	{
 
 	case ECharacterState::Sprinting:
-		_stateComponent->FinishSprint();
+		FinishSprint();
 		break;
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
@@ -344,10 +344,10 @@ void APlayerCharacter::TryCrouch(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 	case ECharacterState::Proning:
-		_stateComponent->StartCrouch();
+		StartCrouch();
 		break;
 	case ECharacterState::Crouching:
-		_stateComponent->FinishCrouch();
+		FinishCrouch();
 		break;
 	case ECharacterState::Sprinting:
 	case ECharacterState::knockdown:
@@ -385,10 +385,10 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
-		_stateComponent->StartProne();
+		StartProne();
 		break;
 	case ECharacterState::Proning:
-		_stateComponent->FinishProne();
+		FinishProne();
 		break;
 	case ECharacterState::Sprinting:
 	case ECharacterState::knockdown:
@@ -400,6 +400,26 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 
 void APlayerCharacter::TryRolling(const FInputActionValue& value)
 {
+
+	switch (_stateComponent->GetCharacterState())
+	{
+
+	case ECharacterState::Standing:
+		StartSprint();
+		break;
+	case ECharacterState::Sprinting:
+		break;
+	case ECharacterState::Crouching:
+		FinishCrouch();
+		break;
+	case ECharacterState::Proning:
+		FinishProne();
+		break;
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
 }
 void APlayerCharacter::SetFPSView()
 {
