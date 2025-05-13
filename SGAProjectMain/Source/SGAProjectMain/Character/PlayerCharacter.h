@@ -22,6 +22,15 @@ enum class EPlayerState : uint8
 	// 필요하면 추가
 };
 
+UENUM()
+enum class ECharacterViewType : uint8
+{
+	Default,
+	TPS,
+	FPS,
+	Max
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API APlayerCharacter : public AHellDiver
 {
@@ -78,6 +87,8 @@ public:
 	UFUNCTION()
 	void TryCrouch(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void TryChangeControl(const  FInputActionValue& value);
 
 	UFUNCTION()
 	void TryProne(const  FInputActionValue& value);
@@ -93,6 +104,15 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2); }
 
 	void SwitchWeapon(int32 index);
+
+	void SetFPSView();
+	void SetTPSView();
+	void SetDefaultView();
+	
+	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
+
+	void FocusMove(FVector2D moveVector);
+	void DefaultMove(FVector2D moveVector);
 
 protected:
 
@@ -112,6 +132,8 @@ protected:
 	class UInputAction* _proneAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _rollingAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _testingViewAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseLButtonAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
@@ -143,6 +165,21 @@ protected:
 
 
 	EPlayerState _playerState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _defaultControl;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _fpsControl;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	class UPlayerControlDataAsset* _tpsControl;
+
+	ECharacterViewType _viewType = ECharacterViewType::Default;
+
+	//EWeaponType _weaponType;
 
 	bool _isAiming = false;
 

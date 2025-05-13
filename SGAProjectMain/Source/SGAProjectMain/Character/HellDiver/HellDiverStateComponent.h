@@ -6,7 +6,7 @@
 #include "../CharacterStateComponent.h"
 #include "HellDiverStateComponent.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	Standing,
@@ -17,7 +17,7 @@ enum class ECharacterState : uint8
 	MAX
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EActionState : uint8
 {
 	None,
@@ -67,23 +67,41 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	
-	void StartSprint();
-	void FinishSprint();
+	bool StartSprint();
+	bool FinishSprint();
 
-	void StartCrouch();
-	void FinishCrouch();
+	bool StartCrouch();
+	bool FinishCrouch();
 	
-	void StartProne();
-	void FinishProne();
+
+	bool StartProne();
+	bool FinishProne();
+
+	bool StartRolling();
+	bool FinishRolling();
 
 	ECharacterState GetCharacterState() { return _characterState; }
+	void SetCharacterState(ECharacterState state) { _characterState=state; }
 	EActionState GetActionState() { return _actionState; }
+	void SetActionState(EActionState state) { _actionState = state; }
+	ELifeState GetLifeState() { return _lifeState; }
+	void SetLifeState(ELifeState state) { _lifeState = state; }
+	bool IsRolling() { return _isRolling; }
+	bool IsReloading() { return _isReloading; }
+	bool IsFiring() { return _isFiring; }
+
+
+	bool StartTPSAiming();
+	bool FinishTPSAiming();
 	EWeaponType GetWeaponState() { return _weaponState; }
 
 	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
 
 
 protected:
+
+
+
 
 	ECharacterState _characterState=ECharacterState::Standing;
 
@@ -95,5 +113,6 @@ protected:
 
 	bool _isFiring = false;
 	bool _isReloading = false;
+	bool _isRolling = false;
 		
 };

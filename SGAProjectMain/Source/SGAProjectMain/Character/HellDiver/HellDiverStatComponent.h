@@ -16,14 +16,20 @@ class SGAPROJECTMAIN_API UHellDiverStatComponent : public UStatComponent
 public:
 
 
+	float GetDefaultSpeed() { return _defaultSpeed; }
+	float GetSprintSpeed() { return _sprintSpeed; }
+	float GetCrouchSpeed() { return _crouchSpeed; }
+	float GetProneSpeed() { return _proneSpeed; }
+
 
 
 protected:
 
+	float _defaultSpeed = 500.0f;
 
-	float _sprintSpeed = 400.0f;
+	float _sprintSpeed = 700.0f;
 
-	float _crouchSpeed = 150.0f;
+	float _crouchSpeed = 300.0f;
 
-	float _proneSpeed = 100.0f;
+	float _proneSpeed = 200.0f;
 };

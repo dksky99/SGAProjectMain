@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "CharacterBase.generated.h"
 
+
+
 UCLASS()
 class SGAPROJECTMAIN_API ACharacterBase : public ACharacter
 {
@@ -29,7 +31,7 @@ public:
 
 	float MyVertical() { return _vertical; }
 	float MyHorizontal() { return _horizontal; }
-
+	float MyDeltaAngle() { return _deltaAngle; }
 
 	FText GetCharacterName() { return _name; }
 
@@ -37,14 +39,28 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
+	virtual void Landed(const FHitResult& Hit) override;
+
 	bool _isTurnLeft = false;
 	bool _isTurnRight = false;
+
+	void KnockDown(float time);
+
+	void KnockDownRecovery();
+
 protected:
 
 	float _vertical = 0;
 	float _horizontal = 0;
 
+	float _deltaAngle = 0.0f;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
+
+	FTimerHandle _knockDownTimerHandle;
+
+
 
 };

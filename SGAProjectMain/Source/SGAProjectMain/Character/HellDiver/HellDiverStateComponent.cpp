@@ -32,51 +32,104 @@ void UHellDiverStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	// ...
 }
 
-void UHellDiverStateComponent::StartSprint()
+bool UHellDiverStateComponent::StartSprint()
 {
 	if (_characterState != ECharacterState::Standing)
-		return;
+		return false;
 
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartSprint"));
 	_characterState = ECharacterState::Sprinting;
 	
 
+	return true;
 
 
 }
 
-void UHellDiverStateComponent::FinishSprint()
+bool UHellDiverStateComponent::FinishSprint()
 {
 	if (_characterState != ECharacterState::Sprinting)
-		return;
+		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishSprint"));
 	_characterState = ECharacterState::Standing;
+	return true;
 }
 
-void UHellDiverStateComponent::StartCrouch()
+bool UHellDiverStateComponent::StartCrouch()
 {
 	if (_characterState == ECharacterState::Crouching)
-		return;
+		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartCrouch"));
 	_characterState = ECharacterState::Crouching;
+	return true;
 }
 
-void UHellDiverStateComponent::FinishCrouch()
+bool UHellDiverStateComponent::FinishCrouch()
 {
 	if (_characterState != ECharacterState::Crouching)
-		return;
+		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishCrouch"));
 	_characterState = ECharacterState::Standing;
+	return true;
 }
 
-void UHellDiverStateComponent::StartProne()
+bool UHellDiverStateComponent::StartProne()
 {
 
 	if (_characterState == ECharacterState::Proning)
-		return;
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartProne"));
 	_characterState = ECharacterState::Proning;
+	return true;
 }
 
-void UHellDiverStateComponent::FinishProne()
+bool UHellDiverStateComponent::FinishProne()
 {
 	if (_characterState != ECharacterState::Proning)
-		return;
+		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishProne"));
 	_characterState = ECharacterState::Standing;
+	return true;
+}
+
+bool UHellDiverStateComponent::StartRolling()
+{
+	if (_characterState == ECharacterState::Proning||_isRolling)
+		return false;
+
+	UE_LOG(LogTemp, Error, TEXT("StartRolling"));
+	_isRolling = true;
+	return true;
+}
+
+bool UHellDiverStateComponent::FinishRolling()
+{
+	bool temp = _isRolling;
+	_isRolling = false;
+	UE_LOG(LogTemp, Error, TEXT("FinishRolling"));
+	return temp;
+
+}
+
+bool UHellDiverStateComponent::StartTPSAiming()
+{
+
+	return true;
+
+}
+
+bool UHellDiverStateComponent::FinishTPSAiming()
+{
+	return true;
 }
 

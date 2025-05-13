@@ -14,28 +14,39 @@ UCharacterAnimInstance::UCharacterAnimInstance()
 {
 }
 
-void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+void UCharacterAnimInstance::NativeInitializeAnimation()
 {
-	Super::NativeUpdateAnimation(DeltaSeconds);
+	Super::NativeInitializeAnimation();
 
 	auto pawn = TryGetPawnOwner();
 	if (pawn)
 	{
-		ACharacterBase* character = Cast<ACharacterBase>(pawn);
-		if (character != nullptr)
+		_pawn = Cast<ACharacterBase>(pawn);
+
+	}
+}
+
+void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+
+	if (_pawn)
+	{
+		if (_pawn != nullptr)
 		{
-			_speed = character->GetVelocity().Size();
-			_isFalling = character->GetMovementComponent()->IsFalling();
+			_speed = _pawn->GetVelocity().Size();
+			_isFalling = _pawn->GetMovementComponent()->IsFalling();
 
-			_vertical = character->MyVertical();
-			_horizontal = character->MyHorizontal();
+			_vertical = _pawn->MyVertical();
+			_horizontal = _pawn->MyHorizontal();
+			_deltaAngle = _pawn->MyDeltaAngle();
 
-			FRotator controlRotation = character->GetControlRotation();
-			FRotator actorRotation = character->GetActorRotation();
+			FRotator controlRotation = _pawn->GetControlRotation();
+			FRotator actorRotation = _pawn->GetActorRotation();
 			_yaw = FMath::FindDeltaAngleDegrees(actorRotation.Yaw, controlRotation.Yaw);
 			_pitch = FMath::FindDeltaAngleDegrees(actorRotation.Pitch, controlRotation.Pitch);
 
-			auto player = Cast<APlayerCharacter>(character);
+			auto player = Cast<APlayerCharacter>(_pawn);
 			if (player)
 			{
 				_isTurnLeft = player->_isTurnLeft;

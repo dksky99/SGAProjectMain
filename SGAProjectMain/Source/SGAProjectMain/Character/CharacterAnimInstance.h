@@ -17,7 +17,10 @@ class SGAPROJECTMAIN_API UCharacterAnimInstance : public UAnimInstance
 public:
 	UCharacterAnimInstance();
 
-	virtual void NativeUpdateAnimation(float DeltaSeconds);
+	virtual void NativeInitializeAnimation() override;
+
+
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	UFUNCTION()
 	void PlayAnimMontage(UAnimMontage* animMontage);
@@ -27,6 +30,9 @@ public:
 
 
 protected:
+
+	class ACharacterBase* _pawn=nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pawn", meta = (AllowPrivateAccess = "true"))
 	float _speed;
 
@@ -44,6 +50,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimOffset", meta = (AllowPrivateAccess = "true"))
 	float _pitch = 0; // 상하 회전
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimOffset", meta = (AllowPrivateAccess = "true"))
+	float _deltaAngle = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimOffset", meta = (AllowPrivateAccess = "true"))
 	bool _isTurnLeft = false;
