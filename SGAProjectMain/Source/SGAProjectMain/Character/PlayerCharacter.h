@@ -72,6 +72,8 @@ public:
 	void WhileAiming(const  FInputActionValue& value);
 	UFUNCTION()
 	void StopAiming(const  FInputActionValue& value);
+	UFUNCTION()
+	void Reload(const  FInputActionValue& value);
 
 
 	UFUNCTION()
@@ -127,6 +129,8 @@ protected:
 	class UInputAction* _mouseLButtonAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mouseRButtonAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _reloadAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
@@ -156,6 +160,13 @@ protected:
 
 	ECharacterViewType _viewType = ECharacterViewType::Default;
 
+	//EWeaponType _weaponType;
 
 	bool _isAiming = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _gunWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
+	class UGunUI* _gunWidget;
 };

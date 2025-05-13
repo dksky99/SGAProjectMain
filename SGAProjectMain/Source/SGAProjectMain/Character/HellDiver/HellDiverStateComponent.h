@@ -84,8 +84,6 @@ public:
 	void SetCharacterState(ECharacterState state) { _characterState=state; }
 	EActionState GetActionState() { return _actionState; }
 	void SetActionState(EActionState state) { _actionState = state; }
-	EWeaponType GetWeaponState() { return _weaponState; }
-	void SetWeaponState(EWeaponType state) { _weaponState = state; }
 	ELifeState GetLifeState() { return _lifeState; }
 	void SetLifeState(ELifeState state) { _lifeState = state; }
 	bool IsRolling() { return _isRolling; }
@@ -95,6 +93,9 @@ public:
 
 	bool StartTPSAiming();
 	bool FinishTPSAiming();
+	EWeaponType GetWeaponState() { return _weaponState; }
+
+	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
 
 
 protected:
