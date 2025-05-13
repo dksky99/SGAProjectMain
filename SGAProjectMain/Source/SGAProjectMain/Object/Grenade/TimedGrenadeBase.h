@@ -36,6 +36,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	float _explosionDamage = 100.0f; // Æø¹ß µ¥¹ÌÁö
 
+	bool _isExploded = false;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
 	UParticleSystem* _explosionEffect; // Æø¹ß ÀÌÆåÆ®
 

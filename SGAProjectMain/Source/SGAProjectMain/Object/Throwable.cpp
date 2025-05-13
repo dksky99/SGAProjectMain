@@ -47,13 +47,50 @@ void AThrowable::Tick(float DeltaTime)
 
 }
 
+void AThrowable::AttachToHand(FName socketName)
+{
+	if (_owner)
+	{
+		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
+		{
+			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
+
+			// 물리 & 충돌 비활성화
+			if (GetMesh())
+			{
+				GetMesh()->SetSimulatePhysics(false);
+				GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+
+			if (_projectileMovement)
+			{
+				_projectileMovement->StopMovementImmediately();
+				_projectileMovement->Deactivate();
+			}
+		}
+	}
+}
+
 void AThrowable::Throw()
 {
 	if (!_owner || !_projectileMovement)
 		return;
 
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	if (GetMesh())
+	{
+		//GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+
+	if (_projectileMovement)
+	{
+		_projectileMovement->Activate();
+	}
+
 	FVector direction = _owner->GetActorForwardVector();
-	float power = 100.0f; // _owner->힘 가져와서 설정
+	float power = 1000.0f; // _owner->힘 가져와서 설정
 
 	_projectileMovement->Velocity = direction * power;
 

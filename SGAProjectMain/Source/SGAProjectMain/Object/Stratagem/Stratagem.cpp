@@ -45,7 +45,7 @@ void AStratagem::DeployStratagem()
 		{
 			if (UProjectileMovementComponent* projectile = spawned->FindComponentByClass<UProjectileMovementComponent>())
 			{
-				projectile->Velocity = direction * 2000.f;
+				projectile->Velocity = direction * 8000.f;
 			}
 		}
 	}

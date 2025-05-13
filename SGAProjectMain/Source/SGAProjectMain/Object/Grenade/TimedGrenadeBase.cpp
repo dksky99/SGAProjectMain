@@ -13,7 +13,7 @@ void ATimedGrenadeBase::StartCookingGrenade()
 
 void ATimedGrenadeBase::UpdateCookingGrenade()
 {
-	if (IsFuseTimeRemaining())
+	if (IsFuseTimeRemaining() || _isExploded)
 		return;
 
 	ExplodeGrenade();
@@ -32,8 +32,10 @@ void ATimedGrenadeBase::Throw()
 
 void ATimedGrenadeBase::ExplodeGrenade()
 {
-	if (IsFuseTimeRemaining())
+	if (IsFuseTimeRemaining() || _isExploded)
 		return;
+
+	_isExploded = true;
 
 	GetWorldTimerManager().ClearTimer(_explosionTimerHandle);  // 타이머 제거
 

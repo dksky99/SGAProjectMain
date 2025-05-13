@@ -23,9 +23,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void AttachToHand(FName socketName);
+
 	virtual void Throw(); // 던지기
 	virtual void OnLifeTimeExpired(); // 수명 만료
 
+	UStaticMeshComponent* GetMesh() const { return _mesh; }
 	void DestroySelf();
 
 	UFUNCTION()

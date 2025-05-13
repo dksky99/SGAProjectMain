@@ -21,6 +21,9 @@
 #include "../GunBase.h"
 #include "../UI/GunUI.h"
 
+#include "../Object/Grenade/TimedGrenadeBase.h"
+#include "../Object/Stratagem/Stratagem.h"
+
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
 
@@ -103,6 +106,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
 		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Reload);
+		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
+		enhancedInputComponent->BindAction(_stratagemAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipStratagem);
 	}
 }
 
@@ -174,8 +179,21 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	switch (_playerState)
 	{
 	case EPlayerState::Idle:
-		_playerState = EPlayerState::Firing;
-		_equippedGun->StartFire();
+		if (GetStateComponent()->GetWeaponState() == EWeaponType::PrimaryWeapon)
+		{
+			_playerState = EPlayerState::Firing;
+			_equippedGun->StartFire();
+		}
+		else if (GetStateComponent()->GetWeaponState() == EWeaponType::Grenade)
+		{
+			_playerState = EPlayerState::CookingGrenade;
+			_equippedGrenade->StartCookingGrenade();
+		}
+		else if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
+		{
+			_playerState = EPlayerState::StratagemInputting;
+		}
+
 		break;
 
 	case EPlayerState::Firing:
@@ -206,6 +224,8 @@ void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 		break;
 
 	case EPlayerState::CookingGrenade:
+		if(_equippedGrenade)
+			_equippedGrenade->UpdateCookingGrenade();
 		break;
 
 	case EPlayerState::StratagemInputting:
@@ -232,9 +252,13 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 		break;
 
 	case EPlayerState::CookingGrenade:
+		_playerState = EPlayerState::Idle;
+		OnThrowReleased();
 		break;
 
 	case EPlayerState::StratagemInputting:
+		_playerState = EPlayerState::Idle;
+		OnThrowReleased();
 		break;
 
 	case EPlayerState::Rolling:

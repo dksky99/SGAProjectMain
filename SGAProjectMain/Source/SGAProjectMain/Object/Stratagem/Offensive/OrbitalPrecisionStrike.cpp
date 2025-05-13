@@ -17,9 +17,9 @@ AOrbitalPrecisionStrike::AOrbitalPrecisionStrike()
 	RootComponent = _mesh;
 
 	_projectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile"));
-	_projectile->ProjectileGravityScale = 1.0f;
+	_projectile->ProjectileGravityScale = 0.0f;
 	_projectile->InitialSpeed = 0.f;
-	_projectile->MaxSpeed = 2000.f;
+	_projectile->MaxSpeed = 10000.f;
 	_projectile->bRotationFollowsVelocity = true;
 }
 
