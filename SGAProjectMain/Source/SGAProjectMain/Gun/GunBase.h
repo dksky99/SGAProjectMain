@@ -49,7 +49,7 @@ private:
 	int32 _maxAmmo = 45; 
 
 	bool _isHit = false;
-	FVector start;
+	//FVector start;
 	FVector _hitPoint;
 
 	UPROPERTY()
@@ -57,6 +57,11 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AImpactMarker> _impactMarkerClass;
+
+	UUserWidget* _crosshair;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _crosshairClass;
 
 	bool _isAiming = false;
 };
