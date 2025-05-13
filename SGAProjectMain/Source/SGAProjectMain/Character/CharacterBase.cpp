@@ -72,7 +72,7 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 	float zVelocity = GetCharacterMovement()->Velocity.Z;
 
-	UE_LOG(LogTemp, Log, TEXT("착지 시 Z 속도: %f"), zVelocity);
+	UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
 
 	if (zVelocity < -1200.f)
 	{

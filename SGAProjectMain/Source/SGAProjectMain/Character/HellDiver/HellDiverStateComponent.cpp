@@ -37,6 +37,9 @@ bool UHellDiverStateComponent::StartSprint()
 	if (_characterState != ECharacterState::Standing)
 		return false;
 
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartSprint"));
 	_characterState = ECharacterState::Sprinting;
 	
 
@@ -49,6 +52,9 @@ bool UHellDiverStateComponent::FinishSprint()
 {
 	if (_characterState != ECharacterState::Sprinting)
 		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishSprint"));
 	_characterState = ECharacterState::Standing;
 	return true;
 }
@@ -57,6 +63,9 @@ bool UHellDiverStateComponent::StartCrouch()
 {
 	if (_characterState == ECharacterState::Crouching)
 		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartCrouch"));
 	_characterState = ECharacterState::Crouching;
 	return true;
 }
@@ -65,6 +74,9 @@ bool UHellDiverStateComponent::FinishCrouch()
 {
 	if (_characterState != ECharacterState::Crouching)
 		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishCrouch"));
 	_characterState = ECharacterState::Standing;
 	return true;
 }
@@ -74,6 +86,7 @@ bool UHellDiverStateComponent::StartProne()
 
 	if (_characterState == ECharacterState::Proning)
 		return false;
+	UE_LOG(LogTemp, Error, TEXT("StartProne"));
 	_characterState = ECharacterState::Proning;
 	return true;
 }
@@ -82,6 +95,9 @@ bool UHellDiverStateComponent::FinishProne()
 {
 	if (_characterState != ECharacterState::Proning)
 		return false;
+	if (_isRolling)
+		return false;
+	UE_LOG(LogTemp, Error, TEXT("FinishProne"));
 	_characterState = ECharacterState::Standing;
 	return true;
 }
@@ -91,6 +107,7 @@ bool UHellDiverStateComponent::StartRolling()
 	if (_characterState == ECharacterState::Proning||_isRolling)
 		return false;
 
+	UE_LOG(LogTemp, Error, TEXT("StartRolling"));
 	_isRolling = true;
 	return true;
 }
@@ -99,6 +116,7 @@ bool UHellDiverStateComponent::FinishRolling()
 {
 	bool temp = _isRolling;
 	_isRolling = false;
+	UE_LOG(LogTemp, Error, TEXT("FinishRolling"));
 	return temp;
 
 }

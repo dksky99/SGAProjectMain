@@ -80,19 +80,42 @@ void AHellDiver::FinishProne()
 
 void AHellDiver::Rolling()
 {
-
+    if (this->CanJump() == false)
+        return;
+    if (_stateComponent->IsRolling())
+        return;
     _stateComponent->StartRolling();
     Jump();
-    StartProne();
 
+    FVector forward = GetActorForwardVector();
+
+    float forwardBoost = 1000.0f; 
+    FVector boost = forward * forwardBoost;
+
+    // 4. 현재 Velocity에 더해줌
+    GetCharacterMovement()->Velocity += boost;
+
+    StartProne();
+}
+
+void AHellDiver::FinishRolling()
+{
+
+    _stateComponent->FinishRolling();
 }
 
 void AHellDiver::Landed(const FHitResult& Hit)
 {
     Super::Landed(Hit);
 
+    if (_stateComponent->IsRolling())
+    {
+        // 일정 시간 후 복구
+        GetWorld()->GetTimerManager().SetTimer(
+            _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
+        );
 
-    _stateComponent->FinishRolling();
+    }
 
 
 }

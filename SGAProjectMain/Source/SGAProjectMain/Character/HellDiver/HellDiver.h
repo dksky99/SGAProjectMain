@@ -31,7 +31,7 @@ public:
 	void FinishProne();
 
 	void Rolling();
-	void StopRolling();
+	void FinishRolling();
 
 
 	virtual void Landed(const FHitResult& Hit) override;

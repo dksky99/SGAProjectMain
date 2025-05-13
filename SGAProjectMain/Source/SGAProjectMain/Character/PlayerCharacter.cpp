@@ -401,15 +401,14 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 void APlayerCharacter::TryRolling(const FInputActionValue& value)
 {
 
+
 	switch (_stateComponent->GetCharacterState())
 	{
 
 	case ECharacterState::Standing:
 	case ECharacterState::Sprinting:
-		Rolling();
-		break;
 	case ECharacterState::Crouching:
-		FinishCrouch();
+		Rolling();
 		break;
 	case ECharacterState::Proning:
 		FinishProne();
@@ -497,6 +496,8 @@ void APlayerCharacter::FocusMove(FVector2D moveVector)
 }
 void APlayerCharacter::DefaultMove(FVector2D moveVector)
 {
+
+
 	if (moveVector.SquaredLength() > 1.0f)
 	{
 		moveVector.Normalize();
