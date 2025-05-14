@@ -3,30 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "GrenadeBase.generated.h"
+#include "../Throwable.h"
+#include "TimedGrenadeBase.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class SGAPROJECTMAIN_API AGrenadeBase : public AActor
+class SGAPROJECTMAIN_API ATimedGrenadeBase : public AThrowable
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
-	AGrenadeBase();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+public:
 	virtual void StartCookingGrenade();
 	virtual void UpdateCookingGrenade();
-	virtual void ThrowGrenade();
+	virtual void Throw() override;
 	virtual void ExplodeGrenade();
+
+	bool IsFuseTimeRemaining();
+	float GetRemainingFuseTime();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
@@ -41,13 +36,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	float _explosionDamage = 100.0f; // Æø¹ß µ¥¹ÌÁö
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grenade")
-	UStaticMeshComponent* _grenadeMesh; // ¼ö·ùÅº ¸Þ½Ã
+	bool _isExploded = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
 	UParticleSystem* _explosionEffect; // Æø¹ß ÀÌÆåÆ®
-
-	class APlayerCharacter* _owner;
 
 	FTimerHandle _explosionTimerHandle;
 };

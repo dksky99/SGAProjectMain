@@ -146,6 +146,9 @@ protected:
 	class UInputAction* _weapon2ChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _weapon3ChangeAction;
+	class UInputAction* _grenadeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _stratagemAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;

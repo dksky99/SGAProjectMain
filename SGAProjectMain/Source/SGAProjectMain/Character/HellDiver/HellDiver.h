@@ -18,7 +18,9 @@ public:
 
 	class UHellDiverStateComponent* GetStateComponent();
 
- 
+	void EquipGrenade();
+	void EquipStratagem();
+	void OnThrowReleased();
 
 	void StartSprint();
 	void FinishSprint();
@@ -35,6 +37,8 @@ public:
 
 
 	virtual void Landed(const FHitResult& Hit) override;
+protected:
+	FTransform GetHandSocketTransform() const;
 
 protected: 
 
@@ -43,8 +47,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
+	UPROPERTY()
+	class AThrowable* _heldThrowable = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStatComponent* _statComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "Throwables", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class ATimedGrenadeBase> _grenadeClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
+	ATimedGrenadeBase* _equippedGrenade;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Throwables", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AStratagem> _stratagemClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
+	AStratagem* _equippedStratagem;
 
 };
