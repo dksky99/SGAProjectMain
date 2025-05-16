@@ -17,7 +17,7 @@ class SGAPROJECTMAIN_API ATimedGrenadeBase : public AThrowable
 public:
 	virtual void StartCookingGrenade();
 	virtual void UpdateCookingGrenade();
-	virtual void Throw() override;
+	virtual void Throw(FVector direction) override;
 	virtual void ExplodeGrenade();
 
 	bool IsFuseTimeRemaining();

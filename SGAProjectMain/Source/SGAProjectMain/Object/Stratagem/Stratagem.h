@@ -20,16 +20,16 @@ public:
 	bool IsSurfaceAttachable(const FHitResult& Hit);
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Stratagem")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	TSubclassOf<AActor> _objectToSpawn; // 실제 폭격/센트리 등
 
-	UPROPERTY(EditAnywhere, Category = "Stratagem")
+	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
 	float _deployDelay = 5.0f; // 투척 후 몇 초 뒤에 스폰
 
-	UPROPERTY(EditAnywhere, Category = "Stratagem")
+	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
 	bool _isAttackStratagem = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stratagem")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
 	AActor* _targetActor = nullptr;
 
 	FTimerHandle _deployTimerHandle;
