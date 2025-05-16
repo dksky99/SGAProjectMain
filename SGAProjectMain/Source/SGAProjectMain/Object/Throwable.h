@@ -25,7 +25,7 @@ public:
 
 	virtual void AttachToHand(FName socketName);
 
-	virtual void Throw(); // 던지기
+	virtual void Throw(FVector direction); // 던지기
 	virtual void OnLifeTimeExpired(); // 수명 만료
 
 	UStaticMeshComponent* GetMesh() const { return _mesh; }
@@ -35,16 +35,16 @@ public:
 	virtual void OnHit(UPrimitiveComponent* HitComp,AActor* OtherActor,	UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwable")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
 	UStaticMeshComponent* _mesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwable")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
 	class UProjectileMovementComponent* _projectileMovement;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Throwable")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Throwable")
 	float _lifeTime = 10.0f; //액터 제거까지 남은 시간
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwable")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
 	class AHellDiver* _owner;
 
 	FTimerHandle _destroyTimerHandle;

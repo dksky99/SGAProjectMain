@@ -77,7 +77,11 @@ void AHellDiver::OnThrowReleased()
 {
 	if (_heldThrowable)
 	{
-		_heldThrowable->Throw(); // AThrowable 기반 함수 호출
+		FRotator throwRot = GetControlRotation();
+		throwRot.Pitch += 20.0f; // 투척 각도
+		FVector throwDirection = throwRot.Vector();
+
+		_heldThrowable->Throw(throwDirection); // AThrowable 기반 함수 호출
 		_heldThrowable = nullptr;
 
 		_equippedGrenade = nullptr;

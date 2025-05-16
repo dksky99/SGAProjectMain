@@ -52,16 +52,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStatComponent* _statComponent;
-	UPROPERTY(EditDefaultsOnly, Category = "Throwables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ATimedGrenadeBase> _grenadeClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
 	ATimedGrenadeBase* _equippedGrenade;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Throwables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AStratagem> _stratagemClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables")
 	AStratagem* _equippedStratagem;
 
 };
