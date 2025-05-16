@@ -7,6 +7,9 @@
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
+#include "../Character/HellDiver/HellDiver.h"
+#include "../Character/HellDiver/HellDiverStateComponent.h"
+
 // Sets default values
 AGunBase::AGunBase()
 {
@@ -30,7 +33,9 @@ void AGunBase::BeginPlay()
 			_crosshair->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
-	_curAmmo = _maxAmmo;
+	_curAmmo = _gunData._maxAmmo;
+	_maxVerticalRecoil = _gunData._verticalRecoil;
+	_maxHorizontalRecoil = _gunData._horizontalRecoil;
 }
 
 // Called every frame
@@ -42,30 +47,9 @@ void AGunBase::Tick(float DeltaTime)
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!player || !camera) return;
 	
-	// 화면 중앙 방향
-	FVector cameraLocation;
-	FRotator cameraRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(cameraLocation, cameraRotation);
-	
-	FVector start = cameraLocation;
+	TickRecoil(DeltaTime);
+	_hitPoint = CalculateHitPoint();
 
-	// 조준 시 라인트레이스 이용하여 마커 위치 계산
-	FHitResult hitResult;
-	FCollisionQueryParams params(NAME_None, false, this);
-
-	FVector end = start + cameraRotation.Vector() * 10000;
-	bool bResult = GetWorld()->LineTraceSingleByChannel(
-		OUT hitResult,
-		start,
-		end,
-		ECC_Visibility,
-		params);
-
-	if (bResult)
-		_hitPoint = hitResult.Location;
-	else
-		_hitPoint = end;
-	
 	if (!_isAiming)
 		return;
 
@@ -73,14 +57,11 @@ void AGunBase::Tick(float DeltaTime)
 		_marker = GetWorld()->SpawnActor<AImpactMarker>(_impactMarkerClass, _hitPoint, FRotator::ZeroRotator);
 	else
 		_marker->SetActorLocation(_hitPoint);
-	
-	UE_LOG(LogTemp, Log, TEXT("Tick"));
 }
 
 void AGunBase::StartFire()
 {
-	UE_LOG(LogTemp, Log, TEXT("STARTFIRE"));
-	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _fireInterval, true, 0.0f);
+	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
 }
 
 void AGunBase::Fire()
@@ -98,6 +79,9 @@ void AGunBase::Fire()
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!player || !camera) return;
 
+	ApplyFireRecoil();
+	_hitPoint = CalculateHitPoint();
+
 	FRotator cameraRotation = camera->GetCameraRotation();
 	FVector start = player->GetActorLocation() + cameraRotation.Vector() * 100;
 
@@ -107,7 +91,7 @@ void AGunBase::Fire()
 	// 조준하지 않을 경우 탄퍼짐
 	if (!_isAiming)
 	{
-		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(15.0f));
+		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(_gunData._recoil));
 		_hitPoint = start + dir * 10000.0f; 
 	}
 
@@ -124,21 +108,22 @@ void AGunBase::Fire()
 	if (bResult)
 	{
 		drawColor = FColor::Red;
+		float distance = FVector::Dist(start, hitResult.ImpactPoint);
+		float finalDamage = CalculateDamage(distance / 100);
+		UE_LOG(LogTemp, Log, TEXT("Final Damage: %f"), finalDamage);
 		// TODO (데미지)
 	}
 
 	_curAmmo--;
 	
 	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _maxAmmo);
+		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 
-	UE_LOG(LogTemp, Log, TEXT("FIRE"));
 	DrawDebugLine(GetWorld(), start, _hitPoint, drawColor, false, 1.0f);
 }
 
 void AGunBase::StopFire()
 {
-	UE_LOG(LogTemp, Log, TEXT("STOPFIRE"));
 	GetWorldTimerManager().ClearTimer(_fireTimer);
 }
 
@@ -169,13 +154,148 @@ void AGunBase::StopAiming()
 void AGunBase::UpdateGun()
 {
 	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _maxAmmo);
+		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 }
 
 void AGunBase::Reload()
 {
-	_curAmmo = _maxAmmo;
+	_curAmmo = _gunData._maxAmmo;
 	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _maxAmmo);
+		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+}
+
+float AGunBase::CalculateDamage(float distance)
+{
+	if (distance <= 25.0f)
+	{
+		float Alpha = distance / 25.0f;
+		float Falloff = FMath::Lerp(0.0f, _gunData._falloff25, Alpha);
+		return _gunData._baseDamage * (1.0f - Falloff);
+	}
+	else if (distance <= 50.0f)
+	{
+		float Alpha = (distance - 25.0f) / 25.0f;
+		float Falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, Alpha);
+		return _gunData._baseDamage * (1.0f - Falloff);
+	}
+	else if (distance <= 100.0f)
+	{
+		float Alpha = (distance - 50.0f) / 50.0f;
+		float Falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, Alpha);
+		return _gunData._baseDamage * (1.0f - Falloff);
+	}
+	else
+	{
+		return _gunData._baseDamage * (1.0f - _gunData._falloff100);
+	}
+}
+
+void AGunBase::TickRecoil(float DeltaTime)
+{
+	float recoilMultiplier = GetRecoilMultiplier();
+
+	static float RecoilTime = 0.f;
+	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
+
+	// 임시값
+	float amplitudePitch = 0.18f;
+	float amplitudeYaw = 0.04f;
+
+	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
+	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
+
+	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
+}
+
+void AGunBase::ApplyFireRecoil()
+{
+	float recoilMultiplier = GetRecoilMultiplier();
+
+	// 수직 반동 적용
+	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / 5.f;
+	_recoilOffset.Pitch += vertical;
+
+	_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
+
+	// 수평 반동 적용
+	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil / 3.f;
+
+	// 수직 반동이 최대에 도달하면 흔들림 적용
+	if (_recoilOffset.Pitch >= _maxVerticalRecoil)
+	{
+		horizontal += FMath::RandRange(-1.f, 1.f) * _gunData._shakeAmount;
+	}
+	_recoilOffset.Yaw += horizontal;
+	
+	_recoilOffset.Yaw = FMath::Clamp(_recoilOffset.Yaw, -_maxHorizontalRecoil, _maxHorizontalRecoil) * recoilMultiplier;
+}
+
+float AGunBase::GetRecoilMultiplier()
+{
+	float base = 1.f;
+
+	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	{
+		FVector velocity = owner->GetVelocity();
+
+		// 움직이고 있지 않다면
+		if (velocity.SizeSquared() < FMath::Square(10.f))
+		{
+			switch (owner->GetStateComponent()->GetCharacterState())
+			{
+			case ECharacterState::Standing:
+				base = 1.f;
+				break;
+			case ECharacterState::Crouching:
+				base = 0.6f;
+				break;
+			case ECharacterState::Proning:
+				base = 0.4f;
+				break;
+			}
+		}
+		// 움직이고 있다면
+		else
+		{
+			switch (owner->GetStateComponent()->GetCharacterState())
+			{
+			case ECharacterState::Standing:
+				base = 1.5f;
+				break;
+			case ECharacterState::Crouching:
+				base = 1.f;
+				break;
+			}
+		}
+	}
+	return base;
+}
+
+
+FVector AGunBase::CalculateHitPoint()
+{
+	// 화면 중앙 방향
+	FVector cameraLocation;
+	FRotator cameraRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(cameraLocation, cameraRotation);
+
+	FVector start = cameraLocation;
+
+	// 조준 시 라인트레이스 이용하여 마커 위치 계산
+	FHitResult hitResult;
+	FCollisionQueryParams params(NAME_None, false, this);
+
+	FVector end = start + (cameraRotation + _recoilOffset).Vector() * 10000;
+	bool bResult = GetWorld()->LineTraceSingleByChannel(
+		OUT hitResult,
+		start,
+		end,
+		ECC_Visibility,
+		params);
+
+	if (bResult)
+		return hitResult.Location;
+	else
+		return end;
 }
 
