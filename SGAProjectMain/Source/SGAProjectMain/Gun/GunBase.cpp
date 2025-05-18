@@ -61,7 +61,26 @@ void AGunBase::Tick(float DeltaTime)
 
 void AGunBase::StartFire()
 {
-	GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
+	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	{
+		owner->GetStateComponent()->SetFiring(true);
+	}
+
+	GetWorldTimerManager().ClearTimer(_fireTimer);
+
+	switch (_fireMode)
+	{
+	case EFireMode::Auto: // 누르는 동안 발사
+		GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
+		break;
+	case EFireMode::Semi: // 한 번만 발사
+		Fire();
+		StopFire();
+		break;
+	case EFireMode::Burst: // 3발 발사
+		_burstCount = 3;
+		GetWorld()->GetTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true);
+	}
 }
 
 void AGunBase::Fire()
@@ -72,12 +91,23 @@ void AGunBase::Fire()
 	if (_curAmmo <= 0)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
+		StopFire();
 		return;
 	}
 	
 	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!player || !camera) return;
+
+	if (_fireMode == EFireMode::Burst)
+	{
+		if (_burstCount <= 0)
+		{
+			StopFire();
+			return;
+		}
+		_burstCount--;
+	}
 
 	ApplyFireRecoil();
 	_hitPoint = CalculateHitPoint();
@@ -124,6 +154,11 @@ void AGunBase::Fire()
 
 void AGunBase::StopFire()
 {
+	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	{
+		owner->GetStateComponent()->SetFiring(false);
+	}
+
 	GetWorldTimerManager().ClearTimer(_fireTimer);
 }
 
@@ -297,5 +332,26 @@ FVector AGunBase::CalculateHitPoint()
 		return hitResult.Location;
 	else
 		return end;
+}
+
+void AGunBase::EnterGunSettingMode()
+{
+	// TODO - UI
+}
+
+void AGunBase::ExitGunSettingMode()
+{
+	// TODO -UI
+}
+
+void AGunBase::ChangeFireMode()
+{
+	if (_gunData._fireModes.Num() <= 1)
+		return;
+
+	_fireIndex = (_fireIndex + 1) % _gunData._fireModes.Num();
+	_fireMode = _gunData._fireModes[_fireIndex];
+
+	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
 }
 

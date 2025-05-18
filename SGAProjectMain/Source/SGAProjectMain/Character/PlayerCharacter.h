@@ -73,7 +73,14 @@ public:
 	UFUNCTION()
 	void StopAiming(const  FInputActionValue& value);
 	UFUNCTION()
-	void Reload(const  FInputActionValue& value);
+	void HoldReload(const  FInputActionValue& value);
+	UFUNCTION()
+	void ReleaseReload(const  FInputActionValue& value);
+
+	void EnterGunSetting();
+
+	UFUNCTION()
+	void TryChangeFireMode(const  FInputActionValue& value);
 
 
 	UFUNCTION()
@@ -182,13 +189,15 @@ protected:
 
 	ECharacterViewType _viewType = ECharacterViewType::Default;
 
-	//EWeaponType _weaponType;
-
-	bool _isAiming = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _gunWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
 	class UGunUI* _gunWidget;
+
+	float _reloadPressedTime = 0.0f;
+	bool _isGunSettingMode = false;
+
+	FTimerHandle _gunSettingTimer;
 };

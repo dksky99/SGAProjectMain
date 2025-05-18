@@ -8,6 +8,14 @@
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
 
+UENUM(BlueprintType)
+enum class EFireMode : uint8
+{
+	Auto,
+	Semi,        
+	Burst,
+};
+
 USTRUCT(BlueprintType)
 struct FGunData // : public FTableRowBase
 {
@@ -35,6 +43,9 @@ struct FGunData // : public FTableRowBase
 	float _falloff50 = 0.072f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff100 = 0.133f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TArray<EFireMode> _fireModes = { EFireMode::Auto, EFireMode::Burst, EFireMode::Semi};
 };
 
 UCLASS()
@@ -71,11 +82,15 @@ public:
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
 
 	FVector CalculateHitPoint();
+	
+	void EnterGunSettingMode();
+	void ExitGunSettingMode();
+	void ChangeFireMode();
 
 	FAmmoChanged _ammoChanged;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "ItemData")
+	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	FGunData _gunData;
 
 	FTimerHandle _fireTimer;
@@ -89,9 +104,14 @@ private:
 	float _maxVerticalRecoil;
 	float _maxHorizontalRecoil;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	EFireMode _fireMode = EFireMode::Auto;
+	int _fireIndex = 0;
+	int _burstCount = 3;
+
 	UPROPERTY()
 	class AImpactMarker* _marker;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AImpactMarker> _impactMarkerClass;
 
 	UPROPERTY()

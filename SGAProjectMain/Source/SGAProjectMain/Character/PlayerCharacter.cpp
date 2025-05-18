@@ -112,7 +112,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileAiming);
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
-		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Reload);
+		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Started, this, &APlayerCharacter::HoldReload);
+		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Completed, this, &APlayerCharacter::ReleaseReload);
 		enhancedInputComponent->BindAction(_weapon1ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon1);
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon3);
@@ -322,7 +323,16 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 }
 void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
-	_isAiming = true;
+	if (_isGunSettingMode)
+	{
+		if (_equippedGun)
+		{
+			_equippedGun->ChangeFireMode();
+			return;
+		}
+	}
+
+	_stateComponent->SetAiming(true);
 
 	switch (_stateComponent->GetWeaponState())
 	{
@@ -364,6 +374,9 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
+	if (_isGunSettingMode)
+		return;
+
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
@@ -612,7 +625,10 @@ void APlayerCharacter::SwitchWeapon(int32 index)
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {
-	_isAiming = false;
+	if (_isGunSettingMode)
+		return;
+
+	_stateComponent->SetAiming(false);
 
 	switch (_stateComponent->GetWeaponState())
 	{
@@ -634,7 +650,61 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 	}
 }
 
-void APlayerCharacter::Reload(const FInputActionValue& value)
+void APlayerCharacter::HoldReload(const FInputActionValue& value)
 {
-	_equippedGun->Reload();
+	_reloadPressedTime = GetWorld()->GetTimeSeconds();
+	_isGunSettingMode = false;
+
+	GetWorldTimerManager().SetTimer(_gunSettingTimer, this, &APlayerCharacter::EnterGunSetting, 0.7f, false);
+}
+
+void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
+{
+	GetWorldTimerManager().ClearTimer(_gunSettingTimer);
+
+	if (_equippedGun)
+	{
+		if (_isGunSettingMode)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
+			_equippedGun->ExitGunSettingMode();
+			_isGunSettingMode = false;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Reload"));
+			_equippedGun->Reload();
+		}
+	}
+}
+
+void APlayerCharacter::EnterGunSetting()
+{
+	if (_equippedGun)
+	{
+		_isGunSettingMode = true;
+
+		if (_stateComponent->IsAiming())
+			return;
+
+		if (_stateComponent->IsFiring())
+			return;
+
+		_equippedGun->EnterGunSettingMode();
+		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
+	}
+}
+
+void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
+{
+	if (_stateComponent->IsAiming())
+		return;
+
+	if (_stateComponent->IsFiring())
+		return;
+
+	if (_equippedGun && _isGunSettingMode)
+	{
+		_equippedGun->ChangeFireMode();
+	}
 }
