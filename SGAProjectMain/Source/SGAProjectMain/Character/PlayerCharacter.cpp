@@ -62,19 +62,13 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SetDefaultView();
-	if (_gunClass)
+	if (_gunClass1 && _gunClass2)
 	{
 		// 임시 세팅
-		_gunSlot[0] = GetWorld()->SpawnActor<AGunBase>(_gunClass);
-		_gunSlot[1] = GetWorld()->SpawnActor<AGunBase>(_gunClass);
+		_gunSlot[0] = SpawnGun(_gunClass1);
+		_gunSlot[1] = SpawnGun(_gunClass2);
 
-		_equippedGun = _gunSlot[0];
-		if (_equippedGun)
-		{
-			_equippedGun->SetOwner(this);
-			_equippedGun->UpdateGun();
-			_stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon);
-		}
+		EquipGun(_gunSlot[0]);
 	}
 
 	if (_gunWidget)
@@ -617,10 +611,12 @@ void APlayerCharacter::SwitchWeapon(int32 index)
 		return;
 
 	_equippedGun->_ammoChanged.Clear();
-	_equippedGun = _gunSlot[index];
+	_equippedGun->DeactivateGun();
+
+	EquipGun(_gunSlot[index]);
 
 	_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
-	_equippedGun->UpdateGun();
+	_equippedGun->ActivateGun();
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)

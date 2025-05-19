@@ -10,6 +10,8 @@
 #include "../../Object/Grenade/TimedGrenadeBase.h"
 #include "../../Object/Stratagem/Stratagem.h"
 
+#include "../../Gun/GunBase.h"
+
 
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
@@ -164,6 +166,24 @@ void AHellDiver::FinishRolling()
 {
 
     _stateComponent->FinishRolling();
+}
+
+AGunBase* AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)
+{
+    AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
+    gun->SetOwner(this);
+    gun->InitializeGun();
+
+    return gun;
+}
+
+void AHellDiver::EquipGun(AGunBase* gun)
+{
+    _equippedGun = gun;
+    _equippedGun->ActivateGun();
+    _stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon);
+
+    UE_LOG(LogTemp, Log, TEXT("Equip Gun"));
 }
 
 void AHellDiver::Landed(const FHitResult& Hit)

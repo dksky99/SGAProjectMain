@@ -25,15 +25,21 @@ struct FGunData // : public FTableRowBase
 	float _baseDamage = 80.0f;
 
 	// 발사 간격
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _fireInterval = 60.0f / 640.0f;
 
 	// 탄약
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;
 
 	// 반동
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _recoil = 14.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _verticalRecoil = 5.f;        // 수직 반동
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _horizontalRecoil = 6.f;      // 수평 반동
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _shakeAmount = 4.f;           // 흔들림
 	
 	// 거리에 따른 데미지 감소량
@@ -72,7 +78,10 @@ public:
 	virtual void StartAiming();
 	virtual void StopAiming();
 
-	void UpdateGun();
+	void InitializeGun();
+	void ActivateGun();
+	void DeactivateGun();
+	void AttachToHand();
 	void Reload();
 
 	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
@@ -91,6 +100,12 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
+	TObjectPtr<USkeletalMeshComponent> _mesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
+	class AHellDiver* _owner;
+
+	UPROPERTY(EditAnywhere, Category = "Game/GunData")
 	FGunData _gunData;
 
 	FTimerHandle _fireTimer;
@@ -104,7 +119,7 @@ private:
 	float _maxVerticalRecoil;
 	float _maxHorizontalRecoil;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	EFireMode _fireMode = EFireMode::Auto;
 	int _fireIndex = 0;
 	int _burstCount = 3;
@@ -116,7 +131,7 @@ private:
 
 	UPROPERTY()
 	UUserWidget* _crosshair;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _crosshairClass;
 
 	bool _isAiming = false;

@@ -35,6 +35,9 @@ public:
 	void Rolling();
 	void FinishRolling();
 
+	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
+	void EquipGun(AGunBase* gun);
+
 
 	virtual void Landed(const FHitResult& Hit) override;
 protected:
@@ -64,4 +67,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
 	AStratagem* _equippedStratagem;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AGunBase> _gunClass1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AGunBase> _gunClass2;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Gun")
+	AGunBase* _equippedGun;
+
+	UPROPERTY()
+	TArray<AGunBase*> _gunSlot;
 };

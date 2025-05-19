@@ -16,6 +16,8 @@ AGunBase::AGunBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	RootComponent = _mesh;
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +35,7 @@ void AGunBase::BeginPlay()
 			_crosshair->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
+
 	_curAmmo = _gunData._maxAmmo;
 	_maxVerticalRecoil = _gunData._verticalRecoil;
 	_maxHorizontalRecoil = _gunData._horizontalRecoil;
@@ -61,9 +64,9 @@ void AGunBase::Tick(float DeltaTime)
 
 void AGunBase::StartFire()
 {
-	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	if (_owner)
 	{
-		owner->GetStateComponent()->SetFiring(true);
+		_owner->GetStateComponent()->SetFiring(true);
 	}
 
 	GetWorldTimerManager().ClearTimer(_fireTimer);
@@ -154,9 +157,9 @@ void AGunBase::Fire()
 
 void AGunBase::StopFire()
 {
-	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	if (_owner)
 	{
-		owner->GetStateComponent()->SetFiring(false);
+		_owner->GetStateComponent()->SetFiring(false);
 	}
 
 	GetWorldTimerManager().ClearTimer(_fireTimer);
@@ -186,10 +189,52 @@ void AGunBase::StopAiming()
 	UE_LOG(LogTemp, Log, TEXT("STOPAIMING"));
 }
 
-void AGunBase::UpdateGun()
+void AGunBase::InitializeGun()
 {
+	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	{
+		_owner = owner;
+		AttachToHand();
+		UE_LOG(LogTemp, Log, TEXT("Initialize Gun"));
+	}
+
+	DeactivateGun();
+}
+
+void AGunBase::ActivateGun()
+{
+	if (_owner)
+	{
+		SetActorHiddenInGame(false);
+	}
+
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+}
+
+void AGunBase::DeactivateGun()
+{
+	SetActorHiddenInGame(true);
+}
+
+void AGunBase::AttachToHand()
+{
+	if (_owner)
+	{
+		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
+		{
+			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
+
+			// 물리 & 충돌 비활성화
+			if (_mesh)
+			{
+				_mesh->SetSimulatePhysics(false);
+				_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+				UE_LOG(LogTemp, Log, TEXT("Attach Gun"));
+			}
+		}
+	}
 }
 
 void AGunBase::Reload()
@@ -269,14 +314,14 @@ float AGunBase::GetRecoilMultiplier()
 {
 	float base = 1.f;
 
-	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
+	if (_owner)
 	{
-		FVector velocity = owner->GetVelocity();
+		FVector velocity = _owner->GetVelocity();
 
 		// 움직이고 있지 않다면
 		if (velocity.SizeSquared() < FMath::Square(10.f))
 		{
-			switch (owner->GetStateComponent()->GetCharacterState())
+			switch (_owner->GetStateComponent()->GetCharacterState())
 			{
 			case ECharacterState::Standing:
 				base = 1.f;
@@ -292,7 +337,7 @@ float AGunBase::GetRecoilMultiplier()
 		// 움직이고 있다면
 		else
 		{
-			switch (owner->GetStateComponent()->GetCharacterState())
+			switch (_owner->GetStateComponent()->GetCharacterState())
 			{
 			case ECharacterState::Standing:
 				base = 1.5f;
