@@ -53,7 +53,9 @@ void AGunBase::Tick(float DeltaTime)
 	TickRecoil(DeltaTime);
 	_hitPoint = CalculateHitPoint();
 
-	if (!_isAiming)
+	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
+
+	if (!_owner->GetStateComponent()->IsAiming())
 		return;
 
 	if (!IsValid(_marker))
@@ -64,10 +66,13 @@ void AGunBase::Tick(float DeltaTime)
 
 void AGunBase::StartFire()
 {
-	if (_owner)
-	{
-		_owner->GetStateComponent()->SetFiring(true);
-	}
+	if (!_owner)
+		return;
+	
+	if(_owner->GetStateComponent()->IsReloading())
+		return;
+
+	_owner->GetStateComponent()->SetFiring(true);
 
 	GetWorldTimerManager().ClearTimer(_fireTimer);
 
@@ -90,8 +95,8 @@ void AGunBase::Fire()
 {
 	FColor drawColor = FColor::Green;
 	
-	// 탄약이 없을 경우
-	if (_curAmmo <= 0)
+	// 탄창, 약실 모두 비었음
+	if (_curAmmo <= 0 && !_isChamberLoaded)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
 		StopFire();
@@ -116,13 +121,23 @@ void AGunBase::Fire()
 	_hitPoint = CalculateHitPoint();
 
 	FRotator cameraRotation = camera->GetCameraRotation();
-	FVector start = player->GetActorLocation() + cameraRotation.Vector() * 100;
+	FVector muzzleLocation;
+
+	if (_mesh && _mesh->DoesSocketExist(TEXT("Muzzle")))
+	{
+		muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
+	}
+	else
+	{
+		muzzleLocation = GetActorLocation() + cameraRotation.Vector() * 100;
+	}
+	FVector start = muzzleLocation;
 
 	// 플레이어에게서 화면 중앙 방향으로
 	FVector dir = (_hitPoint - start).GetSafeNormal();
 	
 	// 조준하지 않을 경우 탄퍼짐
-	if (!_isAiming)
+	if (!_owner->GetStateComponent()->IsAiming())
 	{
 		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(_gunData._recoil));
 		_hitPoint = start + dir * 10000.0f; 
@@ -147,7 +162,14 @@ void AGunBase::Fire()
 		// TODO (데미지)
 	}
 
-	_curAmmo--;
+	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
+	{
+		_curAmmo--;
+	}
+	else // 약실에만 남아있을 경우
+	{
+		_isChamberLoaded = false;
+	}
 	
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
@@ -167,7 +189,10 @@ void AGunBase::StopFire()
 
 void AGunBase::StartAiming()
 {
-	_isAiming = true;
+	if (_owner->GetStateComponent()->IsReloading())
+		return;
+
+	_owner->GetStateComponent()->SetAiming(true);
 
 	if (_marker)
 		_marker->SetActorHiddenInGame(false);
@@ -179,7 +204,7 @@ void AGunBase::StartAiming()
 
 void AGunBase::StopAiming()
 {
-	_isAiming = false;
+	_owner->GetStateComponent()->SetAiming(false);
 
 	if (_marker)
 		_marker->SetActorHiddenInGame(true);
@@ -215,6 +240,12 @@ void AGunBase::ActivateGun()
 void AGunBase::DeactivateGun()
 {
 	SetActorHiddenInGame(true);
+
+	if (_marker)
+		_marker->SetActorHiddenInGame(true);
+
+	if (_crosshair)
+		_crosshair->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void AGunBase::AttachToHand()
@@ -224,6 +255,7 @@ void AGunBase::AttachToHand()
 		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
 		{
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
+			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
 
 			// 물리 & 충돌 비활성화
 			if (_mesh)
@@ -237,11 +269,79 @@ void AGunBase::AttachToHand()
 	}
 }
 
-void AGunBase::Reload()
+void AGunBase::Reload() // 애니메이션과 연결 필요
 {
-	_curAmmo = _gunData._maxAmmo;
+	_owner->GetStateComponent()->SetReloading(true);
+
+	switch (_reloadStage)
+	{
+	case EReloadStage::None:
+		//PlayAnimMontage(temp);
+		break;
+
+	case EReloadStage::RemoveMag:
+		//PlayAnimMontage(temp);
+		break;
+
+	case EReloadStage::InsertMag:
+		//PlayAnimMontage(temp);
+		break;
+
+	case EReloadStage::CloseBolt:
+		//PlayAnimMontage(temp);
+		break;
+	}
+
+	ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
+}
+
+void AGunBase::ChangeReloadStage()
+{
+	switch (_reloadStage)
+	{
+	case EReloadStage::None:
+		_reloadStage = EReloadStage::RemoveMag;
+		if (_curAmmo > 0 || _isChamberLoaded) // 탄창이나 약실에 탄이 있을 경우
+			_isChamberLoaded = true; // 약실 채우기
+		_curAmmo = 0;
+		break;
+
+	case EReloadStage::RemoveMag: // 탄창 제거 상태
+		_reloadStage = EReloadStage::InsertMag;
+		break;
+
+	case EReloadStage::InsertMag: // 탄창 삽입 상태
+		if (_isChamberLoaded) // 약실에 탄이 있을 경우 
+		{
+			_isChamberLoaded = true;
+			_curAmmo = _gunData._maxAmmo;
+			_reloadStage = EReloadStage::None;  // 전술 재장전 -> CloseBolt 생략
+		}
+		else
+		{
+			_reloadStage = EReloadStage::CloseBolt; // 약실에 탄이 없을 경우 CloseBolt
+		}
+		break;
+
+	case EReloadStage::CloseBolt:
+		_curAmmo = _gunData._maxAmmo;
+		_reloadStage = EReloadStage::None;
+		break;
+	}
+
 	if (_ammoChanged.IsBound())
+	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+	}
+}
+
+void AGunBase::CancelReload()
+{
+	if (!_owner->GetStateComponent()->IsReloading())
+		return;
+
+	//StopAnimMontage();
+	_owner->GetStateComponent()->SetReloading(false);
 }
 
 float AGunBase::CalculateDamage(float distance)
@@ -272,19 +372,20 @@ float AGunBase::CalculateDamage(float distance)
 
 void AGunBase::TickRecoil(float DeltaTime)
 {
+	if (_owner->GetStateComponent()->IsFiring())
+		return;
+
 	float recoilMultiplier = GetRecoilMultiplier();
 
 	static float RecoilTime = 0.f;
 	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
 
 	// 임시값
-	float amplitudePitch = 0.18f;
+	float amplitudePitch = 0.12f;
 	float amplitudeYaw = 0.04f;
 
 	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
 	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
-
-	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
 }
 
 void AGunBase::ApplyFireRecoil()
@@ -293,21 +394,21 @@ void AGunBase::ApplyFireRecoil()
 
 	// 수직 반동 적용
 	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / 5.f;
-	_recoilOffset.Pitch += vertical;
+	_recoilOffset.Pitch += vertical * recoilMultiplier;
 
-	_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
+	//_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
 
 	// 수평 반동 적용
 	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil / 3.f;
 
-	// 수직 반동이 최대에 도달하면 흔들림 적용
-	if (_recoilOffset.Pitch >= _maxVerticalRecoil)
-	{
-		horizontal += FMath::RandRange(-1.f, 1.f) * _gunData._shakeAmount;
-	}
-	_recoilOffset.Yaw += horizontal;
+	// 수직 반동이 최대에 도달하면 흔들림 적용 -> 존재하는가?
+	//if (_recoilOffset.Pitch >= _maxVerticalRecoil)
+	//{
+	//	horizontal += FMath::RandRange(-1.f, 1.f) * _gunData._shakeAmount;
+	//}
+	_recoilOffset.Yaw += horizontal * recoilMultiplier;
 	
-	_recoilOffset.Yaw = FMath::Clamp(_recoilOffset.Yaw, -_maxHorizontalRecoil, _maxHorizontalRecoil) * recoilMultiplier;
+	//_recoilOffset.Yaw = FMath::Clamp(_recoilOffset.Yaw, -_maxHorizontalRecoil, _maxHorizontalRecoil) * recoilMultiplier;
 }
 
 float AGunBase::GetRecoilMultiplier()
@@ -324,7 +425,7 @@ float AGunBase::GetRecoilMultiplier()
 			switch (_owner->GetStateComponent()->GetCharacterState())
 			{
 			case ECharacterState::Standing:
-				base = 1.f;
+				base = 0.8f;
 				break;
 			case ECharacterState::Crouching:
 				base = 0.6f;

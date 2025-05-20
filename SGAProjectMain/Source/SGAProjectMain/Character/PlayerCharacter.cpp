@@ -206,6 +206,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		if (GetStateComponent()->GetWeaponState() == EWeaponType::PrimaryWeapon)
 		{
 			_playerState = EPlayerState::Firing;
+			_stateComponent->SetFiring(true);
 			_equippedGun->StartFire();
 		}
 		else if (GetStateComponent()->GetWeaponState() == EWeaponType::Grenade)
@@ -272,6 +273,7 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 	case EPlayerState::Firing:
 		_playerState = EPlayerState::Idle;
+		_stateComponent->SetFiring(false);
 		_equippedGun->StopFire();
 		break;
 
@@ -609,6 +611,9 @@ void APlayerCharacter::SwitchWeapon(int32 index)
 
 	if (_gunSlot[index] == nullptr)
 		return;
+
+	if (_stateComponent->IsReloading())
+		_equippedGun->CancelReload();
 
 	_equippedGun->_ammoChanged.Clear();
 	_equippedGun->DeactivateGun();

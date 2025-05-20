@@ -16,6 +16,15 @@ enum class EFireMode : uint8
 	Burst,
 };
 
+UENUM(BlueprintType)
+enum class EReloadStage : uint8
+{
+	None,
+	RemoveMag,
+	InsertMag,
+	CloseBolt,
+};
+
 USTRUCT(BlueprintType)
 struct FGunData // : public FTableRowBase
 {
@@ -82,7 +91,10 @@ public:
 	void ActivateGun();
 	void DeactivateGun();
 	void AttachToHand();
+
 	void Reload();
+	void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
+	void CancelReload();
 
 	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
 
@@ -124,6 +136,11 @@ private:
 	int _fireIndex = 0;
 	int _burstCount = 3;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	EReloadStage _reloadStage = EReloadStage::None;
+	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
+	bool _isChamberLoaded = false; // 약실에 탄이 남았는지
+
 	UPROPERTY()
 	class AImpactMarker* _marker;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -133,6 +150,4 @@ private:
 	UUserWidget* _crosshair;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _crosshairClass;
-
-	bool _isAiming = false;
 };

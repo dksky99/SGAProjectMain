@@ -7,6 +7,9 @@
 
 void UGunUI::SetAmmo(int32 curAmmo, int32 maxAmmo)
 {
+	if (curAmmo > 0)
+		curAmmo--;
+
 	float ratio = static_cast<float>(curAmmo) / static_cast<float>(maxAmmo);
 	Ammo->SetPercent(ratio);
 }
