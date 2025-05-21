@@ -8,6 +8,35 @@
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
 
+USTRUCT(BlueprintType)
+struct FGunData // : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _baseDamage = 80.0f;
+
+	// 발사 간격
+	float _fireInterval = 60.0f / 640.0f;
+
+	// 탄약
+	int32 _maxAmmo = 45;
+
+	// 반동
+	float _recoil = 14.f;
+	float _verticalRecoil = 5.f;        // 수직 반동
+	float _horizontalRecoil = 6.f;      // 수평 반동
+	float _shakeAmount = 4.f;           // 흔들림
+	
+	// 거리에 따른 데미지 감소량
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _falloff25 = 0.04f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _falloff50 = 0.072f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _falloff100 = 0.133f;
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API AGunBase : public AActor
 {
@@ -35,31 +64,38 @@ public:
 	void UpdateGun();
 	void Reload();
 
+	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
+
+	void TickRecoil(float DeltaTime); // 움직임에 따른 반동
+	void ApplyFireRecoil(); // 사격에 따른 반동
+	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
+
+	FVector CalculateHitPoint();
+
 	FAmmoChanged _ammoChanged;
 
 private:
-	// TODO (총별 속성 - 탄약, 반동...)
+	UPROPERTY(EditAnywhere, Category = "ItemData")
+	FGunData _gunData;
 
-	// 발사 간격
 	FTimerHandle _fireTimer;
-	float _fireInterval = 0.2f;
 
-	// 탄약
 	int32 _curAmmo;
-	int32 _maxAmmo = 45; 
 
-	bool _isHit = false;
-	//FVector start;
 	FVector _hitPoint;
+
+	FRotator _recoilOffset = FRotator::ZeroRotator;
+	float _totalVerticalRecoil = 0.f;
+	float _maxVerticalRecoil;
+	float _maxHorizontalRecoil;
 
 	UPROPERTY()
 	class AImpactMarker* _marker;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AImpactMarker> _impactMarkerClass;
 
+	UPROPERTY()
 	UUserWidget* _crosshair;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _crosshairClass;
 

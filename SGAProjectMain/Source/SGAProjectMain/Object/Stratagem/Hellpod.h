@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "OrbitalPrecisionStrike.generated.h"
+#include "Hellpod.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API AOrbitalPrecisionStrike : public AActor
+class SGAPROJECTMAIN_API AHellpod : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AOrbitalPrecisionStrike();
+	AHellpod();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,20 +26,15 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Game/Offensive")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Hellpod")
 	UStaticMeshComponent* _mesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Game/Offensive")
-	class UProjectileMovementComponent* _projectile;
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
+	TSubclassOf<AActor> _hellpodToSpawn;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
-	class UParticleSystem* _explosionEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
 	float _damage = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
-	float _radius = 300.f;
+	bool isAlreadySpawned = false;
 };
