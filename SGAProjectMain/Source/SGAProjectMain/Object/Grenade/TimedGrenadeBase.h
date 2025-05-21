@@ -24,16 +24,16 @@ public:
 	float GetRemainingFuseTime();
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
 	float _totalFuseTime = 5.0f; // 터지기 까지 걸리는 시간
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
 	float _cookedTime = 0.0f; // 쿠킹 시간
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
 	float _explosionRadius = 300.0f; // 폭발 반경
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
 	float _explosionDamage = 100.0f; // 폭발 데미지
 
 	bool _isExploded = false;
