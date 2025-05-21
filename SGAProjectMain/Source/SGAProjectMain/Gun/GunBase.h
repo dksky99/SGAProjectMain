@@ -51,6 +51,10 @@ struct FGunData // : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;
 
+	// 인체공학성
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _ergo = 54;
+
 	// 반동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _recoil = 14.f;

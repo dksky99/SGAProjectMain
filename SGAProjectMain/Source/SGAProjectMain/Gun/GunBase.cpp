@@ -57,7 +57,7 @@ void AGunBase::Tick(float DeltaTime)
 	TickRecoil(DeltaTime);
 	_hitPoint = CalculateHitPoint();
 
-	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
+	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, _gunData._ergo / 7.f);
 
 	if (!_isActive) return;
 
@@ -295,6 +295,9 @@ void AGunBase::AttachToHand()
 
 void AGunBase::Reload() // 애니메이션과 연결 필요
 {
+	if (_curAmmo == _gunData._maxAmmo)
+		return;
+
 	_owner->GetStateComponent()->SetReloading(true);
 
 	switch (_reloadStage)
@@ -363,6 +366,7 @@ void AGunBase::ChangeReloadStage()
 
 	case EReloadStage::RoundsReload:
 		_curAmmo++;
+		_owner->GetStateComponent()->SetReloading(false);
 		//Reload();
 		break;
 	}
