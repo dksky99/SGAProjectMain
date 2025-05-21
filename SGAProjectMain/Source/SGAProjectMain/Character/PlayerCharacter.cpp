@@ -719,19 +719,64 @@ void APlayerCharacter::SetStandingCollisionCamera()
 {
 	Super::SetStandingCollisionCamera();
 
-	_cameraRoot->SetRelativeLocation(_standingStance->_cameraOffset);
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_standingStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
 
 
 }
 void APlayerCharacter::SetCrouchingCollisionCamera()
 {
 	Super::SetCrouchingCollisionCamera();
-	_cameraRoot->SetRelativeLocation(_crouchingStance->_cameraOffset);
+	
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_crouchingStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
 }
 void APlayerCharacter::SetProningCollisionCamera()
 {
 	Super::SetProningCollisionCamera();
-	_cameraRoot->SetRelativeLocation(_proningStance->_cameraOffset);
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_proningStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
 }
 void APlayerCharacter::SwitchWeapon(int32 index)
 {
