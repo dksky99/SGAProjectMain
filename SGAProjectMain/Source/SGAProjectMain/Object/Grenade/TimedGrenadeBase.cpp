@@ -4,6 +4,9 @@
 #include "TimedGrenadeBase.h"
 #include "Engine/EngineTypes.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Engine/DamageEvents.h"
+#include "Engine/OverlapResult.h"
 #include "TimerManager.h"
 
 void ATimedGrenadeBase::StartCookingGrenade()
@@ -53,7 +56,7 @@ void ATimedGrenadeBase::ExplodeGrenade()
 
 	if (bResult)
 	{
-		for (auto& overlap : overlaps)
+		for (FOverlapResult overlap : overlaps)
 		{
 			AActor* hitActor = overlap.GetActor();
 			if (hitActor)

@@ -3,6 +3,8 @@
 
 #include "HellDiver.h"
 #include "GameFramework/Character.h" // 이게 필요함
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "HellDiverMovementComponent.h"
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
@@ -10,7 +12,7 @@
 #include "../../Object/Grenade/TimedGrenadeBase.h"
 #include "../../Object/Stratagem/Stratagem.h"
 
-
+#include "../../Data/CollisionCameraDataAsset.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -21,6 +23,15 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
 
     _statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
+}
+
+void AHellDiver::BeginPlay()
+{
+    Super::BeginPlay();
+    SetCollisionState(_stateComponent->GetCharacterState());
+
+    _stateComponent->_characterStateChanged.AddDynamic(this, &AHellDiver::SetCollisionState);
+
 }
 
 UHellDiverStateComponent* AHellDiver::GetStateComponent()
@@ -91,7 +102,7 @@ void AHellDiver::StartSprint()
 {
     if (_stateComponent->StartSprint() == false)
         return;
-
+    SetCollisionState(_stateComponent->GetCharacterState());
     auto movement=GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetSprintSpeed();
 }
@@ -100,6 +111,7 @@ void AHellDiver::FinishSprint()
 {
     if (_stateComponent->FinishSprint() == false)
         return;
+    SetCollisionState(_stateComponent->GetCharacterState());
 
     auto movement = GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
@@ -109,6 +121,7 @@ void AHellDiver::StartCrouch()
 {
     if (_stateComponent->StartCrouch() == false)
         return;
+    SetCollisionState(_stateComponent->GetCharacterState());
 
     auto movement = GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetCrouchSpeed();
@@ -118,6 +131,7 @@ void AHellDiver::FinishCrouch()
 {
     if (_stateComponent->FinishCrouch() == false)
         return;
+    SetCollisionState(_stateComponent->GetCharacterState());
 
     auto movement = GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
@@ -127,6 +141,7 @@ void AHellDiver::StartProne()
 {
     if (_stateComponent->StartProne() == false)
         return;
+    SetCollisionState(_stateComponent->GetCharacterState());
 
     auto movement = GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
@@ -136,6 +151,7 @@ void AHellDiver::FinishProne()
 {
     if (_stateComponent->FinishProne() == false)
         return;
+    SetCollisionState(_stateComponent->GetCharacterState());
     auto movement = GetMovementComponent();
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
@@ -190,4 +206,86 @@ FTransform  AHellDiver::GetHandSocketTransform() const
 		return mesh->GetSocketTransform(TEXT("hand_R"));
 	}
 	return GetActorTransform(); // fallback
+}
+
+FTransform AHellDiver::GetEquip1SocketTransform() const
+{
+    USkeletalMeshComponent* mesh = GetMesh();
+    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_l")))
+    {
+        return mesh->GetSocketTransform(TEXT("EquipSocket_l"));
+    }
+    return GetActorTransform(); // fallback
+}
+
+FTransform AHellDiver::GetEquip2SocketTransform() const
+{
+    USkeletalMeshComponent* mesh = GetMesh();
+    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_r")))
+    {
+        return mesh->GetSocketTransform(TEXT("EquipSocket_r"));
+    }
+    return GetActorTransform(); // fallback
+}
+
+FTransform AHellDiver::GetEquip3SocketTransform() const
+{
+    USkeletalMeshComponent* mesh = GetMesh();
+    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_c")))
+    {
+        return mesh->GetSocketTransform(TEXT("EquipSocket_c"));
+    }
+    return GetActorTransform(); // fallback
+}
+
+void AHellDiver::SetCollisionState(ECharacterState newState)
+{
+
+
+    switch (newState)
+    {
+    case ECharacterState::Standing:
+    case ECharacterState::Sprinting:
+        SetStandingCollisionCamera();
+        break;
+    case ECharacterState::Crouching:
+        SetCrouchingCollisionCamera();
+        break;
+    case ECharacterState::Proning:
+    case ECharacterState::knockdown:
+        SetProningCollisionCamera();
+        break;
+    case ECharacterState::MAX:
+    default:
+        break;
+    }
+
+}
+
+void AHellDiver::SetCollisionCamera(UCollisionCameraDataAsset data)
+{
+    
+
+}
+
+void AHellDiver::SetStandingCollisionCamera()
+{
+    GetCapsuleComponent()->SetCapsuleRadius(_standingStance->_capsuleRadius);
+    GetCapsuleComponent()->SetCapsuleHalfHeight(_standingStance->_capsuleHalfHeight);
+    GetMesh()->SetRelativeLocation(FVector(0, 0, -_standingStance->_capsuleHalfHeight));
+}
+
+void AHellDiver::SetCrouchingCollisionCamera()
+{
+    GetCapsuleComponent()->SetCapsuleRadius(_crouchingStance->_capsuleRadius);
+    GetCapsuleComponent()->SetCapsuleHalfHeight(_crouchingStance->_capsuleHalfHeight);
+    GetMesh()->SetRelativeLocation(FVector(0, 0, -_crouchingStance->_capsuleHalfHeight));
+    
+}
+
+void AHellDiver::SetProningCollisionCamera()
+{
+    GetCapsuleComponent()->SetCapsuleRadius(_proningStance->_capsuleRadius);
+    GetCapsuleComponent()->SetCapsuleHalfHeight(_proningStance->_capsuleHalfHeight);
+    GetMesh()->SetRelativeLocation(FVector(0, 0, -_proningStance->_capsuleHalfHeight));
 }

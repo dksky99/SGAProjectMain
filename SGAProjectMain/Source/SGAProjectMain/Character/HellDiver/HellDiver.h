@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../CharacterBase.h"
+#include "HellDiverStateComponent.h"
 #include "HellDiver.generated.h"
 
 
@@ -16,6 +17,7 @@ public:
 
 	AHellDiver(const FObjectInitializer& ObjectInitializer);
 
+	virtual void BeginPlay() override;
 	class UHellDiverStateComponent* GetStateComponent();
 
 	void EquipGrenade();
@@ -37,9 +39,22 @@ public:
 
 
 	virtual void Landed(const FHitResult& Hit) override;
+
+
 protected:
 	FTransform GetHandSocketTransform() const;
+	FTransform GetEquip1SocketTransform() const;
+	FTransform GetEquip2SocketTransform() const;
+	FTransform GetEquip3SocketTransform() const;
 
+
+
+	UFUNCTION()
+	void SetCollisionState(ECharacterState newState);
+	void SetCollisionCamera(class UCollisionCameraDataAsset data);
+	virtual void SetStandingCollisionCamera();
+	virtual void SetCrouchingCollisionCamera();
+	virtual void SetProningCollisionCamera() ;
 protected: 
 
 	FTimerHandle _rollingTimerHandle;
@@ -63,5 +78,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
 	AStratagem* _equippedStratagem;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta = (AllowPrivateAccess = "true"))
+	class UCollisionCameraDataAsset* _standingStance;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
+	class UCollisionCameraDataAsset* _crouchingStance;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
+	class UCollisionCameraDataAsset* _proningStance;
+
 
 };
