@@ -41,7 +41,11 @@ bool UHellDiverStateComponent::StartSprint()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartSprint"));
 	_characterState = ECharacterState::Sprinting;
-	
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 
 	return true;
 
@@ -56,6 +60,11 @@ bool UHellDiverStateComponent::FinishSprint()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishSprint"));
 	_characterState = ECharacterState::Standing;
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 	return true;
 }
 
@@ -67,6 +76,11 @@ bool UHellDiverStateComponent::StartCrouch()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartCrouch"));
 	_characterState = ECharacterState::Crouching;
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 	return true;
 }
 
@@ -78,6 +92,11 @@ bool UHellDiverStateComponent::FinishCrouch()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishCrouch"));
 	_characterState = ECharacterState::Standing;
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 	return true;
 }
 
@@ -88,6 +107,11 @@ bool UHellDiverStateComponent::StartProne()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartProne"));
 	_characterState = ECharacterState::Proning;
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 	return true;
 }
 
@@ -99,6 +123,11 @@ bool UHellDiverStateComponent::FinishProne()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishProne"));
 	_characterState = ECharacterState::Standing;
+	if (_characterStateChanged.IsBound())
+	{
+
+		_characterStateChanged.Broadcast(_characterState);
+	}
 	return true;
 }
 

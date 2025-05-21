@@ -48,6 +48,11 @@ enum class ELifeState : uint8
 	Respawning
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterStateChanged, ECharacterState, newState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActionStateChanged, EActionState, newState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponStateChanged, EWeaponType, newState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLifeStateChanged, ELifeState, newState);
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UHellDiverStateComponent : public UCharacterStateComponent
@@ -101,7 +106,10 @@ public:
 
 	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
 
-
+	FOnCharacterStateChanged _characterStateChanged;
+	FOnActionStateChanged _actionStateChanged;
+	FOnWeaponStateChanged _weaponStateChanged;
+	FOnLifeStateChanged _lifeStateChanged;
 protected:
 
 

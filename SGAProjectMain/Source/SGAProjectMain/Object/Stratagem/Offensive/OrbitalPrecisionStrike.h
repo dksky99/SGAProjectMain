@@ -28,18 +28,18 @@ public:
 
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Offensive")
+	UPROPERTY(VisibleAnywhere, Category = "Game/Offensive")
 	UStaticMeshComponent* _mesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Offensive")
+	UPROPERTY(VisibleAnywhere, Category = "Game/Offensive")
 	class UProjectileMovementComponent* _projectile;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Offensive")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
 	class UParticleSystem* _explosionEffect;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Offensive")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
 	float _damage = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Offensive")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Offensive")
 	float _radius = 300.f;
 };

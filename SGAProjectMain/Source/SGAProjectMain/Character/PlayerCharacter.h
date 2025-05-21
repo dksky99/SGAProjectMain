@@ -25,10 +25,10 @@ enum class EPlayerState : uint8
 UENUM()
 enum class ECharacterViewType : uint8
 {
-	Default,
 	TPS,
+	TPSZoom,
 	FPS,
-	Max
+	MAX
 };
 
 UCLASS()
@@ -114,15 +114,25 @@ public:
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
 
-	void SetFPSView();
-	void SetTPSView();
-	void SetDefaultView();
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
 
 	void FocusMove(FVector2D moveVector);
 	void DefaultMove(FVector2D moveVector);
 
+	void ChangeViewCamera(ECharacterViewType type);
+
+	void InitView();
+	void SetFPSView();
+	void SetTPSView();
+	void SetDefaultView();
+
+	void UpdateCameraOcclusion();
+
+
+	virtual void SetStandingCollisionCamera() override;
+	virtual void SetCrouchingCollisionCamera()override;
+	virtual void SetProningCollisionCamera()override;
 protected:
 
 
@@ -162,11 +172,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* _camera;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* _springArm;
 
 	EPlayerState _playerState;
 
@@ -181,7 +186,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
 	class UPlayerControlDataAsset* _tpsControl;
 
-	ECharacterViewType _viewType = ECharacterViewType::Default;
+	ECharacterViewType _viewType = ECharacterViewType::TPS;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
@@ -189,6 +194,34 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
 	class UGunUI* _gunWidget;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* _camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class USceneComponent* _cameraRoot;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* _tpsSpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* _tpsZoomSpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* _fpsSpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UChildActorComponent* _tpsCameraActor;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UChildActorComponent* _tpsZoomCameraActor;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UChildActorComponent* _fpsCameraActor;
+
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
+	float _cameraBlendTime=0.2f;
+	UPROPERTY()
+	TArray<UPrimitiveComponent*> _fadedComponents;
+
 
 	float _reloadPressedTime = 0.0f;
 	bool _isGunSettingMode = false;

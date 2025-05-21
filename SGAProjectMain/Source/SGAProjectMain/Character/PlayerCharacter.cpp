@@ -2,6 +2,7 @@
 
 
 #include "PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -28,19 +29,40 @@
 #include "HellDiver/HellDiverStateComponent.h"
 
 #include "../Data/PlayerControlDataAsset.h"
+#include "../Data/CollisionCameraDataAsset.h"
+
+#include "../Controller/MainPlayerController.h"
+#include "../Controller/CameraContainActor.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
+	_cameraRoot = CreateDefaultSubobject<USceneComponent>(TEXT("CameraRoot"));
 
-	_springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	_tpsSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPSSpringArm"));
+	_tpsZoomSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPSZoomSpringArm"));
+	_fpsSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPSSpringArm"));
+	_tpsCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPSCamera")) ;
+	_tpsZoomCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPSZoomCamera")) ;
+	_fpsCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPSCamera")) ;
 
 
-	_springArm->SetupAttachment(GetCapsuleComponent());
-	_camera->SetupAttachment(_springArm);
 
+	GetMesh()->SetupAttachment(RootComponent);
+	GetCapsuleComponent()->SetupAttachment(GetMesh());
+	_cameraRoot->SetupAttachment(RootComponent);
+	_tpsSpringArm->SetupAttachment(_cameraRoot);
+	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
+	_fpsSpringArm->SetupAttachment(_cameraRoot);
+
+
+	_tpsCameraActor->SetupAttachment(_tpsSpringArm);
+	_tpsZoomCameraActor->SetupAttachment(_tpsZoomSpringArm);
+	_fpsCameraActor->SetupAttachment(_fpsSpringArm);
+	_tpsCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
+	_tpsZoomCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
+	_fpsCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
 
 
 }
@@ -60,7 +82,7 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	InitView();
 	SetDefaultView();
 	if (_gunClass1 && _gunClass2)
 	{
@@ -124,7 +146,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
 	{
-		if (_viewType == ECharacterViewType::Default)
+		if (_viewType == ECharacterViewType::TPS)
 		{
 			DefaultMove(moveVector);
 		}
@@ -417,12 +439,12 @@ void APlayerCharacter::TryCrouch(const FInputActionValue& value)
 void APlayerCharacter::TryChangeControl(const FInputActionValue& value)
 {
 
-	if (_viewType == ECharacterViewType::Default)
+	if (_viewType == ECharacterViewType::TPS)
 	{
 		SetTPSView();
 
 	}
-	else if (_viewType == ECharacterViewType::TPS)
+	else if (_viewType == ECharacterViewType::TPSZoom)
 	{
 		SetFPSView();
 
@@ -476,12 +498,49 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 		break;
 	}
 }
+void APlayerCharacter::InitView()
+{
+
+
+	//카메라
+	if (_defaultControl != nullptr)
+	{
+		_tpsSpringArm->bUsePawnControlRotation = _defaultControl->bUsePawnContolRotation;
+		_tpsSpringArm->bDoCollisionTest = _defaultControl->bDoCollisionTest;
+		_tpsSpringArm->bInheritPitch = _defaultControl->bInheritPitch;
+		_tpsSpringArm->bInheritYaw = _defaultControl->bInheritYaw;
+		_tpsSpringArm->bInheritRoll = _defaultControl->bInheritRoll;
+
+	}
+	//카메라
+	if (_tpsControl != nullptr)
+	{
+		_tpsZoomSpringArm->bUsePawnControlRotation = _tpsControl->bUsePawnContolRotation;
+		_tpsZoomSpringArm->bDoCollisionTest = _tpsControl->bDoCollisionTest;
+		_tpsZoomSpringArm->bInheritPitch = _tpsControl->bInheritPitch;
+		_tpsZoomSpringArm->bInheritYaw = _tpsControl->bInheritYaw;
+		_tpsZoomSpringArm->bInheritRoll = _tpsControl->bInheritRoll;
+
+	}
+	//1인칭
+	if (_fpsControl != nullptr)
+	{
+		_fpsSpringArm->bUsePawnControlRotation =	_fpsControl->bUsePawnContolRotation;
+		_fpsSpringArm->bDoCollisionTest =			_fpsControl->bDoCollisionTest;
+		_fpsSpringArm->bInheritPitch =				_fpsControl->bInheritPitch;
+		_fpsSpringArm->bInheritYaw =				_fpsControl->bInheritYaw;
+		_fpsSpringArm->bInheritRoll =				_fpsControl->bInheritRoll;
+
+	}
+
+}
 void APlayerCharacter::SetFPSView()
 {
 	if (_fpsControl == nullptr)
 		return;
 	SetViewData(_fpsControl);
 	_viewType = ECharacterViewType::FPS;
+	ChangeViewCamera(_viewType);
 
 }
 void APlayerCharacter::SetTPSView()
@@ -489,7 +548,8 @@ void APlayerCharacter::SetTPSView()
 	if (_tpsControl == nullptr)
 		return;
 	SetViewData(_tpsControl);
-	_viewType = ECharacterViewType::TPS;
+	_viewType = ECharacterViewType::TPSZoom;
+	ChangeViewCamera(_viewType);
 }
 void APlayerCharacter::SetDefaultView()
 {
@@ -497,7 +557,8 @@ void APlayerCharacter::SetDefaultView()
 		return;
 	UE_LOG(LogTemp, Error, TEXT("DefaultView"));
 	SetViewData(_defaultControl);
-	_viewType = ECharacterViewType::Default;
+	_viewType = ECharacterViewType::TPS;
+	ChangeViewCamera(_viewType);
 }
 void APlayerCharacter::SetViewData(const UPlayerControlDataAsset* characterControlData)
 {
@@ -515,15 +576,6 @@ void APlayerCharacter::SetViewData(const UPlayerControlDataAsset* characterContr
 
 
 
-	//카메라
-	_springArm->TargetArmLength = characterControlData->TargetArmLength;
-	_springArm->SetRelativeRotation(characterControlData->RelativeRotation);
-	_springArm->SetRelativeLocation(characterControlData->RelativeLocation);
-	_springArm->bUsePawnControlRotation = characterControlData->bUsePawnContolRotation;
-	_springArm->bDoCollisionTest = characterControlData->bDoCollisionTest;
-	_springArm->bInheritPitch = characterControlData->bInheritPitch;
-	_springArm->bInheritYaw = characterControlData->bInheritYaw;
-	_springArm->bInheritRoll = characterControlData->bInheritRoll;
 
 
 
@@ -606,6 +658,139 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	}
 
 }
+
+void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
+{
+	UChildActorComponent* temp=_tpsCameraActor;
+
+	switch (type)
+	{
+	case ECharacterViewType::TPS:
+		temp = _tpsCameraActor;
+		break;
+	case ECharacterViewType::TPSZoom:
+		temp = _tpsZoomCameraActor;
+		break;
+	case ECharacterViewType::FPS:
+		temp = _fpsCameraActor;
+		break;
+	default:
+		break;
+	}
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC && temp && temp->GetChildActor())
+	{
+		PC->SetViewTargetWithBlend(temp->GetChildActor(), _cameraBlendTime);
+	}
+
+
+}
+void APlayerCharacter::UpdateCameraOcclusion()
+{
+	FVector CameraLocation = _camera->GetComponentLocation(); // or CustomCamera
+	FVector HeadLocation = GetMesh()->GetSocketLocation("head") + FVector(0, 0, 10.f); // 중심 지점
+
+	TArray<FHitResult> Hits;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	GetWorld()->LineTraceMultiByChannel(
+		Hits,
+		CameraLocation,
+		HeadLocation,
+		ECC_Visibility,
+		Params
+	);
+
+	// 숨길 컴포넌트 처리
+	for (const FHitResult& Hit : Hits)
+	{
+		if (UPrimitiveComponent* Comp = Hit.GetComponent())
+		{
+			if (!_fadedComponents.Contains(Comp))
+			{
+				Comp->SetRenderCustomDepth(true); // 또는 투명 머티리얼로 교체
+				_fadedComponents.Add(Comp);
+			}
+		}
+	}
+
+	// 이전 프레임에 있었지만 지금은 없는 → 복원
+	for (int32 i = _fadedComponents.Num() - 1; i >= 0; --i)
+	{
+		if (!Hits.ContainsByPredicate([&](const FHitResult& Hit) { return Hit.GetComponent() == _fadedComponents[i]; }))
+		{
+			_fadedComponents[i]->SetRenderCustomDepth(false); // 또는 원래 머티리얼로 복원
+			_fadedComponents.RemoveAt(i);
+		}
+	}
+
+}
+void APlayerCharacter::SetStandingCollisionCamera()
+{
+	Super::SetStandingCollisionCamera();
+
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_standingStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
+
+
+}
+void APlayerCharacter::SetCrouchingCollisionCamera()
+{
+	Super::SetCrouchingCollisionCamera();
+	
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_crouchingStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
+}
+void APlayerCharacter::SetProningCollisionCamera()
+{
+	Super::SetProningCollisionCamera();
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.ExecutionFunction = NAME_None;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = __LINE__; // 유니크한 ID
+
+	UKismetSystemLibrary::MoveComponentTo(
+		_cameraRoot,
+		_proningStance->_cameraOffset,
+		_cameraRoot->GetRelativeRotation(),
+		true, true,
+		0.2f, false,
+		EMoveComponentAction::Move,
+		LatentInfo
+	);
+}
+
 void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 {
 	if (index > 3 || index < 0)

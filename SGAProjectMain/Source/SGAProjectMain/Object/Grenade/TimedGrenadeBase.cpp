@@ -5,6 +5,9 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Engine/DamageEvents.h"
+#include "Engine/OverlapResult.h"
 #include "TimerManager.h"
 
 void ATimedGrenadeBase::StartCookingGrenade()
@@ -20,7 +23,7 @@ void ATimedGrenadeBase::UpdateCookingGrenade()
 	ExplodeGrenade();
 }
 
-void ATimedGrenadeBase::Throw()
+void ATimedGrenadeBase::Throw(FVector direction)
 {
 	float remainingFuseTime = GetRemainingFuseTime();
 	if (remainingFuseTime < 0)
@@ -28,7 +31,7 @@ void ATimedGrenadeBase::Throw()
 	else
 		GetWorldTimerManager().SetTimer(_explosionTimerHandle, this, &ATimedGrenadeBase::ExplodeGrenade, remainingFuseTime, false);
 
-	Super::Throw();
+	Super::Throw(direction);
 }
 
 void ATimedGrenadeBase::ExplodeGrenade()
@@ -54,7 +57,7 @@ void ATimedGrenadeBase::ExplodeGrenade()
 
 	if (bResult)
 	{
-		for (auto& overlap : overlaps)
+		for (FOverlapResult overlap : overlaps)
 		{
 			AActor* hitActor = overlap.GetActor();
 			if (hitActor)
