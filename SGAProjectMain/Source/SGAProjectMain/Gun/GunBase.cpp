@@ -363,6 +363,7 @@ void AGunBase::ChangeReloadStage()
 
 	case EReloadStage::RoundsReload:
 		_curAmmo++;
+		_owner->GetStateComponent()->SetReloading(false);
 		//Reload();
 		break;
 	}
