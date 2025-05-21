@@ -10,6 +10,8 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
 
+#include "Components/SpotLightComponent.h" 
+
 // Sets default values
 AGunBase::AGunBase()
 {
@@ -18,6 +20,9 @@ AGunBase::AGunBase()
 
 	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
 	RootComponent = _mesh;
+
+	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
+	_tacticalLight->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -46,14 +51,15 @@ void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!player || !camera) return;
+	if (!camera) return;
 	
 	TickRecoil(DeltaTime);
 	_hitPoint = CalculateHitPoint();
 
 	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
+
+	if (!_isActive) return;
 
 	if (!_owner->GetStateComponent()->IsAiming())
 		return;
@@ -103,9 +109,8 @@ void AGunBase::Fire()
 		return;
 	}
 	
-	auto player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!player || !camera) return;
+	if (!camera) return;
 
 	if (_fireMode == EFireMode::Burst)
 	{
@@ -199,6 +204,9 @@ void AGunBase::StartAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Visible);
 
+	if (_tacticalLight)
+		UseTacticalLight(true);
+
 	UE_LOG(LogTemp, Log, TEXT("STARTAIMING"));
 }
 
@@ -210,6 +218,9 @@ void AGunBase::StopAiming()
 		_marker->SetActorHiddenInGame(true);
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
+
+	if (_tacticalLight)
+		UseTacticalLight(false);
 
 	UE_LOG(LogTemp, Log, TEXT("STOPAIMING"));
 }
@@ -228,18 +239,28 @@ void AGunBase::InitializeGun()
 
 void AGunBase::ActivateGun()
 {
-	if (_owner)
-	{
-		SetActorHiddenInGame(false);
-	}
+	_isActive = true;
+	SetActorHiddenInGame(false);
+
+	_recoilOffset = FRotator::ZeroRotator;
 
 	if (_ammoChanged.IsBound())
+	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+		UE_LOG(LogTemp, Log, TEXT("BroadCast"));
+	}
 }
 
 void AGunBase::DeactivateGun()
 {
+	StopFire();
+	StopAiming();
+
+	_isActive = false;
 	SetActorHiddenInGame(true);
+
+	if (_tacticalLight)
+		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
 
 	if (_marker)
 		_marker->SetActorHiddenInGame(true);
@@ -262,8 +283,6 @@ void AGunBase::AttachToHand()
 			{
 				_mesh->SetSimulatePhysics(false);
 				_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-				UE_LOG(LogTemp, Log, TEXT("Attach Gun"));
 			}
 		}
 	}
@@ -315,6 +334,7 @@ void AGunBase::ChangeReloadStage()
 		{
 			_isChamberLoaded = true;
 			_curAmmo = _gunData._maxAmmo;
+			_owner->GetStateComponent()->SetReloading(false);
 			_reloadStage = EReloadStage::None;  // 전술 재장전 -> CloseBolt 생략
 		}
 		else
@@ -325,6 +345,7 @@ void AGunBase::ChangeReloadStage()
 
 	case EReloadStage::CloseBolt:
 		_curAmmo = _gunData._maxAmmo;
+		_owner->GetStateComponent()->SetReloading(false);
 		_reloadStage = EReloadStage::None;
 		break;
 	}
@@ -499,5 +520,52 @@ void AGunBase::ChangeFireMode()
 	_fireMode = _gunData._fireModes[_fireIndex];
 
 	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
+}
+
+void AGunBase::ChangeTacticalLightMode()
+{
+	if (!_tacticalLight) return;
+
+	switch (_tacticalLightMode)
+	{
+	case ETacticalLightMode::On:
+		_tacticalLightMode = ETacticalLightMode::Off;
+		break;
+
+	case ETacticalLightMode::Off:
+		_tacticalLightMode = ETacticalLightMode::Auto;
+		break;
+
+	case ETacticalLightMode::Auto:
+		_tacticalLightMode = ETacticalLightMode::On;
+		break;
+	}
+
+	UseTacticalLight(_owner->GetStateComponent()->IsAiming());
+	UE_LOG(LogTemp, Log, TEXT("Light Mode Change"));
+}
+
+void AGunBase::UseLaserPoint(FVector hitPoint)
+{
+}
+
+void AGunBase::UseTacticalLight(bool isAiming)
+{
+	if (!_tacticalLight) return;
+
+	switch (_tacticalLightMode)
+	{
+	case ETacticalLightMode::On:
+		_tacticalLight->SetVisibility(true);
+		break;
+
+	case ETacticalLightMode::Off:
+		_tacticalLight->SetVisibility(false);
+		break;
+
+	case ETacticalLightMode::Auto:
+		_tacticalLight->SetVisibility(isAiming);
+		break;
+	}
 }
 

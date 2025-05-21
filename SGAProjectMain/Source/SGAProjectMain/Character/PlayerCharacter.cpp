@@ -108,11 +108,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_mouseRButtonAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAiming);
 		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Started, this, &APlayerCharacter::HoldReload);
 		enhancedInputComponent->BindAction(_reloadAction, ETriggerEvent::Completed, this, &APlayerCharacter::ReleaseReload);
-		enhancedInputComponent->BindAction(_weapon1ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon1);
-		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon2);
-		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SwitchWeapon3);
+		enhancedInputComponent->BindAction(_weapon1ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon1);
+		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
+		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
 		enhancedInputComponent->BindAction(_stratagemAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipStratagem);
+		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
 	}
 }
 
@@ -604,24 +605,47 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	}
 
 }
-void APlayerCharacter::SwitchWeapon(int32 index)
+void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 {
-	if (index > 2 || index < 0)
+	if (index > 3 || index < 0)
 		return;
 
-	if (_gunSlot[index] == nullptr)
+	if (index != 3 && _gunSlot[index] == nullptr)
 		return;
+
+	if (_isGunSettingMode)
+	{
+		_equippedGun->ExitGunSettingMode();
+		_isGunSettingMode = false;
+	}
 
 	if (_stateComponent->IsReloading())
 		_equippedGun->CancelReload();
 
-	_equippedGun->_ammoChanged.Clear();
-	_equippedGun->DeactivateGun();
+	bool wasAiming = _stateComponent->IsAiming();
+	bool wasFiring = _stateComponent->IsFiring();
+	_playerState = EPlayerState::Idle;
 
-	EquipGun(_gunSlot[index]);
+	if (index == 3)
+	{
+		// Grenade
+	}
+	else
+	{
+		_equippedGun->_ammoChanged.Clear();
+		_equippedGun->DeactivateGun();
 
-	_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
-	_equippedGun->ActivateGun();
+		EquipGun(_gunSlot[index]);
+
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_equippedGun->ActivateGun();
+	}
+
+	if (wasAiming) // 에임 중이었을 경우 유지
+		StartAiming(value);
+
+	if (wasFiring) // 사격 중이었을 경우 유지
+		StartFiring(value);
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
@@ -663,6 +687,9 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 {
 	GetWorldTimerManager().ClearTimer(_gunSettingTimer);
 
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
 	if (_equippedGun)
 	{
 		if (_isGunSettingMode)
@@ -674,6 +701,8 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 		else
 		{
 			UE_LOG(LogTemp, Log, TEXT("Reload"));
+			_equippedGun->StopAiming();
+			_equippedGun->StopFire();
 			_equippedGun->Reload();
 		}
 	}
@@ -681,6 +710,15 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 
 void APlayerCharacter::EnterGunSetting()
 {
+	if (_stateComponent->IsAiming())
+		return;
+
+	if (_stateComponent->IsFiring())
+		return;
+
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
 	if (_equippedGun)
 	{
 		_isGunSettingMode = true;
@@ -704,8 +742,28 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 	if (_stateComponent->IsFiring())
 		return;
 
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeFireMode();
+	}
+}
+
+void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
+{
+	if (_stateComponent->IsAiming())
+		return;
+
+	if (_stateComponent->IsFiring())
+		return;
+
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
+	if (_equippedGun && _isGunSettingMode)
+	{
+		_equippedGun->ChangeTacticalLightMode();
 	}
 }

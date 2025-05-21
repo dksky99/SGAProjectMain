@@ -25,6 +25,14 @@ enum class EReloadStage : uint8
 	CloseBolt,
 };
 
+UENUM(BlueprintType)
+enum class ETacticalLightMode : uint8
+{
+	Auto,
+	On,
+	Off
+};
+
 USTRUCT(BlueprintType)
 struct FGunData // : public FTableRowBase
 {
@@ -107,6 +115,10 @@ public:
 	void EnterGunSettingMode();
 	void ExitGunSettingMode();
 	void ChangeFireMode();
+	void ChangeTacticalLightMode();
+
+	void UseLaserPoint(FVector hitPoint);
+	void UseTacticalLight(bool isAiming);
 
 	FAmmoChanged _ammoChanged;
 
@@ -119,6 +131,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
 	FGunData _gunData;
+
+	bool _isActive = false;
 
 	FTimerHandle _fireTimer;
 
@@ -150,4 +164,10 @@ private:
 	UUserWidget* _crosshair;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _crosshairClass;
+
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
+	class USpotLightComponent* _tacticalLight;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::Auto;
 };

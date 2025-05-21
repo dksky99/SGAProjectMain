@@ -81,6 +81,8 @@ public:
 
 	UFUNCTION()
 	void TryChangeFireMode(const  FInputActionValue& value);
+	UFUNCTION()
+	void TryChangeLightMode(const  FInputActionValue& value);
 
 
 	UFUNCTION()
@@ -104,13 +106,13 @@ public:
 	void TryRolling(const  FInputActionValue& value);
 
 	UFUNCTION()
-	void SwitchWeapon1(const  FInputActionValue& value) { SwitchWeapon(0); }
+	void SwitchWeapon1(const  FInputActionValue& value) { SwitchWeapon(0, value); }
 	UFUNCTION()
-	void SwitchWeapon2(const  FInputActionValue& value) { SwitchWeapon(1); }
+	void SwitchWeapon2(const  FInputActionValue& value) { SwitchWeapon(1, value); }
 	UFUNCTION()
-	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2); }
+	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
 
-	void SwitchWeapon(int32 index);
+	void SwitchWeapon(int32 index, const FInputActionValue& value);
 
 	void SetFPSView();
 	void SetTPSView();
@@ -153,9 +155,12 @@ protected:
 	class UInputAction* _weapon2ChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _weapon3ChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _grenadeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _stratagemAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _lightChangeAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
