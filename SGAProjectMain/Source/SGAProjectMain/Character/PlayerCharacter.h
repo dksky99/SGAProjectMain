@@ -124,8 +124,8 @@ public:
 
 	void InitView();
 	void SetFPSView();
+	void SetTPSZoomView();
 	void SetTPSView();
-	void SetDefaultView();
 
 	void UpdateCameraOcclusion();
 

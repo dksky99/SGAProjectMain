@@ -83,7 +83,7 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	InitView();
-	SetDefaultView();
+	SetTPSView();
 	if (_gunClass1 && _gunClass2)
 	{
 		// 임시 세팅
@@ -223,6 +223,20 @@ void APlayerCharacter::TryJump(const FInputActionValue& value)
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
+	switch (_stateComponent->GetCharacterState())
+	{
+	case ECharacterState::Sprinting:
+		FinishSprint();
+		break;
+	case ECharacterState::Standing:
+	case ECharacterState::Crouching:
+	case ECharacterState::Proning:
+	case ECharacterState::knockdown:
+	case ECharacterState::MAX:
+	default:
+		break;
+	}
+
 	switch (_playerState)
 	{
 	case EPlayerState::Idle:
@@ -320,6 +334,8 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
 {
+	if (_stateComponent->IsFiring())
+		return;
 	switch (_stateComponent->GetCharacterState())
 	{
 
@@ -352,7 +368,7 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	}
 
 	_stateComponent->SetAiming(true);
-
+	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
@@ -440,7 +456,7 @@ void APlayerCharacter::TryChangeControl(const FInputActionValue& value)
 
 	if (_viewType == ECharacterViewType::TPS)
 	{
-		SetTPSView();
+		SetTPSZoomView();
 
 	}
 	else if (_viewType == ECharacterViewType::TPSZoom)
@@ -450,7 +466,7 @@ void APlayerCharacter::TryChangeControl(const FInputActionValue& value)
 	}
 	else if (_viewType == ECharacterViewType::FPS)
 	{
-		SetDefaultView();
+		SetTPSView();
 	}
 
 
@@ -542,7 +558,7 @@ void APlayerCharacter::SetFPSView()
 	ChangeViewCamera(_viewType);
 
 }
-void APlayerCharacter::SetTPSView()
+void APlayerCharacter::SetTPSZoomView()
 {
 	if (_tpsControl == nullptr)
 		return;
@@ -550,7 +566,7 @@ void APlayerCharacter::SetTPSView()
 	_viewType = ECharacterViewType::TPSZoom;
 	ChangeViewCamera(_viewType);
 }
-void APlayerCharacter::SetDefaultView()
+void APlayerCharacter::SetTPSView()
 {
 	if (_defaultControl == nullptr)
 		return;
@@ -839,7 +855,7 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 		return;
 
 	_stateComponent->SetAiming(false);
-
+	SetTPSView();
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
