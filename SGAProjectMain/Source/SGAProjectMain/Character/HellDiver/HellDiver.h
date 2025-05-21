@@ -37,6 +37,9 @@ public:
 	void Rolling();
 	void FinishRolling();
 
+	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
+	void EquipGun(AGunBase* gun);
+
 
 	virtual void Landed(const FHitResult& Hit) override;
 
@@ -80,7 +83,6 @@ protected:
 	AStratagem* _equippedStratagem;
 
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta = (AllowPrivateAccess = "true"))
 	class UCollisionCameraDataAsset* _standingStance;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
@@ -89,4 +91,14 @@ protected:
 	class UCollisionCameraDataAsset* _proningStance;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AGunBase> _gunClass1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AGunBase> _gunClass2;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Gun")
+	AGunBase* _equippedGun;
+
+	UPROPERTY()
+	TArray<AGunBase*> _gunSlot;
 };

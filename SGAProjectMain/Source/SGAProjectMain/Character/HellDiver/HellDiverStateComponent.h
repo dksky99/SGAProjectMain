@@ -93,7 +93,11 @@ public:
 	void SetLifeState(ELifeState state) { _lifeState = state; }
 	bool IsRolling() { return _isRolling; }
 	bool IsReloading() { return _isReloading; }
+	void SetReloading(bool isReloading) { _isReloading = isReloading; }
 	bool IsFiring() { return _isFiring; }
+	void SetFiring(bool isFiring) { _isFiring = isFiring; }
+	bool IsAiming() { return _isAiming; }
+	void SetAiming(bool isAiming) { _isAiming = isAiming; }
 
 
 	bool StartTPSAiming();
@@ -122,5 +126,6 @@ protected:
 	bool _isFiring = false;
 	bool _isReloading = false;
 	bool _isRolling = false;
+	bool _isAiming = false;
 		
 };
