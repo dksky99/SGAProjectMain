@@ -88,6 +88,7 @@ void AGunBase::StartFire()
 		GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
 		break;
 	case EFireMode::Semi: // 한 번만 발사
+	case EFireMode::BoltAction: // 볼트액션
 		Fire();
 		StopFire();
 		break;
@@ -112,6 +113,14 @@ void AGunBase::Fire()
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!camera) return;
 
+	if (_fireMode == EFireMode::BoltAction)
+	{
+		if (!_canFire) return;
+
+		_canFire = false;
+		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, 1.2f, false);
+	}
+
 	if (_fireMode == EFireMode::Burst)
 	{
 		if (_burstCount <= 0)
@@ -122,8 +131,8 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
-	ApplyFireRecoil();
 	_hitPoint = CalculateHitPoint();
+	ApplyFireRecoil();
 
 	FRotator cameraRotation = camera->GetCameraRotation();
 	FVector muzzleLocation;
@@ -206,8 +215,6 @@ void AGunBase::StartAiming()
 
 	if (_tacticalLight)
 		UseTacticalLight(true);
-
-	UE_LOG(LogTemp, Log, TEXT("STARTAIMING"));
 }
 
 void AGunBase::StopAiming()
@@ -221,8 +228,6 @@ void AGunBase::StopAiming()
 
 	if (_tacticalLight)
 		UseTacticalLight(false);
-
-	UE_LOG(LogTemp, Log, TEXT("STOPAIMING"));
 }
 
 void AGunBase::InitializeGun()
@@ -309,6 +314,10 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 	case EReloadStage::CloseBolt:
 		//PlayAnimMontage(temp);
 		break;
+
+	case EReloadStage::RoundsReload:
+		//PlayAnimMontage(temp);
+		break;
 	}
 
 	ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
@@ -323,10 +332,12 @@ void AGunBase::ChangeReloadStage()
 		if (_curAmmo > 0 || _isChamberLoaded) // 탄창이나 약실에 탄이 있을 경우
 			_isChamberLoaded = true; // 약실 채우기
 		_curAmmo = 0;
+		//Reload();
 		break;
 
 	case EReloadStage::RemoveMag: // 탄창 제거 상태
 		_reloadStage = EReloadStage::InsertMag;
+		//Reload();
 		break;
 
 	case EReloadStage::InsertMag: // 탄창 삽입 상태
@@ -340,6 +351,7 @@ void AGunBase::ChangeReloadStage()
 		else
 		{
 			_reloadStage = EReloadStage::CloseBolt; // 약실에 탄이 없을 경우 CloseBolt
+			//Reload();
 		}
 		break;
 
@@ -347,6 +359,11 @@ void AGunBase::ChangeReloadStage()
 		_curAmmo = _gunData._maxAmmo;
 		_owner->GetStateComponent()->SetReloading(false);
 		_reloadStage = EReloadStage::None;
+		break;
+
+	case EReloadStage::RoundsReload:
+		_curAmmo++;
+		//Reload();
 		break;
 	}
 
@@ -420,7 +437,7 @@ void AGunBase::ApplyFireRecoil()
 	//_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
 
 	// 수평 반동 적용
-	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil / 3.f;
+	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil; // 3.f;
 
 	// 수직 반동이 최대에 도달하면 흔들림 적용 -> 존재하는가?
 	//if (_recoilOffset.Pitch >= _maxVerticalRecoil)

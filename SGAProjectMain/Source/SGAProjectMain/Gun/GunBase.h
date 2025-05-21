@@ -14,6 +14,7 @@ enum class EFireMode : uint8
 	Auto,
 	Semi,        
 	Burst,
+	BoltAction
 };
 
 UENUM(BlueprintType)
@@ -23,6 +24,7 @@ enum class EReloadStage : uint8
 	RemoveMag,
 	InsertMag,
 	CloseBolt,
+	RoundsReload // 한 발씩 장전
 };
 
 UENUM(BlueprintType)
@@ -67,7 +69,7 @@ struct FGunData // : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff100 = 0.133f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<EFireMode> _fireModes = { EFireMode::Auto, EFireMode::Burst, EFireMode::Semi};
 };
 
@@ -120,6 +122,8 @@ public:
 	void UseLaserPoint(FVector hitPoint);
 	void UseTacticalLight(bool isAiming);
 
+	void ResetCanFire() { _canFire = true; }
+
 	FAmmoChanged _ammoChanged;
 
 private:
@@ -170,4 +174,8 @@ private:
 	class USpotLightComponent* _tacticalLight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::Auto;
+
+	// 볼트액션용
+	FTimerHandle _boltActionTimer;
+	bool _canFire = true;
 };
