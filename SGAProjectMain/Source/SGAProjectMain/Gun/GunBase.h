@@ -174,6 +174,12 @@ private:
 	TSubclassOf<UUserWidget> _crosshairClass;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* _laserFX;
+	UPROPERTY()
+	class UNiagaraComponent* _laserpointer;
+
+
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class USpotLightComponent* _tacticalLight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))

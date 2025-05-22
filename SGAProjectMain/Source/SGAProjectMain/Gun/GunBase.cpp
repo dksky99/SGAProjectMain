@@ -10,7 +10,9 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
 
-#include "Components/SpotLightComponent.h" 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/SpotLightComponent.h"
 
 // Sets default values
 AGunBase::AGunBase()
@@ -41,6 +43,19 @@ void AGunBase::BeginPlay()
 		}
 	}
 
+	if (_laserFX)
+	{
+		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			_laserFX,
+			_mesh,
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			true
+		);
+	}
+
 	_curAmmo = _gunData._maxAmmo;
 	_maxVerticalRecoil = _gunData._verticalRecoil;
 	_maxHorizontalRecoil = _gunData._horizontalRecoil;
@@ -58,6 +73,9 @@ void AGunBase::Tick(float DeltaTime)
 	_hitPoint = CalculateHitPoint();
 
 	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, _gunData._ergo / 7.f);
+
+	if (_laserpointer)
+		UseLaserPoint(_hitPoint);
 
 	if (!_isActive) return;
 
@@ -213,6 +231,11 @@ void AGunBase::StartAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Visible);
 
+	if (_laserpointer)
+	{
+		_laserpointer->SetVisibility(true);
+	}
+
 	if (_tacticalLight)
 		UseTacticalLight(true);
 }
@@ -225,6 +248,11 @@ void AGunBase::StopAiming()
 		_marker->SetActorHiddenInGame(true);
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
+
+	if (_laserpointer)
+	{
+		_laserpointer->SetVisibility(false);
+	}
 
 	if (_tacticalLight)
 		UseTacticalLight(false);
@@ -568,6 +596,24 @@ void AGunBase::ChangeTacticalLightMode()
 
 void AGunBase::UseLaserPoint(FVector hitPoint)
 {
+	FVector start;
+
+	if (_mesh && _mesh->DoesSocketExist(TEXT("LaserPoint")))
+	{
+		start = _mesh->GetSocketLocation(TEXT("LaserPoint"));
+	}
+	else
+	{
+		start = GetActorLocation();
+	}
+
+	FVector end = hitPoint;
+
+	if (_laserpointer)
+	{
+		_laserpointer->SetVectorParameter("Beam Start", start);
+		_laserpointer->SetVectorParameter("Beam End", end);
+	}
 }
 
 void AGunBase::UseTacticalLight(bool isAiming)
