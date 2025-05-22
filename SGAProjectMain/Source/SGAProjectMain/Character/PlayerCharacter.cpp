@@ -89,6 +89,7 @@ void APlayerCharacter::BeginPlay()
 		// 임시 세팅
 		_gunSlot[0] = SpawnGun(_gunClass1);
 		_gunSlot[1] = SpawnGun(_gunClass2);
+		_gunSlot[2] = SpawnGun(_gunClass3);
 
 		EquipGun(_gunSlot[0]);
 	}

@@ -3,6 +3,7 @@
 
 #include "TimedGrenadeBase.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/DamageEvents.h"

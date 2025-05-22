@@ -95,6 +95,8 @@ protected:
 	TSubclassOf<class AGunBase> _gunClass1;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AGunBase> _gunClass2;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AGunBase> _gunClass3;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Gun")
 	AGunBase* _equippedGun;
