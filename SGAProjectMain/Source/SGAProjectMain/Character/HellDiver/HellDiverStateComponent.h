@@ -127,5 +127,8 @@ protected:
 	bool _isReloading = false;
 	bool _isRolling = false;
 	bool _isAiming = false;
+
+	bool _isMotionChange = false;
+	bool _isWeaponChange = false;
 		
 };

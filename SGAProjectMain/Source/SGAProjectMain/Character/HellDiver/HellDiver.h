@@ -37,9 +37,15 @@ public:
 	void Rolling();
 	void FinishRolling();
 
+	void Standing();
+	void Sprinting();
+	void Crouching();
+	void Proning();
+
 	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
 	void EquipGun(AGunBase* gun);
 
+	void MotionChangeFinish();
 
 	virtual void Landed(const FHitResult& Hit) override;
 

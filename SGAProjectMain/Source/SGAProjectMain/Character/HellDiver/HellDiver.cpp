@@ -188,6 +188,26 @@ void AHellDiver::FinishRolling()
     _stateComponent->FinishRolling();
 }
 
+void AHellDiver::Standing()
+{
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+}
+
+void AHellDiver::Sprinting()
+{
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetSprintSpeed();
+}
+
+void AHellDiver::Crouching()
+{
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetCrouchSpeed();
+}
+
+void AHellDiver::Proning()
+{
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
+}
+
 AGunBase* AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)
 {
     AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
@@ -204,6 +224,11 @@ void AHellDiver::EquipGun(AGunBase* gun)
     _stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon);
 
     UE_LOG(LogTemp, Log, TEXT("Equip Gun"));
+}
+
+void AHellDiver::MotionChangeFinish()
+{
+
 }
 
 void AHellDiver::Landed(const FHitResult& Hit)
