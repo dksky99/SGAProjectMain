@@ -116,7 +116,7 @@ public:
 	void ApplyFireRecoil(); // 사격에 따른 반동
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
 
-	FVector CalculateHitPoint();
+	FHitResult GetHitResult();
 	
 	void EnterGunSettingMode();
 	void ExitGunSettingMode();
