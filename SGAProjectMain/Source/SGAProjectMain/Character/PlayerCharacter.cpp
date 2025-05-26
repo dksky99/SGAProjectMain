@@ -48,9 +48,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_fpsCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPSCamera")) ;
 
 
-
+	SetRootComponent(GetCapsuleComponent());
 	GetMesh()->SetupAttachment(RootComponent);
-	GetCapsuleComponent()->SetupAttachment(GetMesh());
 	_cameraRoot->SetupAttachment(RootComponent);
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);

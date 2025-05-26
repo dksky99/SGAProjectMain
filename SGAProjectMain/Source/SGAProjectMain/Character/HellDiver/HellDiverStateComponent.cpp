@@ -36,11 +36,14 @@ bool UHellDiverStateComponent::StartSprint()
 {
 	if (_characterState != ECharacterState::Standing)
 		return false;
-
+	
 	if (_isRolling)
+		return false;
+	if (TryMotionChange())
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartSprint"));
 	_characterState = ECharacterState::Sprinting;
+	_waitingMove = "Sprinting";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -59,7 +62,9 @@ bool UHellDiverStateComponent::FinishSprint()
 	if (_isRolling)
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishSprint"));
+	_isMotionChange = true;
 	_characterState = ECharacterState::Standing;
+	_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -74,8 +79,11 @@ bool UHellDiverStateComponent::StartCrouch()
 		return false;
 	if (_isRolling)
 		return false;
+	if (TryMotionChange())
+		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartCrouch"));
 	_characterState = ECharacterState::Crouching;
+	_waitingMove = "Crouching";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -90,8 +98,11 @@ bool UHellDiverStateComponent::FinishCrouch()
 		return false;
 	if (_isRolling)
 		return false;
+	if (TryMotionChange())
+		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishCrouch"));
 	_characterState = ECharacterState::Standing;
+	_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -105,8 +116,11 @@ bool UHellDiverStateComponent::StartProne()
 
 	if (_characterState == ECharacterState::Proning)
 		return false;
+	if (TryMotionChange())
+		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartProne"));
 	_characterState = ECharacterState::Proning;
+	_waitingMove = "Proning";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -121,8 +135,11 @@ bool UHellDiverStateComponent::FinishProne()
 		return false;
 	if (_isRolling)
 		return false;
+	if (TryMotionChange())
+		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishProne"));
 	_characterState = ECharacterState::Standing;
+	_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -134,6 +151,8 @@ bool UHellDiverStateComponent::FinishProne()
 bool UHellDiverStateComponent::StartRolling()
 {
 	if (_characterState == ECharacterState::Proning||_isRolling)
+		return false;
+	if (_isMotionChange)
 		return false;
 
 	UE_LOG(LogTemp, Error, TEXT("StartRolling"));
@@ -150,6 +169,44 @@ bool UHellDiverStateComponent::FinishRolling()
 
 }
 
+void UHellDiverStateComponent::MoveChangeFinish(FString newState)
+{
+	UE_LOG(LogTemp, Error, TEXT("Try Move UnLock"));
+	if (_isMotionChange == false)
+		return;
+
+	if (_waitingMove.IsEmpty())
+		return;
+	if (_waitingMove != newState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"),*_waitingMove,*newState);
+
+		return;
+	}
+	_waitingMove.Empty();
+	_isMotionChange = false;
+	UE_LOG(LogTemp, Error, TEXT("Move UnLock"));
+}
+
+void UHellDiverStateComponent::LookChangeFinish(FString newState)
+{
+	UE_LOG(LogTemp, Error, TEXT("Try Look UnLock"));
+	if (_isWeaponChange == false)
+		return;
+	if (_waitingLook.IsEmpty())
+		return;
+	if (_waitingLook != newState)
+	{
+
+		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"), *_waitingLook, *newState);
+		return;
+	}
+	_waitingLook.Empty();
+	_isWeaponChange = false;
+	UE_LOG(LogTemp, Error, TEXT("Look UnLock"));
+
+}
+
 bool UHellDiverStateComponent::StartTPSAiming()
 {
 
@@ -160,5 +217,21 @@ bool UHellDiverStateComponent::StartTPSAiming()
 bool UHellDiverStateComponent::FinishTPSAiming()
 {
 	return true;
+}
+
+bool UHellDiverStateComponent::TryMotionChange()
+{
+	if (_isMotionChange)
+		return true;
+	_isMotionChange = true;
+	return false;
+}
+
+bool UHellDiverStateComponent::TryWeaponChange()
+{
+	if (_isWeaponChange)
+		return true;
+	_isWeaponChange = true;
+	return false;
 }
 

@@ -4,6 +4,10 @@
 #include "HellDiverAnimInstance.h"
 #include "HellDiver.h"
 #include "HellDiverStateComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimNode_StateMachine.h"
+#include "Animation/AnimInstanceProxy.h"
+
 UHellDiverAnimInstance::UHellDiverAnimInstance()
 {
 	
@@ -37,9 +41,50 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
 			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
 
-			
+			GetCurrentMoveNode();
 
 
 		}
 	}
+}
+
+void UHellDiverAnimInstance::GetCurrentMoveNode()
+{
+	FString temp1 = GetCurrentStateName(GetStateMachineIndex(TEXT("Move"))).ToString();
+	FString temp2 = GetCurrentStateName(GetStateMachineIndex(TEXT("Look"))).ToString();
+	MoveStateChanged(temp1);
+	LookStateChanged(temp2);
+}
+
+bool UHellDiverAnimInstance::MoveStateChanged(FString curState)
+{
+	if (_currentMoveState==curState)
+	{
+		return false;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Move : %s"), *curState);
+	_currentMoveState = curState;
+	if (_moveChanged.IsBound())
+	{
+		_moveChanged.Broadcast(curState);
+	}
+	return true;
+
+}
+
+bool UHellDiverAnimInstance::LookStateChanged(FString curState)
+{
+	if (_currentLookState == curState)
+	{
+		return false;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Look : %s"), *curState);
+	_currentLookState = curState;
+	if (_lookChanged.IsBound())
+	{
+		_lookChanged.Broadcast(curState);
+	}
+	return true;
 }

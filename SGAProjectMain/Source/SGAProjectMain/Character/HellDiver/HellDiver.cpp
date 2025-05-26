@@ -8,6 +8,7 @@
 #include "HellDiverMovementComponent.h"
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
+#include "HellDiverAnimInstance.h"
 
 #include "../../Object/Grenade/TimedGrenadeBase.h"
 #include "../../Object/Stratagem/Stratagem.h"
@@ -33,6 +34,13 @@ void AHellDiver::BeginPlay()
     SetCollisionState(_stateComponent->GetCharacterState());
 
     _stateComponent->_characterStateChanged.AddDynamic(this, &AHellDiver::SetCollisionState);
+    auto anim = Cast<UHellDiverAnimInstance>(GetMesh()->GetAnimInstance());
+    if (anim != nullptr)
+    {
+      
+        anim->_moveChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::MoveChangeFinish);
+        anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
+    }
 
 }
 

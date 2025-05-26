@@ -100,6 +100,14 @@ public:
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
 
 
+	bool IsMotionChanging() { return _isMotionChange; }
+	bool IsWeaponChanging() { return _isWeaponChange; }
+
+	UFUNCTION()
+	void MoveChangeFinish(FString newState);
+	UFUNCTION()
+	void LookChangeFinish(FString newState);
+
 	bool StartTPSAiming();
 	bool FinishTPSAiming();
 	EWeaponType GetWeaponState() { return _weaponState; }
@@ -110,6 +118,9 @@ public:
 	FOnActionStateChanged _actionStateChanged;
 	FOnWeaponStateChanged _weaponStateChanged;
 	FOnLifeStateChanged _lifeStateChanged;
+protected:
+	bool TryMotionChange();
+	bool TryWeaponChange();
 protected:
 
 
@@ -130,5 +141,8 @@ protected:
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
+
+	FString _waitingMove;
+	FString _waitingLook;
 		
 };

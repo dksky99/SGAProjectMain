@@ -7,9 +7,12 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiverAnimInstance.generated.h"
 
-/**
- * 
- */
+
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoveAnimStateChanged, FString, newState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLookAnimStateChanged, FString, newState);
+
 UCLASS()
 class SGAPROJECTMAIN_API UHellDiverAnimInstance : public UCharacterAnimInstance
 {
@@ -20,6 +23,15 @@ public:
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	void GetCurrentMoveNode();
+
+	FOnMoveAnimStateChanged _moveChanged;
+	FOnLookAnimStateChanged _lookChanged;
+
+protected:
+	bool MoveStateChanged(FString curState);
+	bool LookStateChanged(FString curState);
 
 protected:
 
@@ -45,6 +57,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isRolling = false;
 
+	FString _currentMoveState;
+	FString _currentLookState;
 
 
 
