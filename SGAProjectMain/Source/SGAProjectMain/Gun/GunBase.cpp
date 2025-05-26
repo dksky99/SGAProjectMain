@@ -10,7 +10,9 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
 
-#include "Components/SpotLightComponent.h" 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Components/SpotLightComponent.h"
 
 // Sets default values
 AGunBase::AGunBase()
@@ -41,6 +43,19 @@ void AGunBase::BeginPlay()
 		}
 	}
 
+	if (_laserFX)
+	{
+		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			_laserFX,
+			_mesh,
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			true
+		);
+	}
+
 	_curAmmo = _gunData._maxAmmo;
 	_maxVerticalRecoil = _gunData._verticalRecoil;
 	_maxHorizontalRecoil = _gunData._horizontalRecoil;
@@ -54,10 +69,14 @@ void AGunBase::Tick(float DeltaTime)
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!camera) return;
 	
-	TickRecoil(DeltaTime);
-	_hitPoint = CalculateHitPoint();
+	//TickRecoil(DeltaTime);
+	FHitResult hitResult= GetHitResult();
+	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 
-	_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, 4.f);
+	//_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, _gunData._ergo / 7.f);
+
+	if (_laserpointer)
+		UseLaserPoint(_hitPoint);
 
 	if (!_isActive) return;
 
@@ -131,8 +150,8 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
-	_hitPoint = CalculateHitPoint();
-	ApplyFireRecoil();
+	FHitResult hitResult = GetHitResult();
+	/*ApplyFireRecoil();
 
 	FRotator cameraRotation = camera->GetCameraRotation();
 	FVector muzzleLocation;
@@ -165,12 +184,12 @@ void AGunBase::Fire()
 		start,
 		_hitPoint,
 		ECC_Visibility,
-		params);
+		params);*/
 
-	if (bResult)
+	if (hitResult.bBlockingHit)
 	{
 		drawColor = FColor::Red;
-		float distance = FVector::Dist(start, hitResult.ImpactPoint);
+		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
 		float finalDamage = CalculateDamage(distance / 100);
 		UE_LOG(LogTemp, Log, TEXT("Final Damage: %f"), finalDamage);
 		// TODO (데미지)
@@ -188,7 +207,8 @@ void AGunBase::Fire()
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 
-	DrawDebugLine(GetWorld(), start, _hitPoint, drawColor, false, 1.0f);
+	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
+	DrawDebugLine(GetWorld(), hitResult.TraceStart, _hitPoint, drawColor, false, 1.0f);
 }
 
 void AGunBase::StopFire()
@@ -213,6 +233,11 @@ void AGunBase::StartAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Visible);
 
+	if (_laserpointer)
+	{
+		_laserpointer->SetVisibility(true);
+	}
+
 	if (_tacticalLight)
 		UseTacticalLight(true);
 }
@@ -225,6 +250,11 @@ void AGunBase::StopAiming()
 		_marker->SetActorHiddenInGame(true);
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
+
+	if (_laserpointer)
+	{
+		_laserpointer->SetVisibility(false);
+	}
 
 	if (_tacticalLight)
 		UseTacticalLight(false);
@@ -295,6 +325,9 @@ void AGunBase::AttachToHand()
 
 void AGunBase::Reload() // 애니메이션과 연결 필요
 {
+	if (_curAmmo == _gunData._maxAmmo)
+		return;
+
 	_owner->GetStateComponent()->SetReloading(true);
 
 	switch (_reloadStage)
@@ -492,31 +525,45 @@ float AGunBase::GetRecoilMultiplier()
 }
 
 
-FVector AGunBase::CalculateHitPoint()
+FHitResult AGunBase::GetHitResult()
 {
-	// 화면 중앙 방향
-	FVector cameraLocation;
-	FRotator cameraRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(cameraLocation, cameraRotation);
+	//// 화면 중앙 방향
+	//FVector cameraLocation;
+	//FRotator cameraRotation;
+	//GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(cameraLocation, cameraRotation);
+	//
+	//FVector start = cameraLocation;
+	//
+	//// 조준 시 라인트레이스 이용하여 마커 위치 계산
+	//FHitResult hitResult;
+	//FCollisionQueryParams params(NAME_None, false, this);
+	//
+	//FVector end = start + (cameraRotation + _recoilOffset).Vector() * 10000;
+	//bool bResult = GetWorld()->LineTraceSingleByChannel(
+	//	OUT hitResult,
+	//	start,
+	//	end,
+	//	ECC_Visibility,
+	//	params);
+	//
+	//if (bResult)
+	//	return hitResult.Location;
+	//else
+	//	return end;
 
-	FVector start = cameraLocation;
+	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector muzzleDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 
-	// 조준 시 라인트레이스 이용하여 마커 위치 계산
-	FHitResult hitResult;
-	FCollisionQueryParams params(NAME_None, false, this);
+	FVector end = muzzleLocation + muzzleDirection * 10000.f;
 
-	FVector end = start + (cameraRotation + _recoilOffset).Vector() * 10000;
-	bool bResult = GetWorld()->LineTraceSingleByChannel(
-		OUT hitResult,
-		start,
+	FHitResult hit;
+	GetWorld()->LineTraceSingleByChannel(
+		hit,
+		muzzleLocation,
 		end,
-		ECC_Visibility,
-		params);
+		ECC_Visibility);
 
-	if (bResult)
-		return hitResult.Location;
-	else
-		return end;
+	return hit;
 }
 
 void AGunBase::EnterGunSettingMode()
@@ -565,6 +612,24 @@ void AGunBase::ChangeTacticalLightMode()
 
 void AGunBase::UseLaserPoint(FVector hitPoint)
 {
+	FVector start;
+
+	if (_mesh && _mesh->DoesSocketExist(TEXT("LaserPoint")))
+	{
+		start = _mesh->GetSocketLocation(TEXT("LaserPoint"));
+	}
+	else
+	{
+		start = GetActorLocation();
+	}
+
+	FVector end = hitPoint;
+
+	if (_laserpointer)
+	{
+		_laserpointer->SetVectorParameter("Beam Start", start);
+		_laserpointer->SetVectorParameter("Beam End", end);
+	}
 }
 
 void AGunBase::UseTacticalLight(bool isAiming)

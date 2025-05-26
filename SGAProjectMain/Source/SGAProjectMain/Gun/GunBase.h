@@ -51,6 +51,10 @@ struct FGunData // : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;
 
+	// 인체공학성
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _ergo = 54;
+
 	// 반동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _recoil = 14.f;
@@ -112,7 +116,7 @@ public:
 	void ApplyFireRecoil(); // 사격에 따른 반동
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
 
-	FVector CalculateHitPoint();
+	FHitResult GetHitResult();
 	
 	void EnterGunSettingMode();
 	void ExitGunSettingMode();
@@ -168,6 +172,12 @@ private:
 	UUserWidget* _crosshair;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _crosshairClass;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* _laserFX;
+	UPROPERTY()
+	class UNiagaraComponent* _laserpointer;
 
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
