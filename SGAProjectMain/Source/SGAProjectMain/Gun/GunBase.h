@@ -41,6 +41,9 @@ struct FGunData // : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName _name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f;
 
 	// 발사 간격
@@ -127,6 +130,9 @@ public:
 	void UseTacticalLight(bool isAiming);
 
 	void ResetCanFire() { _canFire = true; }
+
+	FGunData GetGunData() { return _gunData; }
+	int32 GetCurAmmo() { return _isChamberLoaded ? _curAmmo + 1 : _curAmmo; }
 
 	FAmmoChanged _ammoChanged;
 

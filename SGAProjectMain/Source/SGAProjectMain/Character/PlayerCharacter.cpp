@@ -21,6 +21,7 @@
 
 #include "../Gun/GunBase.h"
 #include "../UI/GunUI.h"
+#include "../UI/GunSettingUI.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -76,6 +77,11 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_gunWidget = CreateWidget<UGunUI>(GetWorld(), _gunWidgetClass);
 	}
+
+	if (_gunSettingWidgetClass)
+	{
+		_gunSettingWidget = CreateWidget<UGunSettingUI>(GetWorld(), _gunSettingWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -97,6 +103,12 @@ void APlayerCharacter::BeginPlay()
 	{
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
 		_gunWidget->AddToViewport();
+	}
+
+	if (_gunSettingWidget)
+	{
+		_gunSettingWidget->AddToViewport();
+		_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 }
@@ -896,7 +908,12 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 		if (_isGunSettingMode)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
-			_equippedGun->ExitGunSettingMode();
+			
+			if (_gunSettingWidget)
+			{
+				_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
+			}
+			//_equippedGun->ExitGunSettingMode();
 			_isGunSettingMode = false;
 		}
 		else
@@ -930,7 +947,13 @@ void APlayerCharacter::EnterGunSetting()
 		if (_stateComponent->IsFiring())
 			return;
 
-		_equippedGun->EnterGunSettingMode();
+		if (_gunSettingWidget)
+		{
+			_gunSettingWidget->UpdateGunInfo(_equippedGun->GetGunData(), _equippedGun->GetCurAmmo());
+			_gunSettingWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+
+		//_equippedGun->EnterGunSettingMode();
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
 }
