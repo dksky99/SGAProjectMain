@@ -6,6 +6,22 @@
 #include "Components/ActorComponent.h"
 #include "StratagemComponent.generated.h"
 
+USTRUCT(BlueprintType)
+struct FStratagemSlot
+{
+	GENERATED_BODY();
+
+	UPROPERTY(EditAnywhere)
+	FName StratagemID;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AStratagem> StratagemClass;
+
+	UPROPERTY(EditAnywhere)
+	float Cooldown = 10.f;
+
+	float LastUsedTime = -9999.f;
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UStratagemComponent : public UActorComponent
@@ -21,10 +37,17 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	void TryUseCurrentStratagem();
+	void SelectStratagem(int32 Index);
+	TSubclassOf<class AStratagem> GetSelectedStratagemClass() const;
+	bool IsStratagemOnCooldown(int32 SlotIndex) const;
+	float GetRemainingCooldown(int32 SlotIndex) const;
+	void CommitStratagemUse();
 		
 protected:
+	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
+	TArray<FStratagemSlot> StratagemSlots;
 
+	UPROPERTY(VisibleAnywhere, Category = "Game/Stratagem")
+	int32 CurrentSlotIndex = 0;
 };

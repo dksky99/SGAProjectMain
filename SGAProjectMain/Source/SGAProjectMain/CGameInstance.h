@@ -9,9 +9,22 @@
 /**
  * 
  */
+
+USTRUCT(BlueprintType)
+struct FSelectedStratagemSet
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<class AStratagem>> SelectedStratagems;
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API UCGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 	
+public:
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
 };
