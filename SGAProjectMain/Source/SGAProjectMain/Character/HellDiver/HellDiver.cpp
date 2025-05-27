@@ -215,13 +215,16 @@ void AHellDiver::DrawThrowSplineMeshes()
 		const FVector endTangent = _trajectorySpline->GetTangentAtSplinePoint(i + 1, ESplineCoordinateSpace::Local);
 
 		USplineMeshComponent* mesh = NewObject<USplineMeshComponent>(this);
+		mesh->SetMobility(EComponentMobility::Movable);
+		mesh->AttachToComponent(_trajectorySpline, FAttachmentTransformRules::KeepRelativeTransform);
+		mesh->RegisterComponent();
         mesh->SetCastShadow(false);
 		mesh->SetStaticMesh(_trajectoryMesh);
 		mesh->SetMaterial(0, _trajectoryMaterial);
 		mesh->SetStartAndEnd(start, startTangent, end, endTangent);
-		mesh->SetMobility(EComponentMobility::Movable);
-		mesh->AttachToComponent(_trajectorySpline, FAttachmentTransformRules::KeepRelativeTransform);
-		mesh->RegisterComponent();
+
+		mesh->SetStartScale(FVector2D(0.2f, 0.2f));
+		mesh->SetEndScale(FVector2D(0.2f, 0.2f));
 
 		_trajectoryMeshPool.Add(mesh);
 	}
