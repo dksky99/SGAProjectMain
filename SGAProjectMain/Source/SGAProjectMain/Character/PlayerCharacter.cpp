@@ -236,6 +236,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		{
 			_playerState = EPlayerState::CookingGrenade;
 			_equippedGrenade->StartCookingGrenade();
+			StartThrowPreview();
 		}
 		else if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
 		{
@@ -274,6 +275,7 @@ void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 	case EPlayerState::CookingGrenade:
 		if(_equippedGrenade)
 			_equippedGrenade->UpdateCookingGrenade();
+		StartThrowPreview();
 		break;
 
 	case EPlayerState::StratagemInputting:
@@ -303,11 +305,13 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	case EPlayerState::CookingGrenade:
 		_playerState = EPlayerState::Idle;
 		OnThrowReleased();
+		StopThrowPreview();
 		break;
 
 	case EPlayerState::StratagemInputting:
 		_playerState = EPlayerState::Idle;
 		OnThrowReleased();
+		StopThrowPreview();
 		break;
 
 	case EPlayerState::Rolling:

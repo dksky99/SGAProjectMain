@@ -19,10 +19,15 @@ public:
 
 	virtual void BeginPlay() override;
 	class UHellDiverStateComponent* GetStateComponent();
+	class UHellDiverStatComponent* GetStatComponent();
 
 	void EquipGrenade();
 	void EquipStratagem();
 	void OnThrowReleased();
+	void StartThrowPreview();
+	void StopThrowPreview();
+	UFUNCTION()
+	void UpdateThrowSpline();
 
 	void StartSprint();
 	void FinishSprint();
@@ -58,18 +63,25 @@ protected:
 	virtual void SetStandingCollisionCamera();
 	virtual void SetCrouchingCollisionCamera();
 	virtual void SetProningCollisionCamera() ;
+
+private:
+	void ClearThrowSpline(); 
+	void DrawThrowSplineMeshes();
+
 protected: 
 
 	FTimerHandle _rollingTimerHandle;
 
+	// 상태
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
-	UPROPERTY()
-	class AThrowable* _heldThrowable = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStatComponent* _statComponent;
+
+	// 투척물
+	UPROPERTY()
+	class AThrowable* _heldThrowable = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ATimedGrenadeBase> _grenadeClass;
 
@@ -79,10 +91,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AStratagem> _stratagemClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
+	class UStratagemComponent* _stratagemComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables")
 	AStratagem* _equippedStratagem;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables/Trajectory", meta = (AllowPrivateAccess = "true"))
+	class USplineComponent* _trajectorySpline;
 
+	FTimerHandle _throwPreviewTimer;
+
+	bool _isPreviewingThrow = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables/Trajectory")
+	UStaticMesh* _trajectoryMesh;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables/Trajectory")
+	UMaterialInterface* _trajectoryMaterial;
+
+	// 생성된 메쉬 저장용
+	UPROPERTY()
+	TArray<class USplineMeshComponent*> _trajectoryMeshPool;
+
+	// 자세
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta = (AllowPrivateAccess = "true"))
 	class UCollisionCameraDataAsset* _standingStance;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
@@ -90,7 +122,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
 	class UCollisionCameraDataAsset* _proningStance;
 
-
+	// 총기
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AGunBase> _gunClass1;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))

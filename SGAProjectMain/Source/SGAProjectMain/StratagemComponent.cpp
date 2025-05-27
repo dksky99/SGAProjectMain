@@ -2,6 +2,7 @@
 
 
 #include "StratagemComponent.h"
+#include "Object/Stratagem/Stratagem.h"
 
 // Sets default values for this component's properties
 UStratagemComponent::UStratagemComponent()
@@ -23,12 +24,64 @@ void UStratagemComponent::BeginPlay()
 	
 }
 
-
-// Called every frame
-void UStratagemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UStratagemComponent::TryUseCurrentStratagem()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!StratagemSlots.IsValidIndex(CurrentSlotIndex))
+		return;
 
-	// ...
+	FStratagemSlot& slot = StratagemSlots[CurrentSlotIndex];
+
+	if (IsStratagemOnCooldown(CurrentSlotIndex))
+		return;
+
+	StratagemSlots[CurrentSlotIndex].LastUsedTime = GetWorld()->GetTimeSeconds();
+}
+
+void UStratagemComponent::SelectStratagem(int32 Index)
+{
+	if (StratagemSlots.IsValidIndex(Index))
+	{
+		CurrentSlotIndex = Index;
+	}
+}
+
+TSubclassOf<AStratagem> UStratagemComponent::GetSelectedStratagemClass() const
+{
+	if (StratagemSlots.IsValidIndex(CurrentSlotIndex))
+	{
+		return StratagemSlots[CurrentSlotIndex].StratagemClass;
+	}
+	return nullptr;
+}
+
+bool UStratagemComponent::IsStratagemOnCooldown(int32 SlotIndex) const
+{
+	if (!StratagemSlots.IsValidIndex(SlotIndex))
+		return true;
+
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	const FStratagemSlot& slot = StratagemSlots[SlotIndex];
+
+	return (CurrentTime - slot.LastUsedTime) < slot.Cooldown;
+}
+
+float UStratagemComponent::GetRemainingCooldown(int32 SlotIndex) const
+{
+	if (!StratagemSlots.IsValidIndex(SlotIndex))
+		return 0.0f;
+
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	const FStratagemSlot& slot = StratagemSlots[SlotIndex];
+
+	float elapsed = CurrentTime - slot.LastUsedTime;
+	return FMath::Clamp(slot.Cooldown - elapsed, 0.0f, slot.Cooldown);
+}
+
+void UStratagemComponent::CommitStratagemUse()
+{
+	if (StratagemSlots.IsValidIndex(CurrentSlotIndex))
+	{
+		StratagemSlots[CurrentSlotIndex].LastUsedTime = GetWorld()->GetTimeSeconds();
+	}
 }
 
