@@ -193,13 +193,13 @@ protected:
 	TSubclassOf<UUserWidget> _gunWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
-	class UGunUI* _gunWidget;
+	class UGunWidget* _gunWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _gunSettingWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
-	class UGunSettingUI* _gunSettingWidget;
+	class UGunSettingWidget* _gunSettingWidget;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))

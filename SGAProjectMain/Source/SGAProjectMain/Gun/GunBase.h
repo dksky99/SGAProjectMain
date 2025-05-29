@@ -77,7 +77,11 @@ struct FGunData // : public FTableRowBase
 	float _falloff100 = 0.133f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<EFireMode> _fireModes = { EFireMode::Auto, EFireMode::Burst, EFireMode::Semi};
+	TArray<EFireMode> _fireModes = { EFireMode::Auto, EFireMode::Burst, EFireMode::Semi };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<ETacticalLightMode> _lightModes = {};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> _scopeModes = {};
 };
 
 UCLASS()
@@ -133,6 +137,11 @@ public:
 
 	FGunData GetGunData() { return _gunData; }
 	int32 GetCurAmmo() { return _isChamberLoaded ? _curAmmo + 1 : _curAmmo; }
+	EFireMode GetCurFireMode() { return _fireMode; }
+	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
+	int32 GetCurScopeMode() { return _scopeMode; }
+
+
 
 	FAmmoChanged _ammoChanged;
 
@@ -194,4 +203,6 @@ private:
 	// 볼트액션용
 	FTimerHandle _boltActionTimer;
 	bool _canFire = true;
+
+	int32 _scopeMode;
 };

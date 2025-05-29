@@ -20,8 +20,8 @@
 #include "Engine/OverlapResult.h"
 
 #include "../Gun/GunBase.h"
-#include "../UI/GunUI.h"
-#include "../UI/GunSettingUI.h"
+#include "../UI/GunWidget.h"
+#include "../UI/GunSettingWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -75,12 +75,12 @@ void APlayerCharacter::PostInitializeComponents()
 
 	if (_gunWidgetClass)
 	{
-		_gunWidget = CreateWidget<UGunUI>(GetWorld(), _gunWidgetClass);
+		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
 
 	if (_gunSettingWidgetClass)
 	{
-		_gunSettingWidget = CreateWidget<UGunSettingUI>(GetWorld(), _gunSettingWidgetClass);
+		_gunSettingWidget = CreateWidget<UGunSettingWidget>(GetWorld(), _gunSettingWidgetClass);
 	}
 }
 
@@ -101,7 +101,7 @@ void APlayerCharacter::BeginPlay()
 
 	if (_gunWidget)
 	{
-		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_gunWidget->AddToViewport();
 	}
 
@@ -372,11 +372,8 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 	{
-		if (_equippedGun)
-		{
-			_equippedGun->ChangeFireMode();
-			return;
-		}
+		TryChangeFireMode(value);
+		return;
 	}
 
 	_stateComponent->SetAiming(true);
@@ -850,7 +847,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 		EquipGun(_gunSlot[index]);
 
-		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->ActivateGun();
 	}
 
@@ -949,11 +946,11 @@ void APlayerCharacter::EnterGunSetting()
 
 		if (_gunSettingWidget)
 		{
-			_gunSettingWidget->UpdateGunInfo(_equippedGun->GetGunData(), _equippedGun->GetCurAmmo());
+			_gunSettingWidget->InitializeWidget(_equippedGun);
+
 			_gunSettingWidget->SetVisibility(ESlateVisibility::Visible);
 		}
 
-		//_equippedGun->EnterGunSettingMode();
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
 }
@@ -972,6 +969,7 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeFireMode();
+		_gunSettingWidget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 	}
 }
 
@@ -989,5 +987,6 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeTacticalLightMode();
+		_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 	}
 }
