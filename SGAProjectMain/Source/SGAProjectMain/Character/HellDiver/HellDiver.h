@@ -28,6 +28,7 @@ public:
 	void StopThrowPreview();
 	UFUNCTION()
 	void UpdateThrowSpline();
+	class AThrowable* GetHeldThrowable() { return _heldThrowable; }
 
 	void StartSprint();
 	void FinishSprint();
@@ -93,9 +94,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
 	ATimedGrenadeBase* _equippedGrenade;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AStratagem> _stratagemClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	class UStratagemComponent* _stratagemComponent;

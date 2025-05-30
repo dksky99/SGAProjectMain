@@ -38,11 +38,17 @@ protected:
 
 public:	
 	void TryUseCurrentStratagem();
-	void SelectStratagem(int32 Index);
+	
 	TSubclassOf<class AStratagem> GetSelectedStratagemClass() const;
+	void SelectStratagem(int32 Index);
+
+	void CommitStratagemUse();
+	int32 FindStratagemByInputSequence(const TArray<FKey>& InputSequence) const;
+
 	bool IsStratagemOnCooldown(int32 SlotIndex) const;
 	float GetRemainingCooldown(int32 SlotIndex) const;
-	void CommitStratagemUse();
+
+	const TArray<FStratagemSlot>& GetStratagemSlots() const { return StratagemSlots; }
 		
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")

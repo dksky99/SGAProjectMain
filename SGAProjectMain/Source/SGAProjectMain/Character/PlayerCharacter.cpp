@@ -24,6 +24,7 @@
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
+#include "../StratagemComponent.h"
 
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
@@ -134,13 +135,21 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
-		enhancedInputComponent->BindAction(_stratagemAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipStratagem);
 		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
+		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BeginStratagemInputMode);
+		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndStratagemInputMode);
+		enhancedInputComponent->BindAction(_strataWAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyW);
+		enhancedInputComponent->BindAction(_strataAAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyA);
+		enhancedInputComponent->BindAction(_strataSAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyS);
+		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
 	}
 }
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
+	if (_playerState == EPlayerState::StratagemInputting) // 스트라타젬입력 모드에서는 동작안함
+		return;
+
 	FVector2D moveVector = value.Get<FVector2D>();
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
@@ -254,7 +263,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		}
 		else if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
 		{
-			_playerState = EPlayerState::StratagemInputting;
+			StartThrowPreview();
 		}
 
 		break;
@@ -266,6 +275,10 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		break;
 
 	case EPlayerState::StratagemInputting:
+		if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
+		{
+
+		}
 		break;
 
 	case EPlayerState::Rolling:
@@ -289,7 +302,6 @@ void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 	case EPlayerState::CookingGrenade:
 		if(_equippedGrenade)
 			_equippedGrenade->UpdateCookingGrenade();
-		StartThrowPreview();
 		break;
 
 	case EPlayerState::StratagemInputting:
@@ -308,6 +320,11 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	switch (_playerState)
 	{
 	case EPlayerState::Idle:
+		if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
+		{
+			OnThrowReleased();
+			StopThrowPreview();
+		}
 		break;
 
 	case EPlayerState::Firing:
@@ -851,6 +868,112 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 	if (wasFiring) // 사격 중이었을 경우 유지
 		StartFiring(value);
+}
+
+void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::Idle)
+	{
+		_playerState = EPlayerState::StratagemInputting;
+		_stratagemInputBuffer.Empty();
+	}
+}
+
+void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_playerState = EPlayerState::Idle;
+		_stratagemInputBuffer.Empty(); // 조합 초기화
+	}
+}
+
+void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::W);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::A);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::S);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::D);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::CheckStratagemInputCombo()
+{
+	const TArray<FStratagemSlot>& slots = _stratagemComponent->GetStratagemSlots();
+	bool bIsPrefixMatch = false;
+
+	for (int32 i = 0; i < slots.Num(); ++i)
+	{
+		if (_stratagemComponent->IsStratagemOnCooldown(i))
+			continue;
+
+		TSubclassOf<AStratagem> stratagemClass = slots[i].StratagemClass;
+		if (!stratagemClass) continue;
+
+		const AStratagem* CDO = stratagemClass->GetDefaultObject<AStratagem>();
+		const TArray<FKey>& combo = CDO->GetInputSequence();
+
+		// 완전 일치 → 장비
+		if (_stratagemInputBuffer == combo)
+		{
+			_stratagemComponent->SelectStratagem(i);
+			EquipStratagem();
+
+			_stratagemInputBuffer.Empty();
+			_playerState = EPlayerState::Idle;
+			return;
+		}
+
+		// 사용 가능한 스트라타젬이 있는지 확인
+		if (_stratagemInputBuffer.Num() <= combo.Num())
+		{
+			bool bPrefixMatch = true;
+			for (int32 j = 0; j < _stratagemInputBuffer.Num(); ++j)
+			{
+				if (_stratagemInputBuffer[j] != combo[j])
+				{
+					bPrefixMatch = false;
+					break;
+				}
+			}
+			if (bPrefixMatch)
+			{
+				bIsPrefixMatch = true;
+			}
+		}
+	}
+
+	if (!bIsPrefixMatch)
+	{
+		_stratagemInputBuffer.Empty(); // 조합 초기화
+	}
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
