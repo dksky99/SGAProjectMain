@@ -115,7 +115,10 @@ void AThrowable::OnLifeTimeExpired()
 
 void AThrowable::DestroySelf()
 {
-	_owner->StopThrowPreview();
+	if (_owner && _owner->GetHeldThrowable() == this) // 손에 들고 있던 수류탄일 경우만
+	{
+		_owner->StopThrowPreview();
+	}
 
 	GetWorldTimerManager().ClearTimer(_destroyTimerHandle);
 	Destroy();

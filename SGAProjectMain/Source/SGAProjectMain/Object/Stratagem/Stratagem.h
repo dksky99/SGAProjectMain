@@ -16,8 +16,13 @@ class SGAPROJECTMAIN_API AStratagem : public AThrowable
 	
 public:
 	void DeployStratagem();
+
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+	
 	bool IsSurfaceAttachable(const FHitResult& Hit);
+
+	UFUNCTION(BlueprintPure)
+	const TArray<FKey>& GetInputSequence() const { return _inputSequence; }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
@@ -28,6 +33,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
 	bool _isAttackStratagem = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
+	TArray<FKey> _inputSequence;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
 	AActor* _targetActor = nullptr;

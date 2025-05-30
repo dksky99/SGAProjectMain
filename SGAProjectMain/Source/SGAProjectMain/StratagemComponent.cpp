@@ -85,3 +85,23 @@ void UStratagemComponent::CommitStratagemUse()
 	}
 }
 
+int32 UStratagemComponent::FindStratagemByInputSequence(const TArray<FKey>& InputSequence) const
+{
+	for (int32 i = 0; i < StratagemSlots.Num(); ++i)
+	{
+		TSubclassOf<AStratagem> stratagemClass = StratagemSlots[i].StratagemClass;
+		if (!stratagemClass) continue;
+
+		const AStratagem* CDO = stratagemClass->GetDefaultObject<AStratagem>();
+		if (!CDO) continue;
+
+		const TArray<FKey>& combo = CDO->GetInputSequence();
+
+		if (combo == InputSequence)
+		{
+			return i;
+		}
+	}
+	return INDEX_NONE;
+}
+
