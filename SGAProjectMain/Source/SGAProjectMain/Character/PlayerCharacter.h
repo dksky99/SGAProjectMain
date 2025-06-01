@@ -114,6 +114,8 @@ public:
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
 
+	void Interact(const  FInputActionValue& value);
+
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
 
@@ -171,6 +173,8 @@ protected:
 	class UInputAction* _stratagemAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _interactAction;
 
 
 	EPlayerState _playerState;
