@@ -129,6 +129,7 @@ public:
 
 	void CheckStratagemInputCombo();
 
+	void Interact(const  FInputActionValue& value);
 
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
@@ -185,6 +186,8 @@ protected:
 	class UInputAction* _grenadeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _interactAction;
 
 
 	TArray<FKey> _stratagemInputBuffer;

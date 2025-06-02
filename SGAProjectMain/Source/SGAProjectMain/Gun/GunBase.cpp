@@ -57,6 +57,7 @@ void AGunBase::BeginPlay()
 	}
 
 	_curAmmo = _gunData._maxAmmo;
+	_curMag = _gunData._initialMag;
 	_maxVerticalRecoil = _gunData._verticalRecoil;
 	_maxHorizontalRecoil = _gunData._horizontalRecoil;
 }
@@ -282,7 +283,13 @@ void AGunBase::ActivateGun()
 	if (_ammoChanged.IsBound())
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-		UE_LOG(LogTemp, Log, TEXT("BroadCast"));
+		UE_LOG(LogTemp, Log, TEXT("BroadCast1"));
+	}
+
+	if (_magChanged.IsBound())
+	{
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
+		UE_LOG(LogTemp, Log, TEXT("BroadCast2"));
 	}
 }
 
@@ -333,6 +340,7 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 	switch (_reloadStage)
 	{
 	case EReloadStage::None:
+		if (_curMag <= 0) return;
 		//PlayAnimMontage(temp);
 		break;
 
@@ -349,6 +357,7 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 		break;
 
 	case EReloadStage::RoundsReload:
+		if (_curMag <= 0) return;
 		//PlayAnimMontage(temp);
 		break;
 	}
@@ -370,6 +379,7 @@ void AGunBase::ChangeReloadStage()
 
 	case EReloadStage::RemoveMag: // 탄창 제거 상태
 		_reloadStage = EReloadStage::InsertMag;
+		_curMag--;
 		//Reload();
 		break;
 
@@ -396,6 +406,7 @@ void AGunBase::ChangeReloadStage()
 
 	case EReloadStage::RoundsReload:
 		_curAmmo++;
+		_curMag--;
 		_owner->GetStateComponent()->SetReloading(false);
 		//Reload();
 		break;
@@ -405,6 +416,9 @@ void AGunBase::ChangeReloadStage()
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 	}
+
+	if (_magChanged.IsBound())
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 }
 
 void AGunBase::CancelReload()
@@ -414,6 +428,17 @@ void AGunBase::CancelReload()
 
 	//StopAnimMontage();
 	_owner->GetStateComponent()->SetReloading(false);
+}
+
+void AGunBase::RefillMag()
+{
+	_curMag += _gunData._refillMagAmount;
+
+	if (_curMag > _gunData._maxMag)
+		_curMag = _gunData._maxMag;
+
+	if (_magChanged.IsBound())
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 }
 
 float AGunBase::CalculateDamage(float distance)
@@ -564,16 +589,6 @@ FHitResult AGunBase::GetHitResult()
 		ECC_Visibility);
 
 	return hit;
-}
-
-void AGunBase::EnterGunSettingMode()
-{
-	// TODO - UI
-}
-
-void AGunBase::ExitGunSettingMode()
-{
-	// TODO -UI
 }
 
 void AGunBase::ChangeFireMode()

@@ -103,7 +103,9 @@ void APlayerCharacter::BeginPlay()
 	if (_gunWidget)
 	{
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_gunWidget->AddToViewport();
+		_equippedGun->ActivateGun();
 	}
 
 	if (_gunSettingWidget)
@@ -154,6 +156,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_strataAAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyA);
 		enhancedInputComponent->BindAction(_strataSAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyS);
 		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
+		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 	}
 }
 
@@ -845,8 +848,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		return;
 
 	if (_isGunSettingMode)
-	{
-		_equippedGun->ExitGunSettingMode();
+	{;
 		_isGunSettingMode = false;
 	}
 
@@ -863,12 +865,14 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 	}
 	else
 	{
-		_equippedGun->_ammoChanged.Clear();
+		_equippedGun->_ammoChanged.RemoveAll(_gunWidget);
+		_equippedGun->_magChanged.RemoveAll(_gunWidget);
 		_equippedGun->DeactivateGun();
 
 		EquipGun(_gunSlot[index]);
 
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_equippedGun->ActivateGun();
 	}
 
@@ -983,6 +987,11 @@ void APlayerCharacter::CheckStratagemInputCombo()
 	{
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 	}
+}
+
+void APlayerCharacter::Interact(const FInputActionValue& value)
+{
+	RefillAllItem();
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)

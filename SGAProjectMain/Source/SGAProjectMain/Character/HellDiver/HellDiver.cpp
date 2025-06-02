@@ -373,6 +373,22 @@ void AHellDiver::EquipGun(AGunBase* gun)
     UE_LOG(LogTemp, Log, TEXT("Equip Gun"));
 }
 
+void AHellDiver::RefillAllItem()
+{
+    RefillMag();
+}
+
+void AHellDiver::RefillMag()
+{
+    for (auto gun : _gunSlot)
+    {
+        if (gun)
+        {
+            gun->RefillMag();
+        }
+    }
+}
+
 void AHellDiver::MotionChangeFinish()
 {
 

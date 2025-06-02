@@ -51,6 +51,9 @@ public:
 	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
 	void EquipGun(AGunBase* gun);
 
+	void RefillAllItem();
+	void RefillMag();
+
 	void MotionChangeFinish();
 
 	virtual void Landed(const FHitResult& Hit) override;

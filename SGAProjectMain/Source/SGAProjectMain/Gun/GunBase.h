@@ -7,6 +7,7 @@
 #include "GunBase.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FMagChanged, int, int);
 
 UENUM(BlueprintType)
 enum class EFireMode : uint8
@@ -53,6 +54,14 @@ struct FGunData // : public FTableRowBase
 	// 탄약
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;
+
+	// 탄창
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _initialMag = 6;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _maxMag = 8;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _refillMagAmount = 4;
 
 	// 인체공학성
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -117,6 +126,8 @@ public:
 	void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
 
+	void RefillMag();
+
 	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
 
 	void TickRecoil(float DeltaTime); // 움직임에 따른 반동
@@ -125,8 +136,6 @@ public:
 
 	FHitResult GetHitResult();
 	
-	void EnterGunSettingMode();
-	void ExitGunSettingMode();
 	void ChangeFireMode();
 	void ChangeTacticalLightMode();
 
@@ -144,6 +153,7 @@ public:
 
 
 	FAmmoChanged _ammoChanged;
+	FMagChanged _magChanged;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
@@ -155,11 +165,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
 	FGunData _gunData;
 
+
 	bool _isActive = false;
 
 	FTimerHandle _fireTimer;
+	// 볼트액션용
+	FTimerHandle _boltActionTimer;
+	bool _canFire = true;
 
 	int32 _curAmmo;
+	int32 _curMag;
 
 	FVector _hitPoint;
 
@@ -169,14 +184,10 @@ private:
 	float _maxHorizontalRecoil;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	EFireMode _fireMode = EFireMode::Auto;
-	int _fireIndex = 0;
-	int _burstCount = 3;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	EReloadStage _reloadStage = EReloadStage::None;
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	bool _isChamberLoaded = false; // 약실에 탄이 남았는지
+
 
 	UPROPERTY()
 	class AImpactMarker* _marker;
@@ -190,19 +201,20 @@ private:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	class UNiagaraSystem* _laserFX;
-	UPROPERTY()
-	class UNiagaraComponent* _laserpointer;
-
+	EFireMode _fireMode = EFireMode::Auto;
+	int _fireIndex = 0;
+	int _burstCount = 3;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class USpotLightComponent* _tacticalLight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::Auto;
 
-	// 볼트액션용
-	FTimerHandle _boltActionTimer;
-	bool _canFire = true;
-
 	int32 _scopeMode;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* _laserFX;
+	UPROPERTY()
+	class UNiagaraComponent* _laserpointer;
 };
