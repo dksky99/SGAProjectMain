@@ -83,17 +83,20 @@ void UGunSettingWidget::AddSlotToPanel(UPanelWidget* panel, UGunSettingSlotDataA
 
     if (UVerticalBox* vertical = Cast<UVerticalBox>(panel))
     {
-        // scopeMode
-        if (isInsertReversed)
-        {
-            vertical->InsertChildAt(0, slot);
-        }
+        //// scopeMode
+        //if (isInsertReversed)
+        //{
+        //    if (UVerticalBoxSlot* boxSlot = Cast<UVerticalBoxSlot>(slot->Slot))
+        //    {
+        //        boxSlot->SetIndex(0); // 맨 위로 이동
+        //    }
+        //}
 
-        // lightMode
-        else
-        {
+        //// lightMode
+        //else
+        //{
             vertical->AddChild(slot);
-        }
+        //}
     }
 
     // fireMode

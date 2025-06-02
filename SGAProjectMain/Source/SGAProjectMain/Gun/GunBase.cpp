@@ -4,6 +4,7 @@
 #include "GunBase.h"
 
 #include "Engine/DamageEvents.h"
+#include "Kismet/GameplayStatics.h"
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
@@ -192,8 +193,11 @@ void AGunBase::Fire()
 		drawColor = FColor::Red;
 		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
 		float finalDamage = CalculateDamage(distance / 100);
-		UE_LOG(LogTemp, Log, TEXT("Final Damage: %f"), finalDamage);
-		// TODO (데미지)
+
+		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
+		{
+			UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+		}
 	}
 
 	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
@@ -586,7 +590,7 @@ FHitResult AGunBase::GetHitResult()
 		hit,
 		muzzleLocation,
 		end,
-		ECC_Visibility);
+		ECC_Pawn);
 
 	return hit;
 }

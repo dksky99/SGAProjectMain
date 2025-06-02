@@ -48,6 +48,9 @@ public:
 
 	void KnockDownRecovery();
 
+	virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
+	void Dead();
+
 protected:
 
 	float _vertical = 0;
@@ -60,7 +63,4 @@ protected:
 	FText _name;
 
 	FTimerHandle _knockDownTimerHandle;
-
-
-
 };

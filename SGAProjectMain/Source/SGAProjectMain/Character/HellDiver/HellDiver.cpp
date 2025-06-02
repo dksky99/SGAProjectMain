@@ -271,6 +271,18 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
 }
 
+float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
+{
+    _statComponent->ChangeHp(-damageAmount);
+
+    UE_LOG(LogTemp, Log, TEXT("Damage : %f"), damageAmount);
+
+    if (_statComponent->IsDead())
+        Dead();
+
+    return -damageAmount;
+}
+
 FTransform  AHellDiver::GetHandSocketTransform() const
 {
 	USkeletalMeshComponent* mesh = GetMesh();
