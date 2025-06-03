@@ -91,6 +91,7 @@ public:
 	void SetActionState(EActionState state) { _actionState = state; }
 	ELifeState GetLifeState() { return _lifeState; }
 	void SetLifeState(ELifeState state) { _lifeState = state; }
+
 	bool IsRolling() { return _isRolling; }
 	bool IsReloading() { return _isReloading; }
 	void SetReloading(bool isReloading) { _isReloading = isReloading; }
@@ -98,7 +99,10 @@ public:
 	void SetFiring(bool isFiring) { _isFiring = isFiring; }
 	bool IsAiming() { return _isAiming; }
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
-
+	bool IsCookingGrenade() { return _isCookingGrenade; }
+	void SetCookingGrenade(bool isCookingGrenade) { _isCookingGrenade = isCookingGrenade; }
+	bool IsInputtingStratagem(){ return _isInputtingStratagem; }
+	void SetInputtingStratagem(bool isInputtingStratagem) { _isInputtingStratagem = isInputtingStratagem; }
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
@@ -138,6 +142,8 @@ protected:
 	bool _isReloading = false;
 	bool _isRolling = false;
 	bool _isAiming = false;
+	bool _isCookingGrenade = false;
+	bool _isInputtingStratagem = false;
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;

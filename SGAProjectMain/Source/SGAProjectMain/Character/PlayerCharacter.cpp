@@ -150,6 +150,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
 		enhancedInputComponent->BindAction(_stratagemAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipStratagem);
 		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
+		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode);
+		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView);
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 	}
 }
@@ -252,7 +254,24 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		break;
 	}
 
-	switch (_playerState)
+	switch (_stateComponent->GetWeaponState())
+	{
+	case EWeaponType::PrimaryWeapon:
+		_stateComponent->SetFiring(true);
+		_equippedGun->StartFire();
+		break;
+
+	case EWeaponType::Grenade:
+		_stateComponent->SetCookingGrenade(true);
+		_equippedGrenade->StartCookingGrenade();
+		break;
+
+	case EWeaponType::StratagemDevice:
+		_stateComponent->SetInputtingStratagem(true);
+		break;
+	}
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
 		if (GetStateComponent()->GetWeaponState() == EWeaponType::PrimaryWeapon)
@@ -287,12 +306,16 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 {
-	switch (_playerState)
+	if (_stateComponent->IsCookingGrenade())
+		if (_equippedGrenade)
+			_equippedGrenade->UpdateCookingGrenade();
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
 		break;
@@ -313,12 +336,31 @@ void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::StopFiring(const FInputActionValue& value)
 {
-	switch (_playerState)
+	if (_stateComponent->IsFiring())
+	{
+		_stateComponent->SetFiring(false);
+		_equippedGun->StopFire();
+		return;
+	}
+	else if (_stateComponent->IsCookingGrenade())
+	{
+		_stateComponent->SetCookingGrenade(false);
+		OnThrowReleased();
+		return;
+	}
+	else if (_stateComponent->IsInputtingStratagem())
+	{
+		_stateComponent->SetInputtingStratagem(false);
+		OnThrowReleased();
+		return;
+	}
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
 		break;
@@ -344,7 +386,7 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
@@ -836,7 +878,9 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 	bool wasAiming = _stateComponent->IsAiming();
 	bool wasFiring = _stateComponent->IsFiring();
-	_playerState = EPlayerState::Idle;
+	//_playerState = EPlayerState::Idle;
+	_stateComponent->SetAiming(false);
+	_stateComponent->SetFiring(false);
 
 	if (index == 3)
 	{
@@ -921,6 +965,7 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 			}
 			//_equippedGun->ExitGunSettingMode();
 			_isGunSettingMode = false;
+			return;
 		}
 		else
 		{
@@ -928,6 +973,7 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 			_equippedGun->StopAiming();
 			_equippedGun->StopFire();
 			_equippedGun->Reload();
+			return;
 		}
 	}
 }
@@ -997,5 +1043,44 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 	{
 		_equippedGun->ChangeTacticalLightMode();
 		_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
+	}
+}
+
+void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
+{
+	if (_stateComponent->IsAiming())
+		return;
+
+	if (_stateComponent->IsFiring())
+		return;
+
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
+	if (_equippedGun && _isGunSettingMode)
+	{
+		_equippedGun->ChangeScopeMode();
+		_gunSettingWidget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
+	}
+}
+
+void APlayerCharacter::ChangeAimingView(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Log, TEXT("TryAimChange"));
+
+	bool isAiming = _stateComponent->IsAiming();
+
+	if (!isAiming) return;
+
+	if (_viewType == ECharacterViewType::TPSZoom)
+	{
+		SetFPSView();
+		return;
+	}
+
+	if (_viewType == ECharacterViewType::FPS)
+	{
+		SetTPSZoomView();
+		return;
 	}
 }

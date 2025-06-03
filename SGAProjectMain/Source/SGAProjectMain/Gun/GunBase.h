@@ -138,6 +138,7 @@ public:
 	
 	void ChangeFireMode();
 	void ChangeTacticalLightMode();
+	void ChangeScopeMode();
 
 	void UseLaserPoint(FVector hitPoint);
 	void UseTacticalLight(bool isAiming);
@@ -202,15 +203,17 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	EFireMode _fireMode = EFireMode::Auto;
-	int _fireIndex = 0;
-	int _burstCount = 3;
+	int32 _fireIndex = 0;
+	int32 _burstCount = 3;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class USpotLightComponent* _tacticalLight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::Auto;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	int32 _scopeMode;
+	int32 _scopeIndex;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))

@@ -10,17 +10,17 @@
  * 
  */
 
-UENUM(BlueprintType)
-enum class EPlayerState : uint8
-{
-	Idle,
-	Firing,
-	CookingGrenade,
-	StratagemInputting,
-	Rolling,
-	Reloading,
-	// 필요하면 추가
-};
+//UENUM(BlueprintType)
+//enum class EPlayerState : uint8
+//{
+//	Idle,
+//	Firing,
+//	CookingGrenade,
+//	StratagemInputting,
+//	Rolling,
+//	Reloading,
+//	// 필요하면 추가
+//};
 
 UENUM()
 enum class ECharacterViewType : uint8
@@ -83,7 +83,11 @@ public:
 	void TryChangeFireMode(const  FInputActionValue& value);
 	UFUNCTION()
 	void TryChangeLightMode(const  FInputActionValue& value);
+	UFUNCTION()
+	void TryChangeScopeMode(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void ChangeAimingView(const  FInputActionValue& value);
 
 	UFUNCTION()
 	void TrySprint(const  FInputActionValue& value);
@@ -174,10 +178,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _scopeChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _aimChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _interactAction;
 
 
-	EPlayerState _playerState;
+	//EPlayerState _playerState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
 	class UPlayerControlDataAsset* _defaultControl;

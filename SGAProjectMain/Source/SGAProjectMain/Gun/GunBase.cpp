@@ -629,6 +629,17 @@ void AGunBase::ChangeTacticalLightMode()
 	UE_LOG(LogTemp, Log, TEXT("Light Mode Change"));
 }
 
+void AGunBase::ChangeScopeMode()
+{
+	if (_gunData._scopeModes.Num() <= 1)
+		return;
+
+	_scopeIndex = (_scopeIndex + 1) % _gunData._scopeModes.Num();
+	_scopeMode = _gunData._scopeModes[_scopeIndex];
+
+	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
+}
+
 void AGunBase::UseLaserPoint(FVector hitPoint)
 {
 	FVector start;
