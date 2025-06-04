@@ -189,6 +189,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	bool _isChamberLoaded = false; // 약실에 탄이 남았는지
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _reloadMontage;
+
 
 	UPROPERTY()
 	class AImpactMarker* _marker;

@@ -26,6 +26,9 @@ public:
 
 	void GetCurrentMoveNode();
 
+	UFUNCTION()
+	void AnimNotify_Reload();
+
 	FOnMoveAnimStateChanged _moveChanged;
 	FOnLookAnimStateChanged _lookChanged;
 

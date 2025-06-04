@@ -10,6 +10,7 @@
 
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
+#include "../Character/CharacterAnimInstance.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -287,13 +288,11 @@ void AGunBase::ActivateGun()
 	if (_ammoChanged.IsBound())
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-		UE_LOG(LogTemp, Log, TEXT("BroadCast1"));
 	}
 
 	if (_magChanged.IsBound())
 	{
 		_magChanged.Broadcast(_curMag, _gunData._maxMag);
-		UE_LOG(LogTemp, Log, TEXT("BroadCast2"));
 	}
 }
 
@@ -341,32 +340,72 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 
 	_owner->GetStateComponent()->SetReloading(true);
 
-	switch (_reloadStage)
+	if (!_reloadMontage) return;
+
+	if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(_owner->GetMesh()->GetAnimInstance()))
 	{
-	case EReloadStage::None:
-		if (_curMag <= 0) return;
-		//PlayAnimMontage(temp);
-		break;
+		animInstance->PlayAnimMontage(_reloadMontage);
 
-	case EReloadStage::RemoveMag:
-		//PlayAnimMontage(temp);
-		break;
+		int32 sectionIndex = -1;
+		switch (_reloadStage)
+		{
+		case EReloadStage::None:	
+			if (_curMag <= 0) return;
+			sectionIndex = 0;
+			break;
 
-	case EReloadStage::InsertMag:
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::RemoveMag:
+			sectionIndex = 1;
+			break;
 
-	case EReloadStage::CloseBolt:
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::InsertMag:
+			sectionIndex = 2;
+			break;
 
-	case EReloadStage::RoundsReload:
-		if (_curMag <= 0) return;
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::CloseBolt:
+			sectionIndex = 3;
+			break;
+
+		case EReloadStage::RoundsReload:
+			if (_curMag <= 0) return;
+			sectionIndex = 3;
+			break;
+
+		default:
+			return;
+		}
+
+		if (sectionIndex >= 0)
+		{
+			animInstance->JumpToSection(sectionIndex);
+		}
 	}
-
-	ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
+	//switch (_reloadStage)
+	//{
+	//case EReloadStage::None:
+	//	if (_curMag <= 0) return;
+	//	//PlayAnimMontage(temp);
+	//	break;
+	//
+	//case EReloadStage::RemoveMag:
+	//	//PlayAnimMontage(temp);
+	//	break;
+	//
+	//case EReloadStage::InsertMag:
+	//	//PlayAnimMontage(temp);
+	//	break;
+	//
+	//case EReloadStage::CloseBolt:
+	//	//PlayAnimMontage(temp);
+	//	break;
+	//
+	//case EReloadStage::RoundsReload:
+	//	if (_curMag <= 0) return;
+	//	//PlayAnimMontage(temp);
+	//	break;
+	//}
+	//
+	//ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
 }
 
 void AGunBase::ChangeReloadStage()
@@ -378,13 +417,15 @@ void AGunBase::ChangeReloadStage()
 		if (_curAmmo > 0 || _isChamberLoaded) // 탄창이나 약실에 탄이 있을 경우
 			_isChamberLoaded = true; // 약실 채우기
 		_curAmmo = 0;
-		//Reload();
+		UE_LOG(LogTemp, Log, TEXT("None->RemoveMag"));
+		Reload();
 		break;
 
 	case EReloadStage::RemoveMag: // 탄창 제거 상태
 		_reloadStage = EReloadStage::InsertMag;
 		_curMag--;
-		//Reload();
+		Reload();
+		UE_LOG(LogTemp, Log, TEXT("RemoveMag->InsertMag"));
 		break;
 
 	case EReloadStage::InsertMag: // 탄창 삽입 상태
@@ -394,11 +435,13 @@ void AGunBase::ChangeReloadStage()
 			_curAmmo = _gunData._maxAmmo;
 			_owner->GetStateComponent()->SetReloading(false);
 			_reloadStage = EReloadStage::None;  // 전술 재장전 -> CloseBolt 생략
+			UE_LOG(LogTemp, Log, TEXT("InsertMag->None"));
 		}
 		else
 		{
 			_reloadStage = EReloadStage::CloseBolt; // 약실에 탄이 없을 경우 CloseBolt
-			//Reload();
+			Reload();
+			UE_LOG(LogTemp, Log, TEXT("InsertMag->CloseBolt"));
 		}
 		break;
 
@@ -406,13 +449,15 @@ void AGunBase::ChangeReloadStage()
 		_curAmmo = _gunData._maxAmmo;
 		_owner->GetStateComponent()->SetReloading(false);
 		_reloadStage = EReloadStage::None;
+		UE_LOG(LogTemp, Log, TEXT("CloseBolt->None"));
 		break;
 
 	case EReloadStage::RoundsReload:
 		_curAmmo++;
 		_curMag--;
 		_owner->GetStateComponent()->SetReloading(false);
-		//Reload();
+		Reload();
+		UE_LOG(LogTemp, Log, TEXT("RoundsReload"));
 		break;
 	}
 

@@ -44,6 +44,7 @@ public:
 
 	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
 	void EquipGun(AGunBase* gun);
+	AGunBase* GetEquippedGun() { return _equippedGun; }
 
 	void RefillAllItem();
 	void RefillMag();
