@@ -20,6 +20,7 @@
 #include "Engine/OverlapResult.h"
 
 #include "../Gun/GunBase.h"
+#include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
 
@@ -79,10 +80,10 @@ void APlayerCharacter::PostInitializeComponents()
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
 
-	if (_gunSettingWidgetClass)
+	/*if (_gunSettingWidgetClass)
 	{
 		_gunSettingWidget = CreateWidget<UGunSettingWidget>(GetWorld(), _gunSettingWidgetClass);
-	}
+	}*/
 }
 
 void APlayerCharacter::BeginPlay()
@@ -108,11 +109,11 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->ActivateGun();
 	}
 
-	if (_gunSettingWidget)
+	/*if (_gunSettingWidget)
 	{
 		_gunSettingWidget->AddToViewport();
 		_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	}*/
 
 }
 
@@ -1086,11 +1087,12 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
 			
-			if (_gunSettingWidget)
+			GetGameInstance()->GetSubsystem<UUIManager>()->ClosePopUp("GunSetting");
+			/*if (_gunSettingWidget)
 			{
 				_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-			}
-			//_equippedGun->ExitGunSettingMode();
+			}*/
+			
 			_isGunSettingMode = false;
 			return;
 		}
@@ -1126,12 +1128,16 @@ void APlayerCharacter::EnterGunSetting()
 		if (_stateComponent->IsFiring())
 			return;
 
-		if (_gunSettingWidget)
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->InitializeWidget(_equippedGun);
+		}
+		/*if (_gunSettingWidget)
 		{
 			_gunSettingWidget->InitializeWidget(_equippedGun);
 
 			_gunSettingWidget->SetVisibility(ESlateVisibility::Visible);
-		}
+		}*/
 
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
@@ -1151,7 +1157,11 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeFireMode();
-		_gunSettingWidget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
+		}
+		//_gunSettingWidget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 	}
 }
 
@@ -1169,7 +1179,12 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeTacticalLightMode();
-		_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
+
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
+		}
+		//_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 	}
 }
 
@@ -1187,7 +1202,11 @@ void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeScopeMode();
-		_gunSettingWidget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
+		}
+		//_gunSettingWidget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
 	}
 }
 

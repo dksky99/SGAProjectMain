@@ -233,11 +233,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class UGunWidget* _gunWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	/*UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _gunSettingWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
-	class UGunSettingWidget* _gunSettingWidget;
+	class UGunSettingWidget* _gunSettingWidget;*/
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
