@@ -60,8 +60,6 @@ void AGunBase::BeginPlay()
 
 	_curAmmo = _gunData._maxAmmo;
 	_curMag = _gunData._initialMag;
-	_maxVerticalRecoil = _gunData._verticalRecoil;
-	_maxHorizontalRecoil = _gunData._horizontalRecoil;
 }
 
 // Called every frame
@@ -72,11 +70,9 @@ void AGunBase::Tick(float DeltaTime)
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!camera) return;
 	
-	//TickRecoil(DeltaTime);
+	RecoverRecoil(DeltaTime);
 	FHitResult hitResult= GetHitResult();
 	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
-
-	//_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, _gunData._ergo / 7.f);
 
 	if (_laserpointer)
 		UseLaserPoint(_hitPoint);
@@ -152,6 +148,8 @@ void AGunBase::Fire()
 		}
 		_burstCount--;
 	}
+
+	ApplyFireRecoil();
 
 	FHitResult hitResult = GetHitResult();
 	/*ApplyFireRecoil();
@@ -283,7 +281,7 @@ void AGunBase::ActivateGun()
 	_isActive = true;
 	SetActorHiddenInGame(false);
 
-	_recoilOffset = FRotator::ZeroRotator;
+	_recoilToRecover = FRotator::ZeroRotator;
 
 	if (_ammoChanged.IsBound())
 	{
@@ -380,32 +378,6 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 			animInstance->JumpToSection(sectionIndex);
 		}
 	}
-	//switch (_reloadStage)
-	//{
-	//case EReloadStage::None:
-	//	if (_curMag <= 0) return;
-	//	//PlayAnimMontage(temp);
-	//	break;
-	//
-	//case EReloadStage::RemoveMag:
-	//	//PlayAnimMontage(temp);
-	//	break;
-	//
-	//case EReloadStage::InsertMag:
-	//	//PlayAnimMontage(temp);
-	//	break;
-	//
-	//case EReloadStage::CloseBolt:
-	//	//PlayAnimMontage(temp);
-	//	break;
-	//
-	//case EReloadStage::RoundsReload:
-	//	if (_curMag <= 0) return;
-	//	//PlayAnimMontage(temp);
-	//	break;
-	//}
-	//
-	//ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
 }
 
 void AGunBase::ChangeReloadStage()
@@ -516,45 +488,60 @@ float AGunBase::CalculateDamage(float distance)
 	}
 }
 
-void AGunBase::TickRecoil(float DeltaTime)
+//void AGunBase::TickRecoil(float DeltaTime)
+//{
+//	if (_owner->GetStateComponent()->IsFiring())
+//		return;
+//
+//	float recoilMultiplier = GetRecoilMultiplier();
+//
+//	static float RecoilTime = 0.f;
+//	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
+//
+//	// 임시값
+//	float amplitudePitch = 0.12f;
+//	float amplitudeYaw = 0.04f;
+//
+//	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
+//	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
+//}
+
+void AGunBase::RecoverRecoil(float DeltaTime)
 {
-	if (_owner->GetStateComponent()->IsFiring())
-		return;
+	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
+	if (playerController)
+	{
+		float recoverPitch = FMath::FInterpTo(_recoilToRecover.Pitch, 0.f, DeltaTime, _recoilRecoverSpeed);
+		float recoverYaw = FMath::FInterpTo(_recoilToRecover.Yaw, 0.f, DeltaTime, _recoilRecoverSpeed);
 
-	float recoilMultiplier = GetRecoilMultiplier();
+		// 변화량을 반대로 되돌림
+		playerController->AddPitchInput(_recoilToRecover.Pitch - recoverPitch);
+		playerController->AddYawInput(recoverYaw - _recoilToRecover.Yaw);
 
-	static float RecoilTime = 0.f;
-	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
-
-	// 임시값
-	float amplitudePitch = 0.12f;
-	float amplitudeYaw = 0.04f;
-
-	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
-	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
+		_recoilToRecover.Pitch = recoverPitch;
+		_recoilToRecover.Yaw = recoverYaw;
+	}
 }
 
 void AGunBase::ApplyFireRecoil()
 {
 	float recoilMultiplier = GetRecoilMultiplier();
 
-	// 수직 반동 적용
-	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / 5.f;
-	_recoilOffset.Pitch += vertical * recoilMultiplier;
+	// 수직 반동
+	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / _verticalRecoilDamp;
+	// 수평 반동
+	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil / _horizontalRecoilDamp;
 
-	//_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
+	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
+	if (playerController)
+	{
+		playerController->AddPitchInput(-vertical * recoilMultiplier);
+		playerController->AddYawInput(horizontal * recoilMultiplier);
 
-	// 수평 반동 적용
-	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil; // 3.f;
-
-	// 수직 반동이 최대에 도달하면 흔들림 적용 -> 존재하는가?
-	//if (_recoilOffset.Pitch >= _maxVerticalRecoil)
-	//{
-	//	horizontal += FMath::RandRange(-1.f, 1.f) * _gunData._shakeAmount;
-	//}
-	_recoilOffset.Yaw += horizontal * recoilMultiplier;
-	
-	//_recoilOffset.Yaw = FMath::Clamp(_recoilOffset.Yaw, -_maxHorizontalRecoil, _maxHorizontalRecoil) * recoilMultiplier;
+		// 카메라 복구 용
+		_recoilToRecover.Pitch += vertical * recoilMultiplier;
+		_recoilToRecover.Yaw += horizontal * recoilMultiplier;
+	}
 }
 
 float AGunBase::GetRecoilMultiplier()

@@ -79,11 +79,6 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
-
-	/*if (_gunSettingWidgetClass)
-	{
-		_gunSettingWidget = CreateWidget<UGunSettingWidget>(GetWorld(), _gunSettingWidgetClass);
-	}*/
 }
 
 void APlayerCharacter::BeginPlay()
@@ -108,13 +103,6 @@ void APlayerCharacter::BeginPlay()
 		_gunWidget->AddToViewport();
 		_equippedGun->ActivateGun();
 	}
-
-	/*if (_gunSettingWidget)
-	{
-		_gunSettingWidget->AddToViewport();
-		_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}*/
-
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -1088,10 +1076,6 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
 			
 			GetGameInstance()->GetSubsystem<UUIManager>()->ClosePopUp("GunSetting");
-			/*if (_gunSettingWidget)
-			{
-				_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-			}*/
 			
 			_isGunSettingMode = false;
 			return;
@@ -1132,12 +1116,6 @@ void APlayerCharacter::EnterGunSetting()
 		{
 			widget->InitializeWidget(_equippedGun);
 		}
-		/*if (_gunSettingWidget)
-		{
-			_gunSettingWidget->InitializeWidget(_equippedGun);
-
-			_gunSettingWidget->SetVisibility(ESlateVisibility::Visible);
-		}*/
 
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
@@ -1161,7 +1139,6 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 		{
 			widget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 		}
-		//_gunSettingWidget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 	}
 }
 
@@ -1184,7 +1161,6 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 		{
 			widget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 		}
-		//_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 	}
 }
 
@@ -1206,7 +1182,6 @@ void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 		{
 			widget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
 		}
-		//_gunSettingWidget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
 	}
 }
 
