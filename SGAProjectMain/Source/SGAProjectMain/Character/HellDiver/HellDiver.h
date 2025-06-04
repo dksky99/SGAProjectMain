@@ -104,7 +104,7 @@ protected:
 	class UStratagemComponent* _stratagemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables")
-	AStratagem* _equippedStratagem;
+	class AStratagem* _equippedStratagem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables/Trajectory", meta = (AllowPrivateAccess = "true"))
 	class USplineComponent* _trajectorySpline;

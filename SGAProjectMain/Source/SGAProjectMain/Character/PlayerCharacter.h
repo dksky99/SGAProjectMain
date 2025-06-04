@@ -10,17 +10,17 @@
  * 
  */
 
-//UENUM(BlueprintType)
-//enum class EPlayerState : uint8
-//{
-//	Idle,
-//	Firing,
-//	CookingGrenade,
-//	StratagemInputting,
-//	Rolling,
-//	Reloading,
-//	// 필요하면 추가
-//};
+UENUM(BlueprintType)
+enum class EPlayerState : uint8
+{
+	Idle,
+	Firing,
+	CookingGrenade,
+	StratagemInputting,
+	Rolling,
+	Reloading,
+	// 필요하면 추가
+};
 
 UENUM()
 enum class ECharacterViewType : uint8
@@ -210,7 +210,7 @@ protected:
 	class UInputAction* _strataDAction;
 
 
-	//EPlayerState _playerState;
+	EPlayerState _playerState;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
