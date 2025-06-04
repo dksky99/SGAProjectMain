@@ -20,6 +20,7 @@ public:
 	float GetSprintSpeed() { return _sprintSpeed; }
 	float GetCrouchSpeed() { return _crouchSpeed; }
 	float GetProneSpeed() { return _proneSpeed; }
+	float GetPower() { return _power; }
 
 
 
@@ -32,4 +33,6 @@ protected:
 	float _crouchSpeed = 300.0f;
 
 	float _proneSpeed = 200.0f;
+
+	float _power = 1000.0f;
 };

@@ -118,6 +118,21 @@ public:
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
 
+	UFUNCTION()
+	void BeginStratagemInputMode(const FInputActionValue& value);
+	UFUNCTION()
+	void EndStratagemInputMode(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyW(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyA(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyS(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyD(const FInputActionValue& value);
+
+	void CheckStratagemInputCombo();
+
 	void Interact(const  FInputActionValue& value);
 
 	
@@ -174,8 +189,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _grenadeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* _stratagemAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _scopeChangeAction;
@@ -184,8 +197,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _interactAction;
 
+	TArray<FKey> _stratagemInputBuffer;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataInputModeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataWAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataAAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataSAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataDAction;
+
 
 	//EPlayerState _playerState;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
 	class UPlayerControlDataAsset* _defaultControl;
