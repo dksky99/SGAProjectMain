@@ -45,20 +45,23 @@ void UGunSettingWidget::SetSlots(const FGunData& gunData)
             UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
             if (asset)
             {
-                AddSlotToPanel(_fireModePanel, asset, false);
+                AddSlotToPanel(_fireModePanel, asset);
             }
         }
     }
 
     // 2. Range (위쪽)
-    for (int32 scope : gunData._scopeModes)
+    int32 i = gunData._scopeModes.Num() - 1;
+    while (i >= 0)
     {
+        int32 scope = gunData._scopeModes[i];
         FName key = FName(*FString::FromInt(scope));
         UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
         if (asset)
         {
-            AddSlotToPanel(_scopeModePanel, asset, true);
+            AddSlotToPanel(_scopeModePanel, asset);
         }
+        --i;
     }
 
     // 3. Flashlight (아래쪽)
@@ -70,35 +73,20 @@ void UGunSettingWidget::SetSlots(const FGunData& gunData)
             UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
             if (asset)
             {
-                AddSlotToPanel(_lightModePanel, asset, false);
+                AddSlotToPanel(_lightModePanel, asset);
             }
         }
     }
 }
 
-void UGunSettingWidget::AddSlotToPanel(UPanelWidget* panel, UGunSettingSlotDataAsset* asset, bool isInsertReversed)
+void UGunSettingWidget::AddSlotToPanel(UPanelWidget* panel, UGunSettingSlotDataAsset* asset)
 {
     UGunSettingSlotWidget* slot = CreateWidget<UGunSettingSlotWidget>(this, _slotWidgetClass);
     slot->InitializeSlot(asset);
 
     if (UVerticalBox* vertical = Cast<UVerticalBox>(panel))
     {
-        //// scopeMode
-        //if (isInsertReversed)
-        //{
-        //    vertical->InsertChildAt(0, slot);
-        //    UE_LOG(LogTemp, Log, TEXT("test"));
-        //    //if (UVerticalBoxSlot* boxSlot = Cast<UVerticalBoxSlot>(slot->Slot))
-        //    //{
-        //    //    boxSlot->SetIndex(0); // 맨 위로 이동
-        //    //}
-        //}
-
-        //// lightMode
-        //else
-        //{
           vertical->AddChild(slot);
-        //}
     }
 
     // fireMode

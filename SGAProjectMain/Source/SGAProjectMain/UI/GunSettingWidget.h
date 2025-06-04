@@ -20,7 +20,7 @@ public:
 
 	void UpdateGunInfo(const struct FGunData& gunData, int32 curAmmo);
 	void SetSlots(const FGunData& gunData);
-	void AddSlotToPanel(UPanelWidget* panel, class UGunSettingSlotDataAsset* asset, bool isInsertReversed);
+	void AddSlotToPanel(UPanelWidget* panel, class UGunSettingSlotDataAsset* asset);
 
 	void UpdateFireModePanel(EFireMode fireMode);
 	void UpdateLightModePanel(ETacticalLightMode lightMode); 
