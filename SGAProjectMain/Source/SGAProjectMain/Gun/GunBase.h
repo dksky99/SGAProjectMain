@@ -224,9 +224,12 @@ private:
 	int32 _scopeMode;
 	int32 _scopeIndex;
 
-
+	UPROPERTY()
+	class UNiagaraComponent* _laserpointer;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	class UNiagaraSystem* _laserFX;
 	UPROPERTY()
-	class UNiagaraComponent* _laserpointer;
+	class UNiagaraComponent* _laserImpact;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* _laserImpactFX;
 };
