@@ -99,6 +99,7 @@ public:
 	bool IsAiming() { return _isAiming; }
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
 
+	bool IsFocusing();
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }

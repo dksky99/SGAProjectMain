@@ -49,6 +49,9 @@ public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	UFUNCTION(BlueprintCallable)
+	virtual FRotator Focusing();
+
 
 protected:
 	FTransform GetHandSocketTransform() const;

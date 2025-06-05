@@ -652,3 +652,18 @@ void AGunBase::UseTacticalLight(bool isAiming)
 	}
 }
 
+FTransform AGunBase::GetMuzzleTrans()
+{
+	return  _mesh->GetSocketTransform(TEXT("spine_05"),RTS_World);
+}
+
+FVector AGunBase::GetMuzzleLoc()
+{
+	return _mesh->GetSocketLocation(TEXT("spine_05"));;
+}
+
+FRotator AGunBase::GetMuzzleRot()
+{
+	return _mesh->GetSocketRotation(TEXT("spine_05"));
+}
+

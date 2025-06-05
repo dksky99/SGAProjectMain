@@ -139,19 +139,64 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+FTransform APlayerCharacter::GetLeftHandPos()
+{
+
+	return FTransform();
+}
+FRotator APlayerCharacter::Focusing()
+{
+	// 1. spine_05 기준 정보
+	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("FocusingSocket"), RTS_World);
+	const FVector SpineLoc = SpineTransform.GetLocation();
+	const FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
+
+	// 2. 카메라 → AimTarget 방향
+	const FVector CameraLoc = GetCurCamera()->GetComponentLocation();
+	const FVector CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();//Cast<ACameraContainActor>(GetCurCamera()->GetChildActor())->GetCamera()->GetRotation;
+	const FVector AimTarget = CameraLoc + CameraForward * 10000.f;
+	const FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
+	// 3. 내적: 얼마나 일치하는가?
+	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection); // -1~1
+
+	// 4. 외적: 회전 방향 (왼쪽 vs 오른쪽)
+	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
+	FRotator result=FRotator(1,1,0);
+	// 6. 회전 방향 정하기
+	if (DotValue > 0.97)
+	{
+		return FRotator();
+	}
+	result.Roll = 1.f - DotValue;
+	if (CrossValue.Z < 0) // 기준 축: Z = Up
+	{
+		result.Yaw *= -1.f; // 왼쪽으로 회전
+	}
+	if (SpineFwd.Z > TargetDirection.Z)
+	{
+		result.Pitch *= -1.f;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"),result.Pitch,result.Yaw,result.Roll,DotValue);
+	return result;
+}
+
+
+
+
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	FVector2D moveVector = value.Get<FVector2D>();
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
 	{
-		if (_viewType == ECharacterViewType::TPS)
+		if (_stateComponent->IsFocusing())
 		{
-			DefaultMove(moveVector);
+			FocusMove(moveVector);
 		}
 		else
 		{
-			FocusMove(moveVector);
+			DefaultMove(moveVector);
 
 		}
 
@@ -182,31 +227,14 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		 _deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
 		
-		//// 카메라 오른쪽을 넘어감, 나는 정면
-		//if (_deltaAngle > 90.0f)
-		//{
-		//	_isTurnRight = true;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 카메라 왼쪽을 넘어감, 나는 정면
-		//else if (_deltaAngle < -90.0f)
-		//{
-		//	_isTurnLeft = true;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 움직이거나, 공격중일때..
-		//else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
-		//	)
-		//{
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 카메라, 정면 각도 차이의 절대값이 0.1 미만
-		//else if (FMath::Abs(_deltaAngle) < 0.1f)
-		//{
-		//	_isTurnLeft = false;
-		//	_isTurnRight = false;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		//}
+		 if (_stateComponent->IsFocusing())
+		 {
+			 FocusLook();
+		 }
+		 else
+		 {
+			 DefaultLook();
+		 }
 		//
 		//
 		//
@@ -621,6 +649,8 @@ void APlayerCharacter::FocusMove(FVector2D moveVector)
 void APlayerCharacter::DefaultMove(FVector2D moveVector)
 {
 
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	if (moveVector.SquaredLength() > 1.0f)
 	{
@@ -670,8 +700,45 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	{
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 
+}
+
+void APlayerCharacter::FocusLook()
+{
+
+}
+
+void APlayerCharacter::DefaultLook()
+{
+
+	// 카메라 오른쪽을 넘어감, 나는 정면
+	if (_deltaAngle > 90.0f)
+	{
+		_isTurnRight = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 카메라 왼쪽을 넘어감, 나는 정면
+	else if (_deltaAngle < -90.0f)
+	{
+		_isTurnLeft = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 움직이거나, 공격중일때..
+	else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
+		)
+	{
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 카메라, 정면 각도 차이의 절대값이 0.1 미만
+	else if (FMath::Abs(_deltaAngle) < 0.1f)
+	{
+		_isTurnLeft = false;
+		_isTurnRight = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	}
 }
 
 void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
@@ -682,9 +749,11 @@ void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
 	{
 	case ECharacterViewType::TPS:
 		temp = _tpsCameraActor;
+		_stateComponent->SetAiming(false);
 		break;
 	case ECharacterViewType::TPSZoom:
 		temp = _tpsZoomCameraActor;
+		_stateComponent->SetAiming(true);
 		break;
 	case ECharacterViewType::FPS:
 		temp = _fpsCameraActor;
@@ -699,6 +768,31 @@ void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
 		PC->SetViewTargetWithBlend(temp->GetChildActor(), _cameraBlendTime);
 	}
 
+
+}
+UChildActorComponent* APlayerCharacter::GetCurCamera()
+{
+	UChildActorComponent* curCamera=_tpsCameraActor;
+	switch (_viewType)
+	{
+	case ECharacterViewType::TPS:
+		curCamera = _tpsCameraActor;
+		UE_LOG(LogTemp, Display, TEXT("tpsCamera"));
+		break;
+	case ECharacterViewType::TPSZoom:
+		curCamera = _tpsZoomCameraActor;
+		UE_LOG(LogTemp, Display, TEXT("tpsZoomCamera"));
+		break;
+	case ECharacterViewType::FPS:
+		curCamera = _fpsCameraActor;
+		UE_LOG(LogTemp, Display, TEXT("fpsCamera"));
+		break;
+	case ECharacterViewType::MAX:
+	default:
+		break;
+	}
+
+	return curCamera;
 
 }
 void APlayerCharacter::UpdateCameraOcclusion()

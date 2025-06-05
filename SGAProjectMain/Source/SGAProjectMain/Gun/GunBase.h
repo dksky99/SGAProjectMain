@@ -129,6 +129,9 @@ public:
 	void ResetCanFire() { _canFire = true; }
 
 	FAmmoChanged _ammoChanged;
+	FTransform GetMuzzleTrans();
+	FVector GetMuzzleLoc();
+	FRotator GetMuzzleRot();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
