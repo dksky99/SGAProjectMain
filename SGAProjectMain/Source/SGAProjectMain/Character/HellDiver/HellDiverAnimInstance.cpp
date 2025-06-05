@@ -109,6 +109,7 @@ void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 		double dot = temp.Roll;
 		temp.Roll = 0.0f;
 		_focusRotate += temp * DeltaSeconds * _rotateSpeed * dot;
+
 	}
 	else
 	{

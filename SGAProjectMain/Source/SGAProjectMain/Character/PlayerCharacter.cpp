@@ -53,7 +53,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 
 	SetRootComponent(GetCapsuleComponent());
 	GetMesh()->SetupAttachment(RootComponent);
-	_cameraRoot->SetupAttachment(RootComponent);
+	_cameraRoot->SetupAttachment(RootComponent); 
+	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
 	_fpsSpringArm->SetupAttachment(_cameraRoot);
@@ -159,15 +160,26 @@ FTransform APlayerCharacter::GetLeftHandPos()
 FRotator APlayerCharacter::Focusing()
 {
 	// 1. spine_05 기준 정보
-	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("FocusingSocket"), RTS_World);
+	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
 	const FVector SpineLoc = SpineTransform.GetLocation();
 	const FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
 
 	// 2. 카메라 → AimTarget 방향
-	const FVector CameraLoc = GetCurCamera()->GetComponentLocation();
-	const FVector CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();//Cast<ACameraContainActor>(GetCurCamera()->GetChildActor())->GetCamera()->GetRotation;
-	const FVector AimTarget = CameraLoc + CameraForward * 10000.f;
-	const FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
+	FVector CameraLoc;
+	FVector CameraForward;
+	//auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	//if (false)
+	//{
+	//	CameraLoc = camera->GetCameraLocation();
+	//	CameraForward=camera->GetCameraRotation().Vector().GetSafeNormal();
+	//}
+
+	CameraLoc = GetCurCamera()->GetComponentLocation();
+	CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();//Cast<ACameraContainActor>(GetCurCamera()->GetChildActor())->GetCamera()->GetRotation;
+
+	
+	FVector AimTarget = CameraLoc + CameraForward * 10000.f;
+	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
 	// 3. 내적: 얼마나 일치하는가?
 	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection); // -1~1
 
@@ -179,7 +191,7 @@ FRotator APlayerCharacter::Focusing()
 	{
 		return FRotator();
 	}
-	result.Roll = 1.f - DotValue;
+	result.Roll = 2.0f - DotValue;
 	if (CrossValue.Z < 0) // 기준 축: Z = Up
 	{
 		result.Yaw *= -1.f; // 왼쪽으로 회전
@@ -841,15 +853,12 @@ UChildActorComponent* APlayerCharacter::GetCurCamera()
 	{
 	case ECharacterViewType::TPS:
 		curCamera = _tpsCameraActor;
-		UE_LOG(LogTemp, Display, TEXT("tpsCamera"));
 		break;
 	case ECharacterViewType::TPSZoom:
 		curCamera = _tpsZoomCameraActor;
-		UE_LOG(LogTemp, Display, TEXT("tpsZoomCamera"));
 		break;
 	case ECharacterViewType::FPS:
 		curCamera = _fpsCameraActor;
-		UE_LOG(LogTemp, Display, TEXT("fpsCamera"));
 		break;
 	case ECharacterViewType::MAX:
 	default:
