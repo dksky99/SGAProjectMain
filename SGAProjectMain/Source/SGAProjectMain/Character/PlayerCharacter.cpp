@@ -157,52 +157,68 @@ FTransform APlayerCharacter::GetLeftHandPos()
 
 	return FTransform();
 }
+
+
 FRotator APlayerCharacter::Focusing()
 {
-	// 1. spine_05 기준 정보
 	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
 	const FVector SpineLoc = SpineTransform.GetLocation();
-	const FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
 
-	// 2. 카메라 → AimTarget 방향
-	FVector CameraLoc;
-	FVector CameraForward;
-	//auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	//if (false)
-	//{
-	//	CameraLoc = camera->GetCameraLocation();
-	//	CameraForward=camera->GetCameraRotation().Vector().GetSafeNormal();
-	//}
+	FVector CameraLoc, CameraForward;
+	if (APlayerController* controller = Cast<APlayerController>(GetController()))
+	{
+		CameraLoc = controller->PlayerCameraManager->GetCameraLocation();
+		CameraForward = controller->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
+	}
+	else
+	{
+		CameraLoc = GetCurCamera()->GetComponentLocation();
+		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
+	}
 
-	CameraLoc = GetCurCamera()->GetComponentLocation();
-	CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();//Cast<ACameraContainActor>(GetCurCamera()->GetChildActor())->GetCamera()->GetRotation;
-
-	
 	FVector AimTarget = CameraLoc + CameraForward * 10000.f;
+	FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
+	FVector SpineUp = SpineTransform.GetRotation().GetUpVector();
 	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
-	// 3. 내적: 얼마나 일치하는가?
-	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection); // -1~1
 
-	// 4. 외적: 회전 방향 (왼쪽 vs 오른쪽)
+	// 좌우(Yaw) 필요성 판단
+	FVector SpineFwdFlat = FVector::VectorPlaneProject(SpineFwd, SpineUp).GetSafeNormal();
+	FVector TargetDirFlat = FVector::VectorPlaneProject(TargetDirection, SpineUp).GetSafeNormal();
+	float YawDot = FVector::DotProduct(SpineFwdFlat, TargetDirFlat);
+	bool bNeedsYaw = YawDot < 0.999f;
+
+	// 상하(Pitch) 필요성 판단
+	FVector SpineRight = SpineTransform.GetRotation().GetRightVector();
+	FVector SpineFwdNoYaw = FVector::VectorPlaneProject(SpineFwd, SpineRight).GetSafeNormal();
+	FVector TargetDirNoYaw = FVector::VectorPlaneProject(TargetDirection, SpineRight).GetSafeNormal();
+	float PitchDot = FVector::DotProduct(SpineFwdNoYaw, TargetDirNoYaw);
+	bool bNeedsPitch = PitchDot < 0.999f;
+
+	// 전체 회전 판단 (Roll은 여전히 유용)
+	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection);
 	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
-	FRotator result=FRotator(1,1,0);
-	// 6. 회전 방향 정하기
-	if (DotValue > 0.97)
+	float RotationDir = FVector::DotProduct(CrossValue, SpineUp);
+
+	FRotator ResultRot = FRotator::ZeroRotator;
+
+	if (DotValue > 0.999f) // 거의 일치하면 굳이 회전하지 않음
 	{
-		return FRotator();
-	}
-	result.Roll = 2.0f - DotValue;
-	if (CrossValue.Z < 0) // 기준 축: Z = Up
-	{
-		result.Yaw *= -1.f; // 왼쪽으로 회전
-	}
-	if (SpineFwd.Z > TargetDirection.Z)
-	{
-		result.Pitch *= -1.f;
+		return FRotator::ZeroRotator;
 	}
 
-	UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"),result.Pitch,result.Yaw,result.Roll,DotValue);
-	return result;
+	ResultRot.Roll = 2.0f - DotValue;
+
+	if (bNeedsYaw)
+	{
+		ResultRot.Yaw = 1.0f * (RotationDir >= 0 ? 1.f : -1.f);
+	}
+	if (bNeedsPitch)
+	{
+		ResultRot.Pitch = 1.0f * ((SpineFwd.Z <= TargetDirection.Z) ? 1.f : -1.f);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
+	return ResultRot;
 }
 
 
