@@ -58,6 +58,19 @@ void AGunBase::BeginPlay()
 		);
 	}
 
+	if (_laserImpactFX)
+	{
+		_laserImpact = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			_laserImpactFX,
+			_mesh,
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset,
+			true
+		);
+	}
+
 	_curAmmo = _gunData._maxAmmo;
 	_curMag = _gunData._initialMag;
 }
@@ -237,9 +250,10 @@ void AGunBase::StartAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Visible);
 
-	if (_laserpointer)
+	if (_laserpointer && _laserImpact)
 	{
 		_laserpointer->SetVisibility(true);
+		_laserImpact->SetVisibility(true);
 	}
 
 	if (_tacticalLight)
@@ -255,9 +269,10 @@ void AGunBase::StopAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
 
-	if (_laserpointer)
+	if (_laserpointer && _laserImpact)
 	{
 		_laserpointer->SetVisibility(false);
+		_laserImpact->SetVisibility(false);
 	}
 
 	if (_tacticalLight)
@@ -692,6 +707,9 @@ void AGunBase::UseLaserPoint(FVector hitPoint)
 		_laserpointer->SetVectorParameter("Beam Start", start);
 		_laserpointer->SetVectorParameter("Beam End", end);
 	}
+
+	if (_laserImpact)
+		_laserImpact->SetWorldLocation(end);
 }
 
 void AGunBase::UseTacticalLight(bool isAiming)
