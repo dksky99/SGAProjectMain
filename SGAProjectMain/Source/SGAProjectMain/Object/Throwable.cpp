@@ -4,6 +4,7 @@
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../Character/HellDiver/HellDiver.h"
+#include "../Character/HellDiver/HellDiverStatComponent.h"
 
 // Sets default values
 AThrowable::AThrowable()
@@ -99,7 +100,7 @@ void AThrowable::Throw(FVector direction)
 		_projectileMovement->Activate();
 	}
 
-	float power = 1000.0f; // _owner->힘 가져와서 설정
+	float power = _owner->GetStatComponent()->GetPower();
 
 	_projectileMovement->Velocity = direction * power;
 
@@ -114,6 +115,11 @@ void AThrowable::OnLifeTimeExpired()
 
 void AThrowable::DestroySelf()
 {
+	if (_owner && _owner->GetHeldThrowable() == this) // 손에 들고 있던 수류탄일 경우만
+	{
+		_owner->StopThrowPreview();
+	}
+
 	GetWorldTimerManager().ClearTimer(_destroyTimerHandle);
 	Destroy();
 }

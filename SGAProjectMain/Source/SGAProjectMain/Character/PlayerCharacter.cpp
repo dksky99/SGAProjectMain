@@ -20,10 +20,13 @@
 #include "Engine/OverlapResult.h"
 
 #include "../Gun/GunBase.h"
-#include "../UI/GunUI.h"
+#include "../UI/UIManager.h"
+#include "../UI/GunWidget.h"
+#include "../UI/GunSettingWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
+#include "../StratagemComponent.h"
 
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
@@ -74,7 +77,7 @@ void APlayerCharacter::PostInitializeComponents()
 
 	if (_gunWidgetClass)
 	{
-		_gunWidget = CreateWidget<UGunUI>(GetWorld(), _gunWidgetClass);
+		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
 }
 
@@ -95,10 +98,11 @@ void APlayerCharacter::BeginPlay()
 
 	if (_gunWidget)
 	{
-		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_gunWidget->AddToViewport();
+		_equippedGun->ActivateGun();
 	}
-
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -134,8 +138,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
-		enhancedInputComponent->BindAction(_stratagemAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipStratagem);
 		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
+		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode);
+		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView);
+		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BeginStratagemInputMode);
+		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndStratagemInputMode);
+		enhancedInputComponent->BindAction(_strataWAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyW);
+		enhancedInputComponent->BindAction(_strataAAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyA);
+		enhancedInputComponent->BindAction(_strataSAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyS);
+		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
+		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 	}
 }
 
@@ -186,6 +198,9 @@ FRotator APlayerCharacter::Focusing()
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
+	if (_playerState == EPlayerState::StratagemInputting) // 스트라타젬입력 모드에서는 동작안함
+		return;
+
 	FVector2D moveVector = value.Get<FVector2D>();
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
@@ -265,7 +280,24 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		break;
 	}
 
-	switch (_playerState)
+	switch (_stateComponent->GetWeaponState())
+	{
+	case EWeaponType::PrimaryWeapon:
+		_stateComponent->SetFiring(true);
+		_equippedGun->StartFire();
+		break;
+
+	case EWeaponType::Grenade:
+		_stateComponent->SetCookingGrenade(true);
+		_equippedGrenade->StartCookingGrenade();
+		break;
+
+	case EWeaponType::StratagemDevice:
+		_stateComponent->SetInputtingStratagem(true);
+		break;
+	}
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
 		if (GetStateComponent()->GetWeaponState() == EWeaponType::PrimaryWeapon)
@@ -278,10 +310,11 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		{
 			_playerState = EPlayerState::CookingGrenade;
 			_equippedGrenade->StartCookingGrenade();
+			StartThrowPreview();
 		}
 		else if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
 		{
-			_playerState = EPlayerState::StratagemInputting;
+			StartThrowPreview();
 		}
 
 		break;
@@ -293,6 +326,10 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		break;
 
 	case EPlayerState::StratagemInputting:
+		if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
+		{
+
+		}
 		break;
 
 	case EPlayerState::Rolling:
@@ -300,12 +337,16 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 {
-	switch (_playerState)
+	if (_stateComponent->IsCookingGrenade())
+		if (_equippedGrenade)
+			_equippedGrenade->UpdateCookingGrenade();
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
 		break;
@@ -326,14 +367,38 @@ void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::StopFiring(const FInputActionValue& value)
 {
-	switch (_playerState)
+	if (_stateComponent->IsFiring())
+	{
+		_stateComponent->SetFiring(false);
+		_equippedGun->StopFire();
+		return;
+	}
+	else if (_stateComponent->IsCookingGrenade())
+	{
+		_stateComponent->SetCookingGrenade(false);
+		OnThrowReleased();
+		return;
+	}
+	else if (_stateComponent->IsInputtingStratagem())
+	{
+		_stateComponent->SetInputtingStratagem(false);
+		OnThrowReleased();
+		return;
+	}
+
+	/*switch (_playerState)
 	{
 	case EPlayerState::Idle:
+		if (GetStateComponent()->GetWeaponState() == EWeaponType::StratagemDevice)
+		{
+			OnThrowReleased();
+			StopThrowPreview();
+		}
 		break;
 
 	case EPlayerState::Firing:
@@ -345,11 +410,13 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	case EPlayerState::CookingGrenade:
 		_playerState = EPlayerState::Idle;
 		OnThrowReleased();
+		StopThrowPreview();
 		break;
 
 	case EPlayerState::StratagemInputting:
 		_playerState = EPlayerState::Idle;
 		OnThrowReleased();
+		StopThrowPreview();
 		break;
 
 	case EPlayerState::Rolling:
@@ -357,7 +424,7 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 	case EPlayerState::Reloading:
 		break;
-	}
+	}*/
 }
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
@@ -388,11 +455,8 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 	{
-		if (_equippedGun)
-		{
-			_equippedGun->ChangeFireMode();
-			return;
-		}
+		TryChangeFireMode(value);
+		return;
 	}
 
 	_stateComponent->SetAiming(true);
@@ -909,8 +973,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		return;
 
 	if (_isGunSettingMode)
-	{
-		_equippedGun->ExitGunSettingMode();
+	{;
 		_isGunSettingMode = false;
 	}
 
@@ -919,7 +982,9 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 	bool wasAiming = _stateComponent->IsAiming();
 	bool wasFiring = _stateComponent->IsFiring();
-	_playerState = EPlayerState::Idle;
+	//_playerState = EPlayerState::Idle;
+	_stateComponent->SetAiming(false);
+	_stateComponent->SetFiring(false);
 
 	if (index == 3)
 	{
@@ -927,12 +992,14 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 	}
 	else
 	{
-		_equippedGun->_ammoChanged.Clear();
+		_equippedGun->_ammoChanged.RemoveAll(_gunWidget);
+		_equippedGun->_magChanged.RemoveAll(_gunWidget);
 		_equippedGun->DeactivateGun();
 
 		EquipGun(_gunSlot[index]);
 
-		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunUI::SetAmmo);
+		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_equippedGun->ActivateGun();
 	}
 
@@ -941,6 +1008,117 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 	if (wasFiring) // 사격 중이었을 경우 유지
 		StartFiring(value);
+}
+
+void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::Idle)
+	{
+		_playerState = EPlayerState::StratagemInputting;
+		_stratagemInputBuffer.Empty();
+	}
+}
+
+void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_playerState = EPlayerState::Idle;
+		_stratagemInputBuffer.Empty(); // 조합 초기화
+	}
+}
+
+void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::W);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::A);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::S);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
+{
+	if (_playerState == EPlayerState::StratagemInputting)
+	{
+		_stratagemInputBuffer.Add(EKeys::D);
+		CheckStratagemInputCombo();
+	}
+}
+
+void APlayerCharacter::CheckStratagemInputCombo()
+{
+	const TArray<FStratagemSlot>& slots = _stratagemComponent->GetStratagemSlots();
+	bool bIsPrefixMatch = false;
+
+	for (int32 i = 0; i < slots.Num(); ++i)
+	{
+		if (_stratagemComponent->IsStratagemOnCooldown(i))
+			continue;
+
+		TSubclassOf<AStratagem> stratagemClass = slots[i].StratagemClass;
+		if (!stratagemClass) continue;
+
+		const AStratagem* CDO = stratagemClass->GetDefaultObject<AStratagem>();
+		const TArray<FKey>& combo = CDO->GetInputSequence();
+
+		// 완전 일치 → 장비
+		if (_stratagemInputBuffer == combo)
+		{
+			_stratagemComponent->SelectStratagem(i);
+			EquipStratagem();
+
+			_stratagemInputBuffer.Empty();
+			_playerState = EPlayerState::Idle;
+			return;
+		}
+
+		// 사용 가능한 스트라타젬이 있는지 확인
+		if (_stratagemInputBuffer.Num() <= combo.Num())
+		{
+			bool bPrefixMatch = true;
+			for (int32 j = 0; j < _stratagemInputBuffer.Num(); ++j)
+			{
+				if (_stratagemInputBuffer[j] != combo[j])
+				{
+					bPrefixMatch = false;
+					break;
+				}
+			}
+			if (bPrefixMatch)
+			{
+				bIsPrefixMatch = true;
+			}
+		}
+	}
+
+	if (!bIsPrefixMatch)
+	{
+		_stratagemInputBuffer.Empty(); // 조합 초기화
+	}
+}
+
+void APlayerCharacter::Interact(const FInputActionValue& value)
+{
+	RefillAllItem();
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)
@@ -990,8 +1168,11 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 		if (_isGunSettingMode)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
-			_equippedGun->ExitGunSettingMode();
+			
+			GetGameInstance()->GetSubsystem<UUIManager>()->ClosePopUp("GunSetting");
+			
 			_isGunSettingMode = false;
+			return;
 		}
 		else
 		{
@@ -999,6 +1180,7 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 			_equippedGun->StopAiming();
 			_equippedGun->StopFire();
 			_equippedGun->Reload();
+			return;
 		}
 	}
 }
@@ -1024,7 +1206,11 @@ void APlayerCharacter::EnterGunSetting()
 		if (_stateComponent->IsFiring())
 			return;
 
-		_equippedGun->EnterGunSettingMode();
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->InitializeWidget(_equippedGun);
+		}
+
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
 }
@@ -1043,6 +1229,10 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeFireMode();
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
+		}
 	}
 }
 
@@ -1060,5 +1250,52 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 	if (_equippedGun && _isGunSettingMode)
 	{
 		_equippedGun->ChangeTacticalLightMode();
+
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
+		}
+	}
+}
+
+void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
+{
+	if (_stateComponent->IsAiming())
+		return;
+
+	if (_stateComponent->IsFiring())
+		return;
+
+	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+		return;
+
+	if (_equippedGun && _isGunSettingMode)
+	{
+		_equippedGun->ChangeScopeMode();
+		if (auto widget = GET_WIDGET(UGunSettingWidget, "GunSetting"))
+		{
+			widget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
+		}
+	}
+}
+
+void APlayerCharacter::ChangeAimingView(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Log, TEXT("TryAimChange"));
+
+	bool isAiming = _stateComponent->IsAiming();
+
+	if (!isAiming) return;
+
+	if (_viewType == ECharacterViewType::TPSZoom)
+	{
+		SetFPSView();
+		return;
+	}
+
+	if (_viewType == ECharacterViewType::FPS)
+	{
+		SetTPSZoomView();
+		return;
 	}
 }

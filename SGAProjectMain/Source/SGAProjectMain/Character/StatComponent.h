@@ -24,11 +24,18 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void ChangeHp(float amount);
+
+
 	float GetDefaultSpeed() { return _defaultSpeed; }
+
+	bool IsDead() { return _curHp == 0; }
 
 protected:
 
 	float _defaultSpeed = 300.0f;
 
+	float _maxHp = 1000.0f;
+	float _curHp = 1000.0f;
 		
 };

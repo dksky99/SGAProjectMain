@@ -4,11 +4,13 @@
 #include "GunBase.h"
 
 #include "Engine/DamageEvents.h"
+#include "Kismet/GameplayStatics.h"
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
+#include "../Character/CharacterAnimInstance.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -57,8 +59,7 @@ void AGunBase::BeginPlay()
 	}
 
 	_curAmmo = _gunData._maxAmmo;
-	_maxVerticalRecoil = _gunData._verticalRecoil;
-	_maxHorizontalRecoil = _gunData._horizontalRecoil;
+	_curMag = _gunData._initialMag;
 }
 
 // Called every frame
@@ -69,11 +70,9 @@ void AGunBase::Tick(float DeltaTime)
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!camera) return;
 	
-	//TickRecoil(DeltaTime);
+	RecoverRecoil(DeltaTime);
 	FHitResult hitResult= GetHitResult();
 	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
-
-	//_recoilOffset = FMath::RInterpTo(_recoilOffset, FRotator::ZeroRotator, DeltaTime, _gunData._ergo / 7.f);
 
 	if (_laserpointer)
 		UseLaserPoint(_hitPoint);
@@ -150,6 +149,8 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
+	ApplyFireRecoil();
+
 	FHitResult hitResult = GetHitResult();
 	/*ApplyFireRecoil();
 
@@ -191,8 +192,11 @@ void AGunBase::Fire()
 		drawColor = FColor::Red;
 		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
 		float finalDamage = CalculateDamage(distance / 100);
-		UE_LOG(LogTemp, Log, TEXT("Final Damage: %f"), finalDamage);
-		// TODO (데미지)
+
+		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
+		{
+			UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+		}
 	}
 
 	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
@@ -277,12 +281,16 @@ void AGunBase::ActivateGun()
 	_isActive = true;
 	SetActorHiddenInGame(false);
 
-	_recoilOffset = FRotator::ZeroRotator;
+	_recoilToRecover = FRotator::ZeroRotator;
 
 	if (_ammoChanged.IsBound())
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-		UE_LOG(LogTemp, Log, TEXT("BroadCast"));
+	}
+
+	if (_magChanged.IsBound())
+	{
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 	}
 }
 
@@ -330,30 +338,46 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 
 	_owner->GetStateComponent()->SetReloading(true);
 
-	switch (_reloadStage)
+	if (!_reloadMontage) return;
+
+	if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(_owner->GetMesh()->GetAnimInstance()))
 	{
-	case EReloadStage::None:
-		//PlayAnimMontage(temp);
-		break;
+		animInstance->PlayAnimMontage(_reloadMontage);
 
-	case EReloadStage::RemoveMag:
-		//PlayAnimMontage(temp);
-		break;
+		int32 sectionIndex = -1;
+		switch (_reloadStage)
+		{
+		case EReloadStage::None:	
+			if (_curMag <= 0) return;
+			sectionIndex = 0;
+			break;
 
-	case EReloadStage::InsertMag:
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::RemoveMag:
+			sectionIndex = 1;
+			break;
 
-	case EReloadStage::CloseBolt:
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::InsertMag:
+			sectionIndex = 2;
+			break;
 
-	case EReloadStage::RoundsReload:
-		//PlayAnimMontage(temp);
-		break;
+		case EReloadStage::CloseBolt:
+			sectionIndex = 3;
+			break;
+
+		case EReloadStage::RoundsReload:
+			if (_curMag <= 0) return;
+			sectionIndex = 3;
+			break;
+
+		default:
+			return;
+		}
+
+		if (sectionIndex >= 0)
+		{
+			animInstance->JumpToSection(sectionIndex);
+		}
 	}
-
-	ChangeReloadStage(); // 테스트용 호출 -> 추후 변경
 }
 
 void AGunBase::ChangeReloadStage()
@@ -365,12 +389,15 @@ void AGunBase::ChangeReloadStage()
 		if (_curAmmo > 0 || _isChamberLoaded) // 탄창이나 약실에 탄이 있을 경우
 			_isChamberLoaded = true; // 약실 채우기
 		_curAmmo = 0;
-		//Reload();
+		UE_LOG(LogTemp, Log, TEXT("None->RemoveMag"));
+		Reload();
 		break;
 
 	case EReloadStage::RemoveMag: // 탄창 제거 상태
 		_reloadStage = EReloadStage::InsertMag;
-		//Reload();
+		_curMag--;
+		Reload();
+		UE_LOG(LogTemp, Log, TEXT("RemoveMag->InsertMag"));
 		break;
 
 	case EReloadStage::InsertMag: // 탄창 삽입 상태
@@ -380,11 +407,13 @@ void AGunBase::ChangeReloadStage()
 			_curAmmo = _gunData._maxAmmo;
 			_owner->GetStateComponent()->SetReloading(false);
 			_reloadStage = EReloadStage::None;  // 전술 재장전 -> CloseBolt 생략
+			UE_LOG(LogTemp, Log, TEXT("InsertMag->None"));
 		}
 		else
 		{
 			_reloadStage = EReloadStage::CloseBolt; // 약실에 탄이 없을 경우 CloseBolt
-			//Reload();
+			Reload();
+			UE_LOG(LogTemp, Log, TEXT("InsertMag->CloseBolt"));
 		}
 		break;
 
@@ -392,12 +421,15 @@ void AGunBase::ChangeReloadStage()
 		_curAmmo = _gunData._maxAmmo;
 		_owner->GetStateComponent()->SetReloading(false);
 		_reloadStage = EReloadStage::None;
+		UE_LOG(LogTemp, Log, TEXT("CloseBolt->None"));
 		break;
 
 	case EReloadStage::RoundsReload:
 		_curAmmo++;
+		_curMag--;
 		_owner->GetStateComponent()->SetReloading(false);
-		//Reload();
+		Reload();
+		UE_LOG(LogTemp, Log, TEXT("RoundsReload"));
 		break;
 	}
 
@@ -405,6 +437,9 @@ void AGunBase::ChangeReloadStage()
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 	}
+
+	if (_magChanged.IsBound())
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 }
 
 void AGunBase::CancelReload()
@@ -414,6 +449,17 @@ void AGunBase::CancelReload()
 
 	//StopAnimMontage();
 	_owner->GetStateComponent()->SetReloading(false);
+}
+
+void AGunBase::RefillMag()
+{
+	_curMag += _gunData._refillMagAmount;
+
+	if (_curMag > _gunData._maxMag)
+		_curMag = _gunData._maxMag;
+
+	if (_magChanged.IsBound())
+		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 }
 
 float AGunBase::CalculateDamage(float distance)
@@ -442,45 +488,60 @@ float AGunBase::CalculateDamage(float distance)
 	}
 }
 
-void AGunBase::TickRecoil(float DeltaTime)
+//void AGunBase::TickRecoil(float DeltaTime)
+//{
+//	if (_owner->GetStateComponent()->IsFiring())
+//		return;
+//
+//	float recoilMultiplier = GetRecoilMultiplier();
+//
+//	static float RecoilTime = 0.f;
+//	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
+//
+//	// 임시값
+//	float amplitudePitch = 0.12f;
+//	float amplitudeYaw = 0.04f;
+//
+//	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
+//	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
+//}
+
+void AGunBase::RecoverRecoil(float DeltaTime)
 {
-	if (_owner->GetStateComponent()->IsFiring())
-		return;
+	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
+	if (playerController)
+	{
+		float recoverPitch = FMath::FInterpTo(_recoilToRecover.Pitch, 0.f, DeltaTime, _recoilRecoverSpeed);
+		float recoverYaw = FMath::FInterpTo(_recoilToRecover.Yaw, 0.f, DeltaTime, _recoilRecoverSpeed);
 
-	float recoilMultiplier = GetRecoilMultiplier();
+		// 변화량을 반대로 되돌림
+		playerController->AddPitchInput(_recoilToRecover.Pitch - recoverPitch);
+		playerController->AddYawInput(recoverYaw - _recoilToRecover.Yaw);
 
-	static float RecoilTime = 0.f;
-	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
-
-	// 임시값
-	float amplitudePitch = 0.12f;
-	float amplitudeYaw = 0.04f;
-
-	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
-	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
+		_recoilToRecover.Pitch = recoverPitch;
+		_recoilToRecover.Yaw = recoverYaw;
+	}
 }
 
 void AGunBase::ApplyFireRecoil()
 {
 	float recoilMultiplier = GetRecoilMultiplier();
 
-	// 수직 반동 적용
-	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / 5.f;
-	_recoilOffset.Pitch += vertical * recoilMultiplier;
+	// 수직 반동
+	float vertical = FMath::RandRange(0.9f, 1.1f) * _gunData._verticalRecoil / _verticalRecoilDamp;
+	// 수평 반동
+	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil / _horizontalRecoilDamp;
 
-	//_recoilOffset.Pitch = FMath::Clamp(_recoilOffset.Pitch, 0.f, _maxVerticalRecoil) * recoilMultiplier;
+	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
+	if (playerController)
+	{
+		playerController->AddPitchInput(-vertical * recoilMultiplier);
+		playerController->AddYawInput(horizontal * recoilMultiplier);
 
-	// 수평 반동 적용
-	float horizontal = FMath::RandRange(-1.f, 1.f) * _gunData._horizontalRecoil; // 3.f;
-
-	// 수직 반동이 최대에 도달하면 흔들림 적용 -> 존재하는가?
-	//if (_recoilOffset.Pitch >= _maxVerticalRecoil)
-	//{
-	//	horizontal += FMath::RandRange(-1.f, 1.f) * _gunData._shakeAmount;
-	//}
-	_recoilOffset.Yaw += horizontal * recoilMultiplier;
-	
-	//_recoilOffset.Yaw = FMath::Clamp(_recoilOffset.Yaw, -_maxHorizontalRecoil, _maxHorizontalRecoil) * recoilMultiplier;
+		// 카메라 복구 용
+		_recoilToRecover.Pitch += vertical * recoilMultiplier;
+		_recoilToRecover.Yaw += horizontal * recoilMultiplier;
+	}
 }
 
 float AGunBase::GetRecoilMultiplier()
@@ -561,19 +622,9 @@ FHitResult AGunBase::GetHitResult()
 		hit,
 		muzzleLocation,
 		end,
-		ECC_Visibility);
+		ECC_Pawn);
 
 	return hit;
-}
-
-void AGunBase::EnterGunSettingMode()
-{
-	// TODO - UI
-}
-
-void AGunBase::ExitGunSettingMode()
-{
-	// TODO -UI
 }
 
 void AGunBase::ChangeFireMode()
@@ -608,6 +659,17 @@ void AGunBase::ChangeTacticalLightMode()
 
 	UseTacticalLight(_owner->GetStateComponent()->IsAiming());
 	UE_LOG(LogTemp, Log, TEXT("Light Mode Change"));
+}
+
+void AGunBase::ChangeScopeMode()
+{
+	if (_gunData._scopeModes.Num() <= 1)
+		return;
+
+	_scopeIndex = (_scopeIndex + 1) % _gunData._scopeModes.Num();
+	_scopeMode = _gunData._scopeModes[_scopeIndex];
+
+	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
 }
 
 void AGunBase::UseLaserPoint(FVector hitPoint)

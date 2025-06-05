@@ -86,7 +86,11 @@ public:
 	void TryChangeFireMode(const  FInputActionValue& value);
 	UFUNCTION()
 	void TryChangeLightMode(const  FInputActionValue& value);
+	UFUNCTION()
+	void TryChangeScopeMode(const  FInputActionValue& value);
 
+	UFUNCTION()
+	void ChangeAimingView(const  FInputActionValue& value);
 
 	UFUNCTION()
 	void TrySprint(const  FInputActionValue& value);
@@ -116,6 +120,23 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
+
+	UFUNCTION()
+	void BeginStratagemInputMode(const FInputActionValue& value);
+	UFUNCTION()
+	void EndStratagemInputMode(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyW(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyA(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyS(const FInputActionValue& value);
+	UFUNCTION()
+	void OnStrataKeyD(const FInputActionValue& value);
+
+	void CheckStratagemInputCombo();
+
+	void Interact(const  FInputActionValue& value);
 
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
@@ -177,12 +198,29 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _grenadeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* _stratagemAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _scopeChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _aimChangeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _interactAction;
+
+	TArray<FKey> _stratagemInputBuffer;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataInputModeAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataWAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataAAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataSAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _strataDAction;
 
 
 	EPlayerState _playerState;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control", meta = (AllowPrivateAccess = "true"))
 	class UPlayerControlDataAsset* _defaultControl;
@@ -198,11 +236,17 @@ protected:
 	ECharacterViewType _viewType = ECharacterViewType::TPS;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _gunWidgetClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", meta = (AllowPrivateAccess = "true"))
-	class UGunUI* _gunWidget;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UGunWidget* _gunWidget;
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _gunSettingWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UGunSettingWidget* _gunSettingWidget;*/
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))

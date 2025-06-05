@@ -32,3 +32,14 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	// ...
 }
 
+void UStatComponent::ChangeHp(float amount)
+{
+	_curHp += amount;
+
+	if (_curHp > _maxHp)
+		_curHp = _maxHp;
+
+	if (_curHp < 0)
+		_curHp = 0;
+}
+

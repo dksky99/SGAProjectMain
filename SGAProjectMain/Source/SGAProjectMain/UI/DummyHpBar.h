@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "GunUI.generated.h"
+#include "DummyHpBar.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SGAPROJECTMAIN_API UGunUI : public UUserWidget
+class SGAPROJECTMAIN_API UDummyHpBar : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
-	void SetAmmo(int32 curAmmo, int32 maxAmmo);
+	void SetHp(float ratio);
 
 private:
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* Ammo;
+	class UProgressBar* _curHpPB;
 };

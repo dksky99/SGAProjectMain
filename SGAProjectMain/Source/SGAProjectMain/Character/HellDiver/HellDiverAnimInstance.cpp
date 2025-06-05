@@ -8,6 +8,8 @@
 #include "Animation/AnimNode_StateMachine.h"
 #include "Animation/AnimInstanceProxy.h"
 
+#include "../../Gun/GunBase.h"
+
 UHellDiverAnimInstance::UHellDiverAnimInstance()
 {
 	
@@ -55,6 +57,15 @@ void UHellDiverAnimInstance::GetCurrentMoveNode()
 	FString temp2 = GetCurrentStateName(GetStateMachineIndex(TEXT("Look"))).ToString();
 	MoveStateChanged(temp1);
 	LookStateChanged(temp2);
+}
+
+void UHellDiverAnimInstance::AnimNotify_Reload()
+{
+	UE_LOG(LogTemp, Log, TEXT("ReloadNotify"));
+	if (AGunBase* gun = Cast<AGunBase>(_hellDiver->GetEquippedGun()))
+	{
+		gun->ChangeReloadStage();
+	}
 }
 
 bool UHellDiverAnimInstance::MoveStateChanged(FString curState)
