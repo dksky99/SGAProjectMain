@@ -32,3 +32,28 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	// ...
 }
 
+void UStatComponent::AddHP(float amount)
+{
+	_hp += amount;
+
+	if (_hp > _maxHp)
+		_hp = _maxHp;
+
+	IsDead();
+}
+
+bool UStatComponent::IsDead()
+{
+	if (_hp <= 0)
+	{
+		Dead();
+		return true;
+	}
+
+	return false;
+}
+
+void UStatComponent::Dead()
+{
+}
+
