@@ -171,11 +171,17 @@ bool UHellDiverStateComponent::FinishRolling()
 
 bool UHellDiverStateComponent::IsFocusing()
 {
-	if (IsAiming() || IsFiring())
+	if (_isReloading)
+		return false;
+	if (_isWeaponChange)
+		return false;
+	if (_isFiring)
+		return true;
+	if (IsAiming())
 		return true;
 
 
-	return false;
+	return true;
 }
 
 void UHellDiverStateComponent::MoveChangeFinish(FString newState)

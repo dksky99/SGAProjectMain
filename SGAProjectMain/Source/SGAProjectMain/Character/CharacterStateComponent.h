@@ -44,6 +44,8 @@ public:
 	bool CheckAbnormality(EAbnormalityState abnormality);
 
 
+	bool IsMoving();
+
 protected:
 	UPROPERTY(BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "EAbnormalityState"))
 	int32 _activeAbnormalities;

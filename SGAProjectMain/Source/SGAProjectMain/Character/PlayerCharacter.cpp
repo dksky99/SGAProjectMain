@@ -85,7 +85,8 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	InitView();
+	SetDefaultVIew();
+	//InitView();
 	SetTPSView();
 	if (_gunClass1 && _gunClass2)
 	{
@@ -206,7 +207,7 @@ FRotator APlayerCharacter::Focusing()
 		return FRotator::ZeroRotator;
 	}
 
-	ResultRot.Roll = 2.0f - DotValue;
+	ResultRot.Roll = 1.5f - DotValue;
 
 	if (bNeedsYaw)
 	{
@@ -259,7 +260,6 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 
 	}
 }
-
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
 	FVector2D lookAxisVector = value.Get<FVector2D>();
@@ -268,21 +268,24 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerYawInput(lookAxisVector.X);
 		AddControllerPitchInput(lookAxisVector.Y);
 
-		 _deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+
+		const bool bIsMoving = GetVelocity().Size2D() > 1.0f;
+		//에이밍중 아니고 사격중 아니여야함.
+		if (!_stateComponent->IsFocusing()&&bIsMoving)
+		{
+			UE_LOG(LogTemp, Display, TEXT("MovingLook"));
+			MovingLook();
+		}
 		
-		 if (_stateComponent->IsFocusing())
-		 {
-			 FocusLook();
-		 }
-		 else
-		 {
-			 DefaultLook();
-		 }
-		//
-		//
-		//
+		else
+		{
+			UE_LOG(LogTemp, Display, TEXT("DefaultLook"));
+			DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
+		}
 	}
 }
+
 
 void APlayerCharacter::TryJump(const FInputActionValue& value)
 {
@@ -633,6 +636,44 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 		break;
 	}
 }
+void APlayerCharacter::SetDefaultVIew()
+{
+
+	//폰에 관한 설정
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+
+	//캐릭터 무브먼트 설정
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->RotationRate = FRotator(0, 360, 0);
+
+	_tpsSpringArm->bUsePawnControlRotation = true;
+	_tpsZoomSpringArm->bUsePawnControlRotation = true;
+	_fpsSpringArm->bUsePawnControlRotation = true;
+	_tpsSpringArm->bInheritPitch		= true;
+	_tpsSpringArm->bInheritYaw			= true;
+	_tpsSpringArm->bInheritRoll			= true;
+	_tpsZoomSpringArm->bInheritPitch	= true;
+	_tpsZoomSpringArm->bInheritYaw		= true;
+	_tpsZoomSpringArm->bInheritRoll		= true;
+	_fpsSpringArm->bInheritPitch		= true;
+	_fpsSpringArm->bInheritYaw			= true;
+	_fpsSpringArm->bInheritRoll			= true;
+}
+
+void APlayerCharacter::SetMovingView()
+{
+
+	_tpsSpringArm->bUsePawnControlRotation = _defaultControl->bUsePawnContolRotation;
+}
+
+void APlayerCharacter::FinishMoving()
+{
+}
+
 void APlayerCharacter::InitView()
 {
 
@@ -673,7 +714,7 @@ void APlayerCharacter::SetFPSView()
 {
 	if (_fpsControl == nullptr)
 		return;
-	SetViewData(_fpsControl);
+	//SetViewData(_fpsControl);
 	_viewType = ECharacterViewType::FPS;
 	ChangeViewCamera(_viewType);
 
@@ -682,7 +723,7 @@ void APlayerCharacter::SetTPSZoomView()
 {
 	if (_tpsControl == nullptr)
 		return;
-	SetViewData(_tpsControl);
+	//SetViewData(_tpsControl);
 	_viewType = ECharacterViewType::TPSZoom;
 	ChangeViewCamera(_viewType);
 }
@@ -691,7 +732,7 @@ void APlayerCharacter::SetTPSView()
 	if (_defaultControl == nullptr)
 		return;
 	UE_LOG(LogTemp, Error, TEXT("DefaultView"));
-	SetViewData(_defaultControl);
+	//SetViewData(_defaultControl);
 	_viewType = ECharacterViewType::TPS;
 	ChangeViewCamera(_viewType);
 }
@@ -722,110 +763,85 @@ void APlayerCharacter::FocusMove(FVector2D moveVector)
 		moveVector.Normalize();
 	}
 
-	//캐릭터의 로테이션 얻기
-	const FRotator rotation = Controller->GetControlRotation();
-	const FRotator yawRotation(0, rotation.Yaw, 0);
+	const FRotator controlRot = Controller->GetControlRotation();
+	const FRotator yawRotation(0, controlRot.Yaw, 0);
 
-	//정면과 우측 벡터 구하기
-	const FVector forwardDirection = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
-	const FVector rightDirection = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
-
+	const FVector forward = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
+	const FVector right = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
 
 	_vertical = moveVector.Y;
 	_horizontal = moveVector.X;
 
-	//이동
-	AddMovementInput(forwardDirection, moveVector.Y);
-	AddMovementInput(rightDirection, moveVector.X);
+	AddMovementInput(forward, moveVector.Y);
+	AddMovementInput(right, moveVector.X);
 }
+
 void APlayerCharacter::DefaultMove(FVector2D moveVector)
 {
-
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-
 	if (moveVector.SquaredLength() > 1.0f)
 	{
 		moveVector.Normalize();
 	}
 
-	// 컨트롤러의 Yaw 회전값만 추출
-	const FRotator rotation = Controller->GetControlRotation();
-	const FRotator yawRotation(0.f, rotation.Yaw, 0.f);
+	const FRotator controlRot = Controller->GetControlRotation();
+	const FRotator yawRotation(0.f, controlRot.Yaw, 0.f);
 
-	// 전방, 우측 벡터 계산 (카메라 기준)
-	const FVector forwardDirection = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
-	const FVector rightDirection = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
+	const FVector forward = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
+	const FVector right = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
 
-	// 입력 벡터를 바탕으로 이동 방향 결정
-	const FVector desiredMoveDirection =
-		forwardDirection * moveVector.Y + rightDirection * moveVector.X;
+	const FVector desiredMoveDir = forward * moveVector.Y + right * moveVector.X;
 
-	if (!desiredMoveDirection.IsNearlyZero())
+	if (!desiredMoveDir.IsNearlyZero())
 	{
-		// 회전 관련 처리 (이전과 동일)
-		const FRotator targetRotation = desiredMoveDirection.Rotation();
-		const FRotator currentRotation = GetActorRotation();
-		const float rotationSpeed = 10.0f;
+		AddMovementInput(desiredMoveDir.GetSafeNormal(), 1.0f);
 
-		const FRotator newRotation = currentRotation;
-		//	FMath::RInterpTo(
-		//	currentRotation,
-		//	FRotator(0.f, targetRotation.Yaw, 0.f),
-		//	GetWorld()->GetDeltaSeconds(),
-		//	rotationSpeed
-		//);
-
-		SetActorRotation(newRotation);
-
-		// 이동 처리
-		AddMovementInput(desiredMoveDirection.GetSafeNormal(), 1.0f);
-
-		// 월드 방향 → 로컬 방향으로 변환
-		const FVector localMoveDir = GetActorTransform().InverseTransformVectorNoScale(desiredMoveDirection);
-
-		// 애니메이션 파라미터 갱신
-		_vertical = localMoveDir.X;   // 전/후 방향
-		_horizontal = localMoveDir.Y; // 좌/우 방향
+		const FVector localMoveDir = GetActorTransform().InverseTransformVectorNoScale(desiredMoveDir);
+		_vertical = localMoveDir.X;
+		_horizontal = localMoveDir.Y;
 	}
 	else
 	{
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
-
 }
 
-void APlayerCharacter::FocusLook()
+void APlayerCharacter::MovingLook()
 {
+	const FVector velocity = GetVelocity();
+	if (velocity.Size2D() < 1.0f) return; // 멈춰 있으면 회전 안 함
 
+	const FRotator controlRot = Controller->GetControlRotation();
+	const FRotator yawRotation(0, controlRot.Yaw, 0);
+
+	const FVector forward = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
+	const FVector right = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
+
+	// 현재 입력 벡터 방향으로 이동 방향 결정
+	FVector moveDir = forward * _vertical + right * _horizontal;
+
+	if (!moveDir.IsNearlyZero())
+	{
+		FRotator moveRot = moveDir.Rotation();
+		SetActorRotation(FRotator(0.f, moveRot.Yaw, 0.f)); // 즉시 회전
+	}
 }
-
 void APlayerCharacter::DefaultLook()
 {
+	const float speed = GetVelocity().Size2D();
+	const FRotator actorRot = GetActorRotation();
+	const FRotator controlRot = GetControlRotation();
 
-	// 카메라 오른쪽을 넘어감, 나는 정면
-	if (_deltaAngle > 90.0f)
+	if ( FMath::Abs(_deltaAngle) > 80.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
-		_isTurnRight = true;
+		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
+
+		_isTurnLeft = (_deltaAngle < -80.0f);
+		_isTurnRight = (_deltaAngle > 80.0f);
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
 	}
-	// 카메라 왼쪽을 넘어감, 나는 정면
-	else if (_deltaAngle < -90.0f)
-	{
-		_isTurnLeft = true;
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	}
-	// 움직이거나, 공격중일때..
-	else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
-		)
-	{
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	}
-	// 카메라, 정면 각도 차이의 절대값이 0.1 미만
-	else if (FMath::Abs(_deltaAngle) < 0.1f)
+	else if (FMath::Abs(_deltaAngle) < 1.0f)
 	{
 		_isTurnLeft = false;
 		_isTurnRight = false;
@@ -833,34 +849,67 @@ void APlayerCharacter::DefaultLook()
 	}
 }
 
+
 void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
 {
 	UChildActorComponent* temp=_tpsCameraActor;
-
+	USpringArmComponent* temp2 = nullptr;
 	switch (type)
 	{
 	case ECharacterViewType::TPS:
 		temp = _tpsCameraActor;
+		temp2 = _tpsSpringArm;
 		_stateComponent->SetAiming(false);
 		break;
 	case ECharacterViewType::TPSZoom:
 		temp = _tpsZoomCameraActor;
+		temp2 = _tpsZoomSpringArm;
+		
 		_stateComponent->SetAiming(true);
 		break;
 	case ECharacterViewType::FPS:
 		temp = _fpsCameraActor;
+		temp2 = _fpsSpringArm;
 		break;
 	default:
 		break;
 	}
-	
+	temp->SetActive(true);
+	temp2->SetActive(true);
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC && temp && temp->GetChildActor())
 	{
 		PC->SetViewTargetWithBlend(temp->GetChildActor(), _cameraBlendTime);
 	}
+	DeactiveAnotherCamera();
 
-
+}
+void APlayerCharacter::DeactiveAnotherCamera()
+{
+	switch (_viewType)
+	{
+	case ECharacterViewType::TPS:
+		_tpsZoomCameraActor->SetActive(false);
+		_tpsZoomSpringArm->SetActive(false);
+		_fpsCameraActor->SetActive(false);
+		_fpsSpringArm->SetActive(false);
+		break;
+	case ECharacterViewType::TPSZoom:
+		_tpsCameraActor->SetActive(false);
+		_tpsSpringArm->SetActive(false);
+		_fpsCameraActor->SetActive(false);
+		_fpsSpringArm->SetActive(false);
+		break;
+	case ECharacterViewType::FPS:
+		_tpsCameraActor->SetActive(false);
+		_tpsSpringArm->SetActive(false);
+		_tpsZoomCameraActor->SetActive(false);
+		_tpsZoomSpringArm->SetActive(false);
+		break;
+	case ECharacterViewType::MAX:
+	default:
+		break;
+	}
 }
 UChildActorComponent* APlayerCharacter::GetCurCamera()
 {

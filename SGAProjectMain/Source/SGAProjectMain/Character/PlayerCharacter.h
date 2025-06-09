@@ -144,13 +144,16 @@ public:
 	void FocusMove(FVector2D moveVector);
 	void DefaultMove(FVector2D moveVector);
 
-	void FocusLook();
+	void MovingLook();
 	void DefaultLook();
 
 	void ChangeViewCamera(ECharacterViewType type);
-
+	void DeactiveAnotherCamera();
 	UChildActorComponent* GetCurCamera();
 
+	void SetDefaultVIew();
+	void SetMovingView();
+	void FinishMoving();
 	void InitView();
 	void SetFPSView();
 	void SetTPSZoomView();
