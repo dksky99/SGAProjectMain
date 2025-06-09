@@ -29,12 +29,9 @@ public:
 	void Dead(); // 죽었을 시 할 작업 추가
 
 	float GetDefaultSpeed() { return _defaultSpeed; }
-
-	bool IsDead() { return _curHp == 0; }
-
 protected:
 	float _defaultSpeed = 300.0f;
 
 	float _maxHp = 1000.0f;
-	float _hp = 100.0f;
+	float _curHp = 100.0f;
 };

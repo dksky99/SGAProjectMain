@@ -34,17 +34,17 @@ void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 
 void UStatComponent::ChangeHp(float amount)
 {
-	_hp += amount;
+	_curHp += amount;
 
-	if (_hp > _maxHp)
-		_hp = _maxHp;
+	if (_curHp > _maxHp)
+		_curHp = _maxHp;
 
 	IsDead();
 }
 
 bool UStatComponent::IsDead()
 {
-	if (_hp <= 0)
+	if (_curHp <= 0)
 	{
 		Dead();
 		return true;
