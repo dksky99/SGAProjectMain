@@ -26,12 +26,17 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	void DestroySelf();
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Hellpod")
 	UStaticMeshComponent* _mesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
 	TSubclassOf<AActor> _hellpodToSpawn;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Hellpod")
+	class UProjectileMovementComponent* _projectile;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
 	float _damage = 100.f;

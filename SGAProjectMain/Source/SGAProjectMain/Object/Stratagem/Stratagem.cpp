@@ -30,7 +30,7 @@ void AStratagem::DeployStratagem()
 
 		// 방향 = 타겟 - 스폰 위치
 		FVector direction = (targetLocation - spawnLocation).GetSafeNormal();
-		FRotator spawnRotation = direction.Rotation();
+		FRotator spawnRotation = FRotator(0.0f, direction.Rotation().Yaw, 0.0f);
 
 		// 스폰
 		AActor* spawned = GetWorld()->SpawnActor<AActor>(

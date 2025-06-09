@@ -2,7 +2,11 @@
 
 
 #include "Hellpod.h"
+
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/StaticMeshComponent.h"
+
 
 // Sets default values
 AHellpod::AHellpod()
@@ -13,12 +17,23 @@ AHellpod::AHellpod()
 	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = _mesh;
 
+	_projectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile"));
+	_projectile->ProjectileGravityScale = 0.0f;
+	_projectile->InitialSpeed = 0.f;
+	_projectile->MaxSpeed = 10000.f;
+	_projectile->bRotationFollowsVelocity = false;
 }
 
 // Called when the game starts or when spawned
 void AHellpod::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (_mesh)
+	{
+		_mesh->OnComponentHit.AddDynamic(this, &AHellpod::OnHit);
+		_mesh->SetNotifyRigidBodyCollision(true);
+	}
 	
 }
 
@@ -51,6 +66,11 @@ void AHellpod::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiv
 
 	AActor* spawnedActor = GetWorld()->SpawnActor<AActor>(_hellpodToSpawn, spawnLocation, spawnRotation, spawnParams);
 	
-	Destroy();
+	DestroySelf();
+}
+
+void AHellpod::DestroySelf()
+{
+	SetLifeSpan(1.0f); // 자기 자신을 1초뒤에 지운다
 }
 
