@@ -318,10 +318,12 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	case EWeaponType::Grenade:
 		_stateComponent->SetCookingGrenade(true);
 		_equippedGrenade->StartCookingGrenade();
+		StartThrowPreview();
 		break;
 
 	case EWeaponType::StratagemDevice:
 		_stateComponent->SetInputtingStratagem(true);
+		StartThrowPreview();
 		break;
 	}
 
@@ -410,12 +412,14 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	{
 		_stateComponent->SetCookingGrenade(false);
 		OnThrowReleased();
+		StopThrowPreview();
 		return;
 	}
 	else if (_stateComponent->IsInputtingStratagem())
 	{
 		_stateComponent->SetInputtingStratagem(false);
 		OnThrowReleased();
+		StopThrowPreview();
 		return;
 	}
 

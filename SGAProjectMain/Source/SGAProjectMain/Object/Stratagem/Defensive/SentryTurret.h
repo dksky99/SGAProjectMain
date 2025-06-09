@@ -108,7 +108,7 @@ protected:
 
 	// 트레이서용 NiagaraComponent를 미리 생성 → BeamEnd 파라미터 갱신 후 Activate
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	UNiagaraComponent* _tracerComponent;
+	class UNiagaraComponent* _tracerComponent;
 
 	// 최대 탄약 수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
