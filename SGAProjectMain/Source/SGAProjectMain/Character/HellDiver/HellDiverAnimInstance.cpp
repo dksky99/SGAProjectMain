@@ -42,7 +42,8 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isFiring= _hellDiver->GetStateComponent()->IsFiring();
 			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
 			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
-
+			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
+			AimFocus(DeltaSeconds);
 			GetCurrentMoveNode();
 
 
@@ -98,4 +99,22 @@ bool UHellDiverAnimInstance::LookStateChanged(FString curState)
 		_lookChanged.Broadcast(curState);
 	}
 	return true;
+}
+
+void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
+{
+	if (true )
+	{
+		FRotator temp = _hellDiver->Focusing();
+		double dot = temp.Roll;
+		temp.Roll = 0.0f;
+		_focusRotate += temp * DeltaSeconds * _rotateSpeed * dot;
+
+	}
+	else
+	{
+
+		_focusRotate.Yaw /= 2.f;
+		_focusRotate.Pitch /= 2.f;
+	}
 }

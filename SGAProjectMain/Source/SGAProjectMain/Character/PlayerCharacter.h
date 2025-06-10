@@ -48,6 +48,9 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	FTransform GetLeftHandPos();
+
 protected:
 	// Called when the game starts or when spawned
 
@@ -141,19 +144,25 @@ public:
 	void FocusMove(FVector2D moveVector);
 	void DefaultMove(FVector2D moveVector);
 
+	void FocusLook();
+	void DefaultLook();
+
 	void ChangeViewCamera(ECharacterViewType type);
+
+	UChildActorComponent* GetCurCamera();
 
 	void InitView();
 	void SetFPSView();
 	void SetTPSZoomView();
 	void SetTPSView();
-
+	virtual FRotator Focusing() override;
 	void UpdateCameraOcclusion();
 
 
 	virtual void SetStandingCollisionCamera() override;
 	virtual void SetCrouchingCollisionCamera()override;
 	virtual void SetProningCollisionCamera()override;
+
 protected:
 
 

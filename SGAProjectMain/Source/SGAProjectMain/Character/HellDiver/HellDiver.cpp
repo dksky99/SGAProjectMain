@@ -315,7 +315,8 @@ void AHellDiver::Rolling()
         return;
     if (_stateComponent->IsRolling())
         return;
-    _stateComponent->StartRolling();
+    if (_stateComponent->StartRolling()==false)
+        return;
     Jump();
 
     FVector forward = GetActorForwardVector();
@@ -408,6 +409,14 @@ void AHellDiver::Landed(const FHitResult& Hit)
     }
 
 
+}
+
+FRotator AHellDiver::Focusing()
+{
+
+
+    FRotator socketRot = GetMesh()->GetSocketRotation(TEXT("spine_05"));
+    return socketRot;
 }
 
 float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

@@ -12,10 +12,6 @@
 
 void UGunSettingWidget::InitializeWidget(AGunBase* gun)
 {
-    //_fireModePanel->ClearChildren();
-    //_scopeModePanel->ClearChildren();
-    //_lightModePanel->ClearChildren();
-
     UpdateGunInfo(gun->GetGunData(), gun->GetCurAmmo());
     SetSlots(gun->GetGunData());
 

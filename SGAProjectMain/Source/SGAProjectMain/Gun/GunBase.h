@@ -130,7 +130,8 @@ public:
 
 	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
 
-	void TickRecoil(float DeltaTime); // 움직임에 따른 반동
+	//void TickRecoil(float DeltaTime);
+	void RecoverRecoil(float DeltaTime); // 반동 복구
 	void ApplyFireRecoil(); // 사격에 따른 반동
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
 
@@ -154,6 +155,9 @@ public:
 
 
 	FAmmoChanged _ammoChanged;
+	FTransform GetMuzzleTrans();
+	FVector GetMuzzleLoc();
+	FRotator GetMuzzleRot();
 	FMagChanged _magChanged;
 
 private:
@@ -179,10 +183,15 @@ private:
 
 	FVector _hitPoint;
 
-	FRotator _recoilOffset = FRotator::ZeroRotator;
-	float _totalVerticalRecoil = 0.f;
-	float _maxVerticalRecoil;
-	float _maxHorizontalRecoil;
+	FRotator _recoilToRecover = FRotator::ZeroRotator;
+	// 반동 정도 조절을 위한 수치 -> 테스트 필요
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Recoil", meta = (AllowPrivateAccess = "true"))
+	float _recoilRecoverSpeed = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Recoil", meta = (AllowPrivateAccess = "true"))
+	float _verticalRecoilDamp = 5.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Recoil", meta = (AllowPrivateAccess = "true"))
+	float _horizontalRecoilDamp = 3.f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	EReloadStage _reloadStage = EReloadStage::None;
@@ -218,9 +227,12 @@ private:
 	int32 _scopeMode;
 	int32 _scopeIndex;
 
-
+	UPROPERTY()
+	class UNiagaraComponent* _laserpointer;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	class UNiagaraSystem* _laserFX;
 	UPROPERTY()
-	class UNiagaraComponent* _laserpointer;
+	class UNiagaraComponent* _laserImpact;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	class UNiagaraSystem* _laserImpactFX;
 };

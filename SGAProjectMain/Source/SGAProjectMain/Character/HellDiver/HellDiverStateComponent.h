@@ -99,6 +99,8 @@ public:
 	void SetFiring(bool isFiring) { _isFiring = isFiring; }
 	bool IsAiming() { return _isAiming; }
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
+
+	bool IsFocusing();
 	bool IsCookingGrenade() { return _isCookingGrenade; }
 	void SetCookingGrenade(bool isCookingGrenade) { _isCookingGrenade = isCookingGrenade; }
 	bool IsInputtingStratagem(){ return _isInputtingStratagem; }

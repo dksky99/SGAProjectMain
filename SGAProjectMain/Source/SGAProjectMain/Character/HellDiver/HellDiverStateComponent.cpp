@@ -169,6 +169,15 @@ bool UHellDiverStateComponent::FinishRolling()
 
 }
 
+bool UHellDiverStateComponent::IsFocusing()
+{
+	if (IsAiming() || IsFiring())
+		return true;
+
+
+	return false;
+}
+
 void UHellDiverStateComponent::MoveChangeFinish(FString newState)
 {
 	UE_LOG(LogTemp, Error, TEXT("Try Move UnLock"));

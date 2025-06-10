@@ -54,7 +54,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 
 	SetRootComponent(GetCapsuleComponent());
 	GetMesh()->SetupAttachment(RootComponent);
-	_cameraRoot->SetupAttachment(RootComponent);
+	_cameraRoot->SetupAttachment(RootComponent); 
+	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
 	_fpsSpringArm->SetupAttachment(_cameraRoot);
@@ -166,6 +167,78 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+FTransform APlayerCharacter::GetLeftHandPos()
+{
+
+	return FTransform();
+}
+
+
+FRotator APlayerCharacter::Focusing()
+{
+	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+	const FVector SpineLoc = SpineTransform.GetLocation();
+
+	FVector CameraLoc, CameraForward;
+	if (APlayerController* controller = Cast<APlayerController>(GetController()))
+	{
+		CameraLoc = controller->PlayerCameraManager->GetCameraLocation();
+		CameraForward = controller->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
+	}
+	else
+	{
+		CameraLoc = GetCurCamera()->GetComponentLocation();
+		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
+	}
+
+	FVector AimTarget = CameraLoc + CameraForward * 10000.f;
+	FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
+	FVector SpineUp = SpineTransform.GetRotation().GetUpVector();
+	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
+
+	// 좌우(Yaw) 필요성 판단
+	FVector SpineFwdFlat = FVector::VectorPlaneProject(SpineFwd, SpineUp).GetSafeNormal();
+	FVector TargetDirFlat = FVector::VectorPlaneProject(TargetDirection, SpineUp).GetSafeNormal();
+	float YawDot = FVector::DotProduct(SpineFwdFlat, TargetDirFlat);
+	bool bNeedsYaw = YawDot < 0.999f;
+
+	// 상하(Pitch) 필요성 판단
+	FVector SpineRight = SpineTransform.GetRotation().GetRightVector();
+	FVector SpineFwdNoYaw = FVector::VectorPlaneProject(SpineFwd, SpineRight).GetSafeNormal();
+	FVector TargetDirNoYaw = FVector::VectorPlaneProject(TargetDirection, SpineRight).GetSafeNormal();
+	float PitchDot = FVector::DotProduct(SpineFwdNoYaw, TargetDirNoYaw);
+	bool bNeedsPitch = PitchDot < 0.999f;
+
+	// 전체 회전 판단 (Roll은 여전히 유용)
+	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection);
+	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
+	float RotationDir = FVector::DotProduct(CrossValue, SpineUp);
+
+	FRotator ResultRot = FRotator::ZeroRotator;
+
+	if (DotValue > 0.999f) // 거의 일치하면 굳이 회전하지 않음
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	ResultRot.Roll = 2.0f - DotValue;
+
+	if (bNeedsYaw)
+	{
+		ResultRot.Yaw = 1.0f * (RotationDir >= 0 ? 1.f : -1.f);
+	}
+	if (bNeedsPitch)
+	{
+		ResultRot.Pitch = 1.0f * ((SpineFwd.Z <= TargetDirection.Z) ? 1.f : -1.f);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
+	return ResultRot;
+}
+
+
+
+
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (_playerState == EPlayerState::StratagemInputting) // 스트라타젬입력 모드에서는 동작안함
@@ -175,13 +248,13 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
 	{
-		if (_viewType == ECharacterViewType::TPS)
+		if (_stateComponent->IsFocusing())
 		{
-			DefaultMove(moveVector);
+			FocusMove(moveVector);
 		}
 		else
 		{
-			FocusMove(moveVector);
+			DefaultMove(moveVector);
 
 		}
 
@@ -212,31 +285,14 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		 _deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
 		
-		//// 카메라 오른쪽을 넘어감, 나는 정면
-		//if (_deltaAngle > 90.0f)
-		//{
-		//	_isTurnRight = true;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 카메라 왼쪽을 넘어감, 나는 정면
-		//else if (_deltaAngle < -90.0f)
-		//{
-		//	_isTurnLeft = true;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 움직이거나, 공격중일때..
-		//else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
-		//	)
-		//{
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		//}
-		//// 카메라, 정면 각도 차이의 절대값이 0.1 미만
-		//else if (FMath::Abs(_deltaAngle) < 0.1f)
-		//{
-		//	_isTurnLeft = false;
-		//	_isTurnRight = false;
-		//	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		//}
+		 if (_stateComponent->IsFocusing())
+		 {
+			 FocusLook();
+		 }
+		 else
+		 {
+			 DefaultLook();
+		 }
 		//
 		//
 		//
@@ -704,6 +760,8 @@ void APlayerCharacter::FocusMove(FVector2D moveVector)
 void APlayerCharacter::DefaultMove(FVector2D moveVector)
 {
 
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	if (moveVector.SquaredLength() > 1.0f)
 	{
@@ -753,8 +811,45 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	{
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 	}
 
+}
+
+void APlayerCharacter::FocusLook()
+{
+
+}
+
+void APlayerCharacter::DefaultLook()
+{
+
+	// 카메라 오른쪽을 넘어감, 나는 정면
+	if (_deltaAngle > 90.0f)
+	{
+		_isTurnRight = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 카메라 왼쪽을 넘어감, 나는 정면
+	else if (_deltaAngle < -90.0f)
+	{
+		_isTurnLeft = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 움직이거나, 공격중일때..
+	else if (GetCharacterMovement()->Velocity.Size() > 0.1f //|| IsAttack()
+		)
+	{
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	}
+	// 카메라, 정면 각도 차이의 절대값이 0.1 미만
+	else if (FMath::Abs(_deltaAngle) < 0.1f)
+	{
+		_isTurnLeft = false;
+		_isTurnRight = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	}
 }
 
 void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
@@ -765,9 +860,11 @@ void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
 	{
 	case ECharacterViewType::TPS:
 		temp = _tpsCameraActor;
+		_stateComponent->SetAiming(false);
 		break;
 	case ECharacterViewType::TPSZoom:
 		temp = _tpsZoomCameraActor;
+		_stateComponent->SetAiming(true);
 		break;
 	case ECharacterViewType::FPS:
 		temp = _fpsCameraActor;
@@ -782,6 +879,28 @@ void APlayerCharacter::ChangeViewCamera(ECharacterViewType type)
 		PC->SetViewTargetWithBlend(temp->GetChildActor(), _cameraBlendTime);
 	}
 
+
+}
+UChildActorComponent* APlayerCharacter::GetCurCamera()
+{
+	UChildActorComponent* curCamera=_tpsCameraActor;
+	switch (_viewType)
+	{
+	case ECharacterViewType::TPS:
+		curCamera = _tpsCameraActor;
+		break;
+	case ECharacterViewType::TPSZoom:
+		curCamera = _tpsZoomCameraActor;
+		break;
+	case ECharacterViewType::FPS:
+		curCamera = _fpsCameraActor;
+		break;
+	case ECharacterViewType::MAX:
+	default:
+		break;
+	}
+
+	return curCamera;
 
 }
 void APlayerCharacter::UpdateCameraOcclusion()
@@ -1095,10 +1214,6 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 			UE_LOG(LogTemp, Log, TEXT("Exit Gun Setting"));
 			
 			GetGameInstance()->GetSubsystem<UUIManager>()->ClosePopUp("GunSetting");
-			/*if (_gunSettingWidget)
-			{
-				_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-			}*/
 			
 			_isGunSettingMode = false;
 			return;
@@ -1139,12 +1254,6 @@ void APlayerCharacter::EnterGunSetting()
 		{
 			widget->InitializeWidget(_equippedGun);
 		}
-		/*if (_gunSettingWidget)
-		{
-			_gunSettingWidget->InitializeWidget(_equippedGun);
-
-			_gunSettingWidget->SetVisibility(ESlateVisibility::Visible);
-		}*/
 
 		UE_LOG(LogTemp, Log, TEXT("Enter Gun Setting"));
 	}
@@ -1168,7 +1277,6 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 		{
 			widget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 		}
-		//_gunSettingWidget->UpdateFireModePanel(_equippedGun->GetCurFireMode());
 	}
 }
 
@@ -1191,7 +1299,6 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 		{
 			widget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 		}
-		//_gunSettingWidget->UpdateLightModePanel(_equippedGun->GetCurLightMode());
 	}
 }
 
@@ -1213,7 +1320,6 @@ void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 		{
 			widget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
 		}
-		//_gunSettingWidget->UpdateScopeModePanel(_equippedGun->GetCurScopeMode());
 	}
 }
 

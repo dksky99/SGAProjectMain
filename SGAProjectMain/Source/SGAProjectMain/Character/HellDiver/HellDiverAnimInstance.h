@@ -36,6 +36,8 @@ protected:
 	bool MoveStateChanged(FString curState);
 	bool LookStateChanged(FString curState);
 
+	void AimFocus(float DeltaSeconds);
+
 protected:
 
 	class AHellDiver* _hellDiver;
@@ -52,7 +54,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	ELifeState _lifeState;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FRotator _focusRotate=FRotator();
+	float _rotateSpeed = 100;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isFocusing = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

@@ -39,7 +39,22 @@ void UStatComponent::ChangeHp(float amount)
 	if (_curHp > _maxHp)
 		_curHp = _maxHp;
 
-	if (_curHp < 0)
-		_curHp = 0;
+	IsDead();
+}
+
+bool UStatComponent::IsDead()
+{
+	if (_curHp <= 0)
+	{
+		Dead();
+		return true;
+	}
+
+	return false;
+}
+
+void UStatComponent::Dead()
+{
+
 }
 
