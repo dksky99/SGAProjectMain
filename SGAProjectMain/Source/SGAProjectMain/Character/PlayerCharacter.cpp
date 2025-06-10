@@ -23,6 +23,7 @@
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
+#include "../UI/StratagemWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -80,10 +81,10 @@ void APlayerCharacter::PostInitializeComponents()
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
 
-	/*if (_gunSettingWidgetClass)
+	if (_stgWidgetClass)
 	{
-		_gunSettingWidget = CreateWidget<UGunSettingWidget>(GetWorld(), _gunSettingWidgetClass);
-	}*/
+		_stgWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -109,12 +110,14 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->ActivateGun();
 	}
 
-	/*if (_gunSettingWidget)
+	if (_stgWidget)
 	{
-		_gunSettingWidget->AddToViewport();
-		_gunSettingWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}*/
+		_stgWidget->InitializeStgWidget(_stratagemComponent->GetStratagemSlots());
+		_stgWidget->AddToViewport();
+	}
 
+	//if (_sceneUIClass)
+	//	UI->GetOrShowSceneUI(_sceneUIClass);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -274,10 +277,12 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	case EWeaponType::Grenade:
 		_stateComponent->SetCookingGrenade(true);
 		_equippedGrenade->StartCookingGrenade();
+		StartThrowPreview();
 		break;
 
 	case EWeaponType::StratagemDevice:
 		_stateComponent->SetInputtingStratagem(true);
+		StartThrowPreview();
 		break;
 	}
 
@@ -366,12 +371,14 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	{
 		_stateComponent->SetCookingGrenade(false);
 		OnThrowReleased();
+		StopThrowPreview();
 		return;
 	}
 	else if (_stateComponent->IsInputtingStratagem())
 	{
 		_stateComponent->SetInputtingStratagem(false);
 		OnThrowReleased();
+		StopThrowPreview();
 		return;
 	}
 
