@@ -59,6 +59,9 @@ public:
 
 	UFUNCTION()
 	void Move(const  FInputActionValue& value);
+
+	UFUNCTION()
+	void MoveFinish(const  FInputActionValue& value);
 	UFUNCTION()
 	void Look(const  FInputActionValue& value);
 	UFUNCTION()

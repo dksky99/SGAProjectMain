@@ -28,6 +28,7 @@ public:
 
 	void JumpToSection(int32 sectionIndex);
 
+	bool IsMoving();
 
 protected:
 

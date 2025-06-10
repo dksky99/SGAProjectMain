@@ -47,6 +47,10 @@ public:
 	bool IsMoving();
 
 protected:
+
+	class ACharacter* _owner;
+
+
 	UPROPERTY(BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "EAbnormalityState"))
 	int32 _activeAbnormalities;
 

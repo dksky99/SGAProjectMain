@@ -120,6 +120,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (enhancedInputComponent)
 	{
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Completed, this, &APlayerCharacter::MoveFinish);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
 		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TrySprint);
@@ -218,7 +219,7 @@ FRotator APlayerCharacter::Focusing()
 		ResultRot.Pitch = 1.0f * ((SpineFwd.Z <= TargetDirection.Z) ? 1.f : -1.f);
 	}
 
-	UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
+	//UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
 	return ResultRot;
 }
 
@@ -254,11 +255,23 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 		// ¸ØÃß´Â °æ¿ì
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
 
 	}
+}
+void APlayerCharacter::MoveFinish(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	// ¸ØÃß´Â °æ¿ì
+	_vertical = 0.0f;
+	_horizontal = 0.0f;
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
@@ -731,7 +744,6 @@ void APlayerCharacter::SetTPSView()
 {
 	if (_defaultControl == nullptr)
 		return;
-	UE_LOG(LogTemp, Error, TEXT("DefaultView"));
 	//SetViewData(_defaultControl);
 	_viewType = ECharacterViewType::TPS;
 	ChangeViewCamera(_viewType);
@@ -783,6 +795,8 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 		moveVector.Normalize();
 	}
 
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	const FRotator controlRot = Controller->GetControlRotation();
 	const FRotator yawRotation(0.f, controlRot.Yaw, 0.f);
 
@@ -801,6 +815,9 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	}
 	else
 	{
+
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
 	}
@@ -831,6 +848,13 @@ void APlayerCharacter::DefaultLook()
 	const float speed = GetVelocity().Size2D();
 	const FRotator actorRot = GetActorRotation();
 	const FRotator controlRot = GetControlRotation();
+
+	if (_stateComponent->GetCharacterState() == ECharacterState::Proning)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ProningLook"));
+
+		return;
+	}
 
 	if ( FMath::Abs(_deltaAngle) > 80.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{

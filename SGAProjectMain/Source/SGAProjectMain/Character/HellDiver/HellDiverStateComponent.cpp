@@ -179,7 +179,8 @@ bool UHellDiverStateComponent::IsFocusing()
 		return true;
 	if (IsAiming())
 		return true;
-
+	if (IsMoving())
+		return false;
 
 	return true;
 }
