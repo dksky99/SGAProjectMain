@@ -10,6 +10,13 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMagChanged, int, int);
 
 UENUM(BlueprintType)
+enum class EGunType : uint8
+{
+	OneHanded,
+	TwoHanded
+};
+
+UENUM(BlueprintType)
 enum class EFireMode : uint8
 {
 	Auto,
@@ -43,6 +50,9 @@ struct FGunData // : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName _name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGunType _type;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f;

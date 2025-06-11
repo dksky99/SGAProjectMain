@@ -369,7 +369,7 @@ void AHellDiver::EquipGun(AGunBase* gun)
 {
     _equippedGun = gun;
     _equippedGun->ActivateGun();
-    _stateComponent->SetWeaponState(EWeaponType::PrimaryWeapon);
+    _stateComponent->SetWeaponState(EWeaponType::Gun);
 
     UE_LOG(LogTemp, Log, TEXT("Equip Gun"));
 }
