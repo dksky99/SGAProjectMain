@@ -164,6 +164,7 @@ public:
 	virtual FRotator Focusing() override;
 	void UpdateCameraOcclusion();
 
+	void ViewTurnBack();
 
 	virtual void SetStandingCollisionCamera() override;
 	virtual void SetCrouchingCollisionCamera()override;

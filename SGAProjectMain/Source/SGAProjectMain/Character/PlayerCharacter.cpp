@@ -267,13 +267,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 }
 void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 {
-	UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->bOrientRotationToMovement = false;
+	ViewTurnBack();
 	// 멈추는 경우
 	_vertical = 0.0f;
 	_horizontal = 0.0f;
-	_isViewTurnCenter = true;
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
@@ -330,7 +327,10 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	default:
 		break;
 	}
-
+	if (GetCharacterMovement()->bOrientRotationToMovement==true)
+	{
+		ViewTurnBack();
+	}
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::PrimaryWeapon:
@@ -514,6 +514,10 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 		return;
 	}
 
+	if (GetCharacterMovement()->bOrientRotationToMovement == true)
+	{
+		ViewTurnBack();
+	}
 	_stateComponent->SetAiming(true);
 	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
@@ -1008,6 +1012,15 @@ void APlayerCharacter::UpdateCameraOcclusion()
 		}
 	}
 
+}
+void APlayerCharacter::ViewTurnBack()
+{
+	UE_LOG(LogTemp, Display, TEXT("TurnBack"));
+	AddActorWorldRotation(FRotator(0, 1, 0));
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	// 멈추는 경우
+	_isViewTurnCenter = true;
 }
 void APlayerCharacter::SetStandingCollisionCamera()
 {
