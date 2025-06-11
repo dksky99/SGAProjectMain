@@ -58,6 +58,8 @@ protected:
 
 	float _deltaAngle = 0.0f;
 
+	bool _isViewTurnCenter=false;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;

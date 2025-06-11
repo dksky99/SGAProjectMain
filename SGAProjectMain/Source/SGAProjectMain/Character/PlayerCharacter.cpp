@@ -273,6 +273,7 @@ void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 	// 멈추는 경우
 	_vertical = 0.0f;
 	_horizontal = 0.0f;
+	_isViewTurnCenter = true;
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
@@ -283,7 +284,12 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerPitchInput(lookAxisVector.Y);
 
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+		if (_isViewTurnCenter&&_deltaAngle*_deltaAngle<=0.01)
+		{
+			_isViewTurnCenter = false;
+			GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
+		}
 		const bool bIsMoving = GetVelocity().Size2D() > 1.0f;
 		//에이밍중 아니고 사격중 아니여야함.
 		if (!_stateComponent->IsFocusing()&&bIsMoving)
