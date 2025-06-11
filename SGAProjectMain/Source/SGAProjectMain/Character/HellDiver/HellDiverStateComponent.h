@@ -33,12 +33,12 @@ UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
 	None,
-	PrimaryWeapon,
-	SecondaryWeapon,
+	Gun,
 	Grenade,
 	StratagemDevice,
 	// 필요하면 추가
 };
+
 UENUM(BlueprintType)
 enum class ELifeState : uint8
 {

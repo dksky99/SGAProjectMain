@@ -333,7 +333,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	}
 	switch (_stateComponent->GetWeaponState())
 	{
-	case EWeaponType::PrimaryWeapon:
+	case EWeaponType::Gun:
 		_stateComponent->SetFiring(true);
 		_equippedGun->StartFire();
 		break;
@@ -522,11 +522,8 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
 	{
-	case EWeaponType::PrimaryWeapon:
+	case EWeaponType::Gun:
 		_equippedGun->StartAiming();
-		break;
-
-	case EWeaponType::SecondaryWeapon:
 		break;
 
 	case EWeaponType::Grenade:
@@ -565,10 +562,7 @@ void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 
 	switch (_stateComponent->GetWeaponState())
 	{
-	case EWeaponType::PrimaryWeapon:
-		break;
-
-	case EWeaponType::SecondaryWeapon:
+	case EWeaponType::Gun:
 		break;
 
 	case EWeaponType::Grenade:
@@ -1252,11 +1246,8 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 	SetTPSView();
 	switch (_stateComponent->GetWeaponState())
 	{
-	case EWeaponType::PrimaryWeapon:
+	case EWeaponType::Gun:
 		_equippedGun->StopAiming();
-		break;
-
-	case EWeaponType::SecondaryWeapon:
 		break;
 
 	case EWeaponType::Grenade:
@@ -1282,7 +1273,7 @@ void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 {
 	GetWorldTimerManager().ClearTimer(_gunSettingTimer);
 
-	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
 		return;
 
 	if (_equippedGun)
@@ -1315,7 +1306,7 @@ void APlayerCharacter::EnterGunSetting()
 	if (_stateComponent->IsFiring())
 		return;
 
-	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
 		return;
 
 	if (_equippedGun)
@@ -1345,7 +1336,7 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 	if (_stateComponent->IsFiring())
 		return;
 
-	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
 		return;
 
 	if (_equippedGun && _isGunSettingMode)
@@ -1366,7 +1357,7 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 	if (_stateComponent->IsFiring())
 		return;
 
-	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
 		return;
 
 	if (_equippedGun && _isGunSettingMode)
@@ -1388,7 +1379,7 @@ void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 	if (_stateComponent->IsFiring())
 		return;
 
-	if (_stateComponent->GetWeaponState() != EWeaponType::PrimaryWeapon)
+	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
 		return;
 
 	if (_equippedGun && _isGunSettingMode)
