@@ -103,7 +103,7 @@ bool UHellDiverAnimInstance::LookStateChanged(FString curState)
 
 void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 {
-	if (true )
+	if (_isFocusing  || !IsMoving())
 	{
 		FRotator temp = _hellDiver->Focusing();
 		double dot = temp.Roll;
@@ -113,8 +113,8 @@ void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 	}
 	else
 	{
+		// 부드럽게 원래 자세로 돌아감
+		_focusRotate = FMath::RInterpTo(_focusRotate, FRotator::ZeroRotator, DeltaSeconds, _rotateSpeed);
 
-		_focusRotate.Yaw /= 2.f;
-		_focusRotate.Pitch /= 2.f;
 	}
 }

@@ -59,6 +59,9 @@ public:
 
 	UFUNCTION()
 	void Move(const  FInputActionValue& value);
+
+	UFUNCTION()
+	void MoveFinish(const  FInputActionValue& value);
 	UFUNCTION()
 	void Look(const  FInputActionValue& value);
 	UFUNCTION()
@@ -144,13 +147,16 @@ public:
 	void FocusMove(FVector2D moveVector);
 	void DefaultMove(FVector2D moveVector);
 
-	void FocusLook();
+	void MovingLook();
 	void DefaultLook();
 
 	void ChangeViewCamera(ECharacterViewType type);
-
+	void DeactiveAnotherCamera();
 	UChildActorComponent* GetCurCamera();
 
+	void SetDefaultVIew();
+	void SetMovingView();
+	void FinishMoving();
 	void InitView();
 	void SetFPSView();
 	void SetTPSZoomView();
@@ -158,6 +164,7 @@ public:
 	virtual FRotator Focusing() override;
 	void UpdateCameraOcclusion();
 
+	void ViewTurnBack();
 
 	virtual void SetStandingCollisionCamera() override;
 	virtual void SetCrouchingCollisionCamera()override;

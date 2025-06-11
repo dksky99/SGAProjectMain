@@ -70,3 +70,9 @@ void UCharacterAnimInstance::JumpToSection(int32 sectionIndex)
 	FName sectionName = FName(*FString::Printf(TEXT("Section%d"), sectionIndex));
 	Montage_JumpToSection(sectionName);
 }
+
+bool UCharacterAnimInstance::IsMoving()
+{
+	
+	return 0.1<=(_vertical * _vertical + _horizontal + _horizontal);
+}

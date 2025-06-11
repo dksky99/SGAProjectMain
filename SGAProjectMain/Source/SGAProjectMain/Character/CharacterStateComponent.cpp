@@ -3,6 +3,8 @@
 
 #include "CharacterStateComponent.h"
 
+#include "GameFramework/Character.h"
+
 // Sets default values for this component's properties
 UCharacterStateComponent::UCharacterStateComponent()
 {
@@ -19,7 +21,7 @@ void UCharacterStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	_owner =Cast<ACharacter>( GetOwner());
 	
 }
 
@@ -49,5 +51,12 @@ bool UCharacterStateComponent::CheckAbnormality(EAbnormalityState abnormality)
 
 	return _activeAbnormalities & (int32)abnormality;
 
+}
+
+bool UCharacterStateComponent::IsMoving()
+{
+	if (_owner == nullptr)
+		return false;
+	return _owner->GetVelocity().Size2D() > 1.0f;;
 }
 

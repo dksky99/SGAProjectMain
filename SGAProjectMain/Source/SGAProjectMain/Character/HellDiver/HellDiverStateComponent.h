@@ -33,12 +33,12 @@ UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
 	None,
-	PrimaryWeapon,
-	SecondaryWeapon,
+	Gun,
 	Grenade,
 	StratagemDevice,
 	// 필요하면 추가
 };
+
 UENUM(BlueprintType)
 enum class ELifeState : uint8
 {
@@ -140,6 +140,7 @@ protected:
 
 	ELifeState _lifeState = ELifeState::Alive;
 
+	bool _isMoving = false;
 	bool _isFiring = false;
 	bool _isReloading = false;
 	bool _isRolling = false;

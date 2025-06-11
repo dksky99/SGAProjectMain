@@ -56,7 +56,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FRotator _focusRotate=FRotator();
-	float _rotateSpeed = 100;
+
+	float _rotateSpeed = 400;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFocusing = false;
@@ -66,6 +67,7 @@ protected:
 	bool _isReloading = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isRolling = false;
+
 
 	FString _currentMoveState;
 	FString _currentLookState;
