@@ -113,8 +113,9 @@ void APlayerCharacter::BeginPlay()
 
 	if (_stgWidget)
 	{
-		_stgWidget->InitializeStgWidget(_stratagemComponent->GetStratagemSlots());
+		_stgWidget->InitializeWidget(_stratagemComponent->GetStratagemSlots());
 		_stgWidget->AddToViewport();
+		_stgWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	//if (_sceneUIClass)
@@ -1061,6 +1062,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_playerState = EPlayerState::StratagemInputting;
 		_stratagemInputBuffer.Empty();
 	}
+
+	_stgWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
 void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
@@ -1070,6 +1073,9 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 		_playerState = EPlayerState::Idle;
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 	}
+
+	_stgWidget->ResetWidget();
+	_stgWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
@@ -1132,6 +1138,9 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 			_stratagemInputBuffer.Empty();
 			_playerState = EPlayerState::Idle;
+
+			_stgWidget->ResetWidget();
+			_stgWidget->SetVisibility(ESlateVisibility::Hidden);
 			return;
 		}
 
@@ -1151,12 +1160,16 @@ void APlayerCharacter::CheckStratagemInputCombo()
 			{
 				bIsPrefixMatch = true;
 			}
+
+			_stgWidget->UpdateWidget(i, _stratagemInputBuffer.Num(), bPrefixMatch);
 		}
 	}
 
 	if (!bIsPrefixMatch)
 	{
 		_stratagemInputBuffer.Empty(); // 조합 초기화
+		_stgWidget->ResetWidget();
+		_stgWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

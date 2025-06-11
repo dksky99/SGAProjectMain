@@ -15,11 +15,14 @@ class SGAPROJECTMAIN_API UStratagemSlotWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void InitializeStgSlot(const class AStratagem* stg);
-
-	void UpdateStgSlot(const TArray<FKey>& inputBuffer);
-
+	void InitializeSlot(const class AStratagem* stg);
 	void ResetSlot();
+
+	void UpdateSlot(int32 comboNum);
+
+	void DimSlot();
+
+	void SetSlotOpacity(float opacity);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -32,11 +35,5 @@ private:
 	class UHorizontalBox* _stgCommands;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
-	class UTexture2D* _leftArrow;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
-	class UTexture2D* _rightArrow;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
-	class UTexture2D* _upArrow;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
-	class UTexture2D* _downArrow;
+	class UTexture2D* _arrow; // ¿À¸¥ÂÊ
 };

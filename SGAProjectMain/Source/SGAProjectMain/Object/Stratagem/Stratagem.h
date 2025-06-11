@@ -37,6 +37,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	TArray<FKey> _inputSequence;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
+	FName _name;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
+	class UTexture2D* _icon;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
 	AActor* _targetActor = nullptr;
 

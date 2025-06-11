@@ -15,9 +15,11 @@ class SGAPROJECTMAIN_API UStratagemWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void InitializeStgWidget(const TArray<struct FStratagemSlot>& stgSlots);
+	void InitializeWidget(const TArray<struct FStratagemSlot>& stgSlots);
 
-	void UpdateStgWidget(int32 index, const TArray<FKey> inputBuffer);
+	void UpdateWidget(int32 stgIndex, int32 comboNum, bool bPrefixMax);
+
+	void ResetWidget();
 
 private:
 	UPROPERTY(meta = (BindWidget))

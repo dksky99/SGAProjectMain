@@ -9,21 +9,40 @@
 
 #include "Components/VerticalBox.h"
 
-void UStratagemWidget::InitializeStgWidget(const TArray<FStratagemSlot>& stgSlots)
+void UStratagemWidget::InitializeWidget(const TArray<FStratagemSlot>& stgSlots)
 {
-	for (auto stgSlot : stgSlots)
+	for (const FStratagemSlot& stgSlot : stgSlots)
 	{
 		auto stgClass = stgSlot.StratagemClass;
 		const AStratagem* stg = stgClass->GetDefaultObject<AStratagem>();
 
 		UStratagemSlotWidget* slot = CreateWidget<UStratagemSlotWidget>(this, _slotWidgetClass);
-		slot->InitializeStgSlot(stg);
+		slot->InitializeSlot(stg);
 		_stgSlots->AddChild(slot);
+	}
+
+	ResetWidget();
+}
+
+void UStratagemWidget::UpdateWidget(int32 stgIndex, int32 inputNum, bool bPrefixMax)
+{
+	auto stgSlotWdg = Cast<UStratagemSlotWidget>(_stgSlots->GetChildAt(stgIndex));
+
+	if (bPrefixMax)
+	{
+		stgSlotWdg->UpdateSlot(inputNum);
+	}
+	else
+	{
+		stgSlotWdg->DimSlot();
 	}
 }
 
-void UStratagemWidget::UpdateStgWidget(int32 index, const TArray<FKey> inputBuffer)
+void UStratagemWidget::ResetWidget()
 {
-	auto stgSlotWdg = Cast<UStratagemSlotWidget>(_stgSlots->GetChildAt(index));
-	stgSlotWdg->UpdateStgSlot(inputBuffer);
+	auto stgSlots = _stgSlots->GetAllChildren();
+	for (auto slot : stgSlots)
+	{
+		Cast<UStratagemSlotWidget>(slot)->ResetSlot();
+	}
 }
