@@ -163,6 +163,7 @@ FTransform APlayerCharacter::GetLeftHandPos()
 
 FRotator APlayerCharacter::Focusing()
 {
+	//상태에 따라 기준이 되는 본을 바꿔야함.
 	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
 	const FVector SpineLoc = SpineTransform.GetLocation();
 
