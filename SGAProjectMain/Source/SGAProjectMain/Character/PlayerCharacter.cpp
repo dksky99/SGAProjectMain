@@ -84,7 +84,7 @@ void APlayerCharacter::PostInitializeComponents()
 
 	if (_stgWidgetClass)
 	{
-		_stgWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
+		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
 	}
 }
 
@@ -112,11 +112,11 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->ActivateGun();
 	}
 
-	if (_stgWidget)
+	if (_stratagemWidget)
 	{
-		_stgWidget->InitializeWidget(_stratagemComponent->GetStratagemSlots());
-		_stgWidget->AddToViewport();
-		_stgWidget->SetVisibility(ESlateVisibility::Hidden);
+		_stratagemWidget->InitializeWidget(_stratagemComponent->GetStratagemSlots());
+		_stratagemWidget->AddToViewport();
+		_stratagemWidget->OpenWidget(false);
 	}
 
 	//if (_sceneUIClass)
@@ -126,6 +126,18 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (_stratagemComponent && _stratagemWidget)
+	{
+		for (int32 i = 0; i < _stratagemComponent->GetStratagemSlots().Num(); ++i)
+		{
+			if (_stratagemComponent->IsStratagemOnCooldown(i))
+			{
+				float remaining = _stratagemComponent->GetRemainingCooldown(i);
+				_stratagemWidget->SetWidgetCooldownState(i, remaining);
+			}
+		}
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -1150,7 +1162,7 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_stratagemInputBuffer.Empty();
 	}
 
-	_stgWidget->SetVisibility(ESlateVisibility::Visible);
+	_stratagemWidget->OpenWidget(true);
 }
 
 void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
@@ -1161,8 +1173,7 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 	}
 
-	_stgWidget->ResetWidget();
-	_stgWidget->SetVisibility(ESlateVisibility::Hidden);
+	_stratagemWidget->OpenWidget(false);
 }
 
 void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
@@ -1226,8 +1237,7 @@ void APlayerCharacter::CheckStratagemInputCombo()
 			_stratagemInputBuffer.Empty();
 			_playerState = EPlayerState::Idle;
 
-			_stgWidget->ResetWidget();
-			_stgWidget->SetVisibility(ESlateVisibility::Hidden);
+			_stratagemWidget->SetWidgetOperatingState(i);
 			return;
 		}
 
@@ -1248,15 +1258,14 @@ void APlayerCharacter::CheckStratagemInputCombo()
 				bIsPrefixMatch = true;
 			}
 
-			_stgWidget->UpdateWidget(i, _stratagemInputBuffer.Num(), bPrefixMatch);
+			_stratagemWidget->UpdateWidget(i, _stratagemInputBuffer.Num(), bPrefixMatch);
 		}
 	}
 
 	if (!bIsPrefixMatch)
 	{
 		_stratagemInputBuffer.Empty(); // 조합 초기화
-		_stgWidget->ResetWidget();
-		_stgWidget->SetVisibility(ESlateVisibility::Hidden);
+		_stratagemWidget->OpenWidget(false);
 	}
 }
 

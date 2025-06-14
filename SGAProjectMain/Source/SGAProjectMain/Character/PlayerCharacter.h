@@ -253,7 +253,7 @@ protected:
 	TSubclassOf<UUserWidget> _stgWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
-	class UStratagemWidget* _stgWidget;
+	class UStratagemWidget* _stratagemWidget;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))

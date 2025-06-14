@@ -19,7 +19,12 @@ public:
 
 	void UpdateWidget(int32 stgIndex, int32 comboNum, bool bPrefixMax);
 
-	void ResetWidget();
+	void OpenWidget(bool visible);
+	void SetWidgetOperatingState(int32 index);
+	void SetWidgetCooldownState(int32 index, float remainingTime);
+
+	bool IsShowing() { return _isShowing; }
+	void SetShowing(bool isShowing) { _isShowing = isShowing; }
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -27,4 +32,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UStratagemSlotWidget> _slotWidgetClass;
+
+	FTimerHandle _hideWidgetTimerHandle;
+
+	bool _isShowing = false;
 };
