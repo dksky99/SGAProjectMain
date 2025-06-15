@@ -34,6 +34,11 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
         _stgCommands->AddChildToHorizontalBox(arrowImage);
 	}
 
+    auto text = stg->GetStgName().ToString();
+    _stgNameText->SetText(FText::FromString(text));
+
+    _stgIcon->SetBrushFromTexture(stg->GetStgIcon());
+
     _parentWidget = parentWidget;
     ResetSlot();
 }

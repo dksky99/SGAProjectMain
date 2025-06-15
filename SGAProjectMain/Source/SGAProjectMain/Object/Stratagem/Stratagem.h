@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	const TArray<FKey>& GetInputSequence() const { return _inputSequence; }
 
+	const FName GetStgName() const { return _name; }
+	class UTexture2D* GetStgIcon() const { return _icon; }
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	TSubclassOf<AActor> _objectToSpawn; // 실제 폭격/센트리 등
