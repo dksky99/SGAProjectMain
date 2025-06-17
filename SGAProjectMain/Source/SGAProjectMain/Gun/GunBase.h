@@ -170,6 +170,7 @@ public:
 	FRotator GetMuzzleRot();
 	FMagChanged _magChanged;
 
+	FTransform GetLeftHandleTrans();
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _mesh;

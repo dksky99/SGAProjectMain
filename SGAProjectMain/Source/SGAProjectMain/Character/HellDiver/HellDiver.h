@@ -21,6 +21,7 @@ public:
 	class UHellDiverStateComponent* GetStateComponent();
 	class UHellDiverStatComponent* GetStatComponent();
 
+	class UMotionWarpingComponent* GetMotionWarp() const;
 	void EquipGrenade();
 	void EquipStratagem();
 	void OnThrowReleased();
@@ -64,7 +65,10 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	FTransform GetLeftHandSocketTransform() const;
+
 protected:
+
 	FTransform GetHandSocketTransform() const;
 	FTransform GetEquip1SocketTransform() const;
 	FTransform GetEquip2SocketTransform() const;
@@ -93,6 +97,12 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStatComponent* _statComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pakour", meta = (AllowPrivateAccess = "true"))
+	class UPakourComponent* _pakourComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
+	class UMotionWarpingComponent* _motionWarpComponent;
 
 	// ≈ı√¥π∞
 	UPROPERTY()

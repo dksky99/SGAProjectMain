@@ -56,7 +56,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FRotator _focusRotate=FRotator();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _focusAlpha = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _focusSpeed = 10.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FTransform _leftHandTrans = FTransform();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _useLeftHandIk = false;
 	float _rotateSpeed = 400;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

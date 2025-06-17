@@ -9,7 +9,9 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
 #include "HellDiverAnimInstance.h"
+#include "PakourComponent.h"
 
+#include "MotionWarpingComponent.h"
 #include <Kismet/GameplayStaticsTypes.h>
 #include <Kismet/GameplayStatics.h>
 #include "Components/SplineMeshComponent.h"
@@ -37,6 +39,11 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
 	_trajectorySpline = CreateDefaultSubobject<USplineComponent>(TEXT("ThrowSpline"));
     _trajectorySpline->SetupAttachment(GetMesh()); // ¶Ç´Â RootComponent
+
+    _pakourComponent = CreateDefaultSubobject<UPakourComponent>(TEXT("PakourComponent"));
+    _motionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
+
+
 }
 
 void AHellDiver::BeginPlay()
@@ -63,6 +70,11 @@ UHellDiverStateComponent* AHellDiver::GetStateComponent()
 UHellDiverStatComponent* AHellDiver::GetStatComponent()
 {
     return _statComponent;
+}
+
+UMotionWarpingComponent* AHellDiver::GetMotionWarp() const
+{
+    return _motionWarpComponent;
 }
 
 void AHellDiver::EquipGrenade()
@@ -429,6 +441,15 @@ float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent
         Dead();
 
     return -damageAmount;
+}
+
+FTransform AHellDiver::GetLeftHandSocketTransform() const
+{
+    if (_equippedGun ==nullptr)
+    {
+        return GetActorTransform(); // fallback
+    }
+    return _equippedGun->GetLeftHandleTrans();
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

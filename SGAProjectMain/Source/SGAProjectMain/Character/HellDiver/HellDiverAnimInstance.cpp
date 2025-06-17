@@ -43,6 +43,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
 			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
+			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			AimFocus(DeltaSeconds);
 			GetCurrentMoveNode();
 
@@ -109,12 +110,14 @@ void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 		double dot = temp.Roll;
 		temp.Roll = 0.0f;
 		_focusRotate += temp * DeltaSeconds * _rotateSpeed * dot;
-
+		_focusAlpha = FMath::Clamp(_focusAlpha + _focusSpeed * DeltaSeconds, 0, 1);
 	}
 	else
 	{
 		// 부드럽게 원래 자세로 돌아감
 		_focusRotate = FMath::RInterpTo(_focusRotate, FRotator::ZeroRotator, DeltaSeconds, _rotateSpeed);
+
+		_focusAlpha = FMath::Clamp(_focusAlpha - _focusSpeed * DeltaSeconds, 0, 1);
 
 	}
 }

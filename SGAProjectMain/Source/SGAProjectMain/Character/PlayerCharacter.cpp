@@ -30,12 +30,14 @@
 
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
+#include "HellDiver/PakourComponent.h"
 
 #include "../Data/PlayerControlDataAsset.h"
 #include "../Data/CollisionCameraDataAsset.h"
 
 #include "../Controller/MainPlayerController.h"
 #include "../Controller/CameraContainActor.h"
+
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
@@ -291,13 +293,13 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		//에이밍중 아니고 사격중 아니여야함.
 		if (!_stateComponent->IsFocusing()&&bIsMoving)
 		{
-			UE_LOG(LogTemp, Display, TEXT("MovingLook"));
+			//UE_LOG(LogTemp, Display, TEXT("MovingLook"));
 			MovingLook();
 		}
 		
 		else
 		{
-			UE_LOG(LogTemp, Display, TEXT("DefaultLook"));
+			//UE_LOG(LogTemp, Display, TEXT("DefaultLook"));
 			DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
 		}
 	}
@@ -308,7 +310,8 @@ void APlayerCharacter::TryJump(const FInputActionValue& value)
 {
 	if (value.Get<bool>())
 	{
-		Jump();
+		UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
+		_pakourComponent->TriggerPakour();
 	}
 }
 
