@@ -168,7 +168,7 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 	_useFocusing = false;
 	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
 		return false;
-	if (!_isFocusing || IsMoving())
+	if (!_isFocusing && IsMoving())
 		return false;
 	if (IsStableState_Look() == false)
 		return false;
