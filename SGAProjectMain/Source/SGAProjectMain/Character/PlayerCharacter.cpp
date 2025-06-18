@@ -365,6 +365,9 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::Gun:
+		if (_isGunSettingMode)
+			return;
+
 		_stateComponent->SetFiring(true);
 		_equippedGun->StartFire();
 		break;

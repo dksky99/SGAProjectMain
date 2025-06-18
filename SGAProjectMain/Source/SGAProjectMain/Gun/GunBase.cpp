@@ -351,6 +351,9 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 	if (_curAmmo == _gunData._maxAmmo)
 		return;
 
+	if (_curMag == 0)
+		return;
+
 	_owner->GetStateComponent()->SetReloading(true);
 
 	if (!_reloadMontage) return;

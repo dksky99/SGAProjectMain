@@ -24,6 +24,8 @@ public:
 	float GetProneSpeed() { return _proneSpeed; }
 	float GetPower() { return _power; }
 
+	void ChangeHp(float amount) override;
+
 	FHpChanged _hpChanged;
 
 
