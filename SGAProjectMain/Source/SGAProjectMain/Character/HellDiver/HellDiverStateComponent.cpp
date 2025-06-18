@@ -36,6 +36,8 @@ bool UHellDiverStateComponent::StartSprint()
 {
 	if (_characterState != ECharacterState::Standing)
 		return false;
+	if (_isFiring)
+		return false;
 	
 	if (_isRolling)
 		return false;

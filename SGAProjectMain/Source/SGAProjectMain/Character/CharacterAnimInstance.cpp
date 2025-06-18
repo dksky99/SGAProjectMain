@@ -74,5 +74,5 @@ void UCharacterAnimInstance::JumpToSection(int32 sectionIndex)
 bool UCharacterAnimInstance::IsMoving()
 {
 	
-	return 0.1<=(_vertical * _vertical + _horizontal + _horizontal);
+	return 0.1<=(_vertical * _vertical + _horizontal * _horizontal);
 }

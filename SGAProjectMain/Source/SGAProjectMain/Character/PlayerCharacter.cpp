@@ -206,7 +206,24 @@ FTransform APlayerCharacter::GetLeftHandPos()
 FRotator APlayerCharacter::Focusing()
 {
 	//상태에 따라 기준이 되는 본을 바꿔야함.
-	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+	FTransform SpineTransform; 
+	switch (_stateComponent->GetWeaponState())
+	{
+	case EWeaponType::None:
+	case EWeaponType::Grenade:
+	case EWeaponType::StratagemDevice:
+
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("FocusingSocket"), RTS_World);
+
+
+		break;
+	case EWeaponType::Gun:
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+		break;
+	default:
+		break;
+
+	}
 	const FVector SpineLoc = SpineTransform.GetLocation();
 
 	FVector CameraLoc, CameraForward;
@@ -309,10 +326,19 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 }
 void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 {
-	ViewTurnBack();
-	// 멈추는 경우
-	_vertical = 0.0f;
-	_horizontal = 0.0f;
+	if (_stateComponent->IsFocusing())
+	{
+
+	}
+	else
+	{
+
+		ViewTurnBack();
+		// 멈추는 경우
+		_vertical = 0.0f;
+		_horizontal = 0.0f;
+
+	}
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
@@ -530,7 +556,7 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
 {
-	if (_stateComponent->IsFiring())
+	if (_viewType!=ECharacterViewType::TPS)
 		return;
 	switch (_stateComponent->GetCharacterState())
 	{
@@ -565,6 +591,8 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	{
 		ViewTurnBack();
 	}
+	if (_stateComponent->GetCharacterState() == ECharacterState::Sprinting)
+		FinishSprint();
 	_stateComponent->SetAiming(true);
 	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
@@ -872,8 +900,9 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	else
 	{
 
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+		ViewTurnBack();
+		// 멈추는 경우
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
 	}

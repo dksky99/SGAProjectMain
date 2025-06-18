@@ -108,7 +108,7 @@ bool UHellDiverAnimInstance::LookStateChanged(FString curState)
 
 void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 {
-	if (_isFocusing  || !IsMoving())
+	if (_isFocusing  || !IsMoving()||_useFocusing)
 	{
 		FRotator temp = _hellDiver->Focusing();
 		double dot = temp.Roll;
@@ -155,10 +155,10 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 	_useLeftHand = false;
 	if (gun == nullptr)
 		return false;
-	//if (gun->GetGunData()._type == EGunType::OneHanded)
-	//{
-	//	return false;
-	//}
+	if (_weaponState!=EWeaponType::Gun)
+	{
+		return false;
+	}
 	_useLeftHand = true;
 	return true;
 }

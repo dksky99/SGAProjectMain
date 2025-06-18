@@ -77,7 +77,7 @@ protected:
 	bool _useLeftHand = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FTransform _leftHandTrans = FTransform();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FVector _jointTargetLoc = FVector();
 
