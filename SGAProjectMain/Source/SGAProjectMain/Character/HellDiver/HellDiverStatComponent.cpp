@@ -3,3 +3,10 @@
 
 #include "HellDiverStatComponent.h"
 
+void UHellDiverStatComponent::ChangeHp(float amount)
+{
+	Super::ChangeHp(amount);
+
+	if (_hpChanged.IsBound())
+		_hpChanged.Broadcast(_curHp / _maxHp);
+}

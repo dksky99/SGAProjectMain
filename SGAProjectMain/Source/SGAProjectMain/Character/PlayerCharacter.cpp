@@ -31,6 +31,7 @@
 
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
+#include "HellDiver/HellDiverStatComponent.h"
 
 #include "../Data/PlayerControlDataAsset.h"
 #include "../Data/CollisionCameraDataAsset.h"
@@ -108,6 +109,8 @@ void APlayerCharacter::BeginPlay()
 	{
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+
 		_gunWidget->AddToViewport();
 		_equippedGun->ActivateGun();
 	}
