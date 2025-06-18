@@ -326,10 +326,16 @@ void UPakourComponent::TryPakour()
 		return;
 
 	}
-	else
+	if (_wallHeight > 60)
 	{
 		//OneHandVault
 		TryVault(EVaultType_C::OneHandVault);
+
+		return;
+
+	}
+	else
+	{
 
 		return;
 	}
