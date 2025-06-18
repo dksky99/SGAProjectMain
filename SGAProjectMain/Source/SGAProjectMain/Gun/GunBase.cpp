@@ -751,6 +751,9 @@ FTransform AGunBase::GetLeftHandleTrans()
 {
 	if(_mesh==nullptr)
 		return GetActorTransform();
+	if(_mesh->DoesSocketExist(TEXT("LeftGrip")))
 		return _mesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
+	return _mesh->GetComponentTransform();
+		
 }
 

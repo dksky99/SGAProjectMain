@@ -65,6 +65,8 @@ void UPakourComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UPakourComponent::TriggerPakour()
 {
+	if (_canPakour == false)
+		return;
 	FVector hitLoc;
 	FRotator normal;
 	UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));

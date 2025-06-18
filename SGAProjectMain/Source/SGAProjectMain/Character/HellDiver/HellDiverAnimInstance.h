@@ -7,7 +7,14 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiverAnimInstance.generated.h"
 
+/*
+	믹사모에서 추가해올 애니메이션
+	Taunt : 일부를 가져와서 스트라타젬을 누르는 애니메이션으로 사용할 수 있을것같다
+	Flying Death : 일부를 가져와서 뒤로 Rolling할때 사용할 수 있을것같다
+	GoalKeeper Diving Safe : 일부를 가져와서 옆으로 Rolling할때 사용할 수 있을것 같다.
 
+
+*/
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoveAnimStateChanged, FString, newState);
@@ -37,7 +44,10 @@ protected:
 	bool LookStateChanged(FString curState);
 
 	void AimFocus(float DeltaSeconds);
-
+	bool IsStableState_Move();
+	bool IsStableState_Look();
+	bool IsUsingLeftHand();
+	bool IsUsingFocusing();
 protected:
 
 	class AHellDiver* _hellDiver;
@@ -56,16 +66,27 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FRotator _focusRotate=FRotator();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _focusAlpha = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _focusSpeed = 10.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _useLeftHand = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FTransform _leftHandTrans = FTransform();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FVector _jointTargetLoc = FVector();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useLeftHandIk = false;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _useFocusing = false;
 	float _rotateSpeed = 400;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

@@ -66,7 +66,7 @@ public:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	FTransform GetLeftHandSocketTransform() const;
-
+	FVector GetJointTargetLocation() { return _jointTargetLoc; }
 protected:
 
 	FTransform GetHandSocketTransform() const;
@@ -92,16 +92,16 @@ protected:
 	FTimerHandle _rollingTimerHandle;
 
 	// ªÛ≈¬
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStatComponent* _statComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pakour", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Pakour", meta = (AllowPrivateAccess = "true"))
 	class UPakourComponent* _pakourComponent;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stat", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Pakour", meta = (AllowPrivateAccess = "true"))
 	class UMotionWarpingComponent* _motionWarpComponent;
 
 	// ≈ı√¥π∞
@@ -157,4 +157,8 @@ protected:
 
 	UPROPERTY()
 	TArray<AGunBase*> _gunSlot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Anim")
+	FVector _jointTargetLoc = FVector(20,45,-90);
+
 };

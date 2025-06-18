@@ -3,6 +3,7 @@
 
 #include "HellDiverAnimInstance.h"
 #include "HellDiver.h"
+#include "../../Gun/GunBase.h"
 #include "HellDiverStateComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimNode_StateMachine.h"
@@ -44,6 +45,9 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
+			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
+			IsUsingLeftHand();
+			IsUsingFocusing();
 			AimFocus(DeltaSeconds);
 			GetCurrentMoveNode();
 
@@ -120,4 +124,54 @@ void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 		_focusAlpha = FMath::Clamp(_focusAlpha - _focusSpeed * DeltaSeconds, 0, 1);
 
 	}
+}
+
+bool UHellDiverAnimInstance::IsStableState_Move()
+{
+
+	if (_currentMoveState == "Sprinting")
+		return true;
+	if (_currentLookState == "Crouching")
+		return true;
+	if (_currentMoveState == "Standing")
+		return true;
+	if (_currentLookState == "Proning")
+		return true;
+	return false;
+}
+
+bool UHellDiverAnimInstance::IsStableState_Look()
+{
+	if(_currentLookState=="UnArmed")
+		return true;
+	if (_currentLookState == "Gun")
+		return true;
+	return false;
+}
+
+bool UHellDiverAnimInstance::IsUsingLeftHand()
+{
+	auto gun=_hellDiver->GetEquippedGun();
+	_useLeftHand = false;
+	if (gun == nullptr)
+		return false;
+	//if (gun->GetGunData()._type == EGunType::OneHanded)
+	//{
+	//	return false;
+	//}
+	_useLeftHand = true;
+	return true;
+}
+
+bool UHellDiverAnimInstance::IsUsingFocusing()
+{
+	_useFocusing = false;
+	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
+		return false;
+	if (!_isFocusing || IsMoving())
+		return false;
+	if (IsStableState_Look() == false)
+		return false;
+	_useFocusing = true;
+	return true;
 }

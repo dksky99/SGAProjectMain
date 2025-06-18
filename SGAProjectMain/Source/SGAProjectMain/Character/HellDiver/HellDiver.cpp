@@ -449,7 +449,13 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     {
         return GetActorTransform(); // fallback
     }
-    return _equippedGun->GetLeftHandleTrans();
+    FTransform temp = _equippedGun->GetLeftHandleTrans();
+    FVector resultLoc;
+    FRotator resultRot;
+    GetMesh()->TransformToBoneSpace(TEXT("hand_r"), temp.GetLocation(), temp.GetRotation().Rotator(), resultLoc,resultRot);
+    temp.SetLocation(resultLoc);
+    temp.SetRotation(resultRot.Quaternion());
+    return temp ;
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

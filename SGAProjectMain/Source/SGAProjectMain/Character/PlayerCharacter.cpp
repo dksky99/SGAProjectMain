@@ -496,6 +496,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 		StartSprint();
 		break;
 	case ECharacterState::Sprinting:
+		_pakourComponent->TriggerPakour();
 		break;
 	case ECharacterState::Crouching:
 		FinishCrouch();
