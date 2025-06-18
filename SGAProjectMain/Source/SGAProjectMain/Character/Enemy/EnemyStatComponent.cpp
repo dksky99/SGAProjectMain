@@ -7,6 +7,6 @@ void UEnemyStatComponent::ChangeHp(float amount)
 {
 	Super::ChangeHp(amount);
 
-	if (_hpChanged.IsBound())
-		_hpChanged.Broadcast(_curHp / _maxHp);
+	if (_enemyHpChanged.IsBound())
+		_enemyHpChanged.Broadcast(_curHp / _maxHp);
 }
