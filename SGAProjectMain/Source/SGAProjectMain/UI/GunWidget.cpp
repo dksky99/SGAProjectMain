@@ -21,3 +21,20 @@ void UGunWidget::SetMag(int32 curMag, int32 maxMag)
 	_magCount->SetText(FText::FromString(text));
 	UE_LOG(LogTemp, Log, TEXT("SetMag"));
 }
+
+void UGunWidget::SetHp(float ratio)
+{
+	_curHpPB->SetPercent(ratio);
+}
+
+void UGunWidget::SetGrenade(int32 curGrenade, int32 maxGrenade)
+{
+	FString text = FString::Printf(TEXT("x%d/%d"), curGrenade, maxGrenade);
+	_grenadeCount->SetText(FText::FromString(text));
+}
+
+void UGunWidget::SetInjector(int32 curInjector, int32 maxInjector)
+{
+	FString text = FString::Printf(TEXT("x%d/%d"), curInjector, maxInjector);
+	_injectorCount->SetText(FText::FromString(text));
+}

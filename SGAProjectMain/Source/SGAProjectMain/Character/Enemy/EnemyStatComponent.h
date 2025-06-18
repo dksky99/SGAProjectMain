@@ -19,5 +19,5 @@ class SGAPROJECTMAIN_API UEnemyStatComponent : public UStatComponent
 public:
 	void ChangeHp(float amount) override;
 	
-	FHpChanged _hpChanged;
+	FHpChanged _enemyHpChanged;
 };

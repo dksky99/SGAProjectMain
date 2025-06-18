@@ -100,6 +100,34 @@ void UUIManager::CloseAll()
 	_zOrder = 1;
 }
 
+UUserWidget* UUIManager::GetOrShowSceneUI(TSubclassOf<UUserWidget> widgetClass)
+{
+	if (_sceneUI && _sceneUI->GetClass() == widgetClass)
+	{
+		return _sceneUI;
+	}
+
+	if (!_sceneUI)
+	{
+		CloseSceneUI();
+	}
+
+	_sceneUI = CreateWidget(GetWorld(), widgetClass);
+	_sceneUIClass = widgetClass;
+
+	_sceneUI->AddToViewport();
+
+	return _sceneUI;
+}
+
+void UUIManager::CloseSceneUI()
+{
+	_sceneUIClass = nullptr;
+
+	_sceneUI->RemoveFromParent();
+	_sceneUI = nullptr;
+}
+
 void UUIManager::AddUIConstructor(FString name, FString path)
 {
 	ConstructorHelpers::FClassFinder<UUserWidget> bp(*path);

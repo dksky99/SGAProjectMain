@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE_OneParam(FHpChanged, float);
+
 UCLASS()
 class SGAPROJECTMAIN_API UHellDiverStatComponent : public UStatComponent
 {
@@ -22,6 +24,9 @@ public:
 	float GetProneSpeed() { return _proneSpeed; }
 	float GetPower() { return _power; }
 
+	void ChangeHp(float amount) override;
+
+	FHpChanged _hpChanged;
 
 
 protected:

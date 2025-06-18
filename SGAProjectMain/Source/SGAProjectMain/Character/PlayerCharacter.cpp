@@ -26,6 +26,7 @@
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
+#include "../UI/StratagemWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -34,6 +35,7 @@
 #include "HellDiver/HellDiver.h"
 #include "HellDiver/HellDiverStateComponent.h"
 #include "HellDiver/PakourComponent.h"
+#include "HellDiver/HellDiverStatComponent.h"
 
 #include "../Data/PlayerControlDataAsset.h"
 #include "../Data/CollisionCameraDataAsset.h"
@@ -90,6 +92,11 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
 	}
+
+	if (_stgWidgetClass)
+	{
+		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -112,14 +119,38 @@ void APlayerCharacter::BeginPlay()
 	{
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+
 		_gunWidget->AddToViewport();
 		_equippedGun->ActivateGun();
 	}
+
+	if (_stratagemWidget)
+	{
+		_stratagemWidget->InitializeWidget(_stratagemComponent->GetStratagemSlots());
+		_stratagemWidget->AddToViewport();
+		_stratagemWidget->OpenWidget(false);
+	}
+
+	//if (_sceneUIClass)
+	//	UI->GetOrShowSceneUI(_sceneUIClass);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (_stratagemComponent && _stratagemWidget)
+	{
+		for (int32 i = 0; i < _stratagemComponent->GetStratagemSlots().Num(); ++i)
+		{
+			if (_stratagemComponent->IsStratagemOnCooldown(i))
+			{
+				float remaining = _stratagemComponent->GetRemainingCooldown(i);
+				_stratagemWidget->SetWidgetCooldownState(i, remaining);
+			}
+		}
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -346,6 +377,9 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	switch (_stateComponent->GetWeaponState())
 	{
 	case EWeaponType::Gun:
+		if (_isGunSettingMode)
+			return;
+
 		_stateComponent->SetFiring(true);
 		_equippedGun->StartFire();
 		break;
@@ -1146,6 +1180,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_playerState = EPlayerState::StratagemInputting;
 		_stratagemInputBuffer.Empty();
 	}
+
+	_stratagemWidget->OpenWidget(true);
 }
 
 void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
@@ -1155,6 +1191,8 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 		_playerState = EPlayerState::Idle;
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 	}
+
+	_stratagemWidget->OpenWidget(false);
 }
 
 void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
@@ -1222,6 +1260,8 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 			_stratagemInputBuffer.Empty();
 			_playerState = EPlayerState::Idle;
+
+			_stratagemWidget->SetWidgetOperatingState(i);
 			return;
 		}
 
@@ -1241,12 +1281,15 @@ void APlayerCharacter::CheckStratagemInputCombo()
 			{
 				bIsPrefixMatch = true;
 			}
+
+			_stratagemWidget->UpdateWidget(i, _stratagemInputBuffer.Num(), bPrefixMatch);
 		}
 	}
 
 	if (!bIsPrefixMatch)
 	{
 		_stratagemInputBuffer.Empty(); // 조합 초기화
+		_stratagemWidget->OpenWidget(false);
 	}
 }
 

@@ -3,6 +3,7 @@
 
 #include "Stratagem.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "../../Character/HellDiver/HellDiver.h"
 
 void AStratagem::DeployStratagem()
 {
