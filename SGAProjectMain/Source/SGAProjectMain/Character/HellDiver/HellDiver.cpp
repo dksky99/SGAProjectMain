@@ -20,6 +20,8 @@
 #include "../../Object/Stratagem/Stratagem.h"
 #include "../../StratagemComponent.h"
 
+#include "../StimPackComponent.h"
+
 #include "../../Data/CollisionCameraDataAsset.h"
 
 #include "../../Gun/GunBase.h"
@@ -34,6 +36,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
     _statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
 
+    _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
     _stratagemComponent = CreateDefaultSubobject<UStratagemComponent>(TEXT("StratagemComponent"));
 
@@ -82,6 +85,9 @@ void AHellDiver::EquipGrenade()
 	if (_heldThrowable || !_grenadeClass)
 		return; // 이미 들고있다
 
+    if (_curGrenade <= 0)
+        return;
+
 	GetStateComponent()->SetWeaponState(EWeaponType::Grenade);
 
 	FActorSpawnParameters params;
@@ -89,8 +95,7 @@ void AHellDiver::EquipGrenade()
 	params.Instigator = this;
 
 	FTransform spawnTransform = GetHandSocketTransform();
-	_equippedGrenade = GetWorld()->SpawnActor<ATimedGrenadeBase>(_grenadeClass, spawnTransform, params);
-	_heldThrowable = _equippedGrenade;
+	_heldThrowable = GetWorld()->SpawnActor<ATimedGrenadeBase>(_grenadeClass, spawnTransform, params);
 
 	if (_heldThrowable)
 	{
@@ -101,7 +106,7 @@ void AHellDiver::EquipGrenade()
 
 void AHellDiver::EquipStratagem()
 {
-	if (_heldThrowable || _equippedStratagem)
+	if (_heldThrowable)
 		return;
 
 	TSubclassOf<AStratagem> selectedStratagem = _stratagemComponent->GetSelectedStratagemClass();
@@ -115,8 +120,7 @@ void AHellDiver::EquipStratagem()
 	params.Instigator = this;
 
 	FTransform spawnTransform = GetHandSocketTransform();
-	_equippedStratagem = GetWorld()->SpawnActor<AStratagem>(selectedStratagem, spawnTransform, params);
-	_heldThrowable = _equippedStratagem;
+	_heldThrowable = GetWorld()->SpawnActor<AStratagem>(selectedStratagem, spawnTransform, params);
 
 	if (_heldThrowable)
 	{
@@ -134,10 +138,14 @@ void AHellDiver::OnThrowReleased()
 		FVector throwDirection = throwRot.Vector();
 
 		_heldThrowable->Throw(throwDirection); // AThrowable 기반 함수 호출
+
+        auto grenade = Cast<ATimedGrenadeBase>(_heldThrowable);
 		_heldThrowable = nullptr;
 
-		_equippedGrenade = nullptr;
-		_equippedStratagem = nullptr;
+        if (grenade) // 수류탄이면 한개 차감
+        {
+            _curGrenade--;
+        }
 
 		if (_stratagemComponent) // 현재 장착한 스트라타젬 사용 쿨타임 갱신
 		{
@@ -261,6 +269,11 @@ void AHellDiver::StopThrowPreview()
     {
         _heldThrowable = nullptr;
     }
+}
+
+void AHellDiver::UseStimPack()
+{
+    _stimPackComponent->UseStimPack();
 }
 
 void AHellDiver::StartSprint()
@@ -389,6 +402,8 @@ void AHellDiver::EquipGun(AGunBase* gun)
 void AHellDiver::RefillAllItem()
 {
     RefillMag();
+    RefillGrenade();
+    RefillStimPack();
 }
 
 void AHellDiver::RefillMag()
@@ -400,6 +415,19 @@ void AHellDiver::RefillMag()
             gun->RefillMag();
         }
     }
+}
+
+void AHellDiver::RefillGrenade()
+{
+    _curGrenade += 2;
+    
+    if (_curGrenade > _maxGrenade)
+        _curGrenade = _maxGrenade;
+}
+
+void AHellDiver::RefillStimPack()
+{
+    _stimPackComponent->RefillStimPack();
 }
 
 void AHellDiver::MotionChangeFinish()

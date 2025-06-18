@@ -22,6 +22,7 @@ public:
 	class UHellDiverStatComponent* GetStatComponent();
 
 	class UMotionWarpingComponent* GetMotionWarp() const;
+	// 捧么拱
 	void EquipGrenade();
 	void EquipStratagem();
 	void OnThrowReleased();
@@ -30,6 +31,9 @@ public:
 	UFUNCTION()
 	void UpdateThrowSpline();
 	class AThrowable* GetHeldThrowable() { return _heldThrowable; }
+
+	// 阿己力
+	void UseStimPack();
 
 	void StartSprint();
 	void FinishSprint();
@@ -53,8 +57,12 @@ public:
 	void EquipGun(AGunBase* gun);
 	AGunBase* GetEquippedGun() { return _equippedGun; }
 
+	// 焊鞭
 	void RefillAllItem();
 	void RefillMag();
+	void RefillGrenade();
+	void RefillStimPack();
+
 
 	void MotionChangeFinish();
 
@@ -110,14 +118,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class ATimedGrenadeBase> _grenadeClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Throwables")
-	ATimedGrenadeBase* _equippedGrenade;
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables")
+	int32 _maxGrenade = 4;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Throwables")
+	int32 _curGrenade = 2;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
 	class UStratagemComponent* _stratagemComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables")
-	class AStratagem* _equippedStratagem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables/Trajectory", meta = (AllowPrivateAccess = "true"))
 	class USplineComponent* _trajectorySpline;
@@ -131,6 +139,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables/Trajectory")
 	UMaterialInterface* _trajectoryMaterial;
+
+	//阿己力
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/StimPack")
+	class UStimPackComponent* _stimPackComponent;
+	
 
 	// 积己等 皋浆 历厘侩
 	UPROPERTY()
