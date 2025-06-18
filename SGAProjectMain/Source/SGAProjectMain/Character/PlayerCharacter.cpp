@@ -19,6 +19,9 @@
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 
+#include "Components/SphereComponent.h"
+#include "../Object/Item/ItemBase.h"
+
 #include "../Gun/GunBase.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
@@ -66,6 +69,11 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_tpsCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
 	_tpsZoomCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
 	_fpsCameraActor->SetChildActorClass(ACameraContainActor::StaticClass());
+
+	_itemDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("ItemDetectionSphere"));
+	_itemDetectionSphere->SetupAttachment(RootComponent);
+	_itemDetectionSphere->SetSphereRadius(100.f);
+	_itemDetectionSphere->SetGenerateOverlapEvents(true);
 
 
 }
@@ -148,7 +156,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_strataAAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyA);
 		enhancedInputComponent->BindAction(_strataSAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyS);
 		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
-		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
+		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
+		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
 	}
 }
 
@@ -317,7 +326,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 
 	case EWeaponType::Grenade:
 		_stateComponent->SetCookingGrenade(true);
-		_equippedGrenade->StartCookingGrenade();
+		Cast<ATimedGrenadeBase>(_heldThrowable)->StartCookingGrenade();
 		StartThrowPreview();
 		break;
 
@@ -373,8 +382,8 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 void APlayerCharacter::WhileFiring(const FInputActionValue& value)
 {
 	if (_stateComponent->IsCookingGrenade())
-		if (_equippedGrenade)
-			_equippedGrenade->UpdateCookingGrenade();
+		if (_heldThrowable)
+			Cast<ATimedGrenadeBase>(_heldThrowable)->UpdateCookingGrenade();
 
 	/*switch (_playerState)
 	{
@@ -1093,6 +1102,11 @@ void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
 	}
 }
 
+void APlayerCharacter::OnUseStimPack(const FInputActionValue& value)
+{
+	UseStimPack();
+}
+
 void APlayerCharacter::CheckStratagemInputCombo()
 {
 	const TArray<FStratagemSlot>& slots = _stratagemComponent->GetStratagemSlots();
@@ -1147,7 +1161,53 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 void APlayerCharacter::Interact(const FInputActionValue& value)
 {
-	RefillAllItem();
+	TArray<AActor*> overlapped;
+	_itemDetectionSphere->GetOverlappingActors(overlapped, AItemBase::StaticClass());
+
+	// 1) 완전히 겹친 아이템(혹은 거의 동일 위치)에 대해서는 바로 픽업
+	for (AActor* actor : overlapped)
+	{
+		AItemBase* item = Cast<AItemBase>(actor);
+		if (!item) continue;
+
+		float dist = FVector::Dist(GetActorLocation(), item->GetActorLocation());
+		if (dist <= KINDA_SMALL_NUMBER)
+		{
+			item->PickupItem(this);
+			return;  // 가장 먼저 발견된 겹친 아이템만 처리
+		}
+	}
+
+	// 2) 겹치지 않은 아이템들에 대해 기존 스코어 로직 실행
+	AItemBase* bestItem = nullptr; // 최종 선택할 아이템 포인터
+	float bestScore = -1.0f; // 비교용 스코어(클수록 우선)
+	const FVector forward = GetActorForwardVector().GetSafeNormal();
+	const FVector playerLoc = GetActorLocation();
+
+	for (AActor* actor : overlapped)
+	{
+		AItemBase* item = Cast<AItemBase>(actor);
+		if (!item) continue;
+
+		FVector toItem = item->GetActorLocation() - playerLoc;
+		float dist = toItem.Size();
+
+		FVector dir = toItem / dist;
+		// 플레이어의 전방 벡터와 아이템 방향 벡터의 내적 계산
+		float forwardDot = FVector::DotProduct(forward, dir);
+		float score = (forwardDot > 0.0f) ? (forwardDot / dist) : 0.0f;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestItem = item;
+		}
+	}
+
+	if (bestItem)
+	{
+		bestItem->PickupItem(this);
+	}
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)

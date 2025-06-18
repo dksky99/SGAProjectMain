@@ -122,6 +122,9 @@ public:
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
 
 	UFUNCTION()
+	void Interact(const  FInputActionValue& value);
+
+	UFUNCTION()
 	void BeginStratagemInputMode(const FInputActionValue& value);
 	UFUNCTION()
 	void EndStratagemInputMode(const FInputActionValue& value);
@@ -133,10 +136,12 @@ public:
 	void OnStrataKeyS(const FInputActionValue& value);
 	UFUNCTION()
 	void OnStrataKeyD(const FInputActionValue& value);
+	
+	UFUNCTION()
+	void OnUseStimPack(const FInputActionValue& value);
 
 	void CheckStratagemInputCombo();
-
-	void Interact(const  FInputActionValue& value);
+	
 
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
@@ -217,6 +222,8 @@ protected:
 	class UInputAction* _strataSAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _strataDAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _stimPackAction;
 
 
 	EPlayerState _playerState;
@@ -280,4 +287,8 @@ protected:
 	bool _isGunSettingMode = false;
 
 	FTimerHandle _gunSettingTimer;
+
+	// 아이템 감지용
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
+	class USphereComponent* _itemDetectionSphere;
 };
