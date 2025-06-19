@@ -46,6 +46,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
+			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
 			AimFocus(DeltaSeconds);
@@ -174,4 +175,16 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 		return false;
 	_useFocusing = true;
 	return true;
+}
+
+void UHellDiverAnimInstance::CheckEquipChange(uint8 index)
+{
+	if (_curEquipIndex == index)
+	{
+		_changeWeapon = false;
+		return;
+	}
+	_changeWeapon = true;
+	_curEquipIndex = index;
+
 }

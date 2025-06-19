@@ -120,6 +120,9 @@ public:
 
 	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
 
+	void SetEquipIndex(uint8 index) { _curEquipIndex = index; }
+	uint8 GetEquipIndex() { return _curEquipIndex; }
+
 	FOnCharacterStateChanged _characterStateChanged;
 	FOnActionStateChanged _actionStateChanged;
 	FOnWeaponStateChanged _weaponStateChanged;
@@ -150,6 +153,8 @@ protected:
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
+
+	uint8 _curEquipIndex = 0;
 
 	FString _waitingMove;
 	FString _waitingLook;

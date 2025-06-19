@@ -1195,6 +1195,8 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		_equippedGun->ActivateGun();
 	}
 
+	_stateComponent->SetEquipIndex(index);
+
 	if (wasAiming) // 에임 중이었을 경우 유지
 		StartAiming(value);
 
