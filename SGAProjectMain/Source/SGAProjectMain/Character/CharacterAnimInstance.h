@@ -68,7 +68,5 @@ protected:
 
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimOffset", meta = (AllowPrivateAccess = "true"))
-	uint8 _isMoving = false;
 
 };
