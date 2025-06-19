@@ -19,10 +19,10 @@ enum class EGunType : uint8
 UENUM(BlueprintType)
 enum class EFireMode : uint8
 {
-	Auto,
-	Semi,        
-	Burst,
-	BoltAction
+	FireAuto,
+	FireSemi,
+	FireBurst,
+	FireBoltAction
 };
 
 UENUM(BlueprintType)
@@ -38,9 +38,9 @@ enum class EReloadStage : uint8
 UENUM(BlueprintType)
 enum class ETacticalLightMode : uint8
 {
-	Auto,
-	On,
-	Off
+	LightAuto,
+	LightOn,
+	LightOff
 };
 
 USTRUCT(BlueprintType)
@@ -53,6 +53,9 @@ struct FGunData // : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGunType _type;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _icon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f;
@@ -96,7 +99,7 @@ struct FGunData // : public FTableRowBase
 	float _falloff100 = 0.133f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<EFireMode> _fireModes = { EFireMode::Auto, EFireMode::Burst, EFireMode::Semi };
+	TArray<EFireMode> _fireModes = { EFireMode::FireAuto, EFireMode::FireBurst, EFireMode::FireSemi };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ETacticalLightMode> _lightModes = {};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -225,14 +228,14 @@ private:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	EFireMode _fireMode = EFireMode::Auto;
+	EFireMode _fireMode = EFireMode::FireAuto;
 	int32 _fireIndex = 0;
 	int32 _burstCount = 3;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class USpotLightComponent* _tacticalLight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::Auto;
+	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::LightAuto;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	int32 _scopeMode;

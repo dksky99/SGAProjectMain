@@ -5,6 +5,7 @@
 
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 
 void UGunWidget::SetAmmo(int32 curAmmo, int32 maxAmmo)
 {
@@ -33,8 +34,13 @@ void UGunWidget::SetGrenade(int32 curGrenade, int32 maxGrenade)
 	_grenadeCount->SetText(FText::FromString(text));
 }
 
-void UGunWidget::SetInjector(int32 curInjector, int32 maxInjector)
+void UGunWidget::SetStimPack(int32 curStimPack, int32 maxStimPack)
 {
-	FString text = FString::Printf(TEXT("%d/%d"), curInjector, maxInjector);
-	_injectorCount->SetText(FText::FromString(text));
+	FString text = FString::Printf(TEXT("%d/%d"), curStimPack, maxStimPack);
+	_stimPackCount->SetText(FText::FromString(text));
+}
+
+void UGunWidget::SetGun(UTexture2D* gunIcon)
+{
+	_gunIcon->SetBrushFromTexture(gunIcon);
 }

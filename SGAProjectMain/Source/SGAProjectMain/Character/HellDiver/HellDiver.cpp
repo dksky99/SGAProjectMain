@@ -63,6 +63,8 @@ void AHellDiver::BeginPlay()
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
 
+    if (_grenadeChanged.IsBound())
+        _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 }
 
 UHellDiverStateComponent* AHellDiver::GetStateComponent()
@@ -145,6 +147,9 @@ void AHellDiver::OnThrowReleased()
         if (grenade) // 수류탄이면 한개 차감
         {
             _curGrenade--;
+
+            if (_grenadeChanged.IsBound())
+                _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
         }
 
 		if (_stratagemComponent) // 현재 장착한 스트라타젬 사용 쿨타임 갱신
@@ -423,6 +428,9 @@ void AHellDiver::RefillGrenade()
     
     if (_curGrenade > _maxGrenade)
         _curGrenade = _maxGrenade;
+
+    if (_grenadeChanged.IsBound())
+        _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 }
 
 void AHellDiver::RefillStimPack()
