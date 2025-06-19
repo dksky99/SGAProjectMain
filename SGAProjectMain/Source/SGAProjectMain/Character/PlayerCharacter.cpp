@@ -43,7 +43,7 @@
 #include "../Controller/MainPlayerController.h"
 #include "../Controller/CameraContainActor.h"
 
-
+#include "StimPackComponent.h"
 
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
@@ -122,10 +122,16 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
-		//_stimPackComponent->_stimChanged
+		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
+		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
 
 		_gunWidget->AddToViewport();
+
 		_equippedGun->ActivateGun();
+		_stimPackComponent->BroadcastStimPackChanged();
+		_gunWidget->SetGun(_equippedGun->GetGunData()._icon);
+		if (_grenadeChanged.IsBound())
+			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 	}
 
 	if (_stratagemWidget)
@@ -1196,6 +1202,9 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_equippedGun->ActivateGun();
+		
+		if (_gunWidget)
+			_gunWidget->SetGun(_equippedGun->GetGunData()._icon);
 	}
 
 	if (wasAiming) // 에임 중이었을 경우 유지

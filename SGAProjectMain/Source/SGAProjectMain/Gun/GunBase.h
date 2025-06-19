@@ -55,6 +55,9 @@ struct FGunData // : public FTableRowBase
 	EGunType _type;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f;
 
 	// 발사 간격

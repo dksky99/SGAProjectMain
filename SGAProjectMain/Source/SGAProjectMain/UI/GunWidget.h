@@ -19,7 +19,8 @@ public:
 	void SetMag(int32 curMag, int32 maxMag);
 	void SetHp(float ratio);
 	void SetGrenade(int32 curGrenade, int32 maxGrenade);
-	void SetInjector(int32 curInjector, int32 maxInjector);
+	void SetStimPack(int32 curInjector, int32 maxInjector);
+	void SetGun(class UTexture2D* gunIcon);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -35,5 +36,8 @@ private:
 	class UTextBlock* _magCount;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* _injectorCount;
+	class UTextBlock* _stimPackCount;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _gunIcon;
 };

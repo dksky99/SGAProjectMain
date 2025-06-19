@@ -298,6 +298,12 @@ void AGunBase::ActivateGun()
 
 	_recoilToRecover = FRotator::ZeroRotator;
 
+	if (_laserpointer && _laserImpact)
+	{
+		_laserpointer->SetVisibility(false);
+		_laserImpact->SetVisibility(false);
+	}
+
 	if (_ammoChanged.IsBound())
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
@@ -325,6 +331,12 @@ void AGunBase::DeactivateGun()
 
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
+
+	if (_laserpointer && _laserImpact)
+	{
+		_laserpointer->SetVisibility(false);
+		_laserImpact->SetVisibility(false);
+	}
 }
 
 void AGunBase::AttachToHand()
