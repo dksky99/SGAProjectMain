@@ -21,6 +21,8 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
         if (!arrowImage) continue;
 
         arrowImage->SetBrushFromTexture(_arrow);
+        arrowImage->Brush.ImageSize = FVector2D(16.0f, 16.0f);
+        arrowImage->SetDesiredSizeOverride(FVector2D(16.0f, 16.0f));
         //arrowImage->SetColorAndOpacity(FLinearColor::Gray); // 초기엔 회색
 
         if (key == EKeys::W)

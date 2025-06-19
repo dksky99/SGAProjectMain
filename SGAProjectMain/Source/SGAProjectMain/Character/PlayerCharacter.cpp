@@ -44,6 +44,8 @@
 #include "../Controller/CameraContainActor.h"
 
 
+
+
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
 {
@@ -120,6 +122,7 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		//_stimPackComponent->_stimChanged
 
 		_gunWidget->AddToViewport();
 		_equippedGun->ActivateGun();

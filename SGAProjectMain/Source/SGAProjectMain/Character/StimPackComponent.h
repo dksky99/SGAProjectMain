@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "StimPackComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FStimChanged, int, int);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UStimPackComponent : public UActorComponent
@@ -32,6 +33,9 @@ public:
 
 	// 내부 헬퍼: 타이머 시작/연장
 	void StartOrExtendRegen();
+
+	FStimChanged _stimChanged;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Game/StimPack")
 	class AHellDiver* _owner;
