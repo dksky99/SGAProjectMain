@@ -171,6 +171,20 @@ bool UHellDiverStateComponent::FinishRolling()
 
 }
 
+bool UHellDiverStateComponent::StartReload()
+{
+	UE_LOG(LogTemp, Error, TEXT("Call StartReload"));
+	_isReloading = true;
+	return true;
+}
+
+bool UHellDiverStateComponent::FinishReload()
+{
+	UE_LOG(LogTemp, Error, TEXT("Call ReloadFinish"));
+	_isReloading = false;
+	return false;
+}
+
 bool UHellDiverStateComponent::IsFocusing()
 {
 	if (_isReloading)

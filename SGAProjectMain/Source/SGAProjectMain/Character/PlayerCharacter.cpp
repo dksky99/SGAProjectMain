@@ -268,7 +268,7 @@ FRotator APlayerCharacter::Focusing()
 		return FRotator::ZeroRotator;
 	}
 
-	ResultRot.Roll = 1.5f - DotValue;
+	ResultRot.Roll = 1.4f - DotValue;
 
 	if (bNeedsYaw)
 	{

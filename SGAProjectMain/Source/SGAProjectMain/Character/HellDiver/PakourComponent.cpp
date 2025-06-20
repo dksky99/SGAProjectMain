@@ -351,13 +351,13 @@ void UPakourComponent::TryVault(EVaultType_C type)
 	UAnimInstance* animInstance = _mesh->GetAnimInstance();
 	if (!animInstance) return;
 
-	UAnimMontage* SelectedMontage = nullptr;
+	UAnimMontage* selectedMontage = nullptr;
 
 	switch (type)
 	{
 	case EVaultType_C::OneHandVault:
 		UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
-		SelectedMontage = _oneHandVault;
+		selectedMontage = _oneHandVault;
 		break;
 
 	case EVaultType_C::TwoHandVault:
@@ -367,7 +367,7 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
 		UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
 		UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"), _wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
-		SelectedMontage = _twoHandVault;
+		selectedMontage = _twoHandVault;
 		FVector temp = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 62);
 		temp = H_Vector::MoveVectorDownward(temp, 46.5);
 		FRotator rot = _wallRotation;
@@ -386,7 +386,7 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
 		UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
 		UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"),_wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
-		SelectedMontage = _frontFlip;
+		selectedMontage = _frontFlip;
 		FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
 		FRotator rot = _wallRotation;
 		rot.Roll = 0;
@@ -401,18 +401,18 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		return;
 	}
 
-	if (!SelectedMontage) return;
+	if (!selectedMontage) return;
 
 	// 애니메이션 재생
-	const float Duration = animInstance->Montage_Play(SelectedMontage);
+	const float Duration = animInstance->Montage_Play(selectedMontage);
 	if (Duration <= 0.0f)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to play montage: %s"), *SelectedMontage->GetName());
+		UE_LOG(LogTemp, Error, TEXT("Failed to play montage: %s"), *selectedMontage->GetName());
 		return;
 	}
 
 	// 재생 후 인스턴스 가져오기
-	if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(SelectedMontage))
+	if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(selectedMontage))
 	{
 		// 델리게이트 중복 방지
 		MontageInstance->OnMontageEnded.Unbind();
@@ -422,11 +422,11 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		MontageInstance->OnMontageEnded.BindUObject(this, &UPakourComponent::ReadyPakour);
 		MontageInstance->OnMontageBlendingOutStarted.BindUObject(this, &UPakourComponent::ActiveColNMove);
 
-		UE_LOG(LogTemp, Display, TEXT("Delegates bound for %s"), *SelectedMontage->GetName());
+		UE_LOG(LogTemp, Display, TEXT("Delegates bound for %s"), *selectedMontage->GetName());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *SelectedMontage->GetName());
+		UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *selectedMontage->GetName());
 	}
 }
 

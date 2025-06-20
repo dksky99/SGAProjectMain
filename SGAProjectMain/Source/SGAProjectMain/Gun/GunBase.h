@@ -133,6 +133,7 @@ public:
 	void AttachToHand();
 
 	void Reload();
+	void FinishReload(class UAnimMontage* Montage, bool bInterrupted);
 	void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
 

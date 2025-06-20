@@ -85,6 +85,9 @@ public:
 	bool StartRolling();
 	bool FinishRolling();
 
+	bool StartReload();
+	bool FinishReload();
+
 	ECharacterState GetCharacterState() { return _characterState; }
 	void SetCharacterState(ECharacterState state) { _characterState=state; }
 	EActionState GetActionState() { return _actionState; }

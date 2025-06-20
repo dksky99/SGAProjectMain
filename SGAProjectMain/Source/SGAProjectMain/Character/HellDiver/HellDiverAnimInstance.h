@@ -96,7 +96,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useFocusing = false;
-	float _rotateSpeed = 400;
+	float _rotateSpeed = 350;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFocusing = false;

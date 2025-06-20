@@ -109,7 +109,8 @@ bool UHellDiverAnimInstance::LookStateChanged(FString curState)
 
 void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 {
-	if (_isFocusing  || !IsMoving()||_useFocusing)
+	
+	if(_useFocusing)
 	{
 		FRotator temp = _hellDiver->Focusing();
 		double dot = temp.Roll;
@@ -172,6 +173,8 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 	if (!_isFocusing && IsMoving())
 		return false;
 	if (IsStableState_Look() == false)
+		return false;
+	if (_isReloading)
 		return false;
 	_useFocusing = true;
 	return true;

@@ -360,7 +360,24 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 
 	if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(_owner->GetMesh()->GetAnimInstance()))
 	{
+		_owner->GetStateComponent()->StartReload();
 		animInstance->PlayAnimMontage(_reloadMontage);
+
+		// 재생 후 인스턴스 가져오기
+		if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_reloadMontage))
+		{
+			// 델리게이트 중복 방지
+			MontageInstance->OnMontageEnded.Unbind();
+
+			// 델리게이트 바인딩
+			MontageInstance->OnMontageEnded.BindUObject(this, &AGunBase::FinishReload);
+
+			UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_reloadMontage->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_reloadMontage->GetName());
+		}
 
 		int32 sectionIndex = -1;
 		switch (_reloadStage)
@@ -395,7 +412,14 @@ void AGunBase::Reload() // 애니메이션과 연결 필요
 		{
 			animInstance->JumpToSection(sectionIndex);
 		}
+
+		
 	}
+}
+
+void AGunBase::FinishReload(UAnimMontage* Montage, bool bInterrupted)
+{
+	_owner->GetStateComponent()->FinishReload();
 }
 
 void AGunBase::ChangeReloadStage()
