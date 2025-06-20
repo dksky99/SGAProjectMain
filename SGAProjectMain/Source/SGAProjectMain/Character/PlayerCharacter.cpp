@@ -945,7 +945,7 @@ void APlayerCharacter::DefaultLook()
 
 	if (_stateComponent->GetCharacterState() == ECharacterState::Proning)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ProningLook"));
+		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
 
 		return;
 	}
@@ -953,6 +953,7 @@ void APlayerCharacter::DefaultLook()
 	if ( FMath::Abs(_deltaAngle) > 80.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
 		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"),_deltaAngle);
 
 		_isTurnLeft = (_deltaAngle < -80.0f);
 		_isTurnRight = (_deltaAngle > 80.0f);
@@ -961,6 +962,7 @@ void APlayerCharacter::DefaultLook()
 	}
 	else if (FMath::Abs(_deltaAngle) < 1.0f)
 	{
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), _deltaAngle);
 		_isTurnLeft = false;
 		_isTurnRight = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
