@@ -7,7 +7,7 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiver.generated.h"
 
-
+DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int, int);
 
 UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public ACharacterBase
@@ -75,6 +75,9 @@ public:
 
 	FTransform GetLeftHandSocketTransform() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }
+
+	FGrenadeChanged _grenadeChanged;
+
 protected:
 
 	FTransform GetHandSocketTransform() const;

@@ -115,15 +115,15 @@ void AGunBase::StartFire()
 
 	switch (_fireMode)
 	{
-	case EFireMode::Auto: // 누르는 동안 발사
+	case EFireMode::FireAuto: // 누르는 동안 발사
 		GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
 		break;
-	case EFireMode::Semi: // 한 번만 발사
-	case EFireMode::BoltAction: // 볼트액션
+	case EFireMode::FireSemi: // 한 번만 발사
+	case EFireMode::FireBoltAction: // 볼트액션
 		Fire();
 		StopFire();
 		break;
-	case EFireMode::Burst: // 3발 발사
+	case EFireMode::FireBurst: // 3발 발사
 		_burstCount = 3;
 		GetWorld()->GetTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true);
 	}
@@ -144,7 +144,7 @@ void AGunBase::Fire()
 	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 	if (!camera) return;
 
-	if (_fireMode == EFireMode::BoltAction)
+	if (_fireMode == EFireMode::FireBoltAction)
 	{
 		if (!_canFire) return;
 
@@ -152,7 +152,7 @@ void AGunBase::Fire()
 		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, 1.2f, false);
 	}
 
-	if (_fireMode == EFireMode::Burst)
+	if (_fireMode == EFireMode::FireBurst)
 	{
 		if (_burstCount <= 0)
 		{
@@ -298,6 +298,12 @@ void AGunBase::ActivateGun()
 
 	_recoilToRecover = FRotator::ZeroRotator;
 
+	if (_laserpointer && _laserImpact)
+	{
+		_laserpointer->SetVisibility(false);
+		_laserImpact->SetVisibility(false);
+	}
+
 	if (_ammoChanged.IsBound())
 	{
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
@@ -325,6 +331,12 @@ void AGunBase::DeactivateGun()
 
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
+
+	if (_laserpointer && _laserImpact)
+	{
+		_laserpointer->SetVisibility(false);
+		_laserImpact->SetVisibility(false);
+	}
 }
 
 void AGunBase::AttachToHand()
@@ -686,16 +698,16 @@ void AGunBase::ChangeTacticalLightMode()
 
 	switch (_tacticalLightMode)
 	{
-	case ETacticalLightMode::On:
-		_tacticalLightMode = ETacticalLightMode::Off;
+	case ETacticalLightMode::LightOn:
+		_tacticalLightMode = ETacticalLightMode::LightOff;
 		break;
 
-	case ETacticalLightMode::Off:
-		_tacticalLightMode = ETacticalLightMode::Auto;
+	case ETacticalLightMode::LightOff:
+		_tacticalLightMode = ETacticalLightMode::LightAuto;
 		break;
 
-	case ETacticalLightMode::Auto:
-		_tacticalLightMode = ETacticalLightMode::On;
+	case ETacticalLightMode::LightAuto:
+		_tacticalLightMode = ETacticalLightMode::LightOn;
 		break;
 	}
 
@@ -745,15 +757,15 @@ void AGunBase::UseTacticalLight(bool isAiming)
 
 	switch (_tacticalLightMode)
 	{
-	case ETacticalLightMode::On:
+	case ETacticalLightMode::LightOn:
 		_tacticalLight->SetVisibility(true);
 		break;
 
-	case ETacticalLightMode::Off:
+	case ETacticalLightMode::LightOff:
 		_tacticalLight->SetVisibility(false);
 		break;
 
-	case ETacticalLightMode::Auto:
+	case ETacticalLightMode::LightAuto:
 		_tacticalLight->SetVisibility(isAiming);
 		break;
 	}
