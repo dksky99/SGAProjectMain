@@ -1174,9 +1174,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		return;
 
 	if (_isGunSettingMode)
-	{;
-		_isGunSettingMode = false;
-	}
+		return;
 
 	if (_stateComponent->IsReloading())
 		_equippedGun->CancelReload();
