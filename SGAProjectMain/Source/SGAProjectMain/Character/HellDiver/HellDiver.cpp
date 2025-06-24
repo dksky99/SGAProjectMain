@@ -278,6 +278,8 @@ void AHellDiver::StopThrowPreview()
 
 void AHellDiver::UseStimPack()
 {
+    if (_stateComponent->IsActionable() == false)
+        return ;
     _stimPackComponent->UseStimPack();
 }
 
@@ -494,6 +496,30 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     return temp ;
 }
 
+void AHellDiver::KnockDown()
+{
+    Super::KnockDown();
+
+    _stateComponent->KnockDown();
+
+}
+
+void AHellDiver::RecoverFromKnockDown()
+{
+    Super::RecoverFromKnockDown();
+
+    _stateComponent->KnockDown();
+}
+
+void AHellDiver::Dead()
+{
+    Super::Dead();
+
+    _stateComponent->Dead();
+
+
+}
+
 FTransform  AHellDiver::GetHandSocketTransform() const
 {
 	USkeletalMeshComponent* mesh = GetMesh();
@@ -548,7 +574,7 @@ void AHellDiver::SetCollisionState(ECharacterState newState)
         SetCrouchingCollisionCamera();
         break;
     case ECharacterState::Proning:
-    case ECharacterState::knockdown:
+    case ECharacterState::Knockdown:
         SetProningCollisionCamera();
         break;
     case ECharacterState::MAX:

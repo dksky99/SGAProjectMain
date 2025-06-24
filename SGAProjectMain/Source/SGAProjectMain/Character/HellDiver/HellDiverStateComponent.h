@@ -13,7 +13,7 @@ enum class ECharacterState : uint8
 	Sprinting,
 	Crouching,
 	Proning,
-	knockdown,
+	Knockdown,
 	MAX
 };
 
@@ -111,6 +111,10 @@ public:
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
+	void KnockDown();
+	void KnockDownRecovery();
+	void Dead();
+	bool IsActionable();
 
 	UFUNCTION()
 	void MoveChangeFinish(FString newState);

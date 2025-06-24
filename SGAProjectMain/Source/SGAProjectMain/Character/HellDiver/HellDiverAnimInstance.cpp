@@ -155,6 +155,11 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 {
 	auto gun=_hellDiver->GetEquippedGun();
 	_useLeftHand = false;
+
+	if (_lifeState != ELifeState::Alive)
+		return false;
+	if (_characterState == ECharacterState::Knockdown)
+		return false;
 	if (gun == nullptr)
 		return false;
 	if (_weaponState!=EWeaponType::Gun)
@@ -168,6 +173,11 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 bool UHellDiverAnimInstance::IsUsingFocusing()
 {
 	_useFocusing = false;
+	if (_lifeState != ELifeState::Alive)
+		return false;
+	if (_characterState == ECharacterState::Knockdown)
+		return false;
+
 	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
 		return false;
 	if (!_isFocusing && IsMoving())

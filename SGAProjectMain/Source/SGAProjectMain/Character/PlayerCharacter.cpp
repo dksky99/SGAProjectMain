@@ -400,7 +400,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
 	case ECharacterState::Proning:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -582,7 +582,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 	case ECharacterState::Proning:
 		FinishProne();
 		break;
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -633,7 +633,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
 	case ECharacterState::Proning:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -673,7 +673,7 @@ void APlayerCharacter::TryCrouch(const FInputActionValue& value)
 		FinishCrouch();
 		break;
 	case ECharacterState::Sprinting:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -714,7 +714,7 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 		FinishProne();
 		break;
 	case ECharacterState::Sprinting:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -736,7 +736,7 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 	case ECharacterState::Proning:
 		FinishProne();
 		break;
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;

@@ -78,6 +78,9 @@ public:
 
 	FGrenadeChanged _grenadeChanged;
 
+	virtual void KnockDown() override;
+	virtual void RecoverFromKnockDown() override;
+	virtual void Dead() override;
 protected:
 
 	FTransform GetHandSocketTransform() const;
