@@ -103,11 +103,11 @@ protected:
 	float _range = 10000.0f;
 
 	// 머즐 플래시용 ParticleSystemComponent을 미리 생성 → Activate/Deactivate로 재생
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	UParticleSystemComponent* _muzzleFlashComponent;
 
 	// 트레이서용 NiagaraComponent를 미리 생성 → BeamEnd 파라미터 갱신 후 Activate
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	class UNiagaraComponent* _tracerComponent;
 
 	// 최대 탄약 수
