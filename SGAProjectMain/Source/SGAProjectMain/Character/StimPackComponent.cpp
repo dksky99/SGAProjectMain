@@ -43,6 +43,9 @@ void UStimPackComponent::UseStimPack()
 	_curStimPack--;
 
 	StartOrExtendRegen();
+
+	if (_stimPackChanged.IsBound())
+		_stimPackChanged.Broadcast(_curStimPack, _maxStimPack);
 }
 
 void UStimPackComponent::RefillStimPack()
@@ -51,6 +54,9 @@ void UStimPackComponent::RefillStimPack()
 
 	if (_curStimPack > _maxStimPack)
 		_curStimPack = _maxStimPack;
+
+	if (_stimPackChanged.IsBound())
+		_stimPackChanged.Broadcast(_curStimPack, _maxStimPack);
 }
 
 void UStimPackComponent::HandleRegen()
@@ -90,5 +96,11 @@ void UStimPackComponent::StartOrExtendRegen()
 			true
 		);
 	}
+}
+
+void UStimPackComponent::BroadcastStimPackChanged()
+{
+	if (_stimPackChanged.IsBound())
+		_stimPackChanged.Broadcast(_curStimPack, _maxStimPack);
 }
 

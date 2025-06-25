@@ -63,6 +63,8 @@ void AHellDiver::BeginPlay()
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
 
+    if (_grenadeChanged.IsBound())
+        _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 }
 
 UHellDiverStateComponent* AHellDiver::GetStateComponent()
@@ -145,6 +147,9 @@ void AHellDiver::OnThrowReleased()
         if (grenade) // 수류탄이면 한개 차감
         {
             _curGrenade--;
+
+            if (_grenadeChanged.IsBound())
+                _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
         }
 
 		if (_stratagemComponent) // 현재 장착한 스트라타젬 사용 쿨타임 갱신
@@ -273,6 +278,8 @@ void AHellDiver::StopThrowPreview()
 
 void AHellDiver::UseStimPack()
 {
+    if (_stateComponent->IsActionable() == false)
+        return ;
     _stimPackComponent->UseStimPack();
 }
 
@@ -423,6 +430,9 @@ void AHellDiver::RefillGrenade()
     
     if (_curGrenade > _maxGrenade)
         _curGrenade = _maxGrenade;
+
+    if (_grenadeChanged.IsBound())
+        _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 }
 
 void AHellDiver::RefillStimPack()
@@ -486,6 +496,30 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     return temp ;
 }
 
+void AHellDiver::KnockDown()
+{
+    Super::KnockDown();
+
+    _stateComponent->KnockDown();
+
+}
+
+void AHellDiver::RecoverFromKnockDown()
+{
+    Super::RecoverFromKnockDown();
+
+    _stateComponent->KnockDown();
+}
+
+void AHellDiver::Dead()
+{
+    Super::Dead();
+
+    _stateComponent->Dead();
+
+
+}
+
 FTransform  AHellDiver::GetHandSocketTransform() const
 {
 	USkeletalMeshComponent* mesh = GetMesh();
@@ -540,7 +574,7 @@ void AHellDiver::SetCollisionState(ECharacterState newState)
         SetCrouchingCollisionCamera();
         break;
     case ECharacterState::Proning:
-    case ECharacterState::knockdown:
+    case ECharacterState::Knockdown:
         SetProningCollisionCamera();
         break;
     case ECharacterState::MAX:

@@ -21,6 +21,8 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
         if (!arrowImage) continue;
 
         arrowImage->SetBrushFromTexture(_arrow);
+        arrowImage->Brush.ImageSize = FVector2D(16.0f, 16.0f);
+        arrowImage->SetDesiredSizeOverride(FVector2D(16.0f, 16.0f));
         //arrowImage->SetColorAndOpacity(FLinearColor::Gray); // 초기엔 회색
 
         if (key == EKeys::W)
@@ -47,7 +49,7 @@ void UStratagemSlotWidget::ResetSlot()
 {
     SetSlotOpacity(0.8f);
     _widgetSwitcher->SetActiveWidgetIndex(0);
-    _slotState = EStgSlotWdgState::Normal;
+    _slotState = EStgSlotWgtState::Normal;
 }
 
 void UStratagemSlotWidget::UpdateSlot(int32 inputNum)
@@ -80,14 +82,14 @@ void UStratagemSlotWidget::SetSlotOperatingState()
     FString text = FString::Printf(TEXT("Operating"));
     _stgStateText->SetText(FText::FromString(text));
 
-    _slotState = EStgSlotWdgState::Operating;
+    _slotState = EStgSlotWgtState::Operating;
     //_isShowingOperating = true;
     _isForcedShowing = true;
 }
 
 void UStratagemSlotWidget::SetSlotCooldownState(float remainingTime)
 {
-    _slotState = EStgSlotWdgState::Cooldown;
+    _slotState = EStgSlotWgtState::Cooldown;
 
     _widgetSwitcher->SetActiveWidgetIndex(1);
 

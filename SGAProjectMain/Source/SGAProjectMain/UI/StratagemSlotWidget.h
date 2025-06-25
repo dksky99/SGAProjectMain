@@ -7,7 +7,7 @@
 #include "StratagemSlotWidget.generated.h"
 
 UENUM(BlueprintType)
-enum class EStgSlotWdgState : uint8
+enum class EStgSlotWgtState : uint8
 {
 	Normal,
 	Operating,
@@ -37,7 +37,7 @@ public:
 	bool IsForcedShowing() { return _isForcedShowing; }
 	void SetForcedShowing(bool isForcedShowing) { _isForcedShowing = isForcedShowing; }
 
-	EStgSlotWdgState GetSlotState() { return _slotState; }
+	EStgSlotWgtState GetSlotState() { return _slotState; }
 
 private:
 	class UStratagemWidget* _parentWidget = nullptr;
@@ -60,7 +60,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UTexture2D* _arrow; // ¿À¸¥ÂÊ
 
-	EStgSlotWdgState _slotState = EStgSlotWdgState::Normal;
+	EStgSlotWgtState _slotState = EStgSlotWgtState::Normal;
 
 	FTimerHandle _startCooldownHandle;
 	FTimerHandle _preEndCooldownHandle;

@@ -24,15 +24,15 @@ void UStratagemWidget::InitializeWidget(const TArray<FStratagemSlot>& stgSlots)
 
 void UStratagemWidget::UpdateWidget(int32 stgIndex, int32 inputNum, bool bPrefixMax)
 {
-	auto stgSlotWdg = Cast<UStratagemSlotWidget>(_stgSlots->GetChildAt(stgIndex));
+	auto stgSlotWgt = Cast<UStratagemSlotWidget>(_stgSlots->GetChildAt(stgIndex));
 
 	if (bPrefixMax)
 	{
-		stgSlotWdg->UpdateSlot(inputNum);
+		stgSlotWgt->UpdateSlot(inputNum);
 	}
 	else
 	{
-		stgSlotWdg->SetSlotDeactivatingState();
+		stgSlotWgt->SetSlotDeactivatingState();
 	}
 }
 
@@ -51,7 +51,7 @@ void UStratagemWidget::OpenWidget(bool visible)
 			auto stgSlot = Cast<UStratagemSlotWidget>(slot);
 			if (!stgSlot->IsForcedShowing())
 			{
-				if (stgSlot->GetSlotState() != EStgSlotWdgState::Cooldown)
+				if (stgSlot->GetSlotState() != EStgSlotWgtState::Cooldown)
 					stgSlot->ResetSlot();
 				stgSlot->SetVisibility(ESlateVisibility::Hidden);
 			}
@@ -74,7 +74,7 @@ void UStratagemWidget::SetWidgetCooldownState(int32 index, float remainingTime)
 	auto slots = _stgSlots->GetAllChildren();
 	auto stgSlot = Cast<UStratagemSlotWidget>(slots[index]);
 		
-	if (stgSlot->GetSlotState() == EStgSlotWdgState::Operating)
+	if (stgSlot->GetSlotState() == EStgSlotWgtState::Operating)
 		stgSlot->SetSlotCooldownState(remainingTime);
 
 	stgSlot->SetCooldown(remainingTime);

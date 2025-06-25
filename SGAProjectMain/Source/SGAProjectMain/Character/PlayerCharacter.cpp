@@ -43,6 +43,8 @@
 #include "../Controller/MainPlayerController.h"
 #include "../Controller/CameraContainActor.h"
 
+#include "StimPackComponent.h"
+
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	Super(ObjectInitializer)
@@ -120,9 +122,16 @@ void APlayerCharacter::BeginPlay()
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
+		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
 
 		_gunWidget->AddToViewport();
+
 		_equippedGun->ActivateGun();
+		_stimPackComponent->BroadcastStimPackChanged();
+		_gunWidget->SetGun(_equippedGun->GetGunData()._icon);
+		if (_grenadeChanged.IsBound())
+			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 	}
 
 	if (_stratagemWidget)
@@ -206,7 +215,24 @@ FTransform APlayerCharacter::GetLeftHandPos()
 FRotator APlayerCharacter::Focusing()
 {
 	//상태에 따라 기준이 되는 본을 바꿔야함.
-	const FTransform SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+	FTransform SpineTransform; 
+	switch (_stateComponent->GetWeaponState())
+	{
+	case EWeaponType::None:
+	case EWeaponType::Grenade:
+	case EWeaponType::StratagemDevice:
+
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("FocusingSocket"), RTS_World);
+
+
+		break;
+	case EWeaponType::Gun:
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+		break;
+	default:
+		break;
+
+	}
 	const FVector SpineLoc = SpineTransform.GetLocation();
 
 	FVector CameraLoc, CameraForward;
@@ -251,7 +277,7 @@ FRotator APlayerCharacter::Focusing()
 		return FRotator::ZeroRotator;
 	}
 
-	ResultRot.Roll = 1.5f - DotValue;
+	ResultRot.Roll = 1.4f - DotValue;
 
 	if (bNeedsYaw)
 	{
@@ -309,10 +335,19 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 }
 void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 {
-	ViewTurnBack();
-	// 멈추는 경우
-	_vertical = 0.0f;
-	_horizontal = 0.0f;
+	if (_stateComponent->IsFocusing())
+	{
+
+	}
+	else
+	{
+
+		ViewTurnBack();
+		// 멈추는 경우
+		_vertical = 0.0f;
+		_horizontal = 0.0f;
+
+	}
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
@@ -365,7 +400,7 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
 	case ECharacterState::Proning:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -530,7 +565,7 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 
 void APlayerCharacter::TrySprint(const FInputActionValue& value)
 {
-	if (_stateComponent->IsFiring())
+	if (_viewType!=ECharacterViewType::TPS)
 		return;
 	switch (_stateComponent->GetCharacterState())
 	{
@@ -547,7 +582,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 	case ECharacterState::Proning:
 		FinishProne();
 		break;
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -565,6 +600,8 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	{
 		ViewTurnBack();
 	}
+	if (_stateComponent->GetCharacterState() == ECharacterState::Sprinting)
+		FinishSprint();
 	_stateComponent->SetAiming(true);
 	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
@@ -596,7 +633,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 	case ECharacterState::Standing:
 	case ECharacterState::Crouching:
 	case ECharacterState::Proning:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -636,7 +673,7 @@ void APlayerCharacter::TryCrouch(const FInputActionValue& value)
 		FinishCrouch();
 		break;
 	case ECharacterState::Sprinting:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -677,7 +714,7 @@ void APlayerCharacter::TryProne(const FInputActionValue& value)
 		FinishProne();
 		break;
 	case ECharacterState::Sprinting:
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -699,7 +736,7 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 	case ECharacterState::Proning:
 		FinishProne();
 		break;
-	case ECharacterState::knockdown:
+	case ECharacterState::Knockdown:
 	case ECharacterState::MAX:
 	default:
 		break;
@@ -872,8 +909,9 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 	else
 	{
 
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+		ViewTurnBack();
+		// 멈추는 경우
 		_vertical = 0.0f;
 		_horizontal = 0.0f;
 	}
@@ -907,7 +945,7 @@ void APlayerCharacter::DefaultLook()
 
 	if (_stateComponent->GetCharacterState() == ECharacterState::Proning)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ProningLook"));
+		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
 
 		return;
 	}
@@ -915,6 +953,7 @@ void APlayerCharacter::DefaultLook()
 	if ( FMath::Abs(_deltaAngle) > 80.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
 		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"),_deltaAngle);
 
 		_isTurnLeft = (_deltaAngle < -80.0f);
 		_isTurnRight = (_deltaAngle > 80.0f);
@@ -923,6 +962,7 @@ void APlayerCharacter::DefaultLook()
 	}
 	else if (FMath::Abs(_deltaAngle) < 1.0f)
 	{
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), _deltaAngle);
 		_isTurnLeft = false;
 		_isTurnRight = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
@@ -1136,9 +1176,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		return;
 
 	if (_isGunSettingMode)
-	{;
-		_isGunSettingMode = false;
-	}
+		return;
 
 	if (_stateComponent->IsReloading())
 		_equippedGun->CancelReload();
@@ -1164,7 +1202,12 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		_equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		_equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_equippedGun->ActivateGun();
+		
+		if (_gunWidget)
+			_gunWidget->SetGun(_equippedGun->GetGunData()._icon);
 	}
+
+	_stateComponent->SetEquipIndex(index);
 
 	if (wasAiming) // 에임 중이었을 경우 유지
 		StartAiming(value);

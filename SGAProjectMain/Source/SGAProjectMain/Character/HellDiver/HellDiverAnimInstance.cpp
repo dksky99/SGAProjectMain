@@ -46,6 +46,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
+			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
 			AimFocus(DeltaSeconds);
@@ -108,7 +109,8 @@ bool UHellDiverAnimInstance::LookStateChanged(FString curState)
 
 void UHellDiverAnimInstance::AimFocus(float DeltaSeconds)
 {
-	if (_isFocusing  || !IsMoving())
+	
+	if(_useFocusing)
 	{
 		FRotator temp = _hellDiver->Focusing();
 		double dot = temp.Roll;
@@ -153,12 +155,17 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 {
 	auto gun=_hellDiver->GetEquippedGun();
 	_useLeftHand = false;
+
+	if (_lifeState != ELifeState::Alive)
+		return false;
+	if (_characterState == ECharacterState::Knockdown)
+		return false;
 	if (gun == nullptr)
 		return false;
-	//if (gun->GetGunData()._type == EGunType::OneHanded)
-	//{
-	//	return false;
-	//}
+	if (_weaponState!=EWeaponType::Gun)
+	{
+		return false;
+	}
 	_useLeftHand = true;
 	return true;
 }
@@ -166,12 +173,31 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 bool UHellDiverAnimInstance::IsUsingFocusing()
 {
 	_useFocusing = false;
+	if (_lifeState != ELifeState::Alive)
+		return false;
+	if (_characterState == ECharacterState::Knockdown)
+		return false;
+
 	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
 		return false;
-	if (!_isFocusing || IsMoving())
+	if (!_isFocusing && IsMoving())
 		return false;
 	if (IsStableState_Look() == false)
 		return false;
+	if (_isReloading)
+		return false;
 	_useFocusing = true;
 	return true;
+}
+
+void UHellDiverAnimInstance::CheckEquipChange(uint8 index)
+{
+	if (_curEquipIndex == index)
+	{
+		_changeWeapon = false;
+		return;
+	}
+	_changeWeapon = true;
+	_curEquipIndex = index;
+
 }

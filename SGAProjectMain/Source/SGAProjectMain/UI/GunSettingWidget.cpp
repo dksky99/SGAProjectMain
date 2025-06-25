@@ -9,6 +9,7 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Image.h"
 
 void UGunSettingWidget::InitializeWidget(AGunBase* gun)
 {
@@ -28,6 +29,8 @@ void UGunSettingWidget::UpdateGunInfo(const FGunData& gunData, int32 curAmmo)
 
 	text = FString::Printf(TEXT("%d / %d"), curAmmo, gunData._maxAmmo);
 	_curAmmoText->SetText(FText::FromString(text));
+
+    _gunIcon->SetBrushFromTexture(gunData._icon);
 }
 
 void UGunSettingWidget::SetSlots(const FGunData& gunData)

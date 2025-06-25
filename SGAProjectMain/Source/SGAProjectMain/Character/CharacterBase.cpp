@@ -5,6 +5,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 
+#include "Physics/PhysicsInterfacePhysX.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/PhysicsConstraintTemplate.h"
+#include "PhysicsEngine/ConstraintTypes.h"
 #include "StatComponent.h"
 
 // Sets default values
@@ -136,8 +140,119 @@ float ACharacterBase::TakeDamage(float damageAmount, FDamageEvent const& damageE
 	return -damageAmount;
 }
 
+void ACharacterBase::CharacterToRagdoll()
+{
+
+
+
+	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+
+	if (MovementComponent)
+	{
+		MovementComponent->StopMovementImmediately();
+		MovementComponent->DisableMovement();
+	}
+
+	USkeletalMeshComponent* TempMesh = GetMesh();
+	if (TempMesh)
+	{
+		TempMesh->SetSimulatePhysics(true);
+		TempMesh->SetAllBodiesSimulatePhysics(true);
+		TempMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+
+		UPhysicsAsset* TempPhysicsAsset = TempMesh->GetPhysicsAsset();
+		if (TempPhysicsAsset)
+		{
+
+			for (UPhysicsConstraintTemplate* TempConstraintTemplate : TempPhysicsAsset->ConstraintSetup)
+			{
+				if (TempConstraintTemplate)
+				{
+
+					FConstraintInstance& TempConstraintInstance = TempConstraintTemplate->DefaultInstance;
+					TempConstraintInstance.SetLinearLimits(ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, 0.0f);
+
+				}
+			}
+		}
+	}
+
+	UCapsuleComponent* TempCapsule = GetCapsuleComponent();
+	if (TempCapsule)
+	{
+		TempCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	if (TempMesh && TempCapsule)
+	{
+		TempMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	}
+
+}
+
+void ACharacterBase::KnockDown()
+{
+	CharacterToRagdoll();
+
+	// 3초 후 회복 함수 호출
+	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromKnockDown, 3.0f, false);
+
+
+}
+
+void ACharacterBase::RecoverFromKnockDown()
+{
+
+	USkeletalMeshComponent* TempMesh = GetMesh();
+	UCapsuleComponent* TempCapsule = GetCapsuleComponent();
+
+	if (!TempMesh || !TempCapsule)
+		return;
+
+	// 1. 현재 위치 보정 (예: pelvis 본 기준)
+	const FVector PelvisLocation = TempMesh->GetBoneLocation(FName("pelvis"));
+	SetActorLocation(PelvisLocation + FVector(0, 0, TempCapsule->GetUnscaledCapsuleHalfHeight()));
+	
+	// 2. 메시 물리 비활성화
+	TempMesh->SetSimulatePhysics(false);
+	TempMesh->SetAllBodiesSimulatePhysics(false);
+	TempMesh->SetCollisionProfileName(TEXT("CharacterMesh")); // 기본 충돌 프로파일로 복원
+
+	// 3. 메시 재부착 (캡슐 기준)
+	TempMesh->AttachToComponent(TempCapsule, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	TempMesh->SetRelativeLocation(FVector(0.f, 0.f, -TempCapsule->GetUnscaledCapsuleHalfHeight()));
+	TempMesh->SetWorldRotation(FRotator(0, -90, 0));
+
+	// 4. 캡슐 콜리전 복구
+	TempCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	// 5. 이동 컴포넌트 재활성화
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->SetMovementMode(MOVE_Walking);
+	}
+
+	// 6. 애니메이션 갱신 재개
+	TempMesh->bPauseAnims = false;
+	TempMesh->bNoSkeletonUpdate = false;
+
+
+
+
+}
+
 void ACharacterBase::Dead()
 {
+
+	CharacterToRagdoll();
+
+	AController* CurrentController = GetController();
+	if (CurrentController)
+	{
+		CurrentController->UnPossess();
+	}
 	SetLifeSpan(3.0f);
+
+
 }
 

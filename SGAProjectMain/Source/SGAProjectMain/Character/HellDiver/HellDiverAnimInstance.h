@@ -48,6 +48,7 @@ protected:
 	bool IsStableState_Look();
 	bool IsUsingLeftHand();
 	bool IsUsingFocusing();
+	void CheckEquipChange(uint8 index);
 protected:
 
 	class AHellDiver* _hellDiver;
@@ -75,11 +76,19 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useLeftHand = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	FTransform _leftHandTrans = FTransform();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _changeWeapon = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FTransform _leftHandTrans = FTransform();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FVector _jointTargetLoc = FVector();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	uint8 _curEquipIndex=0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useLeftHandIk = false;
@@ -87,7 +96,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useFocusing = false;
-	float _rotateSpeed = 400;
+	float _rotateSpeed = 350;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFocusing = false;

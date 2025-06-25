@@ -49,7 +49,10 @@ public:
 	void KnockDownRecovery();
 
 	virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
-	void Dead();
+	void CharacterToRagdoll();
+	virtual void KnockDown();
+	virtual void RecoverFromKnockDown();
+	virtual void Dead();
 
 protected:
 

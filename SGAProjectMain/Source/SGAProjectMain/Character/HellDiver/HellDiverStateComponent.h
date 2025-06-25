@@ -13,7 +13,7 @@ enum class ECharacterState : uint8
 	Sprinting,
 	Crouching,
 	Proning,
-	knockdown,
+	Knockdown,
 	MAX
 };
 
@@ -85,6 +85,9 @@ public:
 	bool StartRolling();
 	bool FinishRolling();
 
+	bool StartReload();
+	bool FinishReload();
+
 	ECharacterState GetCharacterState() { return _characterState; }
 	void SetCharacterState(ECharacterState state) { _characterState=state; }
 	EActionState GetActionState() { return _actionState; }
@@ -108,6 +111,10 @@ public:
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
+	void KnockDown();
+	void KnockDownRecovery();
+	void Dead();
+	bool IsActionable();
 
 	UFUNCTION()
 	void MoveChangeFinish(FString newState);
@@ -119,6 +126,9 @@ public:
 	EWeaponType GetWeaponState() { return _weaponState; }
 
 	void SetWeaponState(EWeaponType weapon) { _weaponState = weapon; }
+
+	void SetEquipIndex(uint8 index) { _curEquipIndex = index; }
+	uint8 GetEquipIndex() { return _curEquipIndex; }
 
 	FOnCharacterStateChanged _characterStateChanged;
 	FOnActionStateChanged _actionStateChanged;
@@ -150,6 +160,8 @@ protected:
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
+
+	uint8 _curEquipIndex = 0;
 
 	FString _waitingMove;
 	FString _waitingLook;

@@ -34,7 +34,12 @@ void UHellDiverStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 bool UHellDiverStateComponent::StartSprint()
 {
+
+	if (!IsActionable())
+		return false;
 	if (_characterState != ECharacterState::Standing)
+		return false;
+	if (_isFiring)
 		return false;
 	
 	if (_isRolling)
@@ -57,6 +62,9 @@ bool UHellDiverStateComponent::StartSprint()
 
 bool UHellDiverStateComponent::FinishSprint()
 {
+
+	if (!IsActionable())
+		return false;
 	if (_characterState != ECharacterState::Sprinting)
 		return false;
 	if (_isRolling)
@@ -75,6 +83,9 @@ bool UHellDiverStateComponent::FinishSprint()
 
 bool UHellDiverStateComponent::StartCrouch()
 {
+
+	if (!IsActionable())
+		return false;
 	if (_characterState == ECharacterState::Crouching)
 		return false;
 	if (_isRolling)
@@ -94,6 +105,9 @@ bool UHellDiverStateComponent::StartCrouch()
 
 bool UHellDiverStateComponent::FinishCrouch()
 {
+
+	if (!IsActionable())
+		return false;
 	if (_characterState != ECharacterState::Crouching)
 		return false;
 	if (_isRolling)
@@ -114,6 +128,8 @@ bool UHellDiverStateComponent::FinishCrouch()
 bool UHellDiverStateComponent::StartProne()
 {
 
+	if (!IsActionable())
+		return false;
 	if (_characterState == ECharacterState::Proning)
 		return false;
 	if (TryMotionChange())
@@ -169,8 +185,24 @@ bool UHellDiverStateComponent::FinishRolling()
 
 }
 
+bool UHellDiverStateComponent::StartReload()
+{
+	UE_LOG(LogTemp, Error, TEXT("Call StartReload"));
+	_isReloading = true;
+	return true;
+}
+
+bool UHellDiverStateComponent::FinishReload()
+{
+	UE_LOG(LogTemp, Error, TEXT("Call ReloadFinish"));
+	_isReloading = false;
+	return false;
+}
+
 bool UHellDiverStateComponent::IsFocusing()
 {
+	if (!IsActionable())
+		return false;
 	if (_isReloading)
 		return false;
 	if (_isWeaponChange)
@@ -181,6 +213,37 @@ bool UHellDiverStateComponent::IsFocusing()
 		return true;
 	if (IsMoving())
 		return false;
+
+	return true;
+}
+
+void UHellDiverStateComponent::KnockDown()
+{
+	_characterState = ECharacterState::Knockdown;
+
+
+
+}
+
+void UHellDiverStateComponent::KnockDownRecovery()
+{
+	_characterState = ECharacterState::Proning;
+}
+
+void UHellDiverStateComponent::Dead()
+{
+	_lifeState = ELifeState::Dead;
+}
+
+bool UHellDiverStateComponent::IsActionable()
+{
+	if(_lifeState!=ELifeState::Alive)	
+		return false;
+	if (_characterState == ECharacterState::Knockdown)
+		return false;
+
+
+
 
 	return true;
 }

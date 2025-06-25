@@ -46,6 +46,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UVerticalBox* _lightModePanel;
 
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _gunIcon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/SlotData", meta = (AllowPrivateAccess = "true"))
 	TArray<class UGunSettingSlotDataAsset*> _gunSlotDataAssets;
 
