@@ -27,6 +27,7 @@
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
 #include "../UI/StratagemWidget.h"
+#include "../UI/MiniMapWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -99,6 +100,11 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
 	}
+
+	if (_minimapWidgetClass)
+	{
+		_minimapWidget = CreateWidget<UMiniMapWidget>(GetWorld(), _minimapWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -139,6 +145,11 @@ void APlayerCharacter::BeginPlay()
 		_stratagemWidget->InitializeWidget(_stratagemComponent->GetStratagemSlots());
 		_stratagemWidget->AddToViewport();
 		_stratagemWidget->OpenWidget(false);
+	}
+
+	if (_minimapWidget)
+	{
+		_minimapWidget->AddToViewport();
 	}
 
 	//if (_sceneUIClass)
