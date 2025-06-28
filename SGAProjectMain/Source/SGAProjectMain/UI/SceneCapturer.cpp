@@ -25,10 +25,15 @@ void ASceneCapturer::BeginPlay()
 	Super::BeginPlay();
 
 	ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	_player = Cast<APlayerCharacter>(playerCharacter);
+	_curFollowTarget = playerCharacter;
+	Cast<APlayerCharacter>(playerCharacter)->SetSceneCapturer(this);
+
+	_playerController = GetWorld()->GetFirstPlayerController();
 
 	_sceneCaptureComponent->TextureTarget = _renderTarget;
 	_sceneCaptureComponent->ProjectionType = _projectionType;
+	_targetOrthoWidth = _orthoWidthLevel[_orthoWidthLevelIndex];
+	_sceneCaptureComponent->OrthoWidth = _targetOrthoWidth;
 
 	// 필터 적용
 	FilterActorList();
@@ -39,11 +44,75 @@ void ASceneCapturer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!_player) return;
+	if (!_curFollowTarget) return;
 
-	FVector playerLocation = _player->GetActorLocation();
-	FVector newLocation = FVector(playerLocation.X, playerLocation.Y, _fixedHeight); // 위에서 아래로
+	// 드래그 중일 경우
+	if (_isDraggingCursor && _cursorActor)
+	{
+		FVector2D curMousePos;
+		_playerController->GetMousePosition(curMousePos.X, curMousePos.Y);
+
+		FVector2D delta = curMousePos - _lastMousePos;
+		_lastMousePos = curMousePos;
+
+		// 드래그 방향으로 커서 이동
+		FVector cursorLocation = _cursorActor->GetActorLocation();
+		cursorLocation.Y += delta.X;
+		cursorLocation.X -= delta.Y;
+		//FVector Delta3D = FVector(Delta.X, Delta.Y, 0.f) * DragSensitivity; // 좌표계에 따라 YZ 반전 필요할 수도 있음
+		_cursorActor->SetActorLocation(cursorLocation);
+	}
+	
+	// 타겟 액터 따라다니기
+	FVector targetLocation = _curFollowTarget->GetActorLocation();
+	FVector newLocation = FVector(targetLocation.X, targetLocation.Y, _fixedHeight); // 위에서 아래로
 	SetActorLocation(newLocation);
+
+	// 확대 혹은 축소 시
+	float curOrthoWidth = _sceneCaptureComponent->OrthoWidth;
+	if (curOrthoWidth != _targetOrthoWidth)
+	{
+		float newOrthoWidth = FMath::FInterpTo(curOrthoWidth, _targetOrthoWidth, DeltaTime, 8.f);
+		_sceneCaptureComponent->OrthoWidth = newOrthoWidth;
+	}
+}
+
+void ASceneCapturer::ChangeOrthoWidth(bool zoomIn)
+{
+	if (zoomIn) // 맵 확대의 경우
+	{
+		if (_orthoWidthLevelIndex > 0) // 최대 확대 단계가 아닌 경우
+		{
+			_orthoWidthLevelIndex--; // 인덱스 감소 -> orthoWidth 감소 -> 맵 확대
+		}
+	}
+	else // 맵 축소의 경우
+	{
+		if (_orthoWidthLevelIndex < 2) // 최대 축소 단계가 아닌 경우
+		{
+			_orthoWidthLevelIndex++; // 인덱스 증가 -> orthoWidth 증가 -> 맵 축소
+		}
+	}
+
+	_targetOrthoWidth = _orthoWidthLevel[_orthoWidthLevelIndex];
+}
+
+void ASceneCapturer::StartDraggingMap()
+{
+	if (!_cursorActor)
+	{
+		FVector startPos = _curFollowTarget->GetActorLocation(); // 커서가 없을 경우 추적 타겟은 플레이어
+		_cursorActor = GetWorld()->SpawnActor<AActor>(_cursorActorClass, startPos, FRotator::ZeroRotator); // 플레이어 위치에 커서 스폰
+		_curFollowTarget = _cursorActor;
+	}
+	
+	_playerController->GetMousePosition(_lastMousePos.X, _lastMousePos.Y);
+	_isDraggingCursor = true;
+}
+
+void ASceneCapturer::StopDraggingMap()
+{
+	_isDraggingCursor = false;
 }
 
 void ASceneCapturer::FilterActorList()

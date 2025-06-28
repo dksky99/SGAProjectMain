@@ -28,6 +28,7 @@
 #include "../UI/GunSettingWidget.h"
 #include "../UI/StratagemWidget.h"
 #include "../UI/MiniMapWidget.h"
+#include "../UI/SceneCapturer.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -362,6 +363,9 @@ void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
+	if (_isDraggingMap)
+		return;
+
 	FVector2D lookAxisVector = value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -607,6 +611,13 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 		return;
 	}
 
+	if (_isWatchingMap)
+	{
+		_sceneCapturer->StartDraggingMap();
+		_isDraggingMap = true;
+		return;
+	}
+
 	if (GetCharacterMovement()->bOrientRotationToMovement == true)
 	{
 		ViewTurnBack();
@@ -652,7 +663,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
-	if (_isGunSettingMode)
+	if (_isGunSettingMode || _isWatchingMap)
 		return;
 
 	switch (_stateComponent->GetWeaponState())
@@ -1402,6 +1413,13 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 		return;
+
+	if (_isWatchingMap)
+	{
+		_sceneCapturer->StopDraggingMap();
+		_isDraggingMap = false;
+		return;
+	}
 
 	_stateComponent->SetAiming(false);
 	SetTPSView();

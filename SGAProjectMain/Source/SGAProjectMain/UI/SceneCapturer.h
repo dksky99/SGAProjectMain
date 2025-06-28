@@ -30,6 +30,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void ChangeOrthoWidth(bool zoomIn);
+
+	void StartDraggingMap();
+	void StopDraggingMap();
+
+	void SetFollowTarget(AActor* target) { _curFollowTarget = target; }
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Game")
 	USceneCaptureComponent2D* _sceneCaptureComponent;
@@ -47,8 +54,32 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Game")
 	TArray<FName> _showActorTagList;				// Show Only 모드일 때 표시 액터
 
+	// 추적 관련 변수
 	UPROPERTY()
-	class APlayerCharacter* _player;
+	AActor* _curFollowTarget; // 추적 액터 (플레이어 혹은 커서)
 
-	float _fixedHeight = 500.0f; // 캡쳐하는 높이
+	UPROPERTY(EditAnywhere, Category = "Game")
+	TSubclassOf<AActor> _cursorActorClass;
+
+	UPROPERTY()
+	AActor* _cursorActor;
+
+	UPROPERTY()
+	APlayerController* _playerController;
+
+	bool _isDraggingCursor = false;
+
+	FVector2D _lastMousePos;
+
+
+	float _fixedHeight = 500.f; // z축 위치
+
+	// 맵 확대
+	UPROPERTY(EditAnywhere, Category = "Game") // 맵 확대 단계
+	TArray<float> _orthoWidthLevel = { 500.f, 1500.f, 3000.f };
+
+	int32 _orthoWidthLevelIndex = 1; 
+
+	//UPROPERTY(EditAnywhere, Category = "Game")
+	float _targetOrthoWidth = 1500.f;
 };

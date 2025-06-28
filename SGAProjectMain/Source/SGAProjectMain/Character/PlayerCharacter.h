@@ -175,6 +175,8 @@ public:
 	virtual void SetCrouchingCollisionCamera()override;
 	virtual void SetProningCollisionCamera()override;
 
+	void SetSceneCapturer(class ASceneCapturer* capturer) { _sceneCapturer = capturer; }
+
 protected:
 
 
@@ -264,6 +266,8 @@ protected:
 	TSubclassOf<UUserWidget> _minimapWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class UMiniMapWidget* _minimapWidget;
+	UPROPERTY()
+	class ASceneCapturer* _sceneCapturer;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
@@ -292,11 +296,16 @@ protected:
 	UPROPERTY()
 	TArray<UPrimitiveComponent*> _fadedComponents;
 
-
+	// 위젯 -> 총 설정
 	float _reloadPressedTime = 0.0f;
 	bool _isGunSettingMode = false;
 
 	FTimerHandle _gunSettingTimer;
+
+	// 위젯 -> 지도보기
+	UPROPERTY(EditAnywhere, Category = "Game/Test")
+	bool _isWatchingMap = true; //TODO
+	bool _isDraggingMap = false;
 
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
