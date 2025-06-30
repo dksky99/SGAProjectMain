@@ -62,18 +62,37 @@ void ASceneCapturer::Tick(float DeltaTime)
 		//FVector Delta3D = FVector(Delta.X, Delta.Y, 0.f) * DragSensitivity; // 좌표계에 따라 YZ 반전 필요할 수도 있음
 		_cursorActor->SetActorLocation(cursorLocation);
 	}
-	
+
+	float curOrthoWidth = _sceneCaptureComponent->OrthoWidth;
+
 	// 타겟 액터 따라다니기
 	FVector targetLocation = _curFollowTarget->GetActorLocation();
-	FVector newLocation = FVector(targetLocation.X, targetLocation.Y, _fixedHeight); // 위에서 아래로
+
+	float halfWidth = curOrthoWidth * 0.5f;
+
+	// 일정 범위 내에서는 타겟 액터를 따라다니고, 맵 가장자리에서는 타겟 액터만 이동
+	float clampedX = FMath::Clamp(targetLocation.X, halfWidth, _maxMapSize.X - halfWidth);
+	float clampedY = FMath::Clamp(targetLocation.Y, halfWidth, _maxMapSize.Y - halfWidth);
+
+	FVector newLocation = FVector(clampedX, clampedY, _fixedHeight); // 위에서 아래로
 	SetActorLocation(newLocation);
 
 	// 확대 혹은 축소 시
-	float curOrthoWidth = _sceneCaptureComponent->OrthoWidth;
 	if (curOrthoWidth != _targetOrthoWidth)
 	{
 		float newOrthoWidth = FMath::FInterpTo(curOrthoWidth, _targetOrthoWidth, DeltaTime, 8.f);
 		_sceneCaptureComponent->OrthoWidth = newOrthoWidth;
+	}
+}
+
+void ASceneCapturer::ResetMap(AActor* target)
+{
+	_curFollowTarget = target; // 다시 플레이어를 따라다니게
+
+	if (_cursorActor) // 커서가 있을 경우 삭제
+	{
+		_cursorActor->Destroy();
+		_cursorActor = nullptr;
 	}
 }
 
@@ -113,6 +132,37 @@ void ASceneCapturer::StartDraggingMap()
 void ASceneCapturer::StopDraggingMap()
 {
 	_isDraggingCursor = false;
+}
+
+bool ASceneCapturer::PingOnMap()
+{
+	if (!_cursorActor) // 커서가 없는 상태라면 취소
+		return false;
+
+	// 커서가 있을 경우 -> 핑 찍기 가능
+	FVector cursorLocation = _cursorActor->GetActorLocation();
+	const float removeThreshold = 100.f;
+
+	if (_pingActor)
+	{
+		float distance = FVector::Dist(_pingActor->GetActorLocation(), cursorLocation);
+
+		if (distance < removeThreshold) // 비슷한 위치에서 다시 누를 경우 핑 제거
+		{
+			_pingActor->Destroy();
+			_pingActor = nullptr;
+			return true;
+		}
+		else // 거리가 있을 경우 커서 위치로 핑 이동
+		{
+			_pingActor->SetActorLocation(cursorLocation);
+			return true;
+		}
+	}
+
+	// 없을 경우 생성
+	_pingActor = GetWorld()->SpawnActor<AActor>(_pingActorClass, cursorLocation, FRotator::ZeroRotator);
+	return true;
 }
 
 void ASceneCapturer::FilterActorList()

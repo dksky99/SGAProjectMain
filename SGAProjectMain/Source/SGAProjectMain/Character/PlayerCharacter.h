@@ -176,6 +176,7 @@ public:
 	virtual void SetProningCollisionCamera()override;
 
 	void SetSceneCapturer(class ASceneCapturer* capturer) { _sceneCapturer = capturer; }
+	void OpenMap();
 
 protected:
 
@@ -219,6 +220,8 @@ protected:
 	class UInputAction* _aimChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _interactAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _mapAction;
 
 	TArray<FKey> _stratagemInputBuffer;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
@@ -303,8 +306,6 @@ protected:
 	FTimerHandle _gunSettingTimer;
 
 	// 위젯 -> 지도보기
-	UPROPERTY(EditAnywhere, Category = "Game/Test")
-	bool _isWatchingMap = true; //TODO
 	bool _isDraggingMap = false;
 
 	// 아이템 감지용

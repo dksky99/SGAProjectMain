@@ -151,6 +151,7 @@ void APlayerCharacter::BeginPlay()
 	if (_minimapWidget)
 	{
 		_minimapWidget->AddToViewport();
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	//if (_sceneUIClass)
@@ -203,9 +204,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
-		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
-		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode);
-		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView);
+		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode); // 마우스 휠 아래로
+		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode); // 마우스 휠 위로
+		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView); // 마우스 휠 누름
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BeginStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataWAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyW);
@@ -214,6 +215,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
+		enhancedInputComponent->BindAction(_mapAction, ETriggerEvent::Started, this, &APlayerCharacter::OpenMap);
 	}
 }
 
@@ -407,6 +409,16 @@ void APlayerCharacter::TryJump(const FInputActionValue& value)
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap()) // 지도를 보고있는 상태이고
+	{
+		if (_sceneCapturer->PingOnMap()) // 핑을 찍을 수 있는 상태라면
+			return; // 아래부분 전부 실행 안 함
+
+		// 핑을 찍을 수 없다면 맵을 닫고 다음 행동
+		_stateComponent->SetCheckingMap(false);
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 	switch (_stateComponent->GetCharacterState())
 	{
 	case ECharacterState::Sprinting:
@@ -611,7 +623,7 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 		return;
 	}
 
-	if (_isWatchingMap)
+	if (_stateComponent->IsCheckingMap())
 	{
 		_sceneCapturer->StartDraggingMap();
 		_isDraggingMap = true;
@@ -663,7 +675,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
-	if (_isGunSettingMode || _isWatchingMap)
+	if (_isGunSettingMode || _stateComponent->IsCheckingMap())
 		return;
 
 	switch (_stateComponent->GetWeaponState())
@@ -1189,6 +1201,22 @@ void APlayerCharacter::SetProningCollisionCamera()
 	);
 }
 
+void APlayerCharacter::OpenMap()
+{
+	if (_stateComponent->IsCheckingMap()) // 맵을 보고있을 경우
+	{
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+		_stateComponent->SetCheckingMap(false);
+		_isDraggingMap = false;
+		_sceneCapturer->ResetMap(this); // 타겟을 플레이어로 재설정 & 기타 초기화
+	}
+	else // 맵이 닫혀있을 경우
+	{
+		_minimapWidget->SetVisibility(ESlateVisibility::Visible);
+		_stateComponent->SetCheckingMap(true);
+	}
+}
+
 void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 {
 	if (index > 3 || index < 0)
@@ -1414,7 +1442,7 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 	if (_isGunSettingMode)
 		return;
 
-	if (_isWatchingMap)
+	if (_stateComponent->IsCheckingMap())
 	{
 		_sceneCapturer->StopDraggingMap();
 		_isDraggingMap = false;
@@ -1530,6 +1558,12 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 
 void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->ChangeOrthoWidth(false); // 마우스 휠 다운 -> 축소
+		return;
+	}
+
 	if (_stateComponent->IsAiming())
 		return;
 
@@ -1552,6 +1586,12 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 
 void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->ChangeOrthoWidth(true); // 마우스 휠 업 -> 확대
+		return;
+	}
+
 	if (_stateComponent->IsAiming())
 		return;
 
