@@ -54,7 +54,14 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 
+	UFUNCTION()
+	virtual void OnPartDestroyed_Handler(EBodyPart part); // 상속받아서 각 부위별 부위파괴 구현
+
+	UFUNCTION()
+	virtual void OnDeath_Handler(); // 상속받아서 죽었을 시 동작 구현
+
 protected:
+	class UStatComponent* _statComponent;
 
 	float _vertical = 0;
 	float _horizontal = 0;
