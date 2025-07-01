@@ -172,7 +172,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Completed, this, &APlayerCharacter::MoveFinish);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryPakour);
 		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TrySprint);
 		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
 		enhancedInputComponent->BindAction(_crouchAction, ETriggerEvent::Started, this, &APlayerCharacter::TryCrouch);
@@ -381,12 +381,30 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 }
 
 
-void APlayerCharacter::TryJump(const FInputActionValue& value)
+void APlayerCharacter::TryPakour(const FInputActionValue& value)
 {
 	if (value.Get<bool>())
 	{
-		UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
-		_pakourComponent->TriggerPakour();
+
+		switch (_stateComponent->GetCharacterState())
+		{
+		case ECharacterState::Sprinting:
+		case ECharacterState::Standing:
+		case ECharacterState::Crouching:
+		{
+			UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
+			_pakourComponent->TriggerPakour();
+
+		}
+			break;
+		case ECharacterState::Proning:
+			FinishProne();
+		case ECharacterState::Knockdown:
+		case ECharacterState::MAX:
+		default:
+			break;
+		}
+
 	}
 }
 

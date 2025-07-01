@@ -68,11 +68,16 @@ public:
 	FOnMontageBlendingOutStarted _montageBlendOutStarted;
 
 private:
+	//벽 바로앞. 캐릭터와 벽이 만나는 지점
 	FHitResult _facedWallHitResult;
+	//캐릭터와 가장 가까운 벽의 윗부분. 손을 올려놓을 장소
 	FHitResult _firstTopHitResult;
+	//캐릭터와 가장 먼 벽의 윗부분. 벽의 두께를 알수 있게된다. 
 	FHitResult _lastTopHitResult;
 	FHitResult _endOfWallHitResult;
+	//벽 너머에 착지할 지점.
 	FHitResult _vaultLandingHitResult;
+	//벽의 정면 로테이션.
 	FRotator _wallRotation;
 
 	float _wallHeight;

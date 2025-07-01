@@ -199,6 +199,29 @@ bool UHellDiverStateComponent::FinishReload()
 	return false;
 }
 
+bool UHellDiverStateComponent::StartPakour()
+{
+	if (_isVaulting)
+		return false;
+	if (_characterState == ECharacterState::Proning || _isRolling)
+		return false;
+
+	_isVaulting = true;
+
+	return true;
+}
+
+bool UHellDiverStateComponent::FinishPakour()
+{
+	if (_isVaulting == false)
+		return false;
+
+	_isVaulting = false;
+	
+
+	return true;
+}
+
 bool UHellDiverStateComponent::IsFocusing()
 {
 	if (!IsActionable())
@@ -206,6 +229,8 @@ bool UHellDiverStateComponent::IsFocusing()
 	if (_isReloading)
 		return false;
 	if (_isWeaponChange)
+		return false;
+	if (_isVaulting)
 		return false;
 	if (_isFiring)
 		return true;

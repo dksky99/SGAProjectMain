@@ -299,41 +299,38 @@ void UPakourComponent::TryPakour()
 		return;
 
 	}
-	if (_wallHeight > 300.0f)
+	if (_wallHeight > 180)
 	{
 		//Too High Wall
 		return;
 	}
-	if (_wallHeight > 130)
+	if (_wallHeight > 150)
 	{
 		//Climb;
 		TryVault(EVaultType_C::HighMantle);
 		return;
 	}
-	if (_wallHeight > 100.0f)
+
+	float WallThickness = FVector::Dist(
+		_firstTopHitResult.ImpactPoint,
+		_lastTopHitResult.ImpactPoint
+	);
+
+	if (WallThickness <= 30)
 	{
-		//FrontFlip
-		TryVault(EVaultType_C::LowMantle);
+		TryVault(EVaultType_C::Vault);
 		return;
 	}
-	if (_wallHeight > 60)
+	else
 	{
-		//OneHandVault
-		TryVault(EVaultType_C::Vault);
-
+		TryVault(EVaultType_C::LowMantle);
 		return;
-
 	}
 	//if (FMath::IsNearlyEqual(_ownerCharacter->GetVelocity().Size2D(), 0.0f, 5.0f))
 	//{
 	//	//Mantle
 	//	return;
 	//}
-	else
-	{
-
-		return;
-	}
 }
 
 void UPakourComponent::TryVault(EVaultType_C type)

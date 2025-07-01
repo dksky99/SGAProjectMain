@@ -65,7 +65,7 @@ public:
 	UFUNCTION()
 	void Look(const  FInputActionValue& value);
 	UFUNCTION()
-	void TryJump(const  FInputActionValue& value);
+	void TryPakour(const  FInputActionValue& value);
 	UFUNCTION()
 	void StartFiring(const  FInputActionValue& value);
 	UFUNCTION()
