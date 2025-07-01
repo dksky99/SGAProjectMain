@@ -24,9 +24,8 @@ void ASceneCapturer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ACharacter* playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	_curFollowTarget = playerCharacter;
-	Cast<APlayerCharacter>(playerCharacter)->SetSceneCapturer(this);
+	_player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	_curFollowTarget = _player;
 
 	_playerController = GetWorld()->GetFirstPlayerController();
 
@@ -61,6 +60,9 @@ void ASceneCapturer::Tick(float DeltaTime)
 		cursorLocation.X -= delta.Y;
 		//FVector Delta3D = FVector(Delta.X, Delta.Y, 0.f) * DragSensitivity; // 좌표계에 따라 YZ 반전 필요할 수도 있음
 		_cursorActor->SetActorLocation(cursorLocation);
+
+		// 위젯에서 텍스트 연동
+		BroadcastCursorInfo();
 	}
 
 	float curOrthoWidth = _sceneCaptureComponent->OrthoWidth;
@@ -82,12 +84,18 @@ void ASceneCapturer::Tick(float DeltaTime)
 	{
 		float newOrthoWidth = FMath::FInterpTo(curOrthoWidth, _targetOrthoWidth, DeltaTime, 8.f);
 		_sceneCaptureComponent->OrthoWidth = newOrthoWidth;
+		
+		if (_cursorActor)
+			BroadcastCursorInfo();
 	}
+
+	if (_pingActor)
+		BroadcastPingInfo();
 }
 
-void ASceneCapturer::ResetMap(AActor* target)
+void ASceneCapturer::ResetMap()
 {
-	_curFollowTarget = target; // 다시 플레이어를 따라다니게
+	_curFollowTarget = _player; // 다시 플레이어를 따라다니게 하기
 
 	if (_cursorActor) // 커서가 있을 경우 삭제
 	{
@@ -134,9 +142,22 @@ void ASceneCapturer::StopDraggingMap()
 	_isDraggingCursor = false;
 }
 
+void ASceneCapturer::BroadcastCursorInfo()
+{
+	if (!_cursorActor) return;
+	
+	float halfWidth = _sceneCaptureComponent->OrthoWidth / 2.f;
+	FVector sceneCapturerToCursor = _cursorActor->GetActorLocation() - this->GetActorLocation();
+
+	FVector playerToCursor = _cursorActor->GetActorLocation() - _player->GetActorLocation();
+	
+	if (_cursorUpdateEvent.IsBound())
+		_cursorUpdateEvent.Broadcast(sceneCapturerToCursor, playerToCursor, halfWidth);
+}
+
 bool ASceneCapturer::PingOnMap()
 {
-	if (!_cursorActor) // 커서가 없는 상태라면 취소
+	if (!_cursorActor)
 		return false;
 
 	// 커서가 있을 경우 -> 핑 찍기 가능
@@ -151,18 +172,41 @@ bool ASceneCapturer::PingOnMap()
 		{
 			_pingActor->Destroy();
 			_pingActor = nullptr;
+			
+			if (_pingOnOffEvent.IsBound())
+				_pingOnOffEvent.Execute(false);
+
 			return true;
 		}
 		else // 거리가 있을 경우 커서 위치로 핑 이동
 		{
 			_pingActor->SetActorLocation(cursorLocation);
+
+			if (_pingOnOffEvent.IsBound())
+				_pingOnOffEvent.Execute(true);
+
 			return true;
 		}
 	}
 
 	// 없을 경우 생성
 	_pingActor = GetWorld()->SpawnActor<AActor>(_pingActorClass, cursorLocation, FRotator::ZeroRotator);
+	
+	if (_pingOnOffEvent.IsBound())
+		_pingOnOffEvent.Execute(true);
+
 	return true;
+}
+
+void ASceneCapturer::BroadcastPingInfo()
+{
+	if (!_pingActor) return;
+
+	float halfWidth = _sceneCaptureComponent->OrthoWidth / 2.f;
+	FVector sceneCapturerToPing = _pingActor->GetActorLocation() - this->GetActorLocation();
+
+	if (_pingUpdateEvent.IsBound())
+		_pingUpdateEvent.Broadcast(sceneCapturerToPing, halfWidth);
 }
 
 void ASceneCapturer::FilterActorList()

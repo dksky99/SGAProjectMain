@@ -10,6 +10,10 @@
 
 #include "SceneCapturer.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FCursorUpdateEvent, FVector, FVector, float);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FPingUpdateEvent, FVector, float);
+DECLARE_DELEGATE_OneParam(FPingOnOffEvent, bool);
+
 UCLASS()
 class SGAPROJECTMAIN_API ASceneCapturer : public AActor
 {
@@ -31,16 +35,23 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ResetMap(AActor* target); // 플레이어 쪽에서 자신을 넘겨줌
+	void ResetMap();
 
 	void ChangeOrthoWidth(bool zoomIn);
 
 	void StartDraggingMap();
 	void StopDraggingMap();
 
-	bool PingOnMap(); // 핑 찍기가 불가능하면 false, 가능하면 핑을 찍은 후 true 반환 
+	void BroadcastCursorInfo();
+	FCursorUpdateEvent _cursorUpdateEvent;
+
+	bool PingOnMap(); // 핑 찍기가 불가능하면 false, 가능하면 핑을 찍은 후 true 반환
+	void BroadcastPingInfo();
+	FPingUpdateEvent _pingUpdateEvent;
+	FPingOnOffEvent _pingOnOffEvent;
 
 	void SetFollowTarget(AActor* target) { _curFollowTarget = target; }
+	float GetCurOrthoWidth() { return _sceneCaptureComponent->OrthoWidth; }
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Game")
@@ -70,6 +81,8 @@ private:
 
 	UPROPERTY()
 	APlayerController* _playerController;
+	UPROPERTY()
+	ACharacter* _player;
 
 	bool _isDraggingCursor = false;
 	FVector2D _lastMousePos;

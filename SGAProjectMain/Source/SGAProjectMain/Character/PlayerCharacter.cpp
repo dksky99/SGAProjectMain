@@ -18,6 +18,7 @@
 
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
+#include "EngineUtils.h"
 
 #include "Components/SphereComponent.h"
 #include "../Object/Item/ItemBase.h"
@@ -152,6 +153,20 @@ void APlayerCharacter::BeginPlay()
 	{
 		_minimapWidget->AddToViewport();
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+
+		// 월드에서 씬캡쳐러 찾기
+		for (TActorIterator<ASceneCapturer> IT(GetWorld());IT; ++IT)
+		{
+			ASceneCapturer* sceneCapturer = *IT;
+			if (sceneCapturer)
+			{
+				_sceneCapturer = sceneCapturer;
+				break;
+			}
+		}
+		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+		_sceneCapturer->_pingUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+		_sceneCapturer->_pingOnOffEvent.BindUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
 	}
 
 	//if (_sceneUIClass)
@@ -1208,7 +1223,8 @@ void APlayerCharacter::OpenMap()
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 		_stateComponent->SetCheckingMap(false);
 		_isDraggingMap = false;
-		_sceneCapturer->ResetMap(this); // 타겟을 플레이어로 재설정 & 기타 초기화
+		_sceneCapturer->ResetMap();
+		_minimapWidget->ResetMap();
 	}
 	else // 맵이 닫혀있을 경우
 	{
