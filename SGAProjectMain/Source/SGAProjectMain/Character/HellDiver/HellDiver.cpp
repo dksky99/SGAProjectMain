@@ -287,58 +287,43 @@ void AHellDiver::StartSprint()
 {
     if (_stateComponent->StartSprint() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
-    auto movement=GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetSprintSpeed();
+    Sprinting();
 }
 
 void AHellDiver::FinishSprint()
 {
     if (_stateComponent->FinishSprint() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
-
-    auto movement = GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+    Standing();
 }
 
 void AHellDiver::StartCrouch()
 {
     if (_stateComponent->StartCrouch() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
-
-    auto movement = GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetCrouchSpeed();
+    Crouch();
 }
 
 void AHellDiver::FinishCrouch()
 {
     if (_stateComponent->FinishCrouch() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
 
-    auto movement = GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+    Standing();
 }
 
 void AHellDiver::StartProne()
 {
     if (_stateComponent->StartProne() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
-
-    auto movement = GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
+    Proning();
 }
 
 void AHellDiver::FinishProne()
 {
     if (_stateComponent->FinishProne() == false)
         return;
-    SetCollisionState(_stateComponent->GetCharacterState());
-    auto movement = GetMovementComponent();
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+    Standing();
 }
 
 void AHellDiver::Rolling()
@@ -350,10 +335,15 @@ void AHellDiver::Rolling()
     if (_stateComponent->StartRolling()==false)
         return;
     Jump();
+    FVector forward;
+    if (_vertical == 0 && _horizontal == 0)
+    {
+        forward = GetActorForwardVector();
+    }
+    forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
 
-    FVector forward = GetActorForwardVector();
-
-    float forwardBoost = 1000.0f; 
+    forward.Normalize();
+    float forwardBoost = 500.0f; 
     FVector boost = forward * forwardBoost;
 
     // 4. 현재 Velocity에 더해줌
@@ -370,21 +360,27 @@ void AHellDiver::FinishRolling()
 
 void AHellDiver::Standing()
 {
+    SetCollisionState(_stateComponent->GetCharacterState());
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
 void AHellDiver::Sprinting()
 {
+    SetCollisionState(_stateComponent->GetCharacterState());
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetSprintSpeed();
 }
 
 void AHellDiver::Crouching()
 {
+    SetCollisionState(_stateComponent->GetCharacterState());
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetCrouchSpeed();
 }
 
 void AHellDiver::Proning()
 {
+
+    SetCollisionState(_stateComponent->GetCharacterState());
+
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
 }
 
@@ -508,7 +504,8 @@ void AHellDiver::RecoverFromKnockDown()
 {
     Super::RecoverFromKnockDown();
 
-    _stateComponent->KnockDown();
+    _stateComponent->KnockDownRecovery();
+    Proning();
 }
 
 void AHellDiver::Dead()

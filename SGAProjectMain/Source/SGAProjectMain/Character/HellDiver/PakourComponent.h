@@ -12,7 +12,11 @@ enum class EVaultType_C :uint8
 {
 	OneHandVault,
 	TwoHandVault,
-	FrontFlip
+	FrontFlip,
+	Vault,
+	LowMantle,
+	HighMantle
+
 };
 
 
@@ -52,6 +56,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "My Events")
 	void TryVault(EVaultType_C type);
 
+	class UAnimMontage* OneHandVault();
+	class UAnimMontage* TwoHandVault();
+	class UAnimMontage* FrontFlip()   ;
+	class UAnimMontage* Vault()	   ;
+	class UAnimMontage* LowMantle()   ;
+	class UAnimMontage* HighMantle()  ;
+	
+
 	FOnMontageEnded _montageEnded;
 	FOnMontageBlendingOutStarted _montageBlendOutStarted;
 
@@ -87,5 +99,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _frontFlip;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _vault;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _lowMantle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _highMantle;
 	bool _canPakour = true;
 };

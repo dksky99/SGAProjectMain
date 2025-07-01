@@ -186,6 +186,10 @@ void ACharacterBase::CharacterToRagdoll()
 	if (TempMesh && TempCapsule)
 	{
 		TempMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		RootComponent = TempMesh;
+
+		TempCapsule->AttachToComponent(TempMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		TempCapsule->SetRelativeLocation(FVector(0, 0, 88));
 	}
 
 }
@@ -210,8 +214,8 @@ void ACharacterBase::RecoverFromKnockDown()
 		return;
 
 	// 1. 현재 위치 보정 (예: pelvis 본 기준)
-	const FVector PelvisLocation = TempMesh->GetBoneLocation(FName("pelvis"));
-	SetActorLocation(PelvisLocation + FVector(0, 0, TempCapsule->GetUnscaledCapsuleHalfHeight()));
+	const FVector PelvisLocation = TempMesh->GetBoneLocation(FName("pelvis"),EBoneSpaces::WorldSpace);
+	UE_LOG(LogTemp,Display,TEXT("Bone Loc : %f %f %f"),PelvisLocation.X, PelvisLocation.Y, PelvisLocation.Z)
 	
 	// 2. 메시 물리 비활성화
 	TempMesh->SetSimulatePhysics(false);
@@ -219,6 +223,9 @@ void ACharacterBase::RecoverFromKnockDown()
 	TempMesh->SetCollisionProfileName(TEXT("CharacterMesh")); // 기본 충돌 프로파일로 복원
 
 	// 3. 메시 재부착 (캡슐 기준)
+
+	TempCapsule->DetachFromParent();
+	RootComponent = TempCapsule;
 	TempMesh->AttachToComponent(TempCapsule, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	TempMesh->SetRelativeLocation(FVector(0.f, 0.f, -TempCapsule->GetUnscaledCapsuleHalfHeight()));
 	TempMesh->SetWorldRotation(FRotator(0, -90, 0));
@@ -226,6 +233,7 @@ void ACharacterBase::RecoverFromKnockDown()
 	// 4. 캡슐 콜리전 복구
 	TempCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+	SetActorLocation(PelvisLocation + FVector(0, 0, TempCapsule->GetUnscaledCapsuleHalfHeight()));
 	// 5. 이동 컴포넌트 재활성화
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
 	{
@@ -251,7 +259,8 @@ void ACharacterBase::Dead()
 	{
 		CurrentController->UnPossess();
 	}
-	SetLifeSpan(3.0f);
+
+	SetLifeSpan(10.0f);
 
 
 }

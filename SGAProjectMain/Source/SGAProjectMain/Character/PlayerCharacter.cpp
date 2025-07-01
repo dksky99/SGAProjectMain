@@ -358,7 +358,7 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerPitchInput(lookAxisVector.Y);
 
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
-		if (_isViewTurnCenter&&_deltaAngle*_deltaAngle<=0.01)
+		if (_isViewTurnCenter && _deltaAngle * _deltaAngle <= 0.01)
 		{
 			_isViewTurnCenter = false;
 			GetCharacterMovement()->bUseControllerDesiredRotation = false;
@@ -905,15 +905,6 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 		const FVector localMoveDir = GetActorTransform().InverseTransformVectorNoScale(desiredMoveDir);
 		_vertical = localMoveDir.X;
 		_horizontal = localMoveDir.Y;
-	}
-	else
-	{
-
-
-		ViewTurnBack();
-		// ¸ØÃß´Â °æ¿ì
-		_vertical = 0.0f;
-		_horizontal = 0.0f;
 	}
 }
 
