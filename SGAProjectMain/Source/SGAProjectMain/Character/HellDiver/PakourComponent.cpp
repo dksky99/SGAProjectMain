@@ -36,6 +36,7 @@ void UPakourComponent::BeginPlay()
 
 void UPakourComponent::ReadyPakour(UAnimMontage* Montage, bool bInterrupted)
 {
+	_ownerCharacter->GetStateComponent()->FinishPakour();
 	_canPakour = true;
 	UE_LOG(LogTemp, Display, TEXT("Call ReadyPakour"));
 }
@@ -338,7 +339,7 @@ void UPakourComponent::TryVault(EVaultType_C type)
 	_canPakour = false;
 
 	DeactiveColNMove();
-
+	_ownerCharacter->GetStateComponent()->StartPakour();
 	UHellDiverAnimInstance* animInstance = Cast<UHellDiverAnimInstance>(_mesh->GetAnimInstance());
 	if (!animInstance) return;
 	UAnimMontage* selectedMontage = nullptr;
