@@ -122,7 +122,7 @@ public:
 	void KnockDownRecovery();
 	void Dead();
 	bool IsActionable();
-
+	bool IsMovable();
 	UFUNCTION()
 	void MoveChangeFinish(FString newState);
 	UFUNCTION()

@@ -273,6 +273,16 @@ bool UHellDiverStateComponent::IsActionable()
 	return true;
 }
 
+bool UHellDiverStateComponent::IsMovable()
+{
+	if (IsActionable() == false)
+		return false;
+	if (_isRolling)
+		return false;
+
+	return false;
+}
+
 void UHellDiverStateComponent::MoveChangeFinish(FString newState)
 {
 	UE_LOG(LogTemp, Error, TEXT("Try Move UnLock"));

@@ -488,19 +488,45 @@ UAnimMontage* UPakourComponent::FrontFlip()
 
 UAnimMontage* UPakourComponent::Vault()
 {
+
+	FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
+	FRotator rot = _wallRotation;
+	rot.Roll = 0;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultStart : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	FVector temp2 = H_Vector::MoveVectorForward(_vaultLandingHitResult.Location, _wallRotation, 5);
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
+
 	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
 	return _vault;
 }
 
 UAnimMontage* UPakourComponent::LowMantle()
 {
-	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
+	FRotator rot = _wallRotation;
+	rot.Roll = 0;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultStart : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	FVector temp2 = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 5);
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
+
+
 	return _lowMantle;
 }
 
 UAnimMontage* UPakourComponent::HighMantle()
 {
-	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
+	FRotator rot = _wallRotation;
+	rot.Roll = 0;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultStart : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	FVector temp2 = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 5);
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
 	return _highMantle;
 }
 
