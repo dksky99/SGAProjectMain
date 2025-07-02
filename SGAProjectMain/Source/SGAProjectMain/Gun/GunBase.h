@@ -175,7 +175,8 @@ public:
 	FMagChanged _magChanged;
 
 	FTransform GetLeftHandleTrans();
-private:
+
+protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _mesh;
 
@@ -195,8 +196,6 @@ private:
 
 	int32 _curAmmo;
 	int32 _curMag;
-
-	FVector _hitPoint;
 
 	FRotator _recoilToRecover = FRotator::ZeroRotator;
 	// 반동 정도 조절을 위한 수치 -> 테스트 필요

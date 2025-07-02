@@ -113,6 +113,9 @@ public:
 	bool IsInputtingStratagem(){ return _isInputtingStratagem; }
 	void SetInputtingStratagem(bool isInputtingStratagem) { _isInputtingStratagem = isInputtingStratagem; }
 
+	bool IsCheckingMap() { return _isCheckingMap; }
+	void SetCheckingMap(bool isCheckingMap) { _isCheckingMap = isCheckingMap; }
+
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
 	void KnockDown();
@@ -161,6 +164,7 @@ protected:
 	bool _isAiming = false;
 	bool _isCookingGrenade = false;
 	bool _isInputtingStratagem = false;
+	bool _isCheckingMap = false;
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;

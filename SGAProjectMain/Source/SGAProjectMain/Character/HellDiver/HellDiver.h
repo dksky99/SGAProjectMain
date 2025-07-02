@@ -18,6 +18,9 @@ public:
 	AHellDiver(const FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaTime) override;
+
 	class UHellDiverStateComponent* GetStateComponent();
 	class UHellDiverStatComponent* GetStatComponent();
 
@@ -117,6 +120,10 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Pakour", meta = (AllowPrivateAccess = "true"))
 	class UMotionWarpingComponent* _motionWarpComponent;
+
+	// 스프린트 관리
+	FTimerHandle _sprintCooldownHandle;
+	bool _isSprintCoolTime = false;
 
 	// 투척물
 	UPROPERTY()
