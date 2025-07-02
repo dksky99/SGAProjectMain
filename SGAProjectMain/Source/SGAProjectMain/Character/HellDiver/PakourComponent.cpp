@@ -498,7 +498,8 @@ UAnimMontage* UPakourComponent::Vault()
 	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
 	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
 
-	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	UE_LOG(LogTemp, Display, TEXT("Actor Location: %f : %f : %f"), GetOwner()->GetActorLocation().X, GetOwner()->GetActorLocation().Y, GetOwner()->GetActorLocation().Z);
+	UE_LOG(LogTemp, Display, TEXT("Vault Height: %f"), _wallHeight);
 	return _vault;
 }
 
@@ -513,6 +514,8 @@ UAnimMontage* UPakourComponent::LowMantle()
 	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
 	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
 
+	UE_LOG(LogTemp, Display, TEXT("Actor Location: %f : %f : %f"), GetOwner()->GetActorLocation().X, GetOwner()->GetActorLocation().Y, GetOwner()->GetActorLocation().Z);
+	UE_LOG(LogTemp, Display, TEXT("LowMantle Height: %f"), _wallHeight);
 
 	return _lowMantle;
 }
@@ -527,6 +530,10 @@ UAnimMontage* UPakourComponent::HighMantle()
 	FVector temp2 = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 5);
 	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
 	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
+
+	UE_LOG(LogTemp, Display, TEXT("Actor Location: %f : %f : %f"), GetOwner()->GetActorLocation().X, GetOwner()->GetActorLocation().Y, GetOwner()->GetActorLocation().Z);
+	UE_LOG(LogTemp, Display, TEXT("HighMantle Height: %f"), _wallHeight);
+
 	return _highMantle;
 }
 
