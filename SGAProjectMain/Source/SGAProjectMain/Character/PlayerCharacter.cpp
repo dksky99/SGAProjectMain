@@ -30,6 +30,7 @@
 #include "../UI/StratagemWidget.h"
 #include "../UI/MiniMapWidget.h"
 #include "../UI/SceneCapturer.h"
+#include "../UI/StaminaBarWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -107,6 +108,11 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_minimapWidget = CreateWidget<UMiniMapWidget>(GetWorld(), _minimapWidgetClass);
 	}
+
+	if (_staminaBarWidgetClass)
+	{
+		_staminaBarWidget = CreateWidget<UStaminaBarWidget>(GetWorld(), _staminaBarWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -166,7 +172,14 @@ void APlayerCharacter::BeginPlay()
 		}
 		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
 		_sceneCapturer->_pingUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-		_sceneCapturer->_pingOnOffEvent.BindUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+	}
+
+	if (_staminaBarWidget)
+	{
+		_statComponent->_staminaChanged.AddUObject(_staminaBarWidget, &UStaminaBarWidget::SetStamina);
+		_staminaBarWidget->AddToViewport();
+		_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	//if (_sceneUIClass)
@@ -186,6 +199,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 				float remaining = _stratagemComponent->GetRemainingCooldown(i);
 				_stratagemWidget->SetWidgetCooldownState(i, remaining);
 			}
+		}
+	}
+
+	if (_staminaBarWidget)
+	{
+		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
+		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && _statComponent->IsMaxStamina())
+		{
+			_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
 		}
 	}
 }
@@ -632,6 +654,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 		StartSprint();
+		_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
 		_pakourComponent->TriggerPakour();

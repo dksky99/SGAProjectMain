@@ -174,7 +174,7 @@ bool ASceneCapturer::PingOnMap()
 			_pingActor = nullptr;
 			
 			if (_pingOnOffEvent.IsBound())
-				_pingOnOffEvent.Execute(false);
+				_pingOnOffEvent.Broadcast(false);
 
 			return true;
 		}
@@ -183,7 +183,7 @@ bool ASceneCapturer::PingOnMap()
 			_pingActor->SetActorLocation(cursorLocation);
 
 			if (_pingOnOffEvent.IsBound())
-				_pingOnOffEvent.Execute(true);
+				_pingOnOffEvent.Broadcast(true);
 
 			return true;
 		}
@@ -193,7 +193,7 @@ bool ASceneCapturer::PingOnMap()
 	_pingActor = GetWorld()->SpawnActor<AActor>(_pingActorClass, cursorLocation, FRotator::ZeroRotator);
 	
 	if (_pingOnOffEvent.IsBound())
-		_pingOnOffEvent.Execute(true);
+		_pingOnOffEvent.Broadcast(true);
 
 	return true;
 }

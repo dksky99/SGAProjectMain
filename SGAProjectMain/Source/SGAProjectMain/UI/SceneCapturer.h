@@ -12,7 +12,7 @@
 
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FCursorUpdateEvent, FVector, FVector, float);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FPingUpdateEvent, FVector, float);
-DECLARE_DELEGATE_OneParam(FPingOnOffEvent, bool);
+DECLARE_MULTICAST_DELEGATE_OneParam(FPingOnOffEvent, bool);
 
 UCLASS()
 class SGAPROJECTMAIN_API ASceneCapturer : public AActor

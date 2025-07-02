@@ -67,6 +67,26 @@ void AHellDiver::BeginPlay()
         _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 }
 
+void AHellDiver::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (_stateComponent->GetCharacterState() == ECharacterState::Sprinting)
+    {
+        _statComponent->ConsumeStamina(DeltaTime);
+
+        if (_statComponent->GetCurStamina() <= 0.f) // 스테미너가 완전히 소모될 경우
+        {
+            FinishSprint(); // 달리기 중단
+        }
+    }
+    else
+    {
+        if (!_isSprintCoolTime) // 달리기 중단 후 3초가 지나야 스테미너 회복 시작
+            _statComponent->RecoverStamina(DeltaTime);
+    }
+}
+
 UHellDiverStateComponent* AHellDiver::GetStateComponent()
 {
     return _stateComponent;
@@ -285,6 +305,8 @@ void AHellDiver::UseStimPack()
 
 void AHellDiver::StartSprint()
 {
+    if (_statComponent->GetCurStamina() <= 0.f)
+        return;
     if (_stateComponent->StartSprint() == false)
         return;
     Sprinting();
@@ -295,6 +317,12 @@ void AHellDiver::FinishSprint()
     if (_stateComponent->FinishSprint() == false)
         return;
     Standing();
+
+    _isSprintCoolTime = true; // 스테미너 쿨타임 시작 -> 그동안 스테미너 회복 안됨
+    GetWorld()->GetTimerManager().SetTimer(_sprintCooldownHandle, [this]()
+        {
+            _isSprintCoolTime = false;
+        }, 3.f, false); // 3초 후 쿨타임 종료
 }
 
 void AHellDiver::StartCrouch()

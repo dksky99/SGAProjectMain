@@ -10,6 +10,7 @@
  * 
  */
 DECLARE_MULTICAST_DELEGATE_OneParam(FHpChanged, float);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FStaminaChanged, float, bool);
 
 UCLASS()
 class SGAPROJECTMAIN_API UHellDiverStatComponent : public UStatComponent
@@ -26,8 +27,14 @@ public:
 
 	void ChangeHp(float amount) override;
 
-	FHpChanged _hpChanged;
+	void ConsumeStamina(float deltaTime);
+	void RecoverStamina(float deltaTime);
+	void RecoverFullStamina() { _curStamina = _maxStamina; }
+	float GetCurStamina() { return _curStamina; }
+	bool IsMaxStamina() { return _curStamina == _maxStamina; }
 
+	FHpChanged _hpChanged;
+	FStaminaChanged _staminaChanged;
 
 protected:
 
@@ -40,4 +47,7 @@ protected:
 	float _proneSpeed = 200.0f;
 
 	float _power = 1000.0f;
+
+	float _maxStamina = 100.0f;
+	float _curStamina = 100.0f;
 };

@@ -272,6 +272,11 @@ protected:
 	UPROPERTY()
 	class ASceneCapturer* _sceneCapturer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _staminaBarWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UStaminaBarWidget* _staminaBarWidget;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
