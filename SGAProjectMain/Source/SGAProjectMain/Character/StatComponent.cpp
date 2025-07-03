@@ -33,7 +33,9 @@ void UStatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (_owner = Cast<ACharacterBase>(GetOwner()))
+	_owner = Cast<ACharacterBase>(GetOwner());
+
+	if (_owner)
 	{
 		// 포인트 데미지 이벤트 바인딩
 		_owner->OnTakePointDamage.AddDynamic(this, &UStatComponent::HandlePointDamage);
@@ -70,6 +72,42 @@ void UStatComponent::HandlePointDamage(AActor* DamagedActor, float Damage, ACont
 		Part = EBodyPart::RightLeg;
 
 	ProcessDamage(Part, Damage);
+}
+
+void UStatComponent::ChangeHp(float Amount)
+{
+	_coreHP = FMath::Clamp(_coreHP + Amount, 0.f, _coreMaxHP);
+	if (_coreHP <= 0.f)
+	{
+		OnDeath.Broadcast();
+	}
+}
+
+void UStatComponent::StartRegen()
+{
+	// 머리 복구
+	_headHP = _headMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::Head);
+
+	// 몸통 복구
+	_torsoHP = _torsoMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::Torso);
+
+	// 왼팔 복구
+	_leftArmHP = _leftArmMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::LeftArm);
+
+	// 오른팔 복구
+	_rightArmHP = _rightArmMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::RightArm);
+
+	// 왼다리 복구
+	_leftLegHP = _leftLegMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::LeftLeg);
+
+	// 오른다리 복구
+	_rightLegHP = _rightLegMaxHP;
+	OnPartRestored.Broadcast(EBodyPart::RightLeg);
 }
 
 void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)

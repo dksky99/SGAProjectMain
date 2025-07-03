@@ -71,7 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual FRotator Focusing();
 
-	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	//virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	FTransform GetLeftHandSocketTransform() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }

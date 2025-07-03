@@ -39,9 +39,15 @@ void UStimPackComponent::UseStimPack()
 {
 	if (_curStimPack <= 0)
 		return;
-
 	_curStimPack--;
 
+	// 부위 즉시 복구
+	if (auto character = Cast<ACharacterBase>(GetOwner()))
+	{
+		character->RestoreAllParts();
+	}
+
+	// 코어 회복 타이머 시작/연장
 	StartOrExtendRegen();
 
 	if (_stimPackChanged.IsBound())
@@ -68,9 +74,9 @@ void UStimPackComponent::HandleRegen()
 	}
 
 
-	if (auto StatComp = _owner->GetStatComponent())
+	if (auto statComp = _owner->GetStatComponent())
 	{
-		StatComp->ChangeHp(AmountPerTick);
+		statComp->ChangeHp(AmountPerTick);
 	}
 }
 

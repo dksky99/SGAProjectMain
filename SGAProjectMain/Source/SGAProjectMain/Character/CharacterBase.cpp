@@ -145,10 +145,10 @@ void ACharacterBase::KnockDownRecovery()
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
-float ACharacterBase::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
-{
-	return -damageAmount;
-}
+//float ACharacterBase::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
+//{
+//	return -damageAmount;
+//}
 
 void ACharacterBase::CharacterToRagdoll()
 {
@@ -284,6 +284,10 @@ void ACharacterBase::OnPartDestroyed_Handler(EBodyPart part)
 
 	// 부위 파괴 시 로그 출력
 	UE_LOG(LogTemp, Warning, TEXT("%s: Part Destroyed -> %d"), *GetName(), static_cast<int32>(part));
+}
+
+void ACharacterBase::RestoreAllParts()
+{
 }
 
 void ACharacterBase::OnDeath_Handler()

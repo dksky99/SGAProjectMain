@@ -48,7 +48,7 @@ public:
 
 	void KnockDownRecovery();
 
-	virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
+	//virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
 	void CharacterToRagdoll();
 	virtual void KnockDown();
 	virtual void RecoverFromKnockDown();
@@ -56,6 +56,9 @@ public:
 
 	UFUNCTION()
 	virtual void OnPartDestroyed_Handler(EBodyPart part); // 상속받아서 각 부위별 부위파괴 구현
+
+	UFUNCTION()
+	virtual void RestoreAllParts(); // 모든 파손부위 복구 (파손체크 x)
 
 	UFUNCTION()
 	virtual void OnDeath_Handler(); // 상속받아서 죽었을 시 동작 구현

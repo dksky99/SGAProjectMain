@@ -34,7 +34,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
 
 
-    _statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
+    //_statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
 
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
@@ -469,17 +469,17 @@ FRotator AHellDiver::Focusing()
     return socketRot;
 }
 
-float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
-{
-    _statComponent->ChangeHp(-damageAmount);
-
-    UE_LOG(LogTemp, Log, TEXT("Damage : %f"), damageAmount);
-
-    if (_statComponent->IsDead())
-        Dead();
-
-    return -damageAmount;
-}
+//float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
+//{
+//    _statComponent->ChangeHp(-damageAmount);
+//
+//    UE_LOG(LogTemp, Log, TEXT("Damage : %f"), damageAmount);
+//
+//    if (_statComponent->IsDead())
+//        Dead();
+//
+//    return -damageAmount;
+//}
 
 FTransform AHellDiver::GetLeftHandSocketTransform() const
 {

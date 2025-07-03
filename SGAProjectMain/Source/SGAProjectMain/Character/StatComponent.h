@@ -23,6 +23,8 @@ enum class EBodyPart : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 // 부위 파괴 이벤트 델리게이트 (어느 부위인지 전달)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartDestroyed, EBodyPart, Part);
+// 부위 복구 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartRestored, EBodyPart, Part);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UStatComponent : public UActorComponent
@@ -47,6 +49,12 @@ public:
 	void HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation,
 		UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
 
+	UFUNCTION(BlueprintCallable, Category = "Game/Stat")
+	void ChangeHp(float Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Game/Stat")
+	void StartRegen();
+
 	// 사망 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnDeath OnDeath;
@@ -54,6 +62,10 @@ public:
 	// 부위 파괴 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnPartDestroyed OnPartDestroyed;
+
+	// 부위 복구 알림
+	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
+	FOnPartRestored OnPartRestored;
 
 private:
 	// 실제 HP 차감 및 이벤트 브로드캐스트
