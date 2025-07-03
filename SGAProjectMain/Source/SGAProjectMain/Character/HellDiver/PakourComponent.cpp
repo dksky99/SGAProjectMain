@@ -7,6 +7,7 @@
 #include "Materials/MaterialInterface.h"
 #include "GameFramework/Character.h"
 #include "HellDiver.h"
+#include "HellDiverAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -41,17 +42,18 @@ void UPakourComponent::ReadyPakour(UAnimMontage* Montage, bool bInterrupted)
 
 void UPakourComponent::ActiveColNMove(UAnimMontage* Montage, bool bInterrupted)
 {
-
-	_capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	
 	_movement->SetMovementMode(EMovementMode::MOVE_Walking);
+	_capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 	UE_LOG(LogTemp, Display, TEXT("Call ActiveColNMove"));
 }
 
 void UPakourComponent::DeactiveColNMove()
 {
+	_movement->SetMovementMode(EMovementMode::MOVE_Flying);
 
 	_capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	_movement->SetMovementMode(EMovementMode::MOVE_Flying);
 }
 
 
@@ -297,102 +299,83 @@ void UPakourComponent::TryPakour()
 		return;
 
 	}
-	if (_wallHeight > 300.0f)
+	if (_wallHeight > 180)
 	{
 		//Too High Wall
 		return;
 	}
-	if (_wallHeight > 130)
+	if (_wallHeight > 150)
 	{
 		//Climb;
+		TryVault(EVaultType_C::HighMantle);
 		return;
 	}
-	if (FMath::IsNearlyEqual(_ownerCharacter->GetVelocity().Size2D(), 0.0f, 5.0f))
-	{
-		//Mantle
-		return;
-	}
-	if (_wallHeight > 100.0f)
-	{
-		//FrontFlip
-		TryVault(EVaultType_C::FrontFlip);
-		return;
-	}
-	if (_wallHeight > 90)
-	{
-		//TwoHandVault
-		TryVault(EVaultType_C::TwoHandVault);
 
-		return;
+	float WallThickness = FVector::Dist(
+		_firstTopHitResult.ImpactPoint,
+		_lastTopHitResult.ImpactPoint
+	);
 
-	}
-	if (_wallHeight > 60)
+	if (WallThickness <= 30)
 	{
-		//OneHandVault
-		TryVault(EVaultType_C::OneHandVault);
-
+		TryVault(EVaultType_C::Vault);
 		return;
-
 	}
 	else
 	{
-
+		TryVault(EVaultType_C::LowMantle);
 		return;
 	}
+	//if (FMath::IsNearlyEqual(_ownerCharacter->GetVelocity().Size2D(), 0.0f, 5.0f))
+	//{
+	//	//Mantle
+	//	return;
+	//}
 }
 
 void UPakourComponent::TryVault(EVaultType_C type)
 {
 	_canPakour = false;
 
-	_capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	_movement->SetMovementMode(EMovementMode::MOVE_Flying);
+	DeactiveColNMove();
 
-	UAnimInstance* animInstance = _mesh->GetAnimInstance();
+	UHellDiverAnimInstance* animInstance = Cast<UHellDiverAnimInstance>(_mesh->GetAnimInstance());
 	if (!animInstance) return;
-
 	UAnimMontage* selectedMontage = nullptr;
 
 	switch (type)
 	{
 	case EVaultType_C::OneHandVault:
-		UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
-		selectedMontage = _oneHandVault;
+		selectedMontage=OneHandVault();
 		break;
 
 	case EVaultType_C::TwoHandVault:
 	{
-		UE_LOG(LogTemp, Display, TEXT("TwoHandVault Height: %f"), _wallHeight);
-		UE_LOG(LogTemp, Display, TEXT("FirstTopHit: %f : %f : %f"), _firstTopHitResult.Location.X, _firstTopHitResult.Location.Y, _firstTopHitResult.Location.Z);
-		UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
-		UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
-		UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"), _wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
-		selectedMontage = _twoHandVault;
-		FVector temp = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 62);
-		temp = H_Vector::MoveVectorDownward(temp, 46.5);
-		FRotator rot = _wallRotation;
-		rot.Roll = 0;
-		_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"),temp, rot);
-		temp = _vaultLandingHitResult.Location;
-		_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"),temp, rot);
-
+		selectedMontage = TwoHandVault();
 	}
 		break;
 
 	case EVaultType_C::FrontFlip:
 	{
-		UE_LOG(LogTemp, Display, TEXT("FrontFlip Height: %f"), _wallHeight);
-		UE_LOG(LogTemp, Display, TEXT("FirstTopHit: %f : %f : %f"), _firstTopHitResult.Location.X, _firstTopHitResult.Location.Y, _firstTopHitResult.Location.Z);
-		UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
-		UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
-		UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"),_wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
-		selectedMontage = _frontFlip;
-		FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
-		FRotator rot = _wallRotation;
-		rot.Roll = 0;
-		_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
-		FVector temp2 = H_Vector::MoveVectorRight(_vaultLandingHitResult.Location, _wallRotation, 5);
-		_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), temp2, rot);
+		selectedMontage = FrontFlip();
+		break;
+
+	}
+	case EVaultType_C::Vault:
+	{
+		selectedMontage = Vault();
+		break;
+
+	}
+	case EVaultType_C::LowMantle:
+	{
+		selectedMontage = LowMantle();
+		break;
+
+	}
+	case EVaultType_C::HighMantle:
+	{
+		selectedMontage = HighMantle();
 		break;
 
 	}
@@ -401,15 +384,40 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		return;
 	}
 
-	if (!selectedMontage) return;
+	if (selectedMontage == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to find montage"));
 
+		return;
+	}
+	;
+
+	_ownerCharacter->SetAnimRootMotionTranslationScale(1.0f);
 	// 애니메이션 재생
-	const float Duration = animInstance->Montage_Play(selectedMontage);
+	const float Duration = _ownerCharacter->PlayAnimMontage(selectedMontage);
+	//animInstance->Montage_Play(selectedMontage);
 	if (Duration <= 0.0f)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to play montage: %s"), *selectedMontage->GetName());
 		return;
 	}
+	// 런타임에 실제 반영되는 값 (로그 찍어 확인)
+	UE_LOG(LogTemp, Display, TEXT("YawRot:%d  OrientToMove:%d  UseCtrlDesired:%d"),
+		(int32)(_ownerCharacter->bUseControllerRotationYaw),
+		(int32)(_ownerCharacter->GetCharacterMovement()->bOrientRotationToMovement),
+		(int32)(_ownerCharacter->GetCharacterMovement()->bUseControllerDesiredRotation));
+	// 1) AnimInstance 쪽 RootMotionMode
+	UE_LOG(LogTemp, Warning, TEXT("Anim RootMotionMode: %d"),
+		(int32)_mesh->GetAnimInstance()->RootMotionMode);
+
+
+	// 3) 현재 MovementMode
+	UE_LOG(LogTemp, Warning, TEXT("MovementMode: %d"),
+		(int32)(_ownerCharacter->GetCharacterMovement()->MovementMode));
+
+
+
+
 
 	// 재생 후 인스턴스 가져오기
 	if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(selectedMontage))
@@ -423,11 +431,77 @@ void UPakourComponent::TryVault(EVaultType_C type)
 		MontageInstance->OnMontageBlendingOutStarted.BindUObject(this, &UPakourComponent::ActiveColNMove);
 
 		UE_LOG(LogTemp, Display, TEXT("Delegates bound for %s"), *selectedMontage->GetName());
+
+
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *selectedMontage->GetName());
 	}
 }
+
+UAnimMontage* UPakourComponent::OneHandVault()
+{
+	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	return _oneHandVault;
+}
+
+UAnimMontage* UPakourComponent::TwoHandVault()
+{
+	UE_LOG(LogTemp, Display, TEXT("TwoHandVault Height: %f"), _wallHeight);
+	UE_LOG(LogTemp, Display, TEXT("FirstTopHit: %f : %f : %f"), _firstTopHitResult.Location.X, _firstTopHitResult.Location.Y, _firstTopHitResult.Location.Z);
+	UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
+	UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
+	UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"), _wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
+	FVector temp = H_Vector::MoveVectorForward(_firstTopHitResult.Location, _wallRotation, 62);
+	temp = H_Vector::MoveVectorDownward(temp, 46.5);
+	FRotator rot = _wallRotation;
+	rot.Roll = 0;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
+
+	UE_LOG(LogTemp, Display, TEXT("VaultStart : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	temp = _vaultLandingHitResult.Location;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), temp, rot);
+
+	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	return _twoHandVault;
+}
+
+UAnimMontage* UPakourComponent::FrontFlip()
+{
+	UE_LOG(LogTemp, Display, TEXT("FrontFlip Height: %f"), _wallHeight);
+	UE_LOG(LogTemp, Display, TEXT("FirstTopHit: %f : %f : %f"), _firstTopHitResult.Location.X, _firstTopHitResult.Location.Y, _firstTopHitResult.Location.Z);
+	UE_LOG(LogTemp, Display, TEXT("VaultLanding: %f : %f : %f"), _vaultLandingHitResult.Location.X, _vaultLandingHitResult.Location.Y, _vaultLandingHitResult.Location.Z);
+	UE_LOG(LogTemp, Display, TEXT("Actor Rotation: %f : %f : %f"), GetOwner()->GetActorRotation().Pitch, GetOwner()->GetActorRotation().Yaw, GetOwner()->GetActorRotation().Roll);
+	UE_LOG(LogTemp, Display, TEXT("wall Rotation: %f : %f : %f"), _wallRotation.Pitch, _wallRotation.Yaw, _wallRotation.Roll);
+	FVector temp = H_Vector::MoveVectorBackward(_firstTopHitResult.Location, _wallRotation, 100);
+	FRotator rot = _wallRotation;
+	rot.Roll = 0;
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultStart"), temp, rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultStart : %f : %f : %f"), temp.X, temp.Y, temp.Z);
+	FVector temp2 = H_Vector::MoveVectorRight(_vaultLandingHitResult.Location, _wallRotation, 5);
+	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), FVector(0, 0, 0), rot);
+	UE_LOG(LogTemp, Display, TEXT("VaultEnd : %f : %f : %f"), temp2.X, temp2.Y, temp2.Z);
+	return _frontFlip;
+}
+
+UAnimMontage* UPakourComponent::Vault()
+{
+	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	return _vault;
+}
+
+UAnimMontage* UPakourComponent::LowMantle()
+{
+	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	return _lowMantle;
+}
+
+UAnimMontage* UPakourComponent::HighMantle()
+{
+	UE_LOG(LogTemp, Display, TEXT("OneHandVault Height: %f"), _wallHeight);
+	return _highMantle;
+}
+
 
 

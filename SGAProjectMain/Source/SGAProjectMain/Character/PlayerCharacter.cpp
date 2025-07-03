@@ -18,6 +18,7 @@
 
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
+#include "EngineUtils.h"
 
 #include "Components/SphereComponent.h"
 #include "../Object/Item/ItemBase.h"
@@ -27,6 +28,9 @@
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
 #include "../UI/StratagemWidget.h"
+#include "../UI/MiniMapWidget.h"
+#include "../UI/SceneCapturer.h"
+#include "../UI/StaminaBarWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -99,6 +103,16 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
 	}
+
+	if (_minimapWidgetClass)
+	{
+		_minimapWidget = CreateWidget<UMiniMapWidget>(GetWorld(), _minimapWidgetClass);
+	}
+
+	if (_staminaBarWidgetClass)
+	{
+		_staminaBarWidget = CreateWidget<UStaminaBarWidget>(GetWorld(), _staminaBarWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -141,6 +155,33 @@ void APlayerCharacter::BeginPlay()
 		_stratagemWidget->OpenWidget(false);
 	}
 
+	if (_minimapWidget)
+	{
+		_minimapWidget->AddToViewport();
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+
+		// 월드에서 씬캡쳐러 찾기
+		for (TActorIterator<ASceneCapturer> IT(GetWorld());IT; ++IT)
+		{
+			ASceneCapturer* sceneCapturer = *IT;
+			if (sceneCapturer)
+			{
+				_sceneCapturer = sceneCapturer;
+				break;
+			}
+		}
+		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+		_sceneCapturer->_pingUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+	}
+
+	if (_staminaBarWidget)
+	{
+		_statComponent->_staminaChanged.AddUObject(_staminaBarWidget, &UStaminaBarWidget::SetStamina);
+		_staminaBarWidget->AddToViewport();
+		_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 }
@@ -160,6 +201,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
+
+	if (_staminaBarWidget)
+	{
+		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
+		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && _statComponent->IsMaxStamina())
+		{
+			_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
+		}
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -172,7 +222,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Completed, this, &APlayerCharacter::MoveFinish);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryJump);
+		enhancedInputComponent->BindAction(_jumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TryPakour);
 		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TrySprint);
 		enhancedInputComponent->BindAction(_sprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
 		enhancedInputComponent->BindAction(_crouchAction, ETriggerEvent::Started, this, &APlayerCharacter::TryCrouch);
@@ -191,9 +241,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
-		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode);
-		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode);
-		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView);
+		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode); // 마우스 휠 아래로
+		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode); // 마우스 휠 위로
+		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView); // 마우스 휠 누름
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BeginStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataWAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyW);
@@ -202,6 +252,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_strataDAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyD);
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
+		enhancedInputComponent->BindAction(_mapAction, ETriggerEvent::Started, this, &APlayerCharacter::OpenMap);
 	}
 }
 
@@ -351,6 +402,9 @@ void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 }
 void APlayerCharacter::Look(const FInputActionValue& value)
 {
+	if (_isDraggingMap)
+		return;
+
 	FVector2D lookAxisVector = value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -358,7 +412,7 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerPitchInput(lookAxisVector.Y);
 
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
-		if (_isViewTurnCenter&&_deltaAngle*_deltaAngle<=0.01)
+		if (_isViewTurnCenter && _deltaAngle * _deltaAngle <= 0.01)
 		{
 			_isViewTurnCenter = false;
 			GetCharacterMovement()->bUseControllerDesiredRotation = false;
@@ -381,17 +435,45 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 }
 
 
-void APlayerCharacter::TryJump(const FInputActionValue& value)
+void APlayerCharacter::TryPakour(const FInputActionValue& value)
 {
 	if (value.Get<bool>())
 	{
-		UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
-		_pakourComponent->TriggerPakour();
+
+		switch (_stateComponent->GetCharacterState())
+		{
+		case ECharacterState::Sprinting:
+		case ECharacterState::Standing:
+		case ECharacterState::Crouching:
+		{
+			UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
+			_pakourComponent->TriggerPakour();
+
+		}
+			break;
+		case ECharacterState::Proning:
+			FinishProne();
+		case ECharacterState::Knockdown:
+		case ECharacterState::MAX:
+		default:
+			break;
+		}
+
 	}
 }
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap()) // 지도를 보고있는 상태이고
+	{
+		if (_sceneCapturer->PingOnMap()) // 핑을 찍을 수 있는 상태라면
+			return; // 아래부분 전부 실행 안 함
+
+		// 핑을 찍을 수 없다면 맵을 닫고 다음 행동
+		_stateComponent->SetCheckingMap(false);
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 	switch (_stateComponent->GetCharacterState())
 	{
 	case ECharacterState::Sprinting:
@@ -572,6 +654,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 		StartSprint();
+		_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
 		_pakourComponent->TriggerPakour();
@@ -593,6 +676,13 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	if (_isGunSettingMode)
 	{
 		TryChangeFireMode(value);
+		return;
+	}
+
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->StartDraggingMap();
+		_isDraggingMap = true;
 		return;
 	}
 
@@ -641,7 +731,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 }
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
-	if (_isGunSettingMode)
+	if (_isGunSettingMode || _stateComponent->IsCheckingMap())
 		return;
 
 	switch (_stateComponent->GetWeaponState())
@@ -906,15 +996,6 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 		_vertical = localMoveDir.X;
 		_horizontal = localMoveDir.Y;
 	}
-	else
-	{
-
-
-		ViewTurnBack();
-		// 멈추는 경우
-		_vertical = 0.0f;
-		_horizontal = 0.0f;
-	}
 }
 
 void APlayerCharacter::MovingLook()
@@ -1167,6 +1248,23 @@ void APlayerCharacter::SetProningCollisionCamera()
 	);
 }
 
+void APlayerCharacter::OpenMap()
+{
+	if (_stateComponent->IsCheckingMap()) // 맵을 보고있을 경우
+	{
+		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
+		_stateComponent->SetCheckingMap(false);
+		_isDraggingMap = false;
+		_sceneCapturer->ResetMap();
+		_minimapWidget->ResetMap();
+	}
+	else // 맵이 닫혀있을 경우
+	{
+		_minimapWidget->SetVisibility(ESlateVisibility::Visible);
+		_stateComponent->SetCheckingMap(true);
+	}
+}
+
 void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 {
 	if (index > 3 || index < 0)
@@ -1392,6 +1490,13 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 	if (_isGunSettingMode)
 		return;
 
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->StopDraggingMap();
+		_isDraggingMap = false;
+		return;
+	}
+
 	_stateComponent->SetAiming(false);
 	SetTPSView();
 	switch (_stateComponent->GetWeaponState())
@@ -1501,6 +1606,12 @@ void APlayerCharacter::TryChangeFireMode(const FInputActionValue& value)
 
 void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->ChangeOrthoWidth(false); // 마우스 휠 다운 -> 축소
+		return;
+	}
+
 	if (_stateComponent->IsAiming())
 		return;
 
@@ -1523,6 +1634,12 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 
 void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 {
+	if (_stateComponent->IsCheckingMap())
+	{
+		_sceneCapturer->ChangeOrthoWidth(true); // 마우스 휠 업 -> 확대
+		return;
+	}
+
 	if (_stateComponent->IsAiming())
 		return;
 

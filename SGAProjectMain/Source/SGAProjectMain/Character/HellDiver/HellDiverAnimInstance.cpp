@@ -46,6 +46,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
+			_isVaulting = _hellDiver->GetStateComponent()->IsVaulting();
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
@@ -160,6 +161,8 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
 		return false;
+	if (_isVaulting)
+		return false;
 	if (gun == nullptr)
 		return false;
 	if (_weaponState!=EWeaponType::Gun)
@@ -177,7 +180,8 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
 		return false;
-
+	if (_isVaulting)
+		return false;
 	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
 		return false;
 	if (!_isFocusing && IsMoving())

@@ -59,7 +59,7 @@ class SGAPROJECTMAIN_API UHellDiverStateComponent : public UCharacterStateCompon
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UHellDiverStateComponent();
 
@@ -67,17 +67,17 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	
+
 	bool StartSprint();
 	bool FinishSprint();
 
 	bool StartCrouch();
 	bool FinishCrouch();
-	
+
 
 	bool StartProne();
 	bool FinishProne();
@@ -88,8 +88,11 @@ public:
 	bool StartReload();
 	bool FinishReload();
 
+	bool StartPakour();
+	bool FinishPakour();
+
 	ECharacterState GetCharacterState() { return _characterState; }
-	void SetCharacterState(ECharacterState state) { _characterState=state; }
+	void SetCharacterState(ECharacterState state) { _characterState = state; }
 	EActionState GetActionState() { return _actionState; }
 	void SetActionState(EActionState state) { _actionState = state; }
 	ELifeState GetLifeState() { return _lifeState; }
@@ -102,12 +105,16 @@ public:
 	void SetFiring(bool isFiring) { _isFiring = isFiring; }
 	bool IsAiming() { return _isAiming; }
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
+	bool IsVaulting() { return _isVaulting; }
 
 	bool IsFocusing();
 	bool IsCookingGrenade() { return _isCookingGrenade; }
 	void SetCookingGrenade(bool isCookingGrenade) { _isCookingGrenade = isCookingGrenade; }
 	bool IsInputtingStratagem(){ return _isInputtingStratagem; }
 	void SetInputtingStratagem(bool isInputtingStratagem) { _isInputtingStratagem = isInputtingStratagem; }
+
+	bool IsCheckingMap() { return _isCheckingMap; }
+	void SetCheckingMap(bool isCheckingMap) { _isCheckingMap = isCheckingMap; }
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
@@ -157,10 +164,11 @@ protected:
 	bool _isAiming = false;
 	bool _isCookingGrenade = false;
 	bool _isInputtingStratagem = false;
+	bool _isCheckingMap = false;
 
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
-
+	bool _isVaulting = false;
 	uint8 _curEquipIndex = 0;
 
 	FString _waitingMove;

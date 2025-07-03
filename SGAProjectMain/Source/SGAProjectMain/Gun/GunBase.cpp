@@ -8,6 +8,8 @@
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
+#include "../CGameInstance.h"
+
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
 #include "../Character/CharacterAnimInstance.h"
@@ -34,9 +36,16 @@ void AGunBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (_crosshairClass)
+	auto gameInstance = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (gameInstance)
 	{
-		_crosshair = CreateWidget<UUserWidget>(GetWorld(), _crosshairClass);
+		const auto data = gameInstance->GetGunDataFromTable(_gunID);
+		SetGunData(data);
+	}
+
+	if (_gunData._crosshairClass)
+	{
+		_crosshair = CreateWidget<UUserWidget>(GetWorld(), _gunData._crosshairClass);
 
 		if (_crosshair)
 		{
@@ -45,10 +54,10 @@ void AGunBase::BeginPlay()
 		}
 	}
 
-	if (_laserFX)
+	if (_gunData._laserFX)
 	{
 		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_laserFX,
+			_gunData._laserFX,
 			_mesh,
 			NAME_None,
 			FVector::ZeroVector,
@@ -58,10 +67,10 @@ void AGunBase::BeginPlay()
 		);
 	}
 
-	if (_laserImpactFX)
+	if (_gunData._laserImpactFX)
 	{
 		_laserImpact = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_laserImpactFX,
+			_gunData._laserImpactFX,
 			_mesh,
 			NAME_None,
 			FVector::ZeroVector,
@@ -73,6 +82,8 @@ void AGunBase::BeginPlay()
 
 	_curAmmo = _gunData._maxAmmo;
 	_curMag = _gunData._initialMag;
+	_fireMode = _gunData._fireModes[0];
+	_tacticalLightMode = _gunData._lightModes[0];
 }
 
 // Called every frame
@@ -84,21 +95,21 @@ void AGunBase::Tick(float DeltaTime)
 	if (!camera) return;
 	
 	RecoverRecoil(DeltaTime);
-	FHitResult hitResult= GetHitResult();
-	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
-
-	if (_laserpointer)
-		UseLaserPoint(_hitPoint);
-
 	if (!_isActive) return;
 
 	if (!_owner->GetStateComponent()->IsAiming())
 		return;
 
+	FHitResult hitResult= GetHitResult();
+	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
+
+	if (_laserpointer)
+		UseLaserPoint(hitPoint);
+
 	if (!IsValid(_marker))
-		_marker = GetWorld()->SpawnActor<AImpactMarker>(_impactMarkerClass, _hitPoint, FRotator::ZeroRotator);
+		_marker = GetWorld()->SpawnActor<AImpactMarker>(_gunData._impactMarkerClass, hitPoint, FRotator::ZeroRotator);
 	else
-		_marker->SetActorLocation(_hitPoint);
+		_marker->SetActorLocation(hitPoint);
 }
 
 void AGunBase::StartFire()
@@ -149,7 +160,7 @@ void AGunBase::Fire()
 		if (!_canFire) return;
 
 		_canFire = false;
-		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, 1.2f, false);
+		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, _gunData._fireInterval, false);
 	}
 
 	if (_fireMode == EFireMode::FireBurst)
@@ -224,8 +235,8 @@ void AGunBase::Fire()
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 
-	_hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
-	DrawDebugLine(GetWorld(), hitResult.TraceStart, _hitPoint, drawColor, false, 1.0f);
+	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
+	DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
 }
 
 void AGunBase::StopFire()
@@ -666,19 +677,26 @@ FHitResult AGunBase::GetHitResult()
 	//else
 	//	return end;
 
+	// 총구 위치에서 총구가 향하는 방향으로 발사
 	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	FVector muzzleDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector fireDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 
-	FVector end = muzzleLocation + muzzleDirection * 10000.f;
+	// 조준하고 있지 않을 경우 탄퍼짐
+	if (!_owner->GetStateComponent()->IsAiming())
+	{
+		fireDirection = FMath::VRandCone(fireDirection, FMath::DegreesToRadians(_gunData._shakeAmount));
+	}
 
-	FHitResult hit;
+	FVector end = muzzleLocation + fireDirection * 10000.f;
+
+	FHitResult hitResult;
 	GetWorld()->LineTraceSingleByChannel(
-		hit,
+		hitResult,
 		muzzleLocation,
 		end,
 		ECC_Pawn);
 
-	return hit;
+	return hitResult;
 }
 
 void AGunBase::ChangeFireMode()
@@ -688,31 +706,19 @@ void AGunBase::ChangeFireMode()
 
 	_fireIndex = (_fireIndex + 1) % _gunData._fireModes.Num();
 	_fireMode = _gunData._fireModes[_fireIndex];
-
-	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
 }
 
 void AGunBase::ChangeTacticalLightMode()
 {
 	if (!_tacticalLight) return;
 
-	switch (_tacticalLightMode)
-	{
-	case ETacticalLightMode::LightOn:
-		_tacticalLightMode = ETacticalLightMode::LightOff;
-		break;
+	if (_gunData._lightModes.Num() <= 1)
+		return;
 
-	case ETacticalLightMode::LightOff:
-		_tacticalLightMode = ETacticalLightMode::LightAuto;
-		break;
-
-	case ETacticalLightMode::LightAuto:
-		_tacticalLightMode = ETacticalLightMode::LightOn;
-		break;
-	}
+	_lightIndex = (_lightIndex + 1) % _gunData._lightModes.Num();
+	_tacticalLightMode = _gunData._lightModes[_lightIndex];
 
 	UseTacticalLight(_owner->GetStateComponent()->IsAiming());
-	UE_LOG(LogTemp, Log, TEXT("Light Mode Change"));
 }
 
 void AGunBase::ChangeScopeMode()
@@ -722,8 +728,6 @@ void AGunBase::ChangeScopeMode()
 
 	_scopeIndex = (_scopeIndex + 1) % _gunData._scopeModes.Num();
 	_scopeMode = _gunData._scopeModes[_scopeIndex];
-
-	UE_LOG(LogTemp, Log, TEXT("Fire Mode Change"));
 }
 
 void AGunBase::UseLaserPoint(FVector hitPoint)

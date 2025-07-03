@@ -12,7 +12,11 @@ enum class EVaultType_C :uint8
 {
 	OneHandVault,
 	TwoHandVault,
-	FrontFlip
+	FrontFlip,
+	Vault,
+	LowMantle,
+	HighMantle
+
 };
 
 
@@ -52,15 +56,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "My Events")
 	void TryVault(EVaultType_C type);
 
+	class UAnimMontage* OneHandVault();
+	class UAnimMontage* TwoHandVault();
+	class UAnimMontage* FrontFlip()   ;
+	class UAnimMontage* Vault()	   ;
+	class UAnimMontage* LowMantle()   ;
+	class UAnimMontage* HighMantle()  ;
+	
+
 	FOnMontageEnded _montageEnded;
 	FOnMontageBlendingOutStarted _montageBlendOutStarted;
 
 private:
+	//벽 바로앞. 캐릭터와 벽이 만나는 지점
 	FHitResult _facedWallHitResult;
+	//캐릭터와 가장 가까운 벽의 윗부분. 손을 올려놓을 장소
 	FHitResult _firstTopHitResult;
+	//캐릭터와 가장 먼 벽의 윗부분. 벽의 두께를 알수 있게된다. 
 	FHitResult _lastTopHitResult;
 	FHitResult _endOfWallHitResult;
+	//벽 너머에 착지할 지점.
 	FHitResult _vaultLandingHitResult;
+	//벽의 정면 로테이션.
 	FRotator _wallRotation;
 
 	float _wallHeight;
@@ -87,5 +104,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _frontFlip;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _vault;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _lowMantle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _highMantle;
 	bool _canPakour = true;
 };
