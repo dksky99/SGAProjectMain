@@ -70,7 +70,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
-	_fpsSpringArm->SetupAttachment(_cameraRoot);
+	_fpsSpringArm->SetupAttachment(GetMesh(), FName("CameraSocket"));
 
 
 	_tpsCameraActor->SetupAttachment(_tpsSpringArm);
@@ -348,9 +348,12 @@ FRotator APlayerCharacter::Focusing()
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting) // 스트라타젬입력 모드에서는 동작안함
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)// 스트라타젬입력 모드에서는 동작안함
 		return;
-
+	if (GetCharacterMovement()->IsFalling())
+		return;
+	if (_stateComponent->IsActionable() == false)
+		return;
 	FVector2D moveVector = value.Get<FVector2D>();
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
@@ -597,14 +600,14 @@ void APlayerCharacter::StopFiring(const FInputActionValue& value)
 	else if (_stateComponent->IsCookingGrenade())
 	{
 		_stateComponent->SetCookingGrenade(false);
-		OnThrowReleased();
+		Throwing();
 		StopThrowPreview();
 		return;
 	}
 	else if (_stateComponent->IsInputtingStratagem())
 	{
 		_stateComponent->SetInputtingStratagem(false);
-		OnThrowReleased();
+		Throwing();
 		StopThrowPreview();
 		return;
 	}
@@ -1024,7 +1027,7 @@ void APlayerCharacter::DefaultLook()
 	const FRotator actorRot = GetActorRotation();
 	const FRotator controlRot = GetControlRotation();
 
-	if (_stateComponent->GetCharacterState() == ECharacterState::Proning)
+	if (_stateComponent->GetCharacterState() == ECharacterState::Proning||_stateComponent->IsRolling())
 	{
 		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
 
@@ -1316,9 +1319,9 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::Idle)
+	if (_stateComponent->GetActionState() == EActionState::None)
 	{
-		_playerState = EPlayerState::StratagemInputting;
+		_stateComponent->SetActionState(EActionState::Stratagem);
 		_stratagemInputBuffer.Empty();
 	}
 
@@ -1327,9 +1330,9 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 
 void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting)
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
-		_playerState = EPlayerState::Idle;
+		_stateComponent->SetActionState(EActionState::None);
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 	}
 
@@ -1338,8 +1341,9 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 
 void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting)
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
+		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::W);
 		CheckStratagemInputCombo();
 	}
@@ -1347,8 +1351,9 @@ void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
 
 void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting)
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
+		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::A);
 		CheckStratagemInputCombo();
 	}
@@ -1356,8 +1361,9 @@ void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
 
 void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting)
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
+		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::S);
 		CheckStratagemInputCombo();
 	}
@@ -1365,8 +1371,9 @@ void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
 
 void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
 {
-	if (_playerState == EPlayerState::StratagemInputting)
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
+		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::D);
 		CheckStratagemInputCombo();
 	}
@@ -1400,8 +1407,11 @@ void APlayerCharacter::CheckStratagemInputCombo()
 			EquipStratagem();
 
 			_stratagemInputBuffer.Empty();
-			_playerState = EPlayerState::Idle;
 
+			if (_stateComponent->GetActionState() == EActionState::Stratagem)
+			{
+				_stateComponent->SetActionState(EActionState::None);
+			}
 			_stratagemWidget->SetWidgetOperatingState(i);
 			return;
 		}

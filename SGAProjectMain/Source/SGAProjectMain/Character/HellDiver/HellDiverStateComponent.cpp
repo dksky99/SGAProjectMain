@@ -226,6 +226,8 @@ bool UHellDiverStateComponent::IsFocusing()
 {
 	if (!IsActionable())
 		return false;
+	if (_actionState != EActionState::None)
+		return false;
 	if (_isReloading)
 		return false;
 	if (_isWeaponChange)
@@ -265,6 +267,8 @@ bool UHellDiverStateComponent::IsActionable()
 	if(_lifeState!=ELifeState::Alive)	
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
+		return false;
+	if (_isShocking)
 		return false;
 
 

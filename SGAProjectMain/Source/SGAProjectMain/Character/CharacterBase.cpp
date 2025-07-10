@@ -88,6 +88,7 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 	{
 		// 일반 착지
 	}
+
 }
 
 void ACharacterBase::KnockDown(float time)
@@ -129,6 +130,7 @@ void ACharacterBase::KnockDownRecovery()
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()));
 	GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
 
+	GetCapsuleComponent()->SetUsingAbsoluteRotation(false);
 	// 충돌 및 이동 복원 : 나중에 확인하고 다시 확인.
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
@@ -190,6 +192,7 @@ void ACharacterBase::CharacterToRagdoll()
 
 		TempCapsule->AttachToComponent(TempMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		TempCapsule->SetRelativeLocation(FVector(0, 0, 88));
+		TempCapsule->SetUsingAbsoluteRotation(true);
 	}
 
 }

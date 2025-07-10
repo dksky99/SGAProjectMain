@@ -151,7 +151,7 @@ void AHellDiver::EquipStratagem()
 
 }
 
-void AHellDiver::OnThrowReleased()
+void AHellDiver::OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted)
 {
 	if (_heldThrowable)
 	{
@@ -368,9 +368,11 @@ void AHellDiver::Rolling()
     {
         forward = GetActorForwardVector();
     }
+
     forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
 
     forward.Normalize();
+    SetActorRotation(forward.ToOrientationQuat());
     float forwardBoost = 500.0f; 
     FVector boost = forward * forwardBoost;
 
@@ -464,6 +466,19 @@ void AHellDiver::RefillStimPack()
     _stimPackComponent->RefillStimPack();
 }
 
+void AHellDiver::StratagemInputting()
+{
+    if (!_stratagemInputMontage) return;
+
+    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    {
+
+        animInstance->PlayAnimMontage(_stratagemInputMontage);
+
+
+    }
+}
+
 void AHellDiver::MotionChangeFinish()
 {
 
@@ -473,8 +488,13 @@ void AHellDiver::Landed(const FHitResult& Hit)
 {
     Super::Landed(Hit);
 
+    float zVelocity = GetCharacterMovement()->Velocity.Z;
+
+    UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
+    
     if (_stateComponent->IsRolling())
     {
+
         // 일정 시간 후 복구
         GetWorld()->GetTimerManager().SetTimer(
             _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
@@ -482,7 +502,98 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
     }
 
+    if (zVelocity < -1200.f)
+    {
+        if (_stateComponent->IsRolling())
+        {
+            if (_stateComponent->IsRolling())
+            {
+                FinishRolling();
 
+                KnockDown();
+
+            }
+           
+
+        }
+        else
+            HardLanding();
+
+    }
+    else if (zVelocity < -600.f)
+    {
+        
+        SoftLanding();
+    }
+
+    else if (zVelocity < -200.f)
+    {
+        // 일반 착지
+    }
+
+}
+
+void AHellDiver::SoftLanding()
+{
+    if (!_softLandingMontage) return;
+
+    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    {
+
+        animInstance->PlayAnimMontage(_softLandingMontage);
+
+        // 재생 후 인스턴스 가져오기
+        if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_softLandingMontage))
+        {
+            _stateComponent->BeShocked();
+            // 델리게이트 중복 방지
+            MontageInstance->OnMontageEnded.Unbind();
+
+            // 델리게이트 바인딩
+            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+
+            UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_softLandingMontage->GetName());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_softLandingMontage->GetName());
+        }
+
+    }
+}
+
+void AHellDiver::HardLanding()
+{
+    if (!_hardLandingMontage) return;
+    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    {
+
+        animInstance->PlayAnimMontage(_hardLandingMontage);
+
+        // 재생 후 인스턴스 가져오기
+        if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_hardLandingMontage))
+        {
+            _stateComponent->BeShocked();
+
+            // 델리게이트 중복 방지
+            MontageInstance->OnMontageEnded.Unbind();
+
+            // 델리게이트 바인딩
+            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+
+            UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_hardLandingMontage->GetName());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_hardLandingMontage->GetName());
+        }
+
+    }
+}
+
+void AHellDiver::FinishLanding(UAnimMontage* Montage, bool bInterrupted)
+{
+    _stateComponent->RecoveryShocked();
 }
 
 FRotator AHellDiver::Focusing()
@@ -491,6 +602,34 @@ FRotator AHellDiver::Focusing()
 
     FRotator socketRot = GetMesh()->GetSocketRotation(TEXT("spine_05"));
     return socketRot;
+}
+
+void AHellDiver::Throwing()
+{
+    if (!_throwingMontage) return;
+    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    {
+
+        animInstance->PlayAnimMontage(_throwingMontage);
+
+        // 재생 후 인스턴스 가져오기
+        if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_throwingMontage))
+        {
+
+            // 델리게이트 중복 방지
+            MontageInstance->OnMontageEnded.Unbind();
+
+            // 델리게이트 바인딩
+            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::OnThrowReleased);
+
+            UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_throwingMontage->GetName());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_throwingMontage->GetName());
+        }
+
+    }
 }
 
 float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
@@ -525,6 +664,8 @@ void AHellDiver::KnockDown()
     Super::KnockDown();
 
     _stateComponent->KnockDown();
+
+    SetCollisionState(_stateComponent->GetCharacterState());
 
 }
 

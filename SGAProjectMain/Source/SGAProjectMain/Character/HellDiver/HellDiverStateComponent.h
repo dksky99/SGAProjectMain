@@ -21,8 +21,6 @@ UENUM(BlueprintType)
 enum class EActionState : uint8
 {
 	None,
-	TPSAim,
-	FPSAim,
 	Stratagem,
 	ViewMap,
 	InterActing,
@@ -110,16 +108,19 @@ public:
 	bool IsFocusing();
 	bool IsCookingGrenade() { return _isCookingGrenade; }
 	void SetCookingGrenade(bool isCookingGrenade) { _isCookingGrenade = isCookingGrenade; }
-	bool IsInputtingStratagem(){ return _isInputtingStratagem; }
-	void SetInputtingStratagem(bool isInputtingStratagem) { _isInputtingStratagem = isInputtingStratagem; }
+	bool IsInputtingStratagem(){ return _actionState==EActionState::Stratagem; }
+	void SetInputtingStratagem(bool isInputtingStratagem) { _actionState = EActionState::Stratagem;	}
 
-	bool IsCheckingMap() { return _isCheckingMap; }
-	void SetCheckingMap(bool isCheckingMap) { _isCheckingMap = isCheckingMap; }
+	bool IsCheckingMap() { return _actionState == EActionState::ViewMap; }
+	void SetCheckingMap(bool isCheckingMap) { _actionState = EActionState::ViewMap; }
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
 	void KnockDown();
 	void KnockDownRecovery();
+	bool IsShocked() { return _isShocking; }
+	void BeShocked() { _isShocking = true; }
+	void RecoveryShocked(){ _isShocking = false; }
 	void Dead();
 	bool IsActionable();
 	bool IsMovable();
@@ -163,9 +164,7 @@ protected:
 	bool _isRolling = false;
 	bool _isAiming = false;
 	bool _isCookingGrenade = false;
-	bool _isInputtingStratagem = false;
-	bool _isCheckingMap = false;
-
+	bool _isShocking = false;
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
 	bool _isVaulting = false;

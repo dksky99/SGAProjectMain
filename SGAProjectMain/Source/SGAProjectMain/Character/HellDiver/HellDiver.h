@@ -28,7 +28,7 @@ public:
 	// ≈ı√¥π∞
 	void EquipGrenade();
 	void EquipStratagem();
-	void OnThrowReleased();
+	void OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted);
 	void StartThrowPreview();
 	void StopThrowPreview();
 	UFUNCTION()
@@ -66,13 +66,21 @@ public:
 	void RefillGrenade();
 	void RefillStimPack();
 
+	void StratagemInputting();
 
 	void MotionChangeFinish();
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	void SoftLanding();
+	void HardLanding();
+
+	void FinishLanding(class UAnimMontage* Montage, bool bInterrupted);
+
 	UFUNCTION(BlueprintCallable)
 	virtual FRotator Focusing();
+
+	void Throwing();
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -187,4 +195,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Anim")
 	FVector _jointTargetLoc = FVector(20,45,-90);
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _softLandingMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _hardLandingMontage;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _throwingMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _stratagemInputMontage;
 };

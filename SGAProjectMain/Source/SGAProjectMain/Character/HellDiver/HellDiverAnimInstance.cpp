@@ -161,6 +161,8 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
 		return false;
+	if (_actionState != EActionState::None)
+		return false;
 	if (_isVaulting)
 		return false;
 	if (gun == nullptr)
@@ -179,6 +181,8 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 	if (_lifeState != ELifeState::Alive)
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
+		return false;
+	if (_actionState != EActionState::None)
 		return false;
 	if (_isVaulting)
 		return false;
