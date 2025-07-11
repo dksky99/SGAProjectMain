@@ -27,4 +27,10 @@ class SGAPROJECTMAIN_API UCGameInstance : public UGameInstance
 public:
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
+
+	struct FGunData GetGunDataFromTable(int32 id);
+
+private:
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _gunTable;
 };

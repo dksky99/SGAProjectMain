@@ -85,7 +85,7 @@ private:
 	ACharacter* _player;
 
 	bool _isDraggingCursor = false;
-	FVector2D _lastMousePos;
+	//FVector2D _lastMousePos;
 
 
 	float _fixedHeight = 500.f; // zÃà À§Ä¡

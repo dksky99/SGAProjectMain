@@ -48,17 +48,16 @@ void ASceneCapturer::Tick(float DeltaTime)
 	// 드래그 중일 경우
 	if (_isDraggingCursor && _cursorActor)
 	{
-		FVector2D curMousePos;
-		_playerController->GetMousePosition(curMousePos.X, curMousePos.Y);
+		FVector2D delta;
+		_playerController->GetInputMouseDelta(delta.X, delta.Y);
 
-		FVector2D delta = curMousePos - _lastMousePos;
-		_lastMousePos = curMousePos;
-
-		// 드래그 방향으로 커서 이동
 		FVector cursorLocation = _cursorActor->GetActorLocation();
-		cursorLocation.Y += delta.X;
-		cursorLocation.X -= delta.Y;
-		//FVector Delta3D = FVector(Delta.X, Delta.Y, 0.f) * DragSensitivity; // 좌표계에 따라 YZ 반전 필요할 수도 있음
+		cursorLocation.X += delta.Y * 15.f;
+		cursorLocation.Y += delta.X * 15.f;
+	
+		// 맵 안에서만 이동
+		cursorLocation.X = FMath::Clamp(cursorLocation.X, 0.f, _maxMapSize.X);
+		cursorLocation.Y = FMath::Clamp(cursorLocation.Y, 0.f, _maxMapSize.Y);
 		_cursorActor->SetActorLocation(cursorLocation);
 
 		// 위젯에서 텍스트 연동
@@ -129,11 +128,12 @@ void ASceneCapturer::StartDraggingMap()
 	if (!_cursorActor)
 	{
 		FVector startPos = _curFollowTarget->GetActorLocation(); // 커서가 없을 경우 추적 타겟은 플레이어
+		startPos.Z = _fixedHeight - 10.f; // 다른 액터에 가려지지 않게
 		_cursorActor = GetWorld()->SpawnActor<AActor>(_cursorActorClass, startPos, FRotator::ZeroRotator); // 플레이어 위치에 커서 스폰
 		_curFollowTarget = _cursorActor;
 	}
 	
-	_playerController->GetMousePosition(_lastMousePos.X, _lastMousePos.Y);
+	//_playerController->GetMousePosition(_lastMousePos.X, _lastMousePos.Y);
 	_isDraggingCursor = true;
 }
 

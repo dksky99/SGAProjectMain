@@ -36,43 +36,52 @@ void UGunSettingWidget::UpdateGunInfo(const FGunData& gunData, int32 curAmmo)
 void UGunSettingWidget::SetSlots(const FGunData& gunData)
 {
     // 1. FireMode (오른쪽)
-    for (EFireMode fireMode : gunData._fireModes)
+    if (gunData._fireModes.Num() > 1)
     {
-        if (fireEnum)
+        for (EFireMode fireMode : gunData._fireModes)
         {
-            FName key = FName(fireEnum->GetNameStringByValue((int64)fireMode));
-            UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
-            if (asset)
+            if (fireEnum)
             {
-                AddSlotToPanel(_fireModePanel, asset);
+                FName key = FName(fireEnum->GetNameStringByValue((int64)fireMode));
+                UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
+                if (asset)
+                {
+                    AddSlotToPanel(_fireModePanel, asset);
+                }
             }
         }
     }
 
     // 2. Range (위쪽)
     int32 i = gunData._scopeModes.Num() - 1;
-    while (i >= 0)
+    if (i > 1)
     {
-        int32 scope = gunData._scopeModes[i];
-        FName key = FName(*FString::FromInt(scope));
-        UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
-        if (asset)
+        while (i >= 0)
         {
-            AddSlotToPanel(_scopeModePanel, asset);
-        }
-        --i;
-    }
-
-    // 3. Flashlight (아래쪽)
-    for (ETacticalLightMode lightMode : gunData._lightModes)
-    {
-        if (lightEnum)
-        {
-            FName key = FName(lightEnum->GetNameStringByValue((int64)lightMode));
+            int32 scope = gunData._scopeModes[i];
+            FName key = FName(*FString::FromInt(scope));
             UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
             if (asset)
             {
-                AddSlotToPanel(_lightModePanel, asset);
+                AddSlotToPanel(_scopeModePanel, asset);
+            }
+            --i;
+        }
+    }
+
+    // 3. Flashlight (아래쪽)
+    if (gunData._lightModes.Num() > 1)
+    {
+        for (ETacticalLightMode lightMode : gunData._lightModes)
+        {
+            if (lightEnum)
+            {
+                FName key = FName(lightEnum->GetNameStringByValue((int64)lightMode));
+                UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
+                if (asset)
+                {
+                    AddSlotToPanel(_lightModePanel, asset);
+                }
             }
         }
     }
