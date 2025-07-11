@@ -376,16 +376,16 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		////이동
 		//AddMovementInput(MoveDirection, 1);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
-		GetCharacterMovement()->bUseControllerDesiredRotation = true;
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		// 멈추는 경우
-		_vertical = 0.0f;
-		_horizontal = 0.0f;
-
-	}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
+	//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	//	GetCharacterMovement()->bOrientRotationToMovement = false;
+	//	// 멈추는 경우
+	//	_vertical = 0.0f;
+	//	_horizontal = 0.0f;
+	//
+	//}
 }
 void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 {
