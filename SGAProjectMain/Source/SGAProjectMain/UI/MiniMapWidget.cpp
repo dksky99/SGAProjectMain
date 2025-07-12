@@ -43,6 +43,7 @@ void UMiniMapWidget::SetCursorText(FVector sceneCapturerToCursor, FVector player
 	else dir = TEXT("NorthEast");
 
     // 미니맵 이미지의 위젯에서의 위치와 크기
+    //FVector2D mapTopLeft = _mapImage->GetCachedGeometry().LocalToAbsolute(FVector2D(0, 0)); // 크기
     FVector2D mapSize = _mapImage->GetCachedGeometry().GetLocalSize(); // 크기
     FVector2D canvasSize = _canvasPanel->GetCachedGeometry().GetLocalSize(); // _rootCanvas는 UCanvasPanel*
     FVector2D mapTopLeft = canvasSize - mapSize - FVector2D(23.f, 37.f);

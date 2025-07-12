@@ -198,15 +198,18 @@ bool ASceneCapturer::PingOnMap()
 	return true;
 }
 
-void ASceneCapturer::BroadcastPingInfo()
+void ASceneCapturer::BroadcastPingInfo() // TODO : 일부 기능 핑액터에 넘겨주기
 {
 	if (!_pingActor) return;
 
 	float halfWidth = _sceneCaptureComponent->OrthoWidth / 2.f;
-	FVector sceneCapturerToPing = _pingActor->GetActorLocation() - this->GetActorLocation();
+	FVector pingLocation = _pingActor->GetActorLocation();
+	FVector sceneCapturerToPing = pingLocation - this->GetActorLocation();
 
-	if (_pingUpdateEvent.IsBound())
-		_pingUpdateEvent.Broadcast(sceneCapturerToPing, halfWidth);
+	if (_pingRelativeUpdateEvent.IsBound())
+		_pingRelativeUpdateEvent.Broadcast(sceneCapturerToPing, halfWidth);
+	if (_pingLocationUpdateEvent.IsBound())
+		_pingLocationUpdateEvent.Broadcast(pingLocation);
 }
 
 void ASceneCapturer::FilterActorList()
