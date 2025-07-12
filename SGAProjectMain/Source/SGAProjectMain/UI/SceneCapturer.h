@@ -11,7 +11,8 @@
 #include "SceneCapturer.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FCursorUpdateEvent, FVector, FVector, float);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FPingUpdateEvent, FVector, float);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FPingRelativeUpdateEvent, FVector, float);
+DECLARE_MULTICAST_DELEGATE_OneParam(FPingLocationUpdateEvent, FVector);
 DECLARE_MULTICAST_DELEGATE_OneParam(FPingOnOffEvent, bool);
 
 UCLASS()
@@ -47,7 +48,8 @@ public:
 
 	bool PingOnMap(); // 핑 찍기가 불가능하면 false, 가능하면 핑을 찍은 후 true 반환
 	void BroadcastPingInfo();
-	FPingUpdateEvent _pingUpdateEvent;
+	FPingRelativeUpdateEvent _pingRelativeUpdateEvent; // 핑과 씬캡쳐러 간의 거리
+	FPingLocationUpdateEvent _pingLocationUpdateEvent; // 핑의 위치
 	FPingOnOffEvent _pingOnOffEvent;
 
 	void SetFollowTarget(AActor* target) { _curFollowTarget = target; }

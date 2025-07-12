@@ -31,6 +31,7 @@
 #include "../UI/MiniMapWidget.h"
 #include "../UI/SceneCapturer.h"
 #include "../UI/StaminaBarWidget.h"
+#include "../UI/CompassWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -113,6 +114,11 @@ void APlayerCharacter::PostInitializeComponents()
 	{
 		_staminaBarWidget = CreateWidget<UStaminaBarWidget>(GetWorld(), _staminaBarWidgetClass);
 	}
+
+	if (_compassWidgetClass)
+	{
+		_compassWidget = CreateWidget<UCompassWidget>(GetWorld(), _compassWidgetClass);
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -171,7 +177,7 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-		_sceneCapturer->_pingUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+		_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
 		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
 	}
 
@@ -180,6 +186,14 @@ void APlayerCharacter::BeginPlay()
 		_statComponent->_staminaChanged.AddUObject(_staminaBarWidget, &UStaminaBarWidget::SetStamina);
 		_staminaBarWidget->AddToViewport();
 		_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if (_compassWidget)
+	{
+		_compassWidget->AddToViewport();
+
+		_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+		_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
 	}
 
 	//if (_sceneUIClass)
