@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GunDataTable.h"
+#include "../Object/Item/ItemBase.h"
 #include "GunBase.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMagChanged, int, int);
 
 UCLASS()
-class SGAPROJECTMAIN_API AGunBase : public AActor
+class SGAPROJECTMAIN_API AGunBase : public AItemBase
 {
 	GENERATED_BODY()
 	
@@ -64,6 +65,8 @@ public:
 	void UseLaserPoint(FVector hitPoint);
 	void UseTacticalLight(bool isAiming);
 
+	virtual void PickupItem(AHellDiver* player) override;
+
 	void ResetCanFire() { _canFire = true; }
 
 	const FGunData& GetGunData() { return _gunData; }
@@ -85,7 +88,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
-	TObjectPtr<USkeletalMeshComponent> _mesh;
+	TObjectPtr<USkeletalMeshComponent> _gunMesh;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class AHellDiver* _owner;

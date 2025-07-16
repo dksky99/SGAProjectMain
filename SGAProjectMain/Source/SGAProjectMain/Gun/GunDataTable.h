@@ -18,6 +18,14 @@ enum class EGunType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EGunSlotType : uint8
+{
+	Primary,
+	Secondary,
+	Support
+};
+
+UENUM(BlueprintType)
 enum class EFireMode : uint8
 {
 	FireAuto,
@@ -63,6 +71,9 @@ struct FGunData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGunType _type; // 한손 혹은 두손
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGunSlotType _slotType; // 어느 슬롯에 장착되는지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UTexture2D* _icon;

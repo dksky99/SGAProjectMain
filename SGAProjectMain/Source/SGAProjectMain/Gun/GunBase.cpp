@@ -24,8 +24,15 @@ AGunBase::AGunBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
-	RootComponent = _mesh;
+	if (_mesh)  // AItemBase의 StaticMesh 삭제
+	{ 
+		_mesh->DestroyComponent();
+		_mesh->SetHiddenInGame(true);
+		_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	_gunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	RootComponent = _gunMesh;
 
 	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
 	_tacticalLight->SetupAttachment(RootComponent);
@@ -58,7 +65,7 @@ void AGunBase::BeginPlay()
 	{
 		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			_gunData._laserFX,
-			_mesh,
+			_gunMesh,
 			NAME_None,
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
@@ -71,7 +78,7 @@ void AGunBase::BeginPlay()
 	{
 		_laserImpact = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			_gunData._laserImpactFX,
-			_mesh,
+			_gunMesh,
 			NAME_None,
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
@@ -366,10 +373,10 @@ void AGunBase::AttachToHand()
 			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
 
 			// 물리 & 충돌 비활성화
-			if (_mesh)
+			if (_gunMesh)
 			{
-				_mesh->SetSimulatePhysics(false);
-				_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				_gunMesh->SetSimulatePhysics(false);
+				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 		}
 	}
@@ -586,6 +593,8 @@ float AGunBase::CalculateDamage(float distance)
 
 void AGunBase::RecoverRecoil(float DeltaTime)
 {
+	if (!_owner) return;
+
 	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
 	if (playerController)
 	{
@@ -691,8 +700,8 @@ FHitResult AGunBase::GetHitResult()
 	//	return end;
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사
-	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	FVector fireDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector fireDirection = _gunMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 
 	// 조준하고 있지 않을 경우 탄퍼짐
 	if (!_owner->GetStateComponent()->IsAiming())
@@ -747,9 +756,9 @@ void AGunBase::UseLaserPoint(FVector hitPoint)
 {
 	FVector start;
 
-	if (_mesh && _mesh->DoesSocketExist(TEXT("LaserPoint")))
+	if (_gunMesh && _gunMesh->DoesSocketExist(TEXT("LaserPoint")))
 	{
-		start = _mesh->GetSocketLocation(TEXT("LaserPoint"));
+		start = _gunMesh->GetSocketLocation(TEXT("LaserPoint"));
 	}
 	else
 	{
@@ -788,28 +797,33 @@ void AGunBase::UseTacticalLight(bool isAiming)
 	}
 }
 
+void AGunBase::PickupItem(AHellDiver* player)
+{
+	player->EquipGun(this);
+}
+
 FTransform AGunBase::GetMuzzleTrans()
 {
-	return  _mesh->GetSocketTransform(TEXT("Muzzle"),RTS_World);
+	return  _gunMesh->GetSocketTransform(TEXT("Muzzle"),RTS_World);
 }
 
 FVector AGunBase::GetMuzzleLoc()
 {
-	return _mesh->GetSocketLocation(TEXT("Muzzle"));;
+	return _gunMesh->GetSocketLocation(TEXT("Muzzle"));;
 }
 
 FRotator AGunBase::GetMuzzleRot()
 {
-	return _mesh->GetSocketRotation(TEXT("Muzzle"));
+	return _gunMesh->GetSocketRotation(TEXT("Muzzle"));
 }
 
 FTransform AGunBase::GetLeftHandleTrans()
 {
-	if(_mesh==nullptr)
+	if(_gunMesh==nullptr)
 		return GetActorTransform();
-	if(_mesh->DoesSocketExist(TEXT("LeftGrip")))
-		return _mesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
-	return _mesh->GetComponentTransform();
+	if(_gunMesh->DoesSocketExist(TEXT("LeftGrip")))
+		return _gunMesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
+	return _gunMesh->GetComponentTransform();
 		
 }
 

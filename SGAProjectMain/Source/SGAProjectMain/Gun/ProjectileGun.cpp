@@ -15,8 +15,8 @@ void AProjectileGun::Fire()
 
 void AProjectileGun::ExecuteShot()
 {
-	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	FVector fireDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector fireDirection = _gunMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 
 	// 조준하고 있지 않을 경우 탄퍼짐
 	if (!_owner->GetStateComponent()->IsAiming())
