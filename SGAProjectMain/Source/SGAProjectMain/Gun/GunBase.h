@@ -31,6 +31,8 @@ public:
 	virtual void Fire();
 	virtual void StopFire();
 
+	virtual void ExecuteShot(); // È÷Æ®½ºÄµ
+
 	virtual void StartAiming();
 	virtual void StopAiming();
 

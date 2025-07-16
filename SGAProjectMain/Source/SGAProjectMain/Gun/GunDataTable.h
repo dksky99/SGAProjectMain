@@ -75,7 +75,7 @@ struct FGunData : public FTableRowBase
 	float _vsDurableDamage = 15.0f; // 내구 데미지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 내구 데미지
+	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 관통력
 
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

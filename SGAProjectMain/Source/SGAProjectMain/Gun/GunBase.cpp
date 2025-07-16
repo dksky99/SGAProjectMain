@@ -91,8 +91,8 @@ void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
+	//auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	//if (!camera) return;
 	
 	RecoverRecoil(DeltaTime);
 	if (!_isActive) return;
@@ -142,8 +142,6 @@ void AGunBase::StartFire()
 
 void AGunBase::Fire()
 {
-	FColor drawColor = FColor::Green;
-	
 	// 탄창, 약실 모두 비었음
 	if (_curAmmo <= 0 && !_isChamberLoaded)
 	{
@@ -152,8 +150,8 @@ void AGunBase::Fire()
 		return;
 	}
 	
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
+	/*auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	if (!camera) return;*/
 
 	if (_fireMode == EFireMode::FireBoltAction)
 	{
@@ -173,7 +171,35 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
-	ApplyFireRecoil();
+	ApplyFireRecoil(); // 반동 계산
+	ExecuteShot(); // 라인트레이스
+
+	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
+	{
+		_curAmmo--; // 탄약 감소
+	}
+	else // 약실에만 남아있을 경우
+	{
+		_isChamberLoaded = false; // 약실 탄 비움
+	}
+	
+	if (_ammoChanged.IsBound())
+		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+}
+
+void AGunBase::StopFire()
+{
+	if (_owner)
+	{
+		_owner->GetStateComponent()->SetFiring(false);
+	}
+
+	GetWorldTimerManager().ClearTimer(_fireTimer);
+}
+
+void AGunBase::ExecuteShot()
+{
+	FColor drawColor = FColor::Green; // 디버깅용
 
 	FHitResult hitResult = GetHitResult();
 	/*ApplyFireRecoil();
@@ -193,12 +219,12 @@ void AGunBase::Fire()
 
 	// 플레이어에게서 화면 중앙 방향으로
 	FVector dir = (_hitPoint - start).GetSafeNormal();
-	
+
 	// 조준하지 않을 경우 탄퍼짐
 	if (!_owner->GetStateComponent()->IsAiming())
 	{
 		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(_gunData._recoil));
-		_hitPoint = start + dir * 10000.0f; 
+		_hitPoint = start + dir * 10000.0f;
 	}
 
 	FHitResult hitResult;
@@ -217,36 +243,16 @@ void AGunBase::Fire()
 		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
 		float finalDamage = CalculateDamage(distance / 100);
 
+		if (finalDamage < 0) return;
+
 		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 		{
 			UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
 		}
 	}
 
-	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
-	{
-		_curAmmo--;
-	}
-	else // 약실에만 남아있을 경우
-	{
-		_isChamberLoaded = false;
-	}
-	
-	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-
 	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 	DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
-}
-
-void AGunBase::StopFire()
-{
-	if (_owner)
-	{
-		_owner->GetStateComponent()->SetFiring(false);
-	}
-
-	GetWorldTimerManager().ClearTimer(_fireTimer);
 }
 
 void AGunBase::StartAiming()
@@ -529,27 +535,34 @@ void AGunBase::RefillMag()
 
 float AGunBase::CalculateDamage(float distance)
 {
-	if (distance <= 25.0f)
+	if (distance <= 2500.f) // 25m까지
 	{
-		float Alpha = distance / 25.0f;
-		float Falloff = FMath::Lerp(0.0f, _gunData._falloff25, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = distance / 25.0f;
+		float falloff = FMath::Lerp(0.0f, _gunData._falloff25, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 50.0f)
+	else if (distance <= 5000.f) // 50m까지
 	{
-		float Alpha = (distance - 25.0f) / 25.0f;
-		float Falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = (distance - 25.0f) / 25.0f;
+		float falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 100.0f)
+	else if (distance <= 10000.f) // 100m까지
 	{
-		float Alpha = (distance - 50.0f) / 50.0f;
-		float Falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = (distance - 50.0f) / 50.0f;
+		float falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
 	else
 	{
-		return _gunData._baseDamage * (1.0f - _gunData._falloff100);
+		// 50~100m 구간의 감속 기울기
+		float perMeterFalloff = (_gunData._falloff100 - _gunData._falloff50) / 50.0f;
+
+		// 100m 이후부터는 50~100m 구간의 감속 기울기 사용
+		float extraFalloff = perMeterFalloff * ((distance - 10000.f));
+		float finalFalloff = _gunData._falloff100 + extraFalloff;
+
+		return _gunData._baseDamage * (1.0f - finalFalloff);
 	}
 }
 
