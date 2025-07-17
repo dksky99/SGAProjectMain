@@ -39,7 +39,7 @@ void AGunBulletBase::BeginPlay()
     if (GetInstigator())
         _collisionComp->IgnoreActorWhenMoving(GetInstigator(), true);
 
-    _curSpeed = _bulletData._initialSpeed;
+    _baseSpeed = _bulletData._initialSpeed;
 }
 
 // Called every frame
@@ -50,8 +50,8 @@ void AGunBulletBase::Tick(float DeltaTime)
     _moveDistance += _projectileMovement->Velocity.Size() * DeltaTime;
     float speedLoss = _bulletData._initialSpeed * GetSpeedMultiplier(_moveDistance); // 이동 거리 기반 감속된 속도
 
-    // 현재 속도에서 감속량만큼 빼기
-    _curSpeed -= speedLoss * DeltaTime;
+    // 기본 속도에서 감속량만큼 빼기
+    float _curSpeed = _baseSpeed - speedLoss * DeltaTime;
 
     if (_curSpeed <= 0.1f) // 예: 속도 10 이하라면 제거
     {
@@ -59,7 +59,10 @@ void AGunBulletBase::Tick(float DeltaTime)
             Destroy();
     }
     else
-        _projectileMovement->Velocity = _projectileMovement->Velocity.GetSafeNormal() * _curSpeed;
+    {
+        FVector newVelocity = _projectileMovement->Velocity.GetSafeNormal() * _curSpeed;
+        _projectileMovement->Velocity = newVelocity;
+    }
 }
 
 void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -72,18 +75,15 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         if (_hitComponents.Contains(OtherComp))
             return; // 같은 부위를 두 번 공격하지 않음
 
+        float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
+        UGameplayStatics::ApplyDamage(OtherActor, finalDamage, GetInstigatorController(), this, nullptr);
+        _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
+        _baseSpeed *= 0.75f;
+
         if (_bulletData._type == EBulletType::Explosive)
         {
             _isExploded = true;
             Explode();
-        }
-
-        float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
-        UGameplayStatics::ApplyDamage(OtherActor, finalDamage, GetInstigatorController(), this, nullptr);
-        _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
-
-        if (_bulletData._type == EBulletType::Explosive)
-        {
             Destroy();
         }
     }

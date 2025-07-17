@@ -98,6 +98,6 @@ private:
 
 	bool _isExploded = false;
 
-	float _curSpeed;
+	float _baseSpeed;
 	float _moveDistance = 0.f;
 };
