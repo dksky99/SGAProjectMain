@@ -75,6 +75,7 @@ public:
 	EFireMode GetCurFireMode() { return _fireMode; }
 	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
 	int32 GetCurScopeMode() { return _scopeMode; }
+	USkeletalMeshComponent* GetMesh() { return _gunMesh; }
 
 
 

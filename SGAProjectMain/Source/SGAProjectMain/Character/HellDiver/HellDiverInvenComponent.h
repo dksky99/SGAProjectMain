@@ -24,7 +24,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void SetGun(class AGunBase* gun);
+	int32 SetGun(class AGunBase* gun);
 	void EquipGun(int32 index);
 	void DropGun(int32 index);
 	bool CanSwitchGun(int32 index);

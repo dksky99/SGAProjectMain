@@ -1302,6 +1302,26 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 		StartFiring(value);
 }
 
+void APlayerCharacter::PickupGun(AGunBase* newGun)
+{
+	if (_isGunSettingMode)
+		return;
+
+	int32 index = _invenComponent->SetGun(newGun);
+	if (index == -1) return;
+
+	auto previousGun = _invenComponent->GetEquippedGun();
+	previousGun->_ammoChanged.RemoveAll(_gunWidget);
+	previousGun->_magChanged.RemoveAll(_gunWidget);
+
+	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+	Super::PickupGun(newGun);
+
+	if (_gunWidget)
+		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
 void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 {
 	if (_stateComponent->GetActionState() == EActionState::None)

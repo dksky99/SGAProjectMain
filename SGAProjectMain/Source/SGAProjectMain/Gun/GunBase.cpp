@@ -28,14 +28,17 @@ AGunBase::AGunBase()
 	{ 
 		_mesh->DestroyComponent();
 		_mesh->SetHiddenInGame(true);
-		_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	_gunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	_gunMesh->SetCollisionProfileName("PhysicsActor");
+	_gunMesh->SetGenerateOverlapEvents(true);
+	_gunMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	RootComponent = _gunMesh;
 
 	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
 	_tacticalLight->SetupAttachment(RootComponent);
+	_tacticalLight->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -286,6 +289,7 @@ void AGunBase::StartAiming()
 
 void AGunBase::StopAiming()
 {
+	if (!_owner) return;
 	_owner->GetStateComponent()->SetAiming(false);
 
 	if (_marker)
@@ -347,7 +351,7 @@ void AGunBase::DeactivateGun()
 	_isActive = false;
 	SetActorHiddenInGame(true);
 
-	if (_tacticalLight)
+	if (_tacticalLight && _owner)
 		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
 
 	if (_marker)
@@ -369,15 +373,16 @@ void AGunBase::AttachToHand()
 	{
 		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
 		{
-			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
-			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
-
 			// 물리 & 충돌 비활성화
 			if (_gunMesh)
 			{
 				_gunMesh->SetSimulatePhysics(false);
+				_gunMesh->SetEnableGravity(false);
 				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
+
+			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
+			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
 		}
 	}
 }
@@ -799,7 +804,7 @@ void AGunBase::UseTacticalLight(bool isAiming)
 
 void AGunBase::PickupItem(AHellDiver* player)
 {
-	player->EquipGun(this);
+	player->PickupGun(this);
 }
 
 FTransform AGunBase::GetMuzzleTrans()

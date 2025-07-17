@@ -60,7 +60,7 @@ public:
 	// ÃÑ
 	void SpawnGun(TSubclassOf<class AGunBase> gunClass);
 	void EquipGun(int32 index); // ½½·Ô¿¡¼­ ÀÎµ¦½º·Î ÀåÂø
-	void EquipGun(AGunBase* gun); // ÃÑÀ» Á÷Á¢ ½Àµæ
+	virtual void PickupGun(AGunBase* gun); // ÃÑÀ» Á÷Á¢ ½Àµæ
 	void SwitchGun(int32 index);
 	AGunBase* GetEquippedGun();
 

@@ -36,7 +36,7 @@ void UHellDiverInvenComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	// ...
 }
 
-void UHellDiverInvenComponent::SetGun(AGunBase* gun)
+int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)
 {
 	int32 index = -1;
 
@@ -47,7 +47,7 @@ void UHellDiverInvenComponent::SetGun(AGunBase* gun)
 	else if (gun->GetGunData()._slotType == EGunSlotType::Support)
 		index = 2;
 	else
-		return;
+		return -1;
 
 	if (_gunSlot[index] != nullptr) // 슬롯에 이미 총이 존재한다면
 	{
@@ -55,7 +55,7 @@ void UHellDiverInvenComponent::SetGun(AGunBase* gun)
 	}
 
 	_gunSlot[index] = gun;
-	EquipGun(index);
+	return index;
 }
 
 void UHellDiverInvenComponent::EquipGun(int32 index)
@@ -74,10 +74,20 @@ void UHellDiverInvenComponent::DropGun(int32 index)
 
 	gun->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	gun->SetActorEnableCollision(true);
+	gun->DeactivateGun();
 	gun->SetOwner(nullptr);
 
+	USkeletalMeshComponent* mesh = gun->GetMesh(); // 또는 CustomMesh 이름
+	if (mesh)
+	{
+		mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		mesh->SetSimulatePhysics(true);
+		mesh->SetEnableGravity(true);
+	}
+
+	gun->SetActorHiddenInGame(false);
 	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
-	gun->SetActorLocation(dropLocation);
+	gun->SetActorLocation(dropLocation, false, nullptr, ETeleportType::TeleportPhysics);
 }
 
 bool UHellDiverInvenComponent::CanSwitchGun(int32 index)

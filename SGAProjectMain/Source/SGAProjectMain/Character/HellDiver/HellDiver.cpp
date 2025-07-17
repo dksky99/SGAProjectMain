@@ -443,11 +443,14 @@ void AHellDiver::EquipGun(int32 index)
     _stateComponent->SetWeaponState(EWeaponType::Gun);
 }
 
-void AHellDiver::EquipGun(AGunBase* gun)
+void AHellDiver::PickupGun(AGunBase* gun)
 {
+    int32 index = _invenComponent->SetGun(gun);
+    if (index == -1) return;
+
     gun->SetOwner(this);
     gun->InitializeGun();
-    _invenComponent->SetGun(gun);
+    _invenComponent->EquipGun(index);
     _stateComponent->SetWeaponState(EWeaponType::Gun);
 }
 
@@ -764,7 +767,9 @@ void AHellDiver::Dead()
 
     _stateComponent->Dead();
 
-
+    _invenComponent->DropGun(0);
+    _invenComponent->DropGun(1);
+    _invenComponent->DropGun(2);
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

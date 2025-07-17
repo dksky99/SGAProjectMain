@@ -112,6 +112,7 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
+	virtual void PickupGun(AGunBase* gun);
 
 	UFUNCTION()
 	void Interact(const  FInputActionValue& value);
