@@ -71,6 +71,8 @@ public:
 
 	void Reload();
 
+	void EquipBackpack(class ABackpack* backpack);
+
 	// º¸±Þ
 	void RefillAllItem();
 	void RefillMag();

@@ -24,6 +24,7 @@
 #include "../Object/Item/ItemBase.h"
 
 #include "../Gun/GunBase.h"
+#include "../Gun/ExplosiveGun.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
@@ -260,6 +261,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
 		enhancedInputComponent->BindAction(_mapAction, ETriggerEvent::Started, this, &APlayerCharacter::OpenMap);
+		enhancedInputComponent->BindAction(_invenAction, ETriggerEvent::Started, this, &APlayerCharacter::DropBackpack); // 임시
 	}
 }
 
@@ -361,6 +363,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (_stateComponent->IsActionable() == false)
 		return;
+	if (auto explosiveGun = Cast<AExplosiveGun>(_invenComponent->GetEquippedGun())) // 현재 총이 폭발성일 경우
+	{
+		if (_stateComponent->IsReloading()) return; // 장전 중에는 움직일 수 없음
+	}
 	FVector2D moveVector = value.Get<FVector2D>();
 
 	if (Controller != nullptr && moveVector.Length() > 0.01f)
@@ -1320,6 +1326,11 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
+void APlayerCharacter::DropBackpack()
+{
+	_invenComponent->DropBackpack();
 }
 
 void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)

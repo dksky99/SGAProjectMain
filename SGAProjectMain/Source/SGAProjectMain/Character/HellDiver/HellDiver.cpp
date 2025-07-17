@@ -26,6 +26,9 @@
 #include "../../Data/CollisionCameraDataAsset.h"
 
 #include "../../Gun/GunBase.h"
+#include "../../Gun/ExplosiveGun.h"
+#include "../../Object/Item/Backpack.h"
+#include "../../Object/Item/ReloadBackpack.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -507,9 +510,26 @@ void AHellDiver::StopAiming()
 void AHellDiver::Reload()
 {
     auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (auto projectileGun = Cast<AExplosiveGun>(equippedGun)) // 폭발성 총일 경우
+    {
+        auto backpack = _invenComponent->GetBackpack(); // 가방이 없으면 리턴
+        if (!backpack) return;
+
+        auto reloadBackpack = Cast<AReloadBackpack>(backpack); // 가방이 있어도
+        if (!reloadBackpack) return;                            // 장전용이 아니면 리턴
+        if (reloadBackpack->GetCurBulletCount() <= 0) return;   // 혹은 가방에 총알이 없으면 리턴
+    }
+
     equippedGun->StopAiming();
     equippedGun->StopFire();
     equippedGun->Reload();
+}
+
+void AHellDiver::EquipBackpack(ABackpack* backpack)
+{
+
+    _invenComponent->EquipBackpack(backpack);
 }
 
 void AHellDiver::RefillAllItem()

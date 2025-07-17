@@ -19,6 +19,10 @@ void UGunWidget::SetAmmo(int32 curAmmo, int32 maxAmmo)
 void UGunWidget::SetMag(int32 curMag, int32 maxMag)
 {
 	FString text = FString::Printf(TEXT("%d/%d"), curMag, maxMag);
+
+	if (maxMag == 0) // 탄창이 없는 총의 경우 미표시
+		text = FString::Printf(TEXT(""));
+
 	_magCount->SetText(FText::FromString(text));
 	UE_LOG(LogTemp, Log, TEXT("SetMag"));
 }

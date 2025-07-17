@@ -6,6 +6,8 @@
 #include "../../Gun/GunBase.h"
 #include "../../Gun/GunDataTable.h"
 
+#include "../../Object/Item/Backpack.h"
+
 // Sets default values for this component's properties
 UHellDiverInvenComponent::UHellDiverInvenComponent()
 {
@@ -99,5 +101,32 @@ bool UHellDiverInvenComponent::CanSwitchGun(int32 index)
 		return false;
 
 	return true;
+}
+
+void UHellDiverInvenComponent::EquipBackpack(ABackpack* backpack)
+{
+	_backpack = backpack;
+}
+
+void UHellDiverInvenComponent::DropBackpack()
+{
+	if (!_backpack) return;
+
+	_backpack->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	_backpack->SetActorEnableCollision(true);
+	_backpack->SetOwner(nullptr);
+
+	UStaticMeshComponent* mesh = _backpack->GetMesh(); // 또는 CustomMesh 이름
+	if (mesh)
+	{
+		mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		mesh->SetSimulatePhysics(true);
+		mesh->SetEnableGravity(true);
+	}
+
+	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
+	_backpack->SetActorLocation(dropLocation);
+
+	_backpack = nullptr;
 }
 

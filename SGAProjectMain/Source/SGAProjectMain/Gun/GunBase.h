@@ -42,9 +42,9 @@ public:
 	void DeactivateGun();
 	void AttachToHand();
 
-	void Reload();
+	virtual void Reload();
 	void FinishReload(class UAnimMontage* Montage, bool bInterrupted);
-	void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
+	virtual void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
 
 	void RefillMag();

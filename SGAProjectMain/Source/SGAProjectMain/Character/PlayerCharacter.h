@@ -112,7 +112,9 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
-	virtual void PickupGun(AGunBase* gun);
+	void PickupGun(AGunBase* gun) override;
+	void DropBackpack();
+	
 
 	UFUNCTION()
 	void Interact(const  FInputActionValue& value);
@@ -224,8 +226,11 @@ protected:
 	class UInputAction* _strataSAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _strataDAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _stimPackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _invenAction;
 
 
 

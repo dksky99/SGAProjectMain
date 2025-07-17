@@ -53,13 +53,13 @@ void AGunBulletBase::Tick(float DeltaTime)
     // 현재 속도에서 감속량만큼 빼기
     _curSpeed -= speedLoss * DeltaTime;
 
-    _projectileMovement->Velocity = _projectileMovement->Velocity.GetSafeNormal() * _curSpeed;
-
-    if (_curSpeed < 10.f) // 예: 속도 10 이하라면 제거
+    if (_curSpeed <= 0.1f) // 예: 속도 10 이하라면 제거
     {
-        Destroy();
+        if (_bulletData._type == EBulletType::Standard)
+            Destroy();
     }
-
+    else
+        _projectileMovement->Velocity = _projectileMovement->Velocity.GetSafeNormal() * _curSpeed;
 }
 
 void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -72,14 +72,18 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         if (_hitComponents.Contains(OtherComp))
             return; // 같은 부위를 두 번 공격하지 않음
 
+        if (_bulletData._type == EBulletType::Explosive)
+        {
+            _isExploded = true;
+            Explode();
+        }
+
         float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
         UGameplayStatics::ApplyDamage(OtherActor, finalDamage, GetInstigatorController(), this, nullptr);
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
 
         if (_bulletData._type == EBulletType::Explosive)
         {
-            _isExploded = true;
-            Explode();
             Destroy();
         }
     }
