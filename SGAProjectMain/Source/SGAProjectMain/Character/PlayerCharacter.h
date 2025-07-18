@@ -156,6 +156,7 @@ public:
 	void SetTPSZoomView();
 	void SetTPSView();
 	virtual FRotator Focusing() override;
+	virtual FRotator Focusing_Legacy() ;
 	void UpdateCameraOcclusion();
 
 	void ViewTurnBack();

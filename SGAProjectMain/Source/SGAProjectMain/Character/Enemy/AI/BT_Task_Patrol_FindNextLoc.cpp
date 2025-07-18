@@ -28,6 +28,8 @@ EBTNodeResult::Type UBT_Task_Patrol_FindNextLoc::ExecuteTask(UBehaviorTreeCompon
 	if (naviSystem->IsValidLowLevel() == false)
 		return EBTNodeResult::Failed;
 
+
+
 	//반환받을 랜덤한 위치.
 	FNavLocation randLocation;
 	//일정 반경안의 랜덤한 지점을 가져오는 함수

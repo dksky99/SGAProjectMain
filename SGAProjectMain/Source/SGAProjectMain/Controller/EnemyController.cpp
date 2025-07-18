@@ -41,6 +41,7 @@ void AEnemyController::OnPossess(APawn* InPawn)
         if (RunBehaviorTree(_behaviorTree))
         {
 
+            UE_LOG(LogTemp, Error, TEXT("BT_Success"));
         }
         else
         {

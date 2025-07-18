@@ -265,6 +265,15 @@ FTransform APlayerCharacter::GetLeftHandPos()
 
 FRotator APlayerCharacter::Focusing()
 {
+
+	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
+	APlayerController* pc = Cast<APlayerController>(GetController());
+	if (pc == nullptr)
+	{
+		//UE_LOG(LogTemp, Display, TEXT("Legacy"));
+		return Focusing_Legacy();
+	}
+	
 	//상태에 따라 기준이 되는 본을 바꿔야함.
 	FTransform SpineTransform; 
 	switch (_stateComponent->GetWeaponState())
@@ -297,6 +306,129 @@ FRotator APlayerCharacter::Focusing()
 		CameraLoc = GetCurCamera()->GetComponentLocation();
 		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
 	}
+
+	// 1. 화면의 정중앙 좌표 구하기
+	int32 ViewportSizeX, ViewportSizeY;
+	pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	float ScreenCenterX = (float)ViewportSizeX / 2.f;
+	float ScreenCenterY = (float)ViewportSizeY / 2.f;
+
+	FVector AimTarget;
+	// 2. 화면 좌표를 월드 방향으로 변환
+	FVector WorldLocation, WorldDirection;
+	if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
+	{
+
+		// 3. 라인 트레이스를 정중앙 방향으로 쏨
+		FVector TraceEnd = WorldLocation + WorldDirection * 10000;
+		FHitResult HitResult;
+
+		FCollisionQueryParams Params;
+		Params.bReturnPhysicalMaterial = false;
+		Params.AddIgnoredActor(this); // 자기 자신 무시
+
+		if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
+		{
+			// 4. 명중 시 → 충돌 지점 반환
+			AimTarget= HitResult.ImpactPoint;
+			//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
+		}
+		else
+		{
+
+			AimTarget= TraceEnd;
+		}
+		// 5. 미명중 시 → 끝 지점 반환
+	}
+	else
+	{
+		AimTarget= CameraLoc + CameraForward * 10000.f;
+	}
+
+
+	
+	FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
+	FVector SpineUp = SpineTransform.GetRotation().GetUpVector();
+	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
+
+	// 좌우(Yaw) 필요성 판단
+	FVector SpineFwdFlat = FVector::VectorPlaneProject(SpineFwd, SpineUp).GetSafeNormal();
+	FVector TargetDirFlat = FVector::VectorPlaneProject(TargetDirection, SpineUp).GetSafeNormal();
+	float YawDot = FVector::DotProduct(SpineFwdFlat, TargetDirFlat);
+	bool bNeedsYaw = YawDot < 0.999f;
+
+	// 상하(Pitch) 필요성 판단
+	FVector SpineRight = SpineTransform.GetRotation().GetRightVector();
+	FVector SpineFwdNoYaw = FVector::VectorPlaneProject(SpineFwd, SpineRight).GetSafeNormal();
+	FVector TargetDirNoYaw = FVector::VectorPlaneProject(TargetDirection, SpineRight).GetSafeNormal();
+	float PitchDot = FVector::DotProduct(SpineFwdNoYaw, TargetDirNoYaw);
+	bool bNeedsPitch = PitchDot < 0.999f;
+
+	// 전체 회전 판단 (Roll은 여전히 유용)
+	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection);
+	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
+	float RotationDir = FVector::DotProduct(CrossValue, SpineUp);
+
+	FRotator ResultRot = FRotator::ZeroRotator;
+
+	if (DotValue > 0.999f) // 거의 일치하면 굳이 회전하지 않음
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	ResultRot.Roll = 1.4f - DotValue;
+
+	if (bNeedsYaw)
+	{
+		ResultRot.Yaw = 1.0f * (RotationDir >= 0 ? 1.f : -1.f);
+	}
+	if (bNeedsPitch)
+	{
+		ResultRot.Pitch = 1.0f * ((SpineFwd.Z <= TargetDirection.Z) ? 1.f : -1.f);
+	}
+
+	//UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
+	return ResultRot;
+}
+
+
+
+FRotator APlayerCharacter::Focusing_Legacy()
+{
+	//상태에 따라 기준이 되는 본을 바꿔야함.
+	FTransform SpineTransform;
+	switch (_stateComponent->GetWeaponState())
+	{
+	case EWeaponType::None:
+	case EWeaponType::Grenade:
+	case EWeaponType::StratagemDevice:
+
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("FocusingSocket"), RTS_World);
+
+
+		break;
+	case EWeaponType::Gun:
+		SpineTransform = GetMesh()->GetSocketTransform(TEXT("weapon_r_muzzle"), RTS_World);
+		break;
+	default:
+		break;
+
+	}
+	const FVector SpineLoc = SpineTransform.GetLocation();
+
+	FVector CameraLoc, CameraForward;
+	if (APlayerController* controller = Cast<APlayerController>(GetController()))
+	{
+		CameraLoc = controller->PlayerCameraManager->GetCameraLocation();
+		CameraForward = controller->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
+	}
+	else
+	{
+		CameraLoc = GetCurCamera()->GetComponentLocation();
+		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
+	}
+	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
+
 
 	FVector AimTarget = CameraLoc + CameraForward * 10000.f;
 	FVector SpineFwd = SpineTransform.GetRotation().Vector().GetSafeNormal();
@@ -342,7 +474,6 @@ FRotator APlayerCharacter::Focusing()
 	//UE_LOG(LogTemp, Display, TEXT("pitch : %f Yaw : %f Roll : %f Dot : %f"), ResultRot.Pitch, ResultRot.Yaw, ResultRot.Roll, DotValue);
 	return ResultRot;
 }
-
 
 
 
@@ -1326,6 +1457,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 	}
 
 	_stratagemWidget->OpenWidget(true);
+
+	SetTPSZoomView();
 }
 
 void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
@@ -1337,6 +1470,8 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 	}
 
 	_stratagemWidget->OpenWidget(false);
+
+	SetTPSView();
 }
 
 void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)

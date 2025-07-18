@@ -468,11 +468,12 @@ void AHellDiver::RefillStimPack()
 
 void AHellDiver::StratagemInputting()
 {
-    if (!_stratagemInputMontage) return;
-
+    if (_stratagemInputMontage==nullptr) return;
+    UE_LOG(LogTemp, Display, TEXT("StratagemInput"));
     if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
     {
 
+        UE_LOG(LogTemp, Display, TEXT("StratagemInputSuccess"));
         animInstance->PlayAnimMontage(_stratagemInputMontage);
 
 
@@ -504,15 +505,13 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
     if (zVelocity < -1200.f)
     {
-        if (_stateComponent->IsRolling())
-        {
-            if (_stateComponent->IsRolling())
-            {
+       
+       if (_stateComponent->IsRolling())
+       {
                 FinishRolling();
 
                 KnockDown();
 
-            }
            
 
         }
@@ -537,57 +536,74 @@ void AHellDiver::SoftLanding()
 {
     if (!_softLandingMontage) return;
 
-    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
+    {
+        KnockDown();
+    }
+    else
     {
 
-        animInstance->PlayAnimMontage(_softLandingMontage);
-
-        // 재생 후 인스턴스 가져오기
-        if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_softLandingMontage))
+        if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
         {
-            _stateComponent->BeShocked();
-            // 델리게이트 중복 방지
-            MontageInstance->OnMontageEnded.Unbind();
 
-            // 델리게이트 바인딩
-            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+            animInstance->PlayAnimMontage(_softLandingMontage);
 
-            UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_softLandingMontage->GetName());
+            // 재생 후 인스턴스 가져오기
+            if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_softLandingMontage))
+            {
+                _stateComponent->BeShocked();
+                // 델리게이트 중복 방지
+                MontageInstance->OnMontageEnded.Unbind();
+
+                // 델리게이트 바인딩
+                MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+
+                UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_softLandingMontage->GetName());
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_softLandingMontage->GetName());
+            }
+
         }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_softLandingMontage->GetName());
-        }
-
     }
 }
 
 void AHellDiver::HardLanding()
 {
     if (!_hardLandingMontage) return;
-    if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
+    {
+        KnockDown();
+    }
+    else
     {
 
-        animInstance->PlayAnimMontage(_hardLandingMontage);
 
-        // 재생 후 인스턴스 가져오기
-        if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_hardLandingMontage))
+        if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
         {
-            _stateComponent->BeShocked();
 
-            // 델리게이트 중복 방지
-            MontageInstance->OnMontageEnded.Unbind();
+            animInstance->PlayAnimMontage(_hardLandingMontage);
 
-            // 델리게이트 바인딩
-            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+            // 재생 후 인스턴스 가져오기
+            if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_hardLandingMontage))
+            {
+                _stateComponent->BeShocked();
 
-            UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_hardLandingMontage->GetName());
+                // 델리게이트 중복 방지
+                MontageInstance->OnMontageEnded.Unbind();
+
+                // 델리게이트 바인딩
+                MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::FinishLanding);
+
+                UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_hardLandingMontage->GetName());
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_hardLandingMontage->GetName());
+            }
+
         }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_hardLandingMontage->GetName());
-        }
-
     }
 }
 

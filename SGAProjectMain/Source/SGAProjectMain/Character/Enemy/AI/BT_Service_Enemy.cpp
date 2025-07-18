@@ -20,6 +20,9 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 
 	bool reset=false;
 
+	//현재 스테이트 값 세팅
+
+
 	//Todo  : 스쿼드로부터 적이 발견되거나 상태가 변경되었을경우
 
 	
@@ -34,6 +37,10 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 
 	return;
 
+}
+
+void UBT_Service_Enemy::SetCurrentState()
+{
 }
 
 bool UBT_Service_Enemy::SightSearch(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)

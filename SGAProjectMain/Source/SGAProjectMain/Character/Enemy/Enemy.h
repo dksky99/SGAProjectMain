@@ -37,4 +37,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
+
+
+	EUnitState _unitState =EUnitState::Patrol;
+
 };

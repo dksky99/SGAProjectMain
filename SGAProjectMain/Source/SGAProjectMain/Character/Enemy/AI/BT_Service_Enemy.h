@@ -17,6 +17,8 @@ class SGAPROJECTMAIN_API UBT_Service_Enemy : public UBTService
 public:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
+	void SetCurrentState();
+
 	bool SightSearch(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds);
 
 };
