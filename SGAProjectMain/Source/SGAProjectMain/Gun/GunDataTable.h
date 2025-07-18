@@ -18,6 +18,14 @@ enum class EGunType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EGunSlotType : uint8
+{
+	Primary,
+	Secondary,
+	Support
+};
+
+UENUM(BlueprintType)
 enum class EFireMode : uint8
 {
 	FireAuto,
@@ -65,6 +73,9 @@ struct FGunData : public FTableRowBase
 	EGunType _type; // 한손 혹은 두손
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGunSlotType _slotType; // 어느 슬롯에 장착되는지
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UTexture2D* _icon;
 
 	// 데미지 요소
@@ -75,7 +86,7 @@ struct FGunData : public FTableRowBase
 	float _vsDurableDamage = 15.0f; // 내구 데미지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 내구 데미지
+	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 관통력
 
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

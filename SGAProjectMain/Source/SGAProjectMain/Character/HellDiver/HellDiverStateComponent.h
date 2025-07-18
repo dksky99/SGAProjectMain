@@ -109,10 +109,12 @@ public:
 	bool IsCookingGrenade() { return _isCookingGrenade; }
 	void SetCookingGrenade(bool isCookingGrenade) { _isCookingGrenade = isCookingGrenade; }
 	bool IsInputtingStratagem(){ return _actionState==EActionState::Stratagem; }
-	void SetInputtingStratagem(bool isInputtingStratagem) { _actionState = EActionState::Stratagem;	}
+	void SetInputtingStratagem(bool isInputtingStratagem) { if (isInputtingStratagem) _actionState = EActionState::Stratagem;
+															else _actionState = EActionState::None; }
 
 	bool IsCheckingMap() { return _actionState == EActionState::ViewMap; }
-	void SetCheckingMap(bool isCheckingMap) { _actionState = EActionState::ViewMap; }
+	void SetCheckingMap(bool isCheckingMap) { if (isCheckingMap) _actionState = EActionState::ViewMap;
+											  else _actionState = EActionState::None; }
 
 	bool IsMotionChanging() { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }

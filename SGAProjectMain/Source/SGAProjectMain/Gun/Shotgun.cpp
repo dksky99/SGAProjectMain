@@ -43,8 +43,8 @@ void AShotgun::Fire()
 	ApplyFireRecoil();
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사
-	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	FVector fireDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector fireDirection = _gunMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 	FHitResult hitResult;
 
 	// 조준하고 있지 않을 경우 탄퍼짐

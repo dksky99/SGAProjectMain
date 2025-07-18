@@ -24,11 +24,21 @@ AGunBase::AGunBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
-	RootComponent = _mesh;
+	if (_mesh)  // AItemBase의 StaticMesh 삭제
+	{ 
+		_mesh->DestroyComponent();
+		_mesh->SetHiddenInGame(true);
+	}
+
+	_gunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	_gunMesh->SetCollisionProfileName("PhysicsActor");
+	_gunMesh->SetGenerateOverlapEvents(true);
+	_gunMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	RootComponent = _gunMesh;
 
 	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
 	_tacticalLight->SetupAttachment(RootComponent);
+	_tacticalLight->SetVisibility(false);
 }
 
 // Called when the game starts or when spawned
@@ -58,7 +68,7 @@ void AGunBase::BeginPlay()
 	{
 		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			_gunData._laserFX,
-			_mesh,
+			_gunMesh,
 			NAME_None,
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
@@ -71,7 +81,7 @@ void AGunBase::BeginPlay()
 	{
 		_laserImpact = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			_gunData._laserImpactFX,
-			_mesh,
+			_gunMesh,
 			NAME_None,
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
@@ -91,8 +101,8 @@ void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
+	//auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	//if (!camera) return;
 	
 	RecoverRecoil(DeltaTime);
 	if (!_isActive) return;
@@ -142,8 +152,6 @@ void AGunBase::StartFire()
 
 void AGunBase::Fire()
 {
-	FColor drawColor = FColor::Green;
-	
 	// 탄창, 약실 모두 비었음
 	if (_curAmmo <= 0 && !_isChamberLoaded)
 	{
@@ -152,8 +160,8 @@ void AGunBase::Fire()
 		return;
 	}
 	
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
+	/*auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	if (!camera) return;*/
 
 	if (_fireMode == EFireMode::FireBoltAction)
 	{
@@ -173,7 +181,35 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
-	ApplyFireRecoil();
+	ApplyFireRecoil(); // 반동 계산
+	ExecuteShot(); // 라인트레이스
+
+	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
+	{
+		_curAmmo--; // 탄약 감소
+	}
+	else // 약실에만 남아있을 경우
+	{
+		_isChamberLoaded = false; // 약실 탄 비움
+	}
+	
+	if (_ammoChanged.IsBound())
+		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
+}
+
+void AGunBase::StopFire()
+{
+	if (_owner)
+	{
+		_owner->GetStateComponent()->SetFiring(false);
+	}
+
+	GetWorldTimerManager().ClearTimer(_fireTimer);
+}
+
+void AGunBase::ExecuteShot()
+{
+	FColor drawColor = FColor::Green; // 디버깅용
 
 	FHitResult hitResult = GetHitResult();
 	/*ApplyFireRecoil();
@@ -193,12 +229,12 @@ void AGunBase::Fire()
 
 	// 플레이어에게서 화면 중앙 방향으로
 	FVector dir = (_hitPoint - start).GetSafeNormal();
-	
+
 	// 조준하지 않을 경우 탄퍼짐
 	if (!_owner->GetStateComponent()->IsAiming())
 	{
 		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(_gunData._recoil));
-		_hitPoint = start + dir * 10000.0f; 
+		_hitPoint = start + dir * 10000.0f;
 	}
 
 	FHitResult hitResult;
@@ -217,36 +253,16 @@ void AGunBase::Fire()
 		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
 		float finalDamage = CalculateDamage(distance / 100);
 
+		if (finalDamage < 0) return;
+
 		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 		{
 			UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
 		}
 	}
 
-	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
-	{
-		_curAmmo--;
-	}
-	else // 약실에만 남아있을 경우
-	{
-		_isChamberLoaded = false;
-	}
-	
-	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-
 	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 	DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
-}
-
-void AGunBase::StopFire()
-{
-	if (_owner)
-	{
-		_owner->GetStateComponent()->SetFiring(false);
-	}
-
-	GetWorldTimerManager().ClearTimer(_fireTimer);
 }
 
 void AGunBase::StartAiming()
@@ -273,6 +289,7 @@ void AGunBase::StartAiming()
 
 void AGunBase::StopAiming()
 {
+	if (!_owner) return;
 	_owner->GetStateComponent()->SetAiming(false);
 
 	if (_marker)
@@ -334,7 +351,7 @@ void AGunBase::DeactivateGun()
 	_isActive = false;
 	SetActorHiddenInGame(true);
 
-	if (_tacticalLight)
+	if (_tacticalLight && _owner)
 		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
 
 	if (_marker)
@@ -356,15 +373,16 @@ void AGunBase::AttachToHand()
 	{
 		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
 		{
+			// 물리 & 충돌 비활성화
+			if (_gunMesh)
+			{
+				_gunMesh->SetSimulatePhysics(false);
+				_gunMesh->SetEnableGravity(false);
+				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
 			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
-
-			// 물리 & 충돌 비활성화
-			if (_mesh)
-			{
-				_mesh->SetSimulatePhysics(false);
-				_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			}
 		}
 	}
 }
@@ -529,27 +547,34 @@ void AGunBase::RefillMag()
 
 float AGunBase::CalculateDamage(float distance)
 {
-	if (distance <= 25.0f)
+	if (distance <= 2500.f) // 25m까지
 	{
-		float Alpha = distance / 25.0f;
-		float Falloff = FMath::Lerp(0.0f, _gunData._falloff25, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = distance / 25.0f;
+		float falloff = FMath::Lerp(0.0f, _gunData._falloff25, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 50.0f)
+	else if (distance <= 5000.f) // 50m까지
 	{
-		float Alpha = (distance - 25.0f) / 25.0f;
-		float Falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = (distance - 25.0f) / 25.0f;
+		float falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 100.0f)
+	else if (distance <= 10000.f) // 100m까지
 	{
-		float Alpha = (distance - 50.0f) / 50.0f;
-		float Falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, Alpha);
-		return _gunData._baseDamage * (1.0f - Falloff);
+		float alpha = (distance - 50.0f) / 50.0f;
+		float falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, alpha);
+		return _gunData._baseDamage * (1.0f - falloff);
 	}
 	else
 	{
-		return _gunData._baseDamage * (1.0f - _gunData._falloff100);
+		// 50~100m 구간의 감속 기울기
+		float perMeterFalloff = (_gunData._falloff100 - _gunData._falloff50) / 50.0f;
+
+		// 100m 이후부터는 50~100m 구간의 감속 기울기 사용
+		float extraFalloff = perMeterFalloff * ((distance - 10000.f));
+		float finalFalloff = _gunData._falloff100 + extraFalloff;
+
+		return _gunData._baseDamage * (1.0f - finalFalloff);
 	}
 }
 
@@ -573,6 +598,8 @@ float AGunBase::CalculateDamage(float distance)
 
 void AGunBase::RecoverRecoil(float DeltaTime)
 {
+	if (!_owner) return;
+
 	APlayerController* playerController = Cast<APlayerController>(_owner->GetController());
 	if (playerController)
 	{
@@ -678,8 +705,8 @@ FHitResult AGunBase::GetHitResult()
 	//	return end;
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사
-	FVector muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	FVector fireDirection = _mesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector fireDirection = _gunMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
 
 	// 조준하고 있지 않을 경우 탄퍼짐
 	if (!_owner->GetStateComponent()->IsAiming())
@@ -734,9 +761,9 @@ void AGunBase::UseLaserPoint(FVector hitPoint)
 {
 	FVector start;
 
-	if (_mesh && _mesh->DoesSocketExist(TEXT("LaserPoint")))
+	if (_gunMesh && _gunMesh->DoesSocketExist(TEXT("LaserPoint")))
 	{
-		start = _mesh->GetSocketLocation(TEXT("LaserPoint"));
+		start = _gunMesh->GetSocketLocation(TEXT("LaserPoint"));
 	}
 	else
 	{
@@ -775,28 +802,33 @@ void AGunBase::UseTacticalLight(bool isAiming)
 	}
 }
 
+void AGunBase::PickupItem(AHellDiver* player)
+{
+	player->PickupGun(this);
+}
+
 FTransform AGunBase::GetMuzzleTrans()
 {
-	return  _mesh->GetSocketTransform(TEXT("Muzzle"),RTS_World);
+	return  _gunMesh->GetSocketTransform(TEXT("Muzzle"),RTS_World);
 }
 
 FVector AGunBase::GetMuzzleLoc()
 {
-	return _mesh->GetSocketLocation(TEXT("Muzzle"));;
+	return _gunMesh->GetSocketLocation(TEXT("Muzzle"));;
 }
 
 FRotator AGunBase::GetMuzzleRot()
 {
-	return _mesh->GetSocketRotation(TEXT("Muzzle"));
+	return _gunMesh->GetSocketRotation(TEXT("Muzzle"));
 }
 
 FTransform AGunBase::GetLeftHandleTrans()
 {
-	if(_mesh==nullptr)
+	if(_gunMesh==nullptr)
 		return GetActorTransform();
-	if(_mesh->DoesSocketExist(TEXT("LeftGrip")))
-		return _mesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
-	return _mesh->GetComponentTransform();
+	if(_gunMesh->DoesSocketExist(TEXT("LeftGrip")))
+		return _gunMesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
+	return _gunMesh->GetComponentTransform();
 		
 }
 

@@ -89,7 +89,7 @@ void ASceneCapturer::Tick(float DeltaTime)
 	}
 
 	if (_pingActor)
-		BroadcastPingInfo();
+		UpdatePing();
 }
 
 void ASceneCapturer::ResetMap()
@@ -198,15 +198,30 @@ bool ASceneCapturer::PingOnMap()
 	return true;
 }
 
-void ASceneCapturer::BroadcastPingInfo()
+void ASceneCapturer::UpdatePing() // TODO : 일부 기능 핑액터에 넘겨주기
 {
 	if (!_pingActor) return;
 
 	float halfWidth = _sceneCaptureComponent->OrthoWidth / 2.f;
-	FVector sceneCapturerToPing = _pingActor->GetActorLocation() - this->GetActorLocation();
+	FVector pingLocation = _pingActor->GetActorLocation();
+	FVector sceneCapturerToPing = pingLocation - this->GetActorLocation();
+	FVector playerToPing = pingLocation - _player->GetActorLocation();
 
-	if (_pingUpdateEvent.IsBound())
-		_pingUpdateEvent.Broadcast(sceneCapturerToPing, halfWidth);
+	if (playerToPing.SizeSquared2D() <= 50.f * 50.f) // 핑과 플레이어간의 거리가 5m 이내라면
+	{												// 핑 삭제
+		_pingActor->Destroy();
+		_pingActor = nullptr;
+
+		if (_pingOnOffEvent.IsBound())
+			_pingOnOffEvent.Broadcast(false);
+
+		return;
+	}
+
+	if (_pingRelativeUpdateEvent.IsBound())
+		_pingRelativeUpdateEvent.Broadcast(sceneCapturerToPing, halfWidth);
+	if (_pingLocationUpdateEvent.IsBound())
+		_pingLocationUpdateEvent.Broadcast(pingLocation);
 }
 
 void ASceneCapturer::FilterActorList()

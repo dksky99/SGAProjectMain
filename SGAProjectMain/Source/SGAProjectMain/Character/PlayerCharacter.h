@@ -112,6 +112,9 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
 
 	void SwitchWeapon(int32 index, const FInputActionValue& value);
+	void PickupGun(AGunBase* gun) override;
+	void DropBackpack();
+	
 
 	UFUNCTION()
 	void Interact(const  FInputActionValue& value);
@@ -224,8 +227,11 @@ protected:
 	class UInputAction* _strataSAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _strataDAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _stimPackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _invenAction;
 
 
 
@@ -265,6 +271,11 @@ protected:
 	TSubclassOf<UUserWidget> _staminaBarWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class UStaminaBarWidget* _staminaBarWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _compassWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UCompassWidget* _compassWidget;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))

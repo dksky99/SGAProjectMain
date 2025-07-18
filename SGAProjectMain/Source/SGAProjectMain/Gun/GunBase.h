@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GunDataTable.h"
+#include "../Object/Item/ItemBase.h"
 #include "GunBase.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FMagChanged, int, int);
 
 UCLASS()
-class SGAPROJECTMAIN_API AGunBase : public AActor
+class SGAPROJECTMAIN_API AGunBase : public AItemBase
 {
 	GENERATED_BODY()
 	
@@ -31,6 +32,8 @@ public:
 	virtual void Fire();
 	virtual void StopFire();
 
+	virtual void ExecuteShot(); // 히트스캔
+
 	virtual void StartAiming();
 	virtual void StopAiming();
 
@@ -39,9 +42,9 @@ public:
 	void DeactivateGun();
 	void AttachToHand();
 
-	void Reload();
+	virtual void Reload();
 	void FinishReload(class UAnimMontage* Montage, bool bInterrupted);
-	void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
+	virtual void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
 
 	void RefillMag();
@@ -62,6 +65,8 @@ public:
 	void UseLaserPoint(FVector hitPoint);
 	void UseTacticalLight(bool isAiming);
 
+	virtual void PickupItem(AHellDiver* player) override;
+
 	void ResetCanFire() { _canFire = true; }
 
 	const FGunData& GetGunData() { return _gunData; }
@@ -70,6 +75,7 @@ public:
 	EFireMode GetCurFireMode() { return _fireMode; }
 	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
 	int32 GetCurScopeMode() { return _scopeMode; }
+	USkeletalMeshComponent* GetMesh() { return _gunMesh; }
 
 
 
@@ -83,7 +89,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
-	TObjectPtr<USkeletalMeshComponent> _mesh;
+	TObjectPtr<USkeletalMeshComponent> _gunMesh;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class AHellDiver* _owner;

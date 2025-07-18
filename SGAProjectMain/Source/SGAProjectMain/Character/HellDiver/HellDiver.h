@@ -23,8 +23,9 @@ public:
 
 	class UHellDiverStateComponent* GetStateComponent();
 	class UHellDiverStatComponent* GetStatComponent();
-
 	class UMotionWarpingComponent* GetMotionWarp() const;
+	class UHellDiverInvenComponent* GetInvenComponent();
+
 	// ≈ı√¥π∞
 	void EquipGrenade();
 	void EquipStratagem();
@@ -56,9 +57,21 @@ public:
 	void Crouching();
 	void Proning();
 
-	class AGunBase* SpawnGun(TSubclassOf<AGunBase> gunClass);
-	void EquipGun(AGunBase* gun);
-	AGunBase* GetEquippedGun() { return _equippedGun; }
+	// √—
+	void SpawnGun(TSubclassOf<class AGunBase> gunClass);
+	void EquipGun(int32 index); // ΩΩ∑‘ø°º≠ ¿Œµ¶Ω∫∑Œ ¿Â¬¯
+	virtual void PickupGun(AGunBase* gun); // √—¿ª ¡˜¡¢ Ω¿µÊ
+	void SwitchGun(int32 index);
+	AGunBase* GetEquippedGun();
+
+	void StartFiring();
+	void StopFiring();
+	void StartAiming();
+	void StopAiming();
+
+	void Reload();
+
+	void EquipBackpack(class ABackpack* backpack);
 
 	// ∫∏±ﬁ
 	void RefillAllItem();
@@ -133,6 +146,10 @@ protected:
 	FTimerHandle _sprintCooldownHandle;
 	bool _isSprintCoolTime = false;
 
+	// ¿Œ∫•≈‰∏Æ
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Inventory", meta = (AllowPrivateAccess = "true"))
+	class UHellDiverInvenComponent* _invenComponent;
+
 	// ≈ı√¥π∞
 	UPROPERTY()
 	class AThrowable* _heldThrowable = nullptr;
@@ -185,12 +202,6 @@ protected:
 	TSubclassOf<class AGunBase> _gunClass2;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AGunBase> _gunClass3;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Gun")
-	AGunBase* _equippedGun;
-
-	UPROPERTY()
-	TArray<AGunBase*> _gunSlot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Anim")
 	FVector _jointTargetLoc = FVector(20,45,-90);

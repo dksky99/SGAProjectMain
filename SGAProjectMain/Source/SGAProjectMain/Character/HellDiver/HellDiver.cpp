@@ -8,6 +8,7 @@
 #include "HellDiverMovementComponent.h"
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
+#include "HellDiverInvenComponent.h"
 #include "HellDiverAnimInstance.h"
 #include "PakourComponent.h"
 
@@ -25,6 +26,9 @@
 #include "../../Data/CollisionCameraDataAsset.h"
 
 #include "../../Gun/GunBase.h"
+#include "../../Gun/ExplosiveGun.h"
+#include "../../Object/Item/Backpack.h"
+#include "../../Object/Item/ReloadBackpack.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -46,6 +50,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     _pakourComponent = CreateDefaultSubobject<UPakourComponent>(TEXT("PakourComponent"));
     _motionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
 
+    _invenComponent = CreateDefaultSubobject<UHellDiverInvenComponent>(TEXT("InvenComponent"));
 
 }
 
@@ -63,8 +68,15 @@ void AHellDiver::BeginPlay()
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
 
-    if (_grenadeChanged.IsBound())
-        _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
+    if (_gunClass1 && _gunClass2 && _gunClass3)
+    {
+        // 임시 세팅
+        SpawnGun(_gunClass1);
+        SpawnGun(_gunClass2);
+        SpawnGun(_gunClass3);
+
+        EquipGun(0); // 첫 번째 무기 장착
+    }
 }
 
 void AHellDiver::Tick(float DeltaTime)
@@ -100,6 +112,11 @@ UHellDiverStatComponent* AHellDiver::GetStatComponent()
 UMotionWarpingComponent* AHellDiver::GetMotionWarp() const
 {
     return _motionWarpComponent;
+}
+
+UHellDiverInvenComponent* AHellDiver::GetInvenComponent()
+{
+    return _invenComponent;
 }
 
 void AHellDiver::EquipGrenade()
@@ -414,22 +431,105 @@ void AHellDiver::Proning()
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
 }
 
-AGunBase* AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)
+void AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)
 {
     AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
     gun->SetOwner(this);
     gun->InitializeGun();
-
-    return gun;
+    _invenComponent->SetGun(gun);
+    _stateComponent->SetWeaponState(EWeaponType::Gun);
 }
 
-void AHellDiver::EquipGun(AGunBase* gun)
+void AHellDiver::EquipGun(int32 index)
 {
-    _equippedGun = gun;
-    _equippedGun->ActivateGun();
+    _invenComponent->EquipGun(index);
     _stateComponent->SetWeaponState(EWeaponType::Gun);
+}
 
-    UE_LOG(LogTemp, Log, TEXT("Equip Gun"));
+void AHellDiver::PickupGun(AGunBase* gun)
+{
+    int32 index = _invenComponent->SetGun(gun);
+    if (index == -1) return;
+
+    gun->SetOwner(this);
+    gun->InitializeGun();
+    _invenComponent->EquipGun(index);
+    _stateComponent->SetWeaponState(EWeaponType::Gun);
+}
+
+void AHellDiver::SwitchGun(int32 index)
+{
+    if (!_invenComponent->CanSwitchGun(index))
+        return; // 바꿀 수 없으면 중단하고 리턴 false
+
+    // 바꿀 수 있다면
+    if (_stateComponent->IsReloading())
+        _invenComponent->GetEquippedGun()->CancelReload(); // 장전 중단
+
+    // 하던 행동 중단
+    _stateComponent->SetAiming(false);
+    _stateComponent->SetFiring(false);
+
+    _invenComponent->GetEquippedGun()->DeactivateGun();
+    EquipGun(index); // 총 변경
+    _invenComponent->GetEquippedGun()->ActivateGun();
+
+    _stateComponent->SetEquipIndex(index);
+}
+
+AGunBase* AHellDiver::GetEquippedGun()
+{
+    return _invenComponent->GetEquippedGun();
+}
+
+void AHellDiver::StartFiring()
+{
+    _stateComponent->SetFiring(true);
+    _invenComponent->GetEquippedGun()->StartFire();
+}
+
+void AHellDiver::StopFiring()
+{
+    _stateComponent->SetFiring(false);
+    _invenComponent->GetEquippedGun()->StopFire();
+}
+
+void AHellDiver::StartAiming()
+{
+    _stateComponent->SetAiming(true);
+    _invenComponent->GetEquippedGun()->StartAiming();
+
+}
+
+void AHellDiver::StopAiming()
+{
+    _stateComponent->SetAiming(false);
+    _invenComponent->GetEquippedGun()->StopAiming();
+}
+
+void AHellDiver::Reload()
+{
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (auto projectileGun = Cast<AExplosiveGun>(equippedGun)) // 폭발성 총일 경우
+    {
+        auto backpack = _invenComponent->GetBackpack(); // 가방이 없으면 리턴
+        if (!backpack) return;
+
+        auto reloadBackpack = Cast<AReloadBackpack>(backpack); // 가방이 있어도
+        if (!reloadBackpack) return;                            // 장전용이 아니면 리턴
+        if (reloadBackpack->GetCurBulletCount() <= 0) return;   // 혹은 가방에 총알이 없으면 리턴
+    }
+
+    equippedGun->StopAiming();
+    equippedGun->StopFire();
+    equippedGun->Reload();
+}
+
+void AHellDiver::EquipBackpack(ABackpack* backpack)
+{
+
+    _invenComponent->EquipBackpack(backpack);
 }
 
 void AHellDiver::RefillAllItem()
@@ -441,7 +541,9 @@ void AHellDiver::RefillAllItem()
 
 void AHellDiver::RefillMag()
 {
-    for (auto gun : _gunSlot)
+    auto gunSlot = _invenComponent->GetAllGun();
+
+    for (auto gun : gunSlot)
     {
         if (gun)
         {
@@ -662,11 +764,13 @@ float AHellDiver::TakeDamage(float damageAmount, FDamageEvent const& damageEvent
 
 FTransform AHellDiver::GetLeftHandSocketTransform() const
 {
-    if (_equippedGun ==nullptr)
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (equippedGun == nullptr)
     {
         return GetActorTransform(); // fallback
     }
-    FTransform temp = _equippedGun->GetLeftHandleTrans();
+    FTransform temp = equippedGun->GetLeftHandleTrans();
     FVector resultLoc;
     FRotator resultRot;
     GetMesh()->TransformToBoneSpace(TEXT("hand_r"), temp.GetLocation(), temp.GetRotation().Rotator(), resultLoc,resultRot);
@@ -699,7 +803,9 @@ void AHellDiver::Dead()
 
     _stateComponent->Dead();
 
-
+    _invenComponent->DropGun(0);
+    _invenComponent->DropGun(1);
+    _invenComponent->DropGun(2);
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const
