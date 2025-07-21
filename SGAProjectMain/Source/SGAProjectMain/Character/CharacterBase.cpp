@@ -11,6 +11,8 @@
 #include "PhysicsEngine/ConstraintTypes.h"
 #include "StatComponent.h"
 
+const FName ACharacterBase::StatComponentName = "StatComponent";
+
 // Sets default values
 ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
@@ -18,7 +20,7 @@ ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	_statComponent = CreateDefaultSubobject<UStatComponent>("Stat");
+	_statComponent = CreateDefaultSubobject<UStatComponent>(StatComponentName);
 
 }
 
@@ -46,7 +48,6 @@ void ACharacterBase::BeginPlay()
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACharacterBase::UpDown(float value)

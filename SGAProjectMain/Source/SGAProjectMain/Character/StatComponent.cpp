@@ -144,6 +144,9 @@ void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)
 	default:
 		// 코어 직접 처리
 		_coreHP = FMath::Max(0.0f, _coreHP - Damage);
+
+		_hpChanged.Broadcast(_coreHP / _coreMaxHP);
+
 		if (_coreHP == 0.0f)
 			OnDeath.Broadcast();
 		return;
@@ -157,6 +160,8 @@ void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)
 	// 체력 차감
 	*CurrentHP = FMath::Max(0.f, *CurrentHP - DamageToPart);
 	_coreHP = FMath::Max(0.0f, _coreHP - DamageToCore);
+
+	_hpChanged.Broadcast(_coreHP / _coreMaxHP);
 
 	// 코어 사망 우선 체크
 	if (_coreHP == 0.0f)

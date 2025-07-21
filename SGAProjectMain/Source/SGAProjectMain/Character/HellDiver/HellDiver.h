@@ -7,7 +7,7 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiver.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int, int);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int32, int32);
 
 UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public ACharacterBase
@@ -112,8 +112,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
-	class UHellDiverStatComponent* _statComponent;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
+	//class UHellDiverStatComponent* _statComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Pakour", meta = (AllowPrivateAccess = "true"))
 	class UPakourComponent* _pakourComponent;

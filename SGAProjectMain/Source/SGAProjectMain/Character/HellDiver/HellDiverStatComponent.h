@@ -34,7 +34,6 @@ public:
 	float GetCurStamina() { return _curStamina; }
 	bool IsMaxStamina() { return _curStamina == _maxStamina; }
 
-	FHpChanged _hpChanged;
 	FStaminaChanged _staminaChanged;
 
 protected:

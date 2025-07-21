@@ -5,7 +5,7 @@
 #include "GameFramework/Character.h" // 이게 필요함
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "HellDiverMovementComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
 #include "HellDiverAnimInstance.h"
@@ -27,14 +27,11 @@
 #include "../../Gun/GunBase.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverMovementComponent>(ACharacter::CharacterMovementComponentName))
+    : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverStatComponent>(StatComponentName))
 {
     GetCharacterMovement()->JumpZVelocity = 300.0f;
 
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
-
-
-    //_statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
 
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
@@ -52,6 +49,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 void AHellDiver::BeginPlay()
 {
     Super::BeginPlay();
+
     SetCollisionState(_stateComponent->GetCharacterState());
 
     _stateComponent->_characterStateChanged.AddDynamic(this, &AHellDiver::SetCollisionState);
@@ -71,11 +69,13 @@ void AHellDiver::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    auto statComponent = GetStatComponent();
+
     if (_stateComponent->GetCharacterState() == ECharacterState::Sprinting)
     {
-        _statComponent->ConsumeStamina(DeltaTime);
+        statComponent->ConsumeStamina(DeltaTime);
 
-        if (_statComponent->GetCurStamina() <= 0.f) // 스테미너가 완전히 소모될 경우
+        if (statComponent->GetCurStamina() <= 0.f) // 스테미너가 완전히 소모될 경우
         {
             FinishSprint(); // 달리기 중단
         }
@@ -83,7 +83,7 @@ void AHellDiver::Tick(float DeltaTime)
     else
     {
         if (!_isSprintCoolTime) // 달리기 중단 후 3초가 지나야 스테미너 회복 시작
-            _statComponent->RecoverStamina(DeltaTime);
+            statComponent->RecoverStamina(DeltaTime);
     }
 }
 
@@ -94,7 +94,9 @@ UHellDiverStateComponent* AHellDiver::GetStateComponent()
 
 UHellDiverStatComponent* AHellDiver::GetStatComponent()
 {
-    return _statComponent;
+    UHellDiverStatComponent* statComponent = Cast<UHellDiverStatComponent>(_statComponent);
+
+    return statComponent;
 }
 
 UMotionWarpingComponent* AHellDiver::GetMotionWarp() const
@@ -305,7 +307,9 @@ void AHellDiver::UseStimPack()
 
 void AHellDiver::StartSprint()
 {
-    if (_statComponent->GetCurStamina() <= 0.f)
+    auto statComponent = GetStatComponent();
+
+    if (statComponent->GetCurStamina() <= 0.f)
         return;
     if (_stateComponent->StartSprint() == false)
         return;
@@ -388,28 +392,35 @@ void AHellDiver::FinishRolling()
 
 void AHellDiver::Standing()
 {
+    auto statComponent = GetStatComponent();
+
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetDefaultSpeed();
 }
 
 void AHellDiver::Sprinting()
 {
+    auto statComponent = GetStatComponent();
+
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetSprintSpeed();
+    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetSprintSpeed();
 }
 
 void AHellDiver::Crouching()
 {
+    auto statComponent = GetStatComponent();
+
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetCrouchSpeed();
+    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetCrouchSpeed();
 }
 
 void AHellDiver::Proning()
 {
+    auto statComponent = GetStatComponent();
 
     SetCollisionState(_stateComponent->GetCharacterState());
 
-    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetProneSpeed();
+    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetProneSpeed();
 }
 
 AGunBase* AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)

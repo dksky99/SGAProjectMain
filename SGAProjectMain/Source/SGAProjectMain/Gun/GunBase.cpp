@@ -219,7 +219,18 @@ void AGunBase::Fire()
 
 		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 		{
-			UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+			//UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+
+			const FVector shotDirection = (hitResult.TraceStart - hitResult.ImpactPoint).GetSafeNormal();
+			UGameplayStatics::ApplyPointDamage(
+				character,                             // 데미지를 받을 액터
+				finalDamage,                           // 적용할 데미지 값
+				shotDirection,                         // 데미지가 들어온 방향(단위 벡터)
+				hitResult,                             // 충돌에 대한 자세한 정보(FHitResult)
+				_owner->GetController(),               // 데미지를 일으킨 컨트롤러(Instigator)
+				this,                                  // 데미지를 발생시킨 액터(Damage Causer)
+				UDamageType::StaticClass()             // 사용할 데미지 타입 클래스
+			);
 		}
 	}
 

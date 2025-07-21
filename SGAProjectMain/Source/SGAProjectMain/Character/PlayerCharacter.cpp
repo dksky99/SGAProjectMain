@@ -118,6 +118,9 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	auto statComponent = GetStatComponent();
+
 	SetDefaultVIew();
 	//InitView();
 	SetTPSView();
@@ -177,7 +180,7 @@ void APlayerCharacter::BeginPlay()
 
 	if (_staminaBarWidget)
 	{
-		_statComponent->_staminaChanged.AddUObject(_staminaBarWidget, &UStaminaBarWidget::SetStamina);
+		statComponent->_staminaChanged.AddUObject(_staminaBarWidget, &UStaminaBarWidget::SetStamina);
 		_staminaBarWidget->AddToViewport();
 		_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
@@ -189,6 +192,8 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	auto statComponent = GetStatComponent();
 
 	if (_stratagemComponent && _stratagemWidget)
 	{
@@ -205,7 +210,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (_staminaBarWidget)
 	{
 		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
-		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && _statComponent->IsMaxStamina())
+		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
 		{
 			_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
 		}

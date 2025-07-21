@@ -85,7 +85,19 @@ void AHellpod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 
 		_damagedCharacters.Add(hitCharacter);
 
-		UGameplayStatics::ApplyDamage(hitCharacter, _damage, GetInstigatorController(), this, UDamageType::StaticClass());
+		// 폭발(헬포드 충돌) 중심에서 명중 지점까지 방향 계산
+		const FVector shotDirection = (SweepResult.ImpactPoint - GetActorLocation()).GetSafeNormal();
+
+		// 스윕 결과에 담긴 FHitResult를 그대로 사용하여 포인트 데미지 호출
+		UGameplayStatics::ApplyPointDamage(
+			hitCharacter,                   // 데미지를 받을 액터
+			_damage,                        // 적용할 기본 데미지 값
+			shotDirection,                  // 데미지가 들어온 방향 벡터
+			SweepResult,                    // 충돌 정보(FHitResult, Impact 컴포넌트 포함)
+			GetInstigatorController(),      // 데미지를 유발한 컨트롤러
+			this,                           // 데미지 발생 주체 액터
+			UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
+		);
 	}
 }
 

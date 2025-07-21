@@ -21,10 +21,14 @@ enum class EBodyPart : uint8
 
 // 사망 이벤트 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
+// 체력 변화 델리게이트
+DECLARE_MULTICAST_DELEGATE_OneParam(FHPChanged, float);
 // 부위 파괴 이벤트 델리게이트 (어느 부위인지 전달)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartDestroyed, EBodyPart, Part);
 // 부위 복구 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartRestored, EBodyPart, Part);
+
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UStatComponent : public UActorComponent
@@ -58,6 +62,9 @@ public:
 	// 사망 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnDeath OnDeath;
+
+	// 체력 변화 알림
+	FHPChanged _hpChanged;
 
 	// 부위 파괴 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")

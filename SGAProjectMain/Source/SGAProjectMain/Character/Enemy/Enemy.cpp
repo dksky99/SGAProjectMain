@@ -5,6 +5,7 @@
 
 #include "Components/WidgetComponent.h"
 #include "../../UI/DummyHpBar.h"
+#include "../StatComponent.h"
 
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -24,8 +25,9 @@ void AEnemy::BeginPlay()
     auto hpBar = Cast<UDummyHpBar>(_hpBarWidget->GetWidget());
     if (hpBar)
     {
-    }
        // _statComponent->_enemyHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
+        _statComponent->_hpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
+    }
 }
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

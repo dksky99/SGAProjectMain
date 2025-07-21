@@ -64,7 +64,10 @@ public:
 	virtual void OnDeath_Handler(); // 상속받아서 죽었을 시 동작 구현
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat")
 	class UStatComponent* _statComponent;
+
+	static const FName StatComponentName;
 
 	float _vertical = 0;
 	float _horizontal = 0;
