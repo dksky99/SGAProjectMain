@@ -6,9 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "StimPackComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FStimPackChanged, int, int);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FStimPackChanged, int32, int32);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(Custom) )
 class SGAPROJECTMAIN_API UStimPackComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -36,6 +36,8 @@ public:
 
 	// 게임 시작 직후 델리게이트 Broadcast
 	void BroadcastStimPackChanged();
+
+
 	FStimPackChanged _stimPackChanged;
 
 private:

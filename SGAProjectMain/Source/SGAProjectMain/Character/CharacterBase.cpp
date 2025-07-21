@@ -11,12 +11,16 @@
 #include "PhysicsEngine/ConstraintTypes.h"
 #include "StatComponent.h"
 
+const FName ACharacterBase::StatComponentName = "StatComponent";
+
 // Sets default values
 ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	_statComponent = CreateDefaultSubobject<UStatComponent>(StatComponentName);
 
 }
 
@@ -29,6 +33,14 @@ void ACharacterBase::PostInitializeComponents()
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (_statComponent->IsValidLowLevel())
+	{
+		// 부위 파괴
+		_statComponent->OnPartDestroyed.AddDynamic(this, &ACharacterBase::OnPartDestroyed_Handler);
+		// 사망
+		_statComponent->OnDeath.AddDynamic(this, &ACharacterBase::OnDeath_Handler);
+	}
 	
 }
 
@@ -36,7 +48,6 @@ void ACharacterBase::BeginPlay()
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACharacterBase::UpDown(float value)
@@ -137,10 +148,10 @@ void ACharacterBase::KnockDownRecovery()
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 }
 
-float ACharacterBase::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
-{
-	return -damageAmount;
-}
+//float ACharacterBase::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
+//{
+//	return -damageAmount;
+//}
 
 void ACharacterBase::CharacterToRagdoll()
 {
@@ -266,5 +277,37 @@ void ACharacterBase::Dead()
 	SetLifeSpan(10.0f);
 
 
+}
+
+void ACharacterBase::OnPartDestroyed_Handler(EBodyPart part)
+{
+	// 각 부위 파괴 동작 구현 
+	// if (part == EBodyPart::Head)
+	// {
+	// }
+	// else if (part == EBodyPart::Torso)
+	// {
+	// }
+	// else if (part == EBodyPart::LeftArm || part == EBodyPart::RightArm)
+	// {
+	// }
+	// else if (part == EBodyPart::LeftLeg || part == EBodyPart::RightLeg)
+	// {
+	// }
+
+	// 부위 파괴 시 로그 출력
+	UE_LOG(LogTemp, Warning, TEXT("%s: Part Destroyed -> %d"), *GetName(), static_cast<int32>(part));
+}
+
+void ACharacterBase::RestoreAllParts()
+{
+}
+
+void ACharacterBase::OnDeath_Handler()
+{
+	// 사망시 동작 구현
+
+	// 사망 시 로그 출력
+	UE_LOG(LogTemp, Error, TEXT("%s: Character Dead"), *GetName());
 }
 
