@@ -6,6 +6,7 @@
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Character/HellDiver/HellDiver.h"
+#include "../SGAProjectMain.h"
 
 void AShotgun::Fire()
 {
@@ -62,7 +63,7 @@ void AShotgun::Fire()
 			hitResult,
 			muzzleLocation,
 			end,
-			ECC_Pawn);
+			ECC_GameDamage);
 
 		if (hitResult.bBlockingHit)
 		{
@@ -72,7 +73,8 @@ void AShotgun::Fire()
 
 			if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 			{
-				UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+				//UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
+				UGameplayStatics::ApplyPointDamage(hitResult.GetActor(), finalDamage, pelletDirection, hitResult, _owner->GetController(), this, UDamageType::StaticClass());
 			}
 		}
 

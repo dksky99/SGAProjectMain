@@ -18,6 +18,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/SpotLightComponent.h"
 
+#include "../SGAProjectMain.h"
+
 // Sets default values
 AGunBase::AGunBase()
 {
@@ -732,7 +734,7 @@ FHitResult AGunBase::GetHitResult()
 		hitResult,
 		muzzleLocation,
 		end,
-		ECC_Pawn);
+		ECC_GameDamage);
 
 	return hitResult;
 }
