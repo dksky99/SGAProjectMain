@@ -311,7 +311,7 @@ void AHellDiver::StopThrowPreview()
 
     if (_heldThrowable)
     {
-        _heldThrowable = nullptr;
+        //_heldThrowable = nullptr;
     }
 }
 

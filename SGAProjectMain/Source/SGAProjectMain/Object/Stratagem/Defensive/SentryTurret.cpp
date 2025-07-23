@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SentryTurret.h"
+
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -11,6 +12,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+
+#include "../../../SGAProjectMain.h"
 
 // Sets default values
 ASentryTurret::ASentryTurret()
@@ -152,7 +155,7 @@ FHitResult ASentryTurret::GetHitResult() const
 		Hit,
 		TraceStart,
 		TraceEnd,
-		ECC_Visibility,
+		ECC_GameDamage,
 		Params
 	);
 
