@@ -29,6 +29,7 @@
 #include "../../Gun/ExplosiveGun.h"
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/ReloadBackpack.h"
+#include "../../Object/Item/SampleResources.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverStatComponent>(StatComponentName))
@@ -539,8 +540,12 @@ void AHellDiver::Reload()
 
 void AHellDiver::EquipBackpack(ABackpack* backpack)
 {
-
     _invenComponent->EquipBackpack(backpack);
+}
+
+void AHellDiver::AddSample(FSampleBundle sample)
+{
+    _invenComponent->AddSample(sample);
 }
 
 void AHellDiver::RefillAllItem()
@@ -817,6 +822,9 @@ void AHellDiver::Dead()
     _invenComponent->DropGun(0);
     _invenComponent->DropGun(1);
     _invenComponent->DropGun(2);
+
+    _invenComponent->DropBackpack();
+    _invenComponent->DropSample();
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const
