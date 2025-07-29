@@ -18,14 +18,6 @@ AEscapePlane::AEscapePlane()
 
     _escapeTriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeTriggerBox"));
     _escapeTriggerBox->SetupAttachment(_planeMesh);
-    //_escapeTriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // ÃÊ±â¿£ Ãæµ¹À» ²¨µÒ
-    //_escapeTriggerBox->SetGenerateOverlapEvents(false);
-
-    //Test
-    _escapeTriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    _escapeTriggerBox->SetGenerateOverlapEvents(true);
-    _isEscapeEnabled = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -33,10 +25,12 @@ void AEscapePlane::BeginPlay()
 {
 	Super::BeginPlay();
 	
-    _escapeTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AEscapePlane::OnDoorOverlap);
+    _escapeTriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // ÃÊ±â¿£ Ãæµ¹À» ²¨µÒ
+    _escapeTriggerBox->SetGenerateOverlapEvents(false);
+    _escapeTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AEscapePlane::OnTriggerBoxOverlap);
 }
 
-void AEscapePlane::OnDoorOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!_isEscapeEnabled) return;
 
@@ -44,10 +38,30 @@ void AEscapePlane::OnDoorOverlap(UPrimitiveComponent* OverlappedComp, AActor* Ot
     GM->OnBattleEnd();
 }
 
+void AEscapePlane::EnableTriggerBox()
+{
+    _escapeTriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    _escapeTriggerBox->SetGenerateOverlapEvents(true);
+    _isEscapeEnabled = true;
+}
+
 // Called every frame
 void AEscapePlane::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    if (_isLanding)
+    {
+        FVector curLocation = GetActorLocation();
+        FVector newLocation = FMath::VInterpTo(curLocation, _targetLocation, DeltaTime, 1.f);
+        SetActorLocation(newLocation);
+
+        float Distance = FVector::Dist(newLocation, _targetLocation);
+        if (Distance <= 5.0f)
+        {
+            _isLanding = false;
+            EnableTriggerBox();  // Æ®¸®°Å ÄÑ±â
+        }
+    }
 }
 

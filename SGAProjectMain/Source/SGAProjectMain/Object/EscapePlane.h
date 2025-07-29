@@ -20,18 +20,24 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnDoorOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void EnableTriggerBox();
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 protected:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Game")
 	UStaticMeshComponent* _planeMesh;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Game")
 	class UBoxComponent* _escapeTriggerBox; // 문 부분에 위치
 
-	bool _isEscapeEnabled;
+	UPROPERTY(EditAnywhere, Category = "Game")
+	FVector _targetLocation;
+
+	bool _isLanding = true;
+	bool _isEscapeEnabled = false;
 };

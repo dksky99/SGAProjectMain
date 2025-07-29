@@ -7,6 +7,15 @@
 #include "CGameInstance.h"
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
+#include "Object/EscapePlane.h"
+
+void AMainGameMode::CallEscapePlane()
+{
+    UWorld* world = GetWorld();
+    if (!world) return;
+
+    AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, FRotator::ZeroRotator);
+}
 
 void AMainGameMode::OnBattleEnd() // 게임이 끝났을 경우
 {

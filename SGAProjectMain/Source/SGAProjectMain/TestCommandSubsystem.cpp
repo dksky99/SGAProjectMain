@@ -39,6 +39,14 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         MoveLobbyDelegate,
         ECVF_Cheat
     );
+
+    CallEscapePlaneDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnCallEscapePlane);
+    CallEscapePlaneCommand = IConsoleManager::Get().RegisterConsoleCommand(
+        TEXT("CallEscapePlane"),
+        TEXT("탈출용 비행기를 소환합니다."),
+        CallEscapePlaneDelegate,
+        ECVF_Cheat
+    );
 }
 
 void UTestCommandSubsystem::Deinitialize()
@@ -102,5 +110,17 @@ void UTestCommandSubsystem::OnMoveLobby()
     if (GM)
     {
         GM->OnBattleEnd();
+    }
+}
+
+void UTestCommandSubsystem::OnCallEscapePlane()
+{
+    UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+    if (!World) return;
+
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (GM)
+    {
+        GM->CallEscapePlane();
     }
 }

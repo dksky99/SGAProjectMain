@@ -22,12 +22,15 @@ private:
     FConsoleCommandDelegate KillMeDelegate;
     FConsoleCommandDelegate KnockDownDelegate;
     FConsoleCommandDelegate MoveLobbyDelegate;
+    FConsoleCommandDelegate CallEscapePlaneDelegate;
 
     IConsoleObject* KillMeCommand;
     IConsoleObject* KnockDownCommand;
     IConsoleObject* MoveLobbyCommand;
+    IConsoleObject* CallEscapePlaneCommand;
 
     void OnKillMe();
     void OnSelfKnockDown();
     void OnMoveLobby();
+    void OnCallEscapePlane();
 };

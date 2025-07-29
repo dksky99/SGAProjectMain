@@ -15,6 +15,14 @@ class SGAPROJECTMAIN_API AMainGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	void CallEscapePlane();
+
 	void OnBattleEnd();
 	
+private:
+	UPROPERTY(EditAnywhere, Category = "Game/Plane")
+	TSubclassOf<class AEscapePlane> _escapePlaneClass;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Plane")
+	FVector _planeSpawnLoc;
 };
