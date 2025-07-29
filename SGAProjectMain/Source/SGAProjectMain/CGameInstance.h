@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Object/Item/SampleResources.h"
 #include "CGameInstance.generated.h"
 
 /**
@@ -30,7 +31,12 @@ public:
 
 	struct FGunData GetGunDataFromTable(int32 id);
 
+	void AddEarnedSample(const FSampleBundle& earnedSample);
+
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
+
+	UPROPERTY(EditAnywhere, Category = "Sample")
+	FSampleBundle _savedSample;
 };

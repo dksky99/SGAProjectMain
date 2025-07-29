@@ -21,10 +21,13 @@ public:
 private:
     FConsoleCommandDelegate KillMeDelegate;
     FConsoleCommandDelegate KnockDownDelegate;
+    FConsoleCommandDelegate MoveLobbyDelegate;
 
     IConsoleObject* KillMeCommand;
     IConsoleObject* KnockDownCommand;
+    IConsoleObject* MoveLobbyCommand;
 
     void OnKillMe();
     void OnSelfKnockDown();
+    void OnMoveLobby();
 };

@@ -26,6 +26,7 @@ void UHellDiverInvenComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	_sampleBundle.Clear();
 	// ...
 	
 }

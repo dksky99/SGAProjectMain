@@ -170,12 +170,14 @@ void APlayerCharacter::BeginPlay()
 			if (sceneCapturer)
 			{
 				_sceneCapturer = sceneCapturer;
+				
+				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+				
 				break;
 			}
 		}
-		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-		_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
 	}
 
 	if (_staminaBarWidget)
@@ -189,8 +191,11 @@ void APlayerCharacter::BeginPlay()
 	{
 		_compassWidget->AddToViewport();
 
-		_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		if (_sceneCapturer)
+		{
+			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		}
 	}
 
 	//if (_sceneUIClass)

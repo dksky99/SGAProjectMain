@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
 #include "Character/CharacterBase.h"
+#include "MainGameMode.h"
 
 void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,6 +31,14 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         ECVF_Cheat
     );
 
+
+    MoveLobbyDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnMoveLobby);
+    MoveLobbyCommand = IConsoleManager::Get().RegisterConsoleCommand(
+        TEXT("MoveLevel"),
+        TEXT("게임을 종료하고 로비로 이동합니다."),
+        MoveLobbyDelegate,
+        ECVF_Cheat
+    );
 }
 
 void UTestCommandSubsystem::Deinitialize()
@@ -44,6 +53,12 @@ void UTestCommandSubsystem::Deinitialize()
     {
         IConsoleManager::Get().UnregisterConsoleObject(KnockDownCommand);
         KnockDownCommand = nullptr;
+    }
+
+    if (MoveLobbyCommand)
+    {
+        IConsoleManager::Get().UnregisterConsoleObject(MoveLobbyCommand);
+        MoveLobbyCommand = nullptr;
     }
     Super::Deinitialize();
 }
@@ -75,5 +90,17 @@ void UTestCommandSubsystem::OnSelfKnockDown()
     if (MyChar)
     {
         MyChar->KnockDown();
+    }
+}
+
+void UTestCommandSubsystem::OnMoveLobby()
+{
+    UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+    if (!World) return;
+
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (GM)
+    {
+        GM->OnBattleEnd();
     }
 }

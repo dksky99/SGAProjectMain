@@ -13,5 +13,8 @@ UCLASS()
 class SGAPROJECTMAIN_API AMainGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	void OnBattleEnd();
 	
 };
