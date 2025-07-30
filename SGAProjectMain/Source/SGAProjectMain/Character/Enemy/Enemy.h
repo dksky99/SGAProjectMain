@@ -50,11 +50,12 @@ public:
 
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
-protected:
 
-private:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
+
+private:
 
 
 	EUnitState _unitState =EUnitState::Patrol;

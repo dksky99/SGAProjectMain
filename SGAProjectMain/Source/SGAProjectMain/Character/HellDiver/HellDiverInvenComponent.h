@@ -7,7 +7,7 @@
 #include "../../Object/Item/SampleResources.h"
 #include "HellDiverInvenComponent.generated.h"
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class SGAPROJECTMAIN_API UHellDiverInvenComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -38,6 +38,7 @@ public:
 	TArray<AGunBase*> GetAllGun() { return _gunSlot; } // 들고있는 총 목록 전달
 	AGunBase* GetEquippedGun() { return _equippedGun; } // 현재 장착 중인 총 전달
 	ABackpack* GetBackpack() { return _backpack; }
+	FSampleBundle GetSampleBundle() { return _sampleBundle; }
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Game/Inven")
@@ -53,5 +54,5 @@ private:
 	TSubclassOf<class ASampleResources> _sampleClass;
 
 	UPROPERTY()
-	struct FSampleBundle _sampleBundle;
+	FSampleBundle _sampleBundle;
 };

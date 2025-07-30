@@ -33,6 +33,7 @@
 #include "../UI/SceneCapturer.h"
 #include "../UI/StaminaBarWidget.h"
 #include "../UI/CompassWidget.h"
+#include "../UI/SampleWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -96,29 +97,17 @@ void APlayerCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	if (_gunWidgetClass)
-	{
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
-	}
-
 	if (_stgWidgetClass)
-	{
 		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
-	}
-
 	if (_minimapWidgetClass)
-	{
 		_minimapWidget = CreateWidget<UMiniMapWidget>(GetWorld(), _minimapWidgetClass);
-	}
-
 	if (_staminaBarWidgetClass)
-	{
 		_staminaBarWidget = CreateWidget<UStaminaBarWidget>(GetWorld(), _staminaBarWidgetClass);
-	}
-
 	if (_compassWidgetClass)
-	{
 		_compassWidget = CreateWidget<UCompassWidget>(GetWorld(), _compassWidgetClass);
-	}
+	if (_sampleWidgetClass)
+		_sampleWidget = CreateWidget<USampleWidget>(GetWorld(), _sampleWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -170,12 +159,14 @@ void APlayerCharacter::BeginPlay()
 			if (sceneCapturer)
 			{
 				_sceneCapturer = sceneCapturer;
+				
+				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+				
 				break;
 			}
 		}
-		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-		_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
 	}
 
 	if (_staminaBarWidget)
@@ -189,9 +180,15 @@ void APlayerCharacter::BeginPlay()
 	{
 		_compassWidget->AddToViewport();
 
-		_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		if (_sceneCapturer)
+		{
+			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		}
 	}
+
+	if (_sampleWidget)
+		_sampleWidget->AddToViewport();
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
@@ -1454,6 +1451,17 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
+void APlayerCharacter::AddSample(FSampleBundle sample)
+{
+	Super::AddSample(sample);
+
+	if (_sampleWidget)
+	{
+		const FSampleBundle& sample = _invenComponent->GetSampleBundle();
+		_sampleWidget->SetSampleCount(sample);
+	}
 }
 
 void APlayerCharacter::DropBackpack()

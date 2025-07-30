@@ -355,6 +355,7 @@ void ACharacterBase::RestoreAllParts()
 void ACharacterBase::OnDeath_Handler()
 {
 	// 사망시 동작 구현
+	Dead();
 
 	// 사망 시 로그 출력
 	UE_LOG(LogTemp, Error, TEXT("%s: Character Dead"), *GetName());
