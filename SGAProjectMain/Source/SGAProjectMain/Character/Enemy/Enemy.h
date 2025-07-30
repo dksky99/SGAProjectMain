@@ -51,8 +51,6 @@ public:
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
 
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Destroyed() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
