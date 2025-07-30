@@ -7,7 +7,7 @@
 #include "../../Object/Item/SampleResources.h"
 #include "HellDiverInvenComponent.generated.h"
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS()
 class SGAPROJECTMAIN_API UHellDiverInvenComponent : public UActorComponent
 {
 	GENERATED_BODY()
