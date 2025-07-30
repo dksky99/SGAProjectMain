@@ -269,14 +269,14 @@ void ACharacterBase::RecoverFromKnockDown()
 void ACharacterBase::Dead()
 {
 
-	CharacterToRagdoll();
-	SpawnGhost();
-
 	AController* CurrentController = GetController();
 	if (CurrentController)
 	{
 		CurrentController->UnPossess();
 	}
+	//CharacterToRagdoll();
+	SpawnGhost();
+
 
 
 
@@ -301,8 +301,6 @@ void ACharacterBase::SpawnGhost()
 
 
 
-	//20초뒤 시체 소멸
-	ghost->SetLifeSpan(20);
 
 
 

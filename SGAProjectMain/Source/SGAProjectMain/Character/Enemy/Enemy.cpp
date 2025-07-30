@@ -73,6 +73,11 @@ bool AEnemy::AddToSquad(AEnemySquad* squad)
 void AEnemy::UnitDeactivate()
 {
 
+    AEnemyController* controller = Cast<AEnemyController>(GetController());
+    if (controller)
+    {
+        controller->UnPossess();
+    }
     SetActorHiddenInGame(true);
     SetActorEnableCollision(false);
     SetActorTickEnabled(false);
@@ -80,11 +85,6 @@ void AEnemy::UnitDeactivate()
     
     SetActorLocation(FVector::ZeroVector);
 
-    AEnemyController* controller = Cast<AEnemyController>(GetController());
-    if (controller)
-    {
-        controller->UnPossess();
-    }
 }
 
 void AEnemy::Dead()
@@ -100,6 +100,18 @@ void AEnemy::SpawnGhost()
 
     UnitDeactivate();
 
+}
+
+void AEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+
+    Super::EndPlay(EndPlayReason);
+}
+
+void AEnemy::Destroyed()
+{
+
+    Super::Destroyed();
 }
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

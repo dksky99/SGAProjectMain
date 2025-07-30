@@ -25,6 +25,8 @@ void ACorpse::BeginPlay()
 {
 	Super::BeginPlay();
 	
+
+	SetLifeSpan(20);
 }
 
 // Called every frame
