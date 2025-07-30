@@ -76,7 +76,20 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
             return; // 같은 부위를 두 번 공격하지 않음
 
         float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
-        UGameplayStatics::ApplyDamage(OtherActor, finalDamage, GetInstigatorController(), this, nullptr);
+        FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
+
+        UGameplayStatics::ApplyPointDamage(
+            OtherActor,                     // 데미지를 받을 액터
+            finalDamage,                    // 적용할 기본 데미지 값
+            shotDirection,                  // 데미지가 들어온 방향 벡터
+            SweepResult,                    // 충돌 정보(FHitResult)
+            GetInstigatorController(),      // 데미지를 유발한 컨트롤러
+            this,                           // 데미지 발생 주체 액터
+            UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
+        );
+
+        UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
+
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
         _baseSpeed *= 0.75f;
 

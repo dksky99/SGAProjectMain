@@ -75,7 +75,7 @@ public:
 	void Reload();
 
 	void EquipBackpack(class ABackpack* backpack);
-	void AddSample(struct FSampleBundle sample);
+	virtual void AddSample(struct FSampleBundle sample);
 
 	// º¸±Þ
 	void RefillAllItem();
