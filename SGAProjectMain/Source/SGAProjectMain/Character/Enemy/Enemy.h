@@ -31,7 +31,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
+	//virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
 
 	virtual void PossessedBy(AController* NewController) override;
 
@@ -53,9 +53,8 @@ public:
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
 protected:
-	UPROPERTY()
-	class UEnemyStatComponent* _statComponent;
 
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
 

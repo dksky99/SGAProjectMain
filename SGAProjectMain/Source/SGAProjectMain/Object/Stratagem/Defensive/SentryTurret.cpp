@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SentryTurret.h"
+
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -11,6 +12,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+
+#include "../../../SGAProjectMain.h"
 
 // Sets default values
 ASentryTurret::ASentryTurret()
@@ -82,17 +85,17 @@ void ASentryTurret::AIStopFire()
 
 void ASentryTurret::Fire()
 {
-	// (0) 탄약이 없으면 파괴 처리
+	// 탄약이 없으면 파괴 처리
 	if (_curAmmo <= 0)
 	{
 		HandleOutOfAmmo();
 		return;
 	}
 
-	// (1) 라인트레이스를 수행해서 Hit 정보를 가져온다.
+	// 라인트레이스를 수행해서 Hit 정보를 가져온다.
 	FHitResult Hit = GetHitResult();
 
-	// (2) Start → End 지점을 삼항 연산으로 정해 디버그 라인 그리기
+	// Start → End 지점을 삼항 연산으로 정해 디버그 라인 그리기
 	FVector Start = Hit.TraceStart;
 	FVector End = Hit.bBlockingHit ? Hit.ImpactPoint : Hit.TraceEnd;
 
@@ -113,7 +116,7 @@ void ASentryTurret::Fire()
 	// 트레이서 재생
 	PlayTracer(End);
 
-	// (3) Hit이 발생한 경우에만 데미지 계산 → 대미지 적용
+	// Hit이 발생한 경우에만 데미지 계산 → 대미지 적용
 	if (Hit.bBlockingHit)
 	{
 		// TraceStart와 ImpactPoint 사이의 거리(cm) → m 단위로 변환
@@ -123,7 +126,7 @@ void ASentryTurret::Fire()
 		// CalculateDamage() 호출
 		float DamageToApply = CalculateDamage(DistanceMeters);
 
-		// ApplyDamage 호출 예시
+		// ApplyDamage 호출 
 		ApplyHitDamage(Hit, DamageToApply);
 	}
 
@@ -152,7 +155,7 @@ FHitResult ASentryTurret::GetHitResult() const
 		Hit,
 		TraceStart,
 		TraceEnd,
-		ECC_Visibility,
+		ECC_GameDamage,
 		Params
 	);
 
@@ -192,20 +195,23 @@ float ASentryTurret::CalculateDamage(float distance) const
 
 void ASentryTurret::ApplyHitDamage(const FHitResult& hit, float damage) 
 {
-	// (1) 명중한 액터 가져오기
+	// 명중한 액터 가져오기
 	AActor* HitActor = hit.GetActor();
 	if (!HitActor)
 	{
 		return;
 	}
 
-	// (2) Unreal의 데미지 시스템 사용 예시
-	UGameplayStatics::ApplyDamage(
-		HitActor,
-		damage,
-		GetInstigatorController(), // 발사자를 전달(없으면 nullptr)
-		this,                      // 데미지를 준 주체(=this)
-		UDamageType::StaticClass() // 기본 데미지 타입
+	// 포인트 데미지 호출: 어느 콜리전 컴포넌트에 맞았는지 정보까지 전달
+	const FVector shotDirection = (hit.TraceStart - hit.ImpactPoint).GetSafeNormal();
+	UGameplayStatics::ApplyPointDamage(
+		HitActor,                   // 데미지를 받을 액터
+		damage,                     // 적용할 기본 데미지 값
+		shotDirection,              // 데미지가 들어온 방향 벡터
+		hit,                        // 충돌 정보(FHitResult)
+		GetInstigatorController(),  // 데미지를 유발한 컨트롤러
+		this,                       // 데미지 발생 주체 액터
+		UDamageType::StaticClass()  // 사용할 데미지 타입 클래스
 	);
 
 	// 원한다면, 맞은 액터가 파괴 가능한 인터페이스를 구현했다면 호출하거나,

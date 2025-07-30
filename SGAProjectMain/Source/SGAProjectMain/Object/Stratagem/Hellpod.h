@@ -24,7 +24,23 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	// 상승 시작
+	void StartRising();
+
+	// 상승 완료 후 후속 처리
+	void OnRiseFinished();
+
+	// 주변 캐릭터 날리기
+	void LaunchOverlappedActors(const FVector& hitPoint);
+
+	// 내부 액터 스폰
+	void SpawnInternalActor();
 
 	void DestroySelf();
 
@@ -41,5 +57,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
 	float _damage = 100.f;
 
+	// 중복 실행 방지
 	bool isAlreadySpawned = false;
+
+	// 바닥 충돌 여부
+	bool _isGrounded = false;
+
+	// 상승 애니메이션 플래그
+	bool _isRising = false;
+
+	FVector _targetLocation;
+	float _riseSpeed = 300.f; // 초당 300cm 상승
+
+	// 타이머 (올라오기 지연)
+	FTimerHandle _riseTimerHandle;
+
+	// 충돌한 캐릭터 저장 (중복 데미지 방지)
+	TSet<AActor*> _damagedCharacters;
 };

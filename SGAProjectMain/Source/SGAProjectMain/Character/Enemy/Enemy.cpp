@@ -3,19 +3,18 @@
 
 #include "Enemy.h"
 
-#include "EnemyStatComponent.h"
 #include "../CharacterStateComponent.h"
 #include "Components/WidgetComponent.h"
 #include "../../UI/DummyHpBar.h"
+#include "../StatComponent.h"
 
 #include "../../Controller/EnemyController.h"
 #include "EnemySquad.h"
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    this->_statComponent  = CreateDefaultSubobject<UEnemyStatComponent>(TEXT("Stat"));
-    Super::_statComp = this->_statComponent;
     Super::_stateComp = CreateDefaultSubobject<UCharacterStateComponent>(TEXT("State"));
+
     _hpBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HpBar"));
     _hpBarWidget->SetupAttachment(GetMesh());
     _hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
@@ -36,19 +35,10 @@ void AEnemy::BeginPlay()
 
     auto hpBar = Cast<UDummyHpBar>(_hpBarWidget->GetWidget());
     if (hpBar)
-        _statComponent->_enemyHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
-}
-
-float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
-{
-    _statComponent->ChangeHp(-damageAmount);
-
-    UE_LOG(LogTemp, Log, TEXT("Damage : %f"), damageAmount);
-
-    if (_statComponent->IsDead())
-        Dead();
-    
-    return 0.0f;
+    {
+       // _statComponent->_enemyHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
+        _statComponent->_hpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
+    }
 }
 
 void AEnemy::PossessedBy(AController* NewController)
@@ -127,3 +117,14 @@ void AEnemy::SpawnGhost()
 
 }
 
+//float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
+//{
+//	_statComponent->ChangeHp(-damageAmount);
+//
+//	UE_LOG(LogTemp, Log, TEXT("Damage : %f"), damageAmount);
+//
+//	if (_statComponent->IsDead())
+//		Dead();
+//
+//	return 0.0f;
+//}

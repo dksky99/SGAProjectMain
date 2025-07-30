@@ -9,7 +9,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE_OneParam(FHpChanged, float);
+//DECLARE_MULTICAST_DELEGATE_OneParam(FHpChanged, float);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FStaminaChanged, float, bool);
 
 UCLASS()
@@ -25,7 +25,8 @@ public:
 	float GetProneSpeed() { return _proneSpeed; }
 	float GetPower() { return _power; }
 
-	void ChangeHp(float amount) override;
+	//FHpChanged _hpChanged;
+	//void ChangeHp(float amount) override;
 
 	void ConsumeStamina(float deltaTime);
 	void RecoverStamina(float deltaTime);
@@ -33,7 +34,6 @@ public:
 	float GetCurStamina() { return _curStamina; }
 	bool IsMaxStamina() { return _curStamina == _maxStamina; }
 
-	FHpChanged _hpChanged;
 	FStaminaChanged _staminaChanged;
 
 protected:

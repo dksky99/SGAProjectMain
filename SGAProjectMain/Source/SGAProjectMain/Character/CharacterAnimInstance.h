@@ -32,7 +32,8 @@ public:
 
 protected:
 
-	class ACharacterBase* _pawn=nullptr;
+	class ACharacterBase* _pawn = nullptr;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pawn", meta = (AllowPrivateAccess = "true"))
 	float _speed;

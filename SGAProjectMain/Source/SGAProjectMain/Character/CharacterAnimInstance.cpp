@@ -6,6 +6,7 @@
 #include "CharacterBase.h"
 #include "PlayerCharacter.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Math/UnrealMathUtility.h"
@@ -22,8 +23,9 @@ void UCharacterAnimInstance::NativeInitializeAnimation()
 	if (pawn)
 	{
 		_pawn = Cast<ACharacterBase>(pawn);
-
 	}
+	else
+		_pawn = nullptr;
 }
 
 void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

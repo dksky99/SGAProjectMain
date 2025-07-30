@@ -7,7 +7,7 @@
 #include "HellDiverStateComponent.h"
 #include "HellDiver.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int, int);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int32, int32);
 
 UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public ACharacterBase
@@ -75,6 +75,7 @@ public:
 	void Reload();
 
 	void EquipBackpack(class ABackpack* backpack);
+	void AddSample(struct FSampleBundle sample);
 
 	// º¸±Þ
 	void RefillAllItem();
@@ -98,7 +99,7 @@ public:
 
 	void Throwing();
 
-	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	//virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	FTransform GetLeftHandSocketTransform() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }
@@ -136,8 +137,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/HellDiver/State", meta = (AllowPrivateAccess = "true"))
 	class UHellDiverStateComponent* _stateComponent;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/HellDiver/Stat", meta = (AllowPrivateAccess = "true"))
-	class UHellDiverStatComponent* _statComponent;
+	UPROPERTY()
+	class UHellDiverStatComponent* _statComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/HellDiver/Pakour", meta = (AllowPrivateAccess = "true"))
 	class UPakourComponent* _pakourComponent;
