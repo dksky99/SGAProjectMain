@@ -32,6 +32,7 @@ public:
 	struct FGunData GetGunDataFromTable(int32 id);
 
 	void AddEarnedSample(const FSampleBundle& earnedSample);
+	FSampleBundle GetSavedSample() { return _savedSample; }
 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))

@@ -40,6 +40,16 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         ECVF_Cheat
     );
 
+
+    MoveMainGameDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnMoveMainGame);
+    MoveMainGameCommand = IConsoleManager::Get().RegisterConsoleCommand(
+        TEXT("MoveMainGame"),
+        TEXT("로비에서 게임으로 이동합니다."),
+        MoveMainGameDelegate,
+        ECVF_Cheat
+    );
+
+
     CallEscapePlaneDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnCallEscapePlane);
     CallEscapePlaneCommand = IConsoleManager::Get().RegisterConsoleCommand(
         TEXT("CallEscapePlane"),
@@ -68,6 +78,19 @@ void UTestCommandSubsystem::Deinitialize()
         IConsoleManager::Get().UnregisterConsoleObject(MoveLobbyCommand);
         MoveLobbyCommand = nullptr;
     }
+
+    if (MoveMainGameCommand)
+    {
+        IConsoleManager::Get().UnregisterConsoleObject(MoveMainGameCommand);
+        MoveMainGameCommand = nullptr;
+    }
+
+    if (CallEscapePlaneCommand)
+    {
+        IConsoleManager::Get().UnregisterConsoleObject(CallEscapePlaneCommand);
+        CallEscapePlaneCommand = nullptr;
+    }
+
     Super::Deinitialize();
 }
 
@@ -111,6 +134,14 @@ void UTestCommandSubsystem::OnMoveLobby()
     {
         GM->OnBattleEnd();
     }
+}
+
+void UTestCommandSubsystem::OnMoveMainGame()
+{
+    UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+    if (!World) return;
+
+    UGameplayStatics::OpenLevel(this, FName("FirstPersonMap"));
 }
 
 void UTestCommandSubsystem::OnCallEscapePlane()
