@@ -11,6 +11,9 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 
+#include "Engine/OverlapResult.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Engine/DamageEvents.h"
 
 // Sets default values
 AHellpod::AHellpod()

@@ -85,7 +85,7 @@ void AEnemySquad::SpawnAllUnits()
 
 }
 
-bool AEnemySquad::SpawnUnit(TPair< class AEnemy*, class AEnemyController*>* unit)
+bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
 {
 	if (IsActivatedUnit(unit))
 		return false;
@@ -132,7 +132,7 @@ void AEnemySquad::Command_Deactivate()
 {
 }
 
-TPair< class AEnemy*, class AEnemyController*>* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
+TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
 {
 	if (!_unitPool.Contains(EnemyClass)) return nullptr;
 
@@ -187,7 +187,7 @@ void AEnemySquad::DeactivateAllUnits()
 	}
 }
 
-TPair< class AEnemy*, class AEnemyController*>* AEnemySquad::CheckExtraUnit()
+TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::CheckExtraUnit()
 {
 
 	for (auto& pairs : _unitPool)
@@ -205,7 +205,7 @@ TPair< class AEnemy*, class AEnemyController*>* AEnemySquad::CheckExtraUnit()
 	return nullptr;
 }
 
-bool AEnemySquad::IsActivatedUnit(TPair< class AEnemy*, class AEnemyController*>* unit)
+bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
 {
 	if (unit->Key->GetController() == nullptr || unit->Value->GetPawn() == nullptr)
 		return false;

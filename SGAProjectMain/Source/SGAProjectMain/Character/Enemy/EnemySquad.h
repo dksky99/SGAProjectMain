@@ -24,7 +24,7 @@ struct FEnemyUnit
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TMap< class AEnemy*,class AEnemyController*>  _units;
+	TMap< TObjectPtr<class AEnemy>,TObjectPtr<class AEnemyController>>  _units;
 };
 
 
@@ -53,7 +53,7 @@ public:
 
 
 	virtual void SpawnAllUnits();
-	virtual bool SpawnUnit(TPair< class AEnemy*, class AEnemyController*>* unit);
+	virtual bool SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
 	// 이건 만들어놓고 어떻게 써야할지 모르겠다 놔두다 필요하면 쓰고 필요없으면 버리자
 	virtual void Command_Search();
@@ -70,13 +70,13 @@ public:
 	// 스쿼드 비활성화. 
 	virtual void Command_Deactivate();
 
-	TPair< class AEnemy*, class AEnemyController*>* GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass);
+	TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass);
 	void ReturnUnitToPool(AEnemy* Enemy);
 	void DeactivateAllUnits();
 	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인.
-	TPair< class AEnemy*, class AEnemyController*>* CheckExtraUnit();
+	TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* CheckExtraUnit();
 protected:
-	bool IsActivatedUnit(TPair< class AEnemy*, class AEnemyController*>* unit);
+	bool IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
 protected:
 
