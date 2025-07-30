@@ -54,6 +54,12 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 
+	virtual void SpawnGhost();
+
+	virtual void ResetUnit();
+
+	class UStatComponent* GetStatComponent() ;
+	class UCharacterStateComponent* GetStateComponent();
 protected:
 
 	float _vertical = 0;
@@ -62,8 +68,11 @@ protected:
 	float _deltaAngle = 0.0f;
 
 	bool _isViewTurnCenter=false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
+	class UStatComponent* _statComp;
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
+	class UCharacterStateComponent* _stateComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
 

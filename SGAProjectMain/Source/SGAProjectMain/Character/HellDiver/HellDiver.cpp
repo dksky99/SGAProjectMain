@@ -36,10 +36,10 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     GetCharacterMovement()->JumpZVelocity = 300.0f;
 
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
-
+    Super::_stateComp = _stateComponent;
 
     _statComponent = CreateDefaultSubobject<UHellDiverStatComponent>("Stat");
-
+    Super::_statComp = _statComponent;
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
     _stratagemComponent = CreateDefaultSubobject<UStratagemComponent>(TEXT("StratagemComponent"));
@@ -380,14 +380,17 @@ void AHellDiver::Rolling()
     if (_stateComponent->StartRolling()==false)
         return;
     Jump();
+    StartProne();
     FVector forward;
     if (_vertical == 0 && _horizontal == 0)
     {
         forward = GetActorForwardVector();
     }
+    else
+    {
 
-    forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
-
+        forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
+    }
     forward.Normalize();
     SetActorRotation(forward.ToOrientationQuat());
     float forwardBoost = 500.0f; 
@@ -396,7 +399,6 @@ void AHellDiver::Rolling()
     // 4. 현재 Velocity에 더해줌
     GetCharacterMovement()->Velocity += boost;
 
-    StartProne();
 }
 
 void AHellDiver::FinishRolling()
@@ -774,7 +776,7 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     FVector resultLoc;
     FRotator resultRot;
     GetMesh()->TransformToBoneSpace(TEXT("hand_r"), temp.GetLocation(), temp.GetRotation().Rotator(), resultLoc,resultRot);
-    temp.SetLocation(resultLoc);
+    temp.SetLocation(resultLoc+FVector(0,6,6));
     temp.SetRotation(resultRot.Quaternion());
     return temp ;
 }

@@ -60,3 +60,9 @@ bool UCharacterStateComponent::IsMoving()
 	return _owner->GetVelocity().Size2D() > 1.0f;;
 }
 
+void UCharacterStateComponent::Reset()
+{
+
+
+}
+

@@ -97,7 +97,7 @@ bool UPakourComponent::DetectWall(FVector& hitLocation, FRotator& normal)
 		//자신의 정면방향으로 발에서부터 위로올라가며 정면방향으로 캡슐 콜리전을 해서 벽이 있는지 탐색. 탐지를 명확히하기위해 좀더 뒤에서부터 시작.
 		FVector temp = H_Vector::MoveVectorDownward(GetOwner()->GetActorLocation(), 60);
 		temp = H_Vector::MoveVectorUpward(temp, i * 20);
-		FVector end = temp + (GetOwner()->GetActorForwardVector() * 200.0f);
+		FVector end = temp + (GetOwner()->GetActorForwardVector() * 100.0f);
 		FVector start= H_Vector::MoveVectorBackward(temp, GetOwner()->GetActorRotation(), 30);
 		 //start에서 정면 200만큼 추가로.
 

@@ -10,6 +10,9 @@
 #include "PhysicsEngine/PhysicsConstraintTemplate.h"
 #include "PhysicsEngine/ConstraintTypes.h"
 #include "StatComponent.h"
+#include "CharacterStateComponent.h"
+
+#include "../Object/Corpse.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
@@ -147,52 +150,52 @@ void ACharacterBase::CharacterToRagdoll()
 
 
 
-	UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	UCharacterMovementComponent* movementComponent = GetCharacterMovement();
 
-	if (MovementComponent)
+	if (movementComponent)
 	{
-		MovementComponent->StopMovementImmediately();
-		MovementComponent->DisableMovement();
+		movementComponent->StopMovementImmediately();
+		movementComponent->DisableMovement();
 	}
 
-	USkeletalMeshComponent* TempMesh = GetMesh();
-	if (TempMesh)
+	USkeletalMeshComponent* tempMesh = GetMesh();
+	if (tempMesh)
 	{
-		TempMesh->SetSimulatePhysics(true);
-		TempMesh->SetAllBodiesSimulatePhysics(true);
-		TempMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+		tempMesh->SetSimulatePhysics(true);
+		tempMesh->SetAllBodiesSimulatePhysics(true);
+		tempMesh->SetCollisionProfileName(TEXT("Ragdoll"));
 
-		UPhysicsAsset* TempPhysicsAsset = TempMesh->GetPhysicsAsset();
-		if (TempPhysicsAsset)
+		UPhysicsAsset* tempPhysicsAsset = tempMesh->GetPhysicsAsset();
+		if (tempPhysicsAsset)
 		{
 
-			for (UPhysicsConstraintTemplate* TempConstraintTemplate : TempPhysicsAsset->ConstraintSetup)
+			for (UPhysicsConstraintTemplate* tempConstraintTemplate : tempPhysicsAsset->ConstraintSetup)
 			{
-				if (TempConstraintTemplate)
+				if (tempConstraintTemplate)
 				{
 
-					FConstraintInstance& TempConstraintInstance = TempConstraintTemplate->DefaultInstance;
-					TempConstraintInstance.SetLinearLimits(ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, 0.0f);
+					FConstraintInstance& tempConstraintInstance = tempConstraintTemplate->DefaultInstance;
+					tempConstraintInstance.SetLinearLimits(ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, 0.0f);
 
 				}
 			}
 		}
 	}
 
-	UCapsuleComponent* TempCapsule = GetCapsuleComponent();
-	if (TempCapsule)
+	UCapsuleComponent* tempCapsule = GetCapsuleComponent();
+	if (tempCapsule)
 	{
-		TempCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		tempCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
-	if (TempMesh && TempCapsule)
+	if (tempMesh && tempCapsule)
 	{
-		TempMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		RootComponent = TempMesh;
+		tempMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		RootComponent = tempMesh;
 
-		TempCapsule->AttachToComponent(TempMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		TempCapsule->SetRelativeLocation(FVector(0, 0, 88));
-		TempCapsule->SetUsingAbsoluteRotation(true);
+		tempCapsule->AttachToComponent(tempMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		tempCapsule->SetRelativeLocation(FVector(0, 0, 88));
+		tempCapsule->SetUsingAbsoluteRotation(true);
 	}
 
 }
@@ -210,33 +213,33 @@ void ACharacterBase::KnockDown()
 void ACharacterBase::RecoverFromKnockDown()
 {
 
-	USkeletalMeshComponent* TempMesh = GetMesh();
-	UCapsuleComponent* TempCapsule = GetCapsuleComponent();
+	USkeletalMeshComponent* tempMesh = GetMesh();
+	UCapsuleComponent* tempCapsule = GetCapsuleComponent();
 
-	if (!TempMesh || !TempCapsule)
+	if (!tempMesh || !tempCapsule)
 		return;
 
 	// 1. 현재 위치 보정 (예: pelvis 본 기준)
-	const FVector PelvisLocation = TempMesh->GetBoneLocation(FName("pelvis"),EBoneSpaces::WorldSpace);
-	UE_LOG(LogTemp,Display,TEXT("Bone Loc : %f %f %f"),PelvisLocation.X, PelvisLocation.Y, PelvisLocation.Z)
+	const FVector pelvisLocation = tempMesh->GetBoneLocation(FName("pelvis"),EBoneSpaces::WorldSpace);
+	UE_LOG(LogTemp,Display,TEXT("Bone Loc : %f %f %f"),pelvisLocation.X, pelvisLocation.Y, pelvisLocation.Z)
 	
 	// 2. 메시 물리 비활성화
-	TempMesh->SetSimulatePhysics(false);
-	TempMesh->SetAllBodiesSimulatePhysics(false);
-	TempMesh->SetCollisionProfileName(TEXT("CharacterMesh")); // 기본 충돌 프로파일로 복원
+	tempMesh->SetSimulatePhysics(false);
+	tempMesh->SetAllBodiesSimulatePhysics(false);
+	tempMesh->SetCollisionProfileName(TEXT("CharacterMesh")); // 기본 충돌 프로파일로 복원
 
 	// 3. 메시 재부착 (캡슐 기준)
 
-	TempCapsule->DetachFromParent();
-	RootComponent = TempCapsule;
-	TempMesh->AttachToComponent(TempCapsule, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	TempMesh->SetRelativeLocation(FVector(0.f, 0.f, -TempCapsule->GetUnscaledCapsuleHalfHeight()));
-	TempMesh->SetWorldRotation(FRotator(0, -90, 0));
+	tempCapsule->DetachFromParent();
+	RootComponent = tempCapsule;
+	tempMesh->AttachToComponent(tempCapsule, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	tempMesh->SetRelativeLocation(FVector(0.f, 0.f, -tempCapsule->GetUnscaledCapsuleHalfHeight()));
+	tempMesh->SetWorldRotation(FRotator(0, -90, 0));
 
 	// 4. 캡슐 콜리전 복구
-	TempCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	tempCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-	SetActorLocation(PelvisLocation + FVector(0, 0, TempCapsule->GetUnscaledCapsuleHalfHeight()));
+	SetActorLocation(pelvisLocation + FVector(0, 0, tempCapsule->GetUnscaledCapsuleHalfHeight()));
 	// 5. 이동 컴포넌트 재활성화
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
 	{
@@ -244,8 +247,8 @@ void ACharacterBase::RecoverFromKnockDown()
 	}
 
 	// 6. 애니메이션 갱신 재개
-	TempMesh->bPauseAnims = false;
-	TempMesh->bNoSkeletonUpdate = false;
+	tempMesh->bPauseAnims = false;
+	tempMesh->bNoSkeletonUpdate = false;
 
 
 
@@ -256,6 +259,7 @@ void ACharacterBase::Dead()
 {
 
 	CharacterToRagdoll();
+	SpawnGhost();
 
 	AController* CurrentController = GetController();
 	if (CurrentController)
@@ -263,8 +267,54 @@ void ACharacterBase::Dead()
 		CurrentController->UnPossess();
 	}
 
-	SetLifeSpan(10.0f);
 
 
+}
+
+void ACharacterBase::SpawnGhost()
+{
+	// 사망 직후 CurrentMesh는 이미 래그돌 상태
+	USkeletalMeshComponent* originalMesh = GetMesh();
+	
+	// GhostActor 스폰
+	FActorSpawnParameters params;
+	ACorpse* ghost = GetWorld()->SpawnActor<ACorpse>(
+		ACorpse::StaticClass(),
+		GetActorTransform(),
+		params);
+
+	// 메시 설정 (원본과 동일한 Skeleton/Mesh)
+	ghost->InitCorpseMesh(originalMesh);
+
+	ghost->SetActorScale3D(GetActorScale3D());
+
+
+
+	//20초뒤 시체 소멸
+	ghost->SetLifeSpan(20);
+
+
+
+}
+
+void ACharacterBase::ResetUnit()
+{
+	_statComp->Reset();
+	_stateComp->Reset();
+	RecoverFromKnockDown();
+
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
+}
+
+UStatComponent* ACharacterBase::GetStatComponent()
+{
+	return _statComp;
+}
+
+UCharacterStateComponent* ACharacterBase::GetStateComponent()
+{
+	return _stateComp;
 }
 

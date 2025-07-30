@@ -73,7 +73,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
-	_fpsSpringArm->SetupAttachment(GetMesh(), FName("CameraSocket"));
+	_fpsSpringArm->SetupAttachment(GetMesh(), FName("head_Socket"));
 
 
 	_tpsCameraActor->SetupAttachment(_tpsSpringArm);
@@ -566,18 +566,8 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		}
 		const bool bIsMoving = GetVelocity().Size2D() > 1.0f;
-		//에이밍중 아니고 사격중 아니여야함.
-		if (!_stateComponent->IsFocusing()&&bIsMoving)
-		{
-			//UE_LOG(LogTemp, Display, TEXT("MovingLook"));
-			MovingLook();
-		}
+		DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
 		
-		else
-		{
-			//UE_LOG(LogTemp, Display, TEXT("DefaultLook"));
-			DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
-		}
 	}
 }
 
@@ -1171,6 +1161,8 @@ void APlayerCharacter::DefaultLook()
 	if (_stateComponent->GetCharacterState() == ECharacterState::Proning||_stateComponent->IsRolling())
 	{
 		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
+
+
 
 		return;
 	}

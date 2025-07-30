@@ -24,6 +24,11 @@ void UStatComponent::BeginPlay()
 }
 
 
+void UStatComponent::Reset()
+{
+	_curHp = _maxHp;
+}
+
 // Called every frame
 void UStatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
