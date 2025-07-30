@@ -43,9 +43,7 @@ public:
 	//주변의 아군들에게 강한 경보상태로 만들고 다 같이 자신이 
 	virtual void RaiseAlert();
 
-	class AEnemyController* GetPairController() const { return _controller; }
 
-	bool SetPairController(class AEnemyController* controller);
 	bool AddToSquad(class AEnemySquad* temp);
 
 	void UnitDeactivate();
@@ -63,8 +61,6 @@ private:
 
 	TArray<class ACharacterBase*> _targets;
 
-	UPROPERTY()
-	class AEnemyController* _controller;
 
 	UPROPERTY()
 	TWeakObjectPtr<class AEnemySquad> _squad;

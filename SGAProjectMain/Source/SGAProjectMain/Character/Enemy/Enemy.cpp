@@ -25,12 +25,6 @@ void AEnemy::BeginPlay()
 {
     Super::BeginPlay();
 
-    AEnemyController* temp = Cast<AEnemyController>(GetController());
-    if (temp)
-    {
-        UE_LOG(LogTemp, Log, TEXT("ValidController"));
-        _controller = temp;
-    }
 
 
     auto hpBar = Cast<UDummyHpBar>(_hpBarWidget->GetWidget());
@@ -64,15 +58,6 @@ void AEnemy::FoundTarget(ACharacterBase* target)
 void AEnemy::RaiseAlert()
 {
 
-}
-
-bool AEnemy::SetPairController(AEnemyController* controller)
-{
-    if(controller)
-    return false;
-
-    _controller = controller;
-    return true;
 }
 
 bool AEnemy::AddToSquad(AEnemySquad* squad)
