@@ -34,6 +34,7 @@ void AEnemySquad::Tick(float DeltaTime)
 
 void AEnemySquad::Init()
 {
+	
 	FActorSpawnParameters param;
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	for (const TPair<TSubclassOf<AEnemy>, int>& unitPair : _unitList)

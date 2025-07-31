@@ -102,17 +102,6 @@ void AEnemy::SpawnGhost()
 
 }
 
-void AEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-
-    Super::EndPlay(EndPlayReason);
-}
-
-void AEnemy::Destroyed()
-{
-
-    Super::Destroyed();
-}
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)
 //{
