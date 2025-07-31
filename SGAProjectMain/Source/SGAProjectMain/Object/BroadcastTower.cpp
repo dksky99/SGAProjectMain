@@ -2,6 +2,9 @@
 
 
 #include "BroadcastTower.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/DamageEvents.h"
+#include "DestructFieldActor.h"
 
 // Sets default values
 ABroadcastTower::ABroadcastTower()
@@ -25,24 +28,39 @@ void ABroadcastTower::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	DrawDebugBox(GetWorld(), _geometryCollection->GetComponentLocation(), FVector(50), FColor::Green, false, 3.0f);
 }
 
-//float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-//{
-//	/*if (_geometryCollection)
-//	{
-//		FVector hitLocation = GetActorLocation();
-//
-//		FVector impulseDirection = (hitLocation - DamageCauser->GetActorLocation()).GetSafeNormal();
-//		float impulseStrength = DamageAmount;
-//
-//		_geometryCollection->AddImpulseAtLocation(impulseDirection * impulseStrength, _geometryCollection->GetComponentLocation());
-//		UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f, ImpulseStrength: %f"), DamageAmount, impulseStrength);
-//	}*/
-//
-//	_geometryCollection->ApplyExternalStrain(100000.f, _geometryCollection->GetComponentLocation(), 500.f);
-//
-//	return DamageAmount;
-//}
+float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+    const FPointDamageEvent* PointEvent = nullptr;
+
+    if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
+        PointEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    
+
+    FVector ImpactPoint = GetActorLocation(); // 기본값
+    if (PointEvent)
+    {
+        ImpactPoint = PointEvent->HitInfo.ImpactPoint;
+    }
+
+    if (DamageAmount >= 50000.f)
+    {
+        // 파괴 필드 스폰
+        FActorSpawnParameters Params;
+        ADestructFieldActor* FieldActor = GetWorld()->SpawnActor<ADestructFieldActor>(
+            ADestructFieldActor::StaticClass(),
+            ImpactPoint,
+            FRotator::ZeroRotator,
+            Params
+        );
+
+        if (FieldActor)
+        {
+            FieldActor->ActivateField(ImpactPoint);
+        }
+    }
+
+    return DamageAmount;
+}
 
