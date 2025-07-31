@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "DestructFieldActor.h"
+#include "../MainGameMode.h"
 
 // Sets default values
 ABroadcastTower::ABroadcastTower()
@@ -44,7 +45,7 @@ float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& Damage
         ImpactPoint = PointEvent->HitInfo.ImpactPoint;
     }
 
-    if (DamageAmount >= 50000.f)
+    if (DamageAmount >= 5000.f)
     {
         // 파괴 필드 스폰
         FActorSpawnParameters Params;
@@ -58,6 +59,15 @@ float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& Damage
         if (FieldActor)
         {
             FieldActor->ActivateField(ImpactPoint);
+        }
+
+        UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+        if (!World) return DamageAmount;
+
+        AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+        if (GM)
+        {
+            GM->CallEscapePlane();
         }
     }
 

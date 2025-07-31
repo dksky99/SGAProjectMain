@@ -15,5 +15,5 @@ class SGAPROJECTMAIN_API ADestructFieldActor : public AFieldSystemActor
 	GENERATED_BODY()
 	
 public:
-	void ActivateField(const FVector& Position, float Radius = 5000.f, float Strength = 10000.f);
+	void ActivateField(const FVector& Position, float Radius = 500.f, float Strength = 10000.f);
 };

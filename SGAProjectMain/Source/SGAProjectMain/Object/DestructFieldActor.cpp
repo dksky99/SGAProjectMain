@@ -9,35 +9,9 @@
 
 void ADestructFieldActor::ActivateField(const FVector& Position, float Radius, float Strength)
 {
-//    URadialFalloff* Falloff = NewObject<URadialFalloff>();
-//    Falloff->Magnitude = 1.0f;
-//    Falloff->MinRange = 0.f;
-//    Falloff->MaxRange = Radius;
-//    Falloff->Default = 0.f;
-//    Falloff->Radius = Radius;
-//    Falloff->Position = Position;
-//    Falloff->Falloff = EFieldFalloffType::Field_Falloff_Linear;
-//
-//    URadialVector* Vector = NewObject<URadialVector>();
-//    Vector->Magnitude = Strength;
-//    Vector->Position = Position;
-//
-//    UOperatorField* Operator = NewObject<UOperatorField>();
-//    Operator->LeftField = Falloff;
-//    Operator->RightField = Vector;
-//    Operator->Operation = EFieldOperationType::Field_Multiply;
-//
-//    if (FieldSystemComponent)
-//    {
-//        FieldSystemComponent->ApplyPhysicsField(
-//            true,
-//            EFieldPhysicsType::Field_ExternalClusterStrain,
-//            nullptr,
-//            Operator
-//        );
-//    }
+
     // 스칼라 데미지 필드 (RadialFalloff를 Magnitude로 사용)
-    URadialFalloff* DamageFalloff = NewObject<URadialFalloff>();
+    URadialFalloff* DamageFalloff = NewObject<URadialFalloff>(GetTransientPackage());
     DamageFalloff->Magnitude = Strength; // Strength를 직접 Magnitude로 사용
     DamageFalloff->MinRange = 0.f;
     DamageFalloff->MaxRange = Radius;
@@ -55,7 +29,7 @@ void ADestructFieldActor::ActivateField(const FVector& Position, float Radius, f
         // 이는 직접적인 '데미지' 필드라기보다는 물리적 상태를 변경하여 파괴가 가능하게 함
         FieldSystemComponent->ApplyPhysicsField(
             true, // Enable
-            EFieldPhysicsType::Field_DynamicState, // 동적 상태 필드
+            EFieldPhysicsType::Field_ExternalClusterStrain, // 동적 상태 필드
             nullptr, // 특정 컴포넌트 타겟팅: 모든 Geometry Collection에 영향을 주려면 nullptr 유지, 아니면 TargetGCComponent
             DamageFalloff // 이 스칼라 필드의 Magnitude가 DynamicState의 값을 결정 (높을수록 강하게 적용)
         );
