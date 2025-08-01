@@ -97,6 +97,8 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 	//È°¼ºÈ­
 
 	unit->Key->ResetUnit();
+	unit->Key->Spawn();
+
 
 	return true;
 }
@@ -195,11 +197,13 @@ TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySqua
 	{
 		for (auto& pair : pairs.Value._units)
 		{
-			if (!IsActivatedUnit(&pair))
+			if (IsActivatedUnit(&pair))
 			{
-				return &pair;
+				continue;
 
 			}
+			if (pair.Key->IsReadyToSpawn())
+				return &pair;
 		}
 	}
 
@@ -210,7 +214,6 @@ bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<cl
 {
 	if (unit->Key->GetController() == nullptr || unit->Value->GetPawn() == nullptr)
 		return false;
-
 	return true;
 }
 

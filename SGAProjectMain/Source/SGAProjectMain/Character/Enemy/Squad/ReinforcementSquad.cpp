@@ -3,23 +3,14 @@
 
 #include "ReinforcementSquad.h"
 
+#include "../Enemy.h"
 #include "NavigationSystem.h"
 
 void AReinforcementSquad::Init()
 {
     Super::Init();
 
-    for (auto& pairs : _unitPool)
-    {
-        _unitMem.Add(pairs.Key);
-
-        for (auto& pair : pairs.Value._units)
-        {
-            _unitMem[pairs.Key]._units.Add(pair.Key,true);
-        }
-
-
-    }
+    
 
 }
 
@@ -45,7 +36,10 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin)
     //일정 반경안의 랜덤한 지점을 가져오는 함수
     if (naviSystem->GetRandomPointInNavigableRadius(pos, _callRadius, randLocation))
     {
-        CallReinforcement(origin);
+
+        SetActorLocation(origin);
+
+        CallReinforcement();
         return true;
     }
 
@@ -55,18 +49,21 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin)
     return false;
 }
 
-void AReinforcementSquad::CallReinforcement(FVector target)
+void AReinforcementSquad::CallReinforcement()
 {
 
-    UE_LOG(LogTemp, Display, TEXT("TryAddUnit"));
+    UE_LOG(LogTemp, Display, TEXT("CallReinforce"));
     auto extra = CheckExtraUnit();
-    if (extra)
+    if (extra==nullptr)
     {
-        UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
-        SpawnUnit(extra);
+        return;
     }
+    _spawnPoint->SetWorldLocation( GetCallPoint(GetActorLocation()));
+    UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
+    SpawnUnit(extra);
+    float nextCall = FMath::FRandRange(_callingDelay_Min, _callingDelay_Max);
 
-    GetWorld()->GetTimerManager().SetTimer(_callUnitTimer, this, &AReinforcementSquad::CallRemainUnit, _generateCoolDown, false);
+    GetWorld()->GetTimerManager().SetTimer(_callUnitTimer, this, &AReinforcementSquad::CallReinforcement, nextCall, false);
 
 
 }
@@ -100,5 +97,16 @@ FVector AReinforcementSquad::GetCallPoint( FVector origin)
 
 void AReinforcementSquad::ReadyToCall()
 {
+    _isReadyToCall = true;
+    for (auto& pairs : _unitPool)
+    {
+
+        for (auto& pair : pairs.Value._units)
+        {
+            pair.Key->ReadyToSpawn();
+        }
+
+
+    }
 }
 

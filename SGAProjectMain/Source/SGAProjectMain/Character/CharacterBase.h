@@ -88,4 +88,7 @@ protected:
 	FText _name;
 
 	FTimerHandle _knockDownTimerHandle;
+
+	
+
 };

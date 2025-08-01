@@ -8,6 +8,20 @@
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
 #include "Object/EscapePlane.h"
+#include "Game/EnemyReinforceManager.h"
+void AMainGameMode::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if(_enemyReinforceManagerClass)
+        _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
+
+}
+
+void AMainGameMode::StartPlay()
+{
+    Super::StartPlay();
+}
 
 void AMainGameMode::CallEscapePlane()
 {

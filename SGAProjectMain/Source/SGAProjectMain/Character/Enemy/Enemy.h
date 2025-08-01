@@ -43,6 +43,9 @@ public:
 	//주변의 아군들에게 강한 경보상태로 만들고 다 같이 자신이 
 	virtual void RaiseAlert();
 
+	virtual void Spawn();
+	bool IsReadyToSpawn();
+	void ReadyToSpawn();
 
 	bool AddToSquad(class AEnemySquad* temp);
 
@@ -50,8 +53,6 @@ public:
 
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Destroyed() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -59,7 +60,12 @@ protected:
 
 private:
 
+	FTimerHandle _respawnTimer;
 
+	bool _isReadyToSpawn = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	float _respawnCoolDown;
 	EUnitState _unitState =EUnitState::Patrol;
 
 	TArray<class ACharacterBase*> _targets;
@@ -69,4 +75,9 @@ private:
 	TWeakObjectPtr<class AEnemySquad> _squad;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _spawnMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _deadMontage;
 };

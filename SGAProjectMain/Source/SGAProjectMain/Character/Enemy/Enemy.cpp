@@ -3,6 +3,7 @@
 
 #include "Enemy.h"
 
+#include "../CharacterAnimInstance.h"
 #include "../CharacterStateComponent.h"
 #include "Components/WidgetComponent.h"
 #include "../../UI/DummyHpBar.h"
@@ -58,6 +59,44 @@ void AEnemy::FoundTarget(ACharacterBase* target)
 void AEnemy::RaiseAlert()
 {
 
+}
+
+void AEnemy::Spawn()
+{
+    GetWorld()->GetTimerManager().SetTimer(_respawnTimer,this, &AEnemy::ReadyToSpawn,_respawnCoolDown,false );
+    _isReadyToSpawn = false;
+    //스폰몽타주가 있을시. 몽타주가 끝나고 컨트롤러 결합을할지 고민중
+    if (_spawnMontage)
+    {
+        if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+        {
+
+            animInstance->PlayAnimMontage(_spawnMontage);
+
+            // 재생 후 인스턴스 가져오기
+            if (FAnimMontageInstance* montageInstance = animInstance->GetActiveInstanceForMontage(_spawnMontage))
+            {
+
+            }
+        }
+    }
+}
+
+bool AEnemy::IsReadyToSpawn()
+{
+    if (GetController())
+        return false;
+   
+    return _isReadyToSpawn;
+}
+
+void AEnemy::ReadyToSpawn()
+{
+    _isReadyToSpawn = true;
+    if (GetWorld()->GetTimerManager().IsTimerActive(_respawnTimer))
+    {
+        GetWorld()->GetTimerManager().ClearTimer(_respawnTimer);
+    }
 }
 
 bool AEnemy::AddToSquad(AEnemySquad* squad)

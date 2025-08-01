@@ -7,14 +7,6 @@
 #include "ReinforcementSquad.generated.h"
 
 
-USTRUCT()
-struct FEnemyUnit_Mem
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TMap< TWeakObjectPtr<class AEnemy>,bool>  _units;
-};
 
 
 UCLASS()
@@ -29,7 +21,9 @@ public:
 
 	bool CheckAbleToCall(FVector origin);
 
-	void CallReinforcement(FVector target);
+	void CallReinforcement();
+
+
 	
 	FVector GetCallPoint(FVector origin);
 
@@ -54,8 +48,6 @@ protected:
 	float _callingDelay_Max=3.f;
 
 
-	UPROPERTY()
-	TMap<TSubclassOf<class AEnemy>, FEnemyUnit_Mem> _unitMem;
 
 
 

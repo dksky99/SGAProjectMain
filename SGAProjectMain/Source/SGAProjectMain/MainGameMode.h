@@ -15,6 +15,11 @@ class SGAPROJECTMAIN_API AMainGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+
+	virtual void BeginPlay() override;
+
+	virtual void StartPlay() override;
+
 	void CallEscapePlane();
 
 	void OnBattleEnd();
@@ -25,4 +30,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	FVector _planeSpawnLoc;
+
+
+	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
+	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AEnemyReinforceManager* _enemyReinforceManager;
+
 };
