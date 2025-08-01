@@ -78,10 +78,19 @@ void ATimedGrenadeBase::ExplodeGrenade()
 				// bBlockingHit: 유효한 히트 이벤트임을 표시
 				pointHit.bBlockingHit = true;
 
+				// 폭발 중심과의 거리 계산
+				float distance = FVector::Distance(GetActorLocation(), actorLocation);
+
+				// 거리 비율로 감쇠값 구하기
+				float distanceRatio = FMath::Clamp(1.0f - (distance / _explosionRadius), 0.0f, 1.0f);
+
+				// 실제 데미지
+				float actualDamage = _explosionDamage * distanceRatio;
+
 				// ApplyPointDamage 호출로 부위별 데미지 처리 정보 전달
 				UGameplayStatics::ApplyPointDamage(
 					hitActor,                       // 데미지를 받을 액터
-					_explosionDamage,               // 적용할 기본 데미지 값
+					actualDamage,					// 적용할 최종 데미지 값
 					shotDirection,                  // 데미지가 들어온 방향 벡터
 					pointHit,                       // 충돌 정보(FHitResult)
 					GetInstigatorController(),      // 데미지를 유발한 컨트롤러

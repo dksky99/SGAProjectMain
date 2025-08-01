@@ -34,7 +34,7 @@
 #include "../UI/StaminaBarWidget.h"
 #include "../UI/CompassWidget.h"
 
-#include "../Object/Grenade/TimedGrenadeBase.h"
+#include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
 #include "../StratagemComponent.h"
 

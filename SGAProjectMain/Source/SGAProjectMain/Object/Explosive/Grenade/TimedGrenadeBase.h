@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Throwable.h"
+#include "../../Throwable.h"
 #include "TimedGrenadeBase.generated.h"
 
 /**

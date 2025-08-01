@@ -58,6 +58,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Stat")
 	void StartRegen();
+	
+	float GetCoreHP()     const { return _coreHP; }
+	float GetHeadHP()     const { return _headHP; }
+	float GetTorsoHP()    const { return _torsoHP; }
+	float GetLeftArmHP()  const { return _leftArmHP; }
+	float GetRightArmHP() const { return _rightArmHP; }
+	float GetLeftLegHP()  const { return _leftLegHP; }
+	float GetRightLegHP() const { return _rightLegHP; }
 
 	// »ç¸Á ¾Ë¸²
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
