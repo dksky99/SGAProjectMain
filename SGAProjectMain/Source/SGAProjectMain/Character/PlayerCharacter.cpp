@@ -33,6 +33,7 @@
 #include "../UI/SceneCapturer.h"
 #include "../UI/StaminaBarWidget.h"
 #include "../UI/CompassWidget.h"
+#include "../UI/SampleWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -73,7 +74,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
-	_fpsSpringArm->SetupAttachment(GetMesh(), FName("CameraSocket"));
+	_fpsSpringArm->SetupAttachment(GetMesh(), FName("head_Socket"));
 
 
 	_tpsCameraActor->SetupAttachment(_tpsSpringArm);
@@ -96,29 +97,17 @@ void APlayerCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	if (_gunWidgetClass)
-	{
 		_gunWidget = CreateWidget<UGunWidget>(GetWorld(), _gunWidgetClass);
-	}
-
 	if (_stgWidgetClass)
-	{
 		_stratagemWidget = CreateWidget<UStratagemWidget>(GetWorld(), _stgWidgetClass);
-	}
-
 	if (_minimapWidgetClass)
-	{
 		_minimapWidget = CreateWidget<UMiniMapWidget>(GetWorld(), _minimapWidgetClass);
-	}
-
 	if (_staminaBarWidgetClass)
-	{
 		_staminaBarWidget = CreateWidget<UStaminaBarWidget>(GetWorld(), _staminaBarWidgetClass);
-	}
-
 	if (_compassWidgetClass)
-	{
 		_compassWidget = CreateWidget<UCompassWidget>(GetWorld(), _compassWidgetClass);
-	}
+	if (_sampleWidgetClass)
+		_sampleWidget = CreateWidget<USampleWidget>(GetWorld(), _sampleWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -170,12 +159,14 @@ void APlayerCharacter::BeginPlay()
 			if (sceneCapturer)
 			{
 				_sceneCapturer = sceneCapturer;
+				
+				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+				
 				break;
 			}
 		}
-		_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-		_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
 	}
 
 	if (_staminaBarWidget)
@@ -189,9 +180,15 @@ void APlayerCharacter::BeginPlay()
 	{
 		_compassWidget->AddToViewport();
 
-		_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
-		_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		if (_sceneCapturer)
+		{
+			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
+		}
 	}
+
+	if (_sampleWidget)
+		_sampleWidget->AddToViewport();
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
@@ -571,18 +568,8 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		}
 		const bool bIsMoving = GetVelocity().Size2D() > 1.0f;
-		//에이밍중 아니고 사격중 아니여야함.
-		if (!_stateComponent->IsFocusing()&&bIsMoving)
-		{
-			//UE_LOG(LogTemp, Display, TEXT("MovingLook"));
-			MovingLook();
-		}
+		DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
 		
-		else
-		{
-			//UE_LOG(LogTemp, Display, TEXT("DefaultLook"));
-			DefaultLook(); // 멈췄을 때 ±90도 넘는 회전 처리
-		}
 	}
 }
 
@@ -1177,6 +1164,8 @@ void APlayerCharacter::DefaultLook()
 	{
 		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
 
+
+
 		return;
 	}
 
@@ -1462,6 +1451,17 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
+void APlayerCharacter::AddSample(FSampleBundle sample)
+{
+	Super::AddSample(sample);
+
+	if (_sampleWidget)
+	{
+		const FSampleBundle& sample = _invenComponent->GetSampleBundle();
+		_sampleWidget->SetSampleCount(sample);
+	}
 }
 
 void APlayerCharacter::DropBackpack()

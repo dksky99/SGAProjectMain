@@ -43,6 +43,12 @@ void UStatComponent::BeginPlay()
 	
 }
 
+
+void UStatComponent::Reset()
+{
+	_coreHP = _coreMaxHP;
+}
+
 bool UStatComponent::IsDead()
 {
 	if (_coreHP <= 0)

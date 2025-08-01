@@ -29,14 +29,15 @@
 #include "../../Gun/ExplosiveGun.h"
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/ReloadBackpack.h"
+#include "../../Object/Item/SampleResources.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverStatComponent>(StatComponentName))
 {
     GetCharacterMovement()->JumpZVelocity = 300.0f;
 
+    _statComp= Cast<UHellDiverStatComponent>(Super::_statComponent);
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
-
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
     _stratagemComponent = CreateDefaultSubobject<UStratagemComponent>(TEXT("StratagemComponent"));
@@ -106,9 +107,9 @@ UHellDiverStateComponent* AHellDiver::GetStateComponent()
 
 UHellDiverStatComponent* AHellDiver::GetStatComponent()
 {
-    UHellDiverStatComponent* statComponent = Cast<UHellDiverStatComponent>(_statComponent);
+   
 
-    return statComponent;
+    return _statComp;
 }
 
 UMotionWarpingComponent* AHellDiver::GetMotionWarp() const
@@ -384,14 +385,17 @@ void AHellDiver::Rolling()
     if (_stateComponent->StartRolling()==false)
         return;
     Jump();
+    StartProne();
     FVector forward;
     if (_vertical == 0 && _horizontal == 0)
     {
         forward = GetActorForwardVector();
     }
+    else
+    {
 
-    forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
-
+        forward = GetActorForwardVector() * _vertical + GetActorRightVector() * _horizontal;
+    }
     forward.Normalize();
     SetActorRotation(forward.ToOrientationQuat());
     float forwardBoost = 500.0f; 
@@ -400,7 +404,6 @@ void AHellDiver::Rolling()
     // 4. 현재 Velocity에 더해줌
     GetCharacterMovement()->Velocity += boost;
 
-    StartProne();
 }
 
 void AHellDiver::FinishRolling()
@@ -539,8 +542,12 @@ void AHellDiver::Reload()
 
 void AHellDiver::EquipBackpack(ABackpack* backpack)
 {
-
     _invenComponent->EquipBackpack(backpack);
+}
+
+void AHellDiver::AddSample(FSampleBundle sample)
+{
+    _invenComponent->AddSample(sample);
 }
 
 void AHellDiver::RefillAllItem()
@@ -785,7 +792,7 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     FVector resultLoc;
     FRotator resultRot;
     GetMesh()->TransformToBoneSpace(TEXT("hand_r"), temp.GetLocation(), temp.GetRotation().Rotator(), resultLoc,resultRot);
-    temp.SetLocation(resultLoc);
+    temp.SetLocation(resultLoc+FVector(0,6,6));
     temp.SetRotation(resultRot.Quaternion());
     return temp ;
 }
@@ -817,6 +824,9 @@ void AHellDiver::Dead()
     _invenComponent->DropGun(0);
     _invenComponent->DropGun(1);
     _invenComponent->DropGun(2);
+
+    _invenComponent->DropBackpack();
+    _invenComponent->DropSample();
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

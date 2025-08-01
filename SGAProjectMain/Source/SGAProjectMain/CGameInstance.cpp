@@ -11,3 +11,8 @@ FGunData UCGameInstance::GetGunDataFromTable(int32 id)
 	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
 	return *row;
 }
+
+void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
+{
+	_savedSample.AddSample(earnedSample);
+}

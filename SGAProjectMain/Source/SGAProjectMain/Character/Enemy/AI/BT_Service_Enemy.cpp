@@ -20,6 +20,8 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 
 	bool reset=false;
 
+	//UE_LOG(LogTemp, Display, TEXT("ServiceTest : EnemyService"));
+
 	//현재 스테이트 값 세팅
 
 

@@ -46,6 +46,8 @@ public:
 
 	bool IsMoving();
 
+	virtual void Reset();
+
 protected:
 
 	class ACharacter* _owner;

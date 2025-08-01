@@ -54,6 +54,12 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 
+	virtual void SpawnGhost();
+
+	virtual void ResetUnit();
+
+	class UStatComponent* GetStatComponent() ;
+	class UCharacterStateComponent* GetStateComponent();
 	UFUNCTION()
 	virtual void OnPartDestroyed_Handler(EBodyPart part); // 상속받아서 각 부위별 부위파괴 구현
 
@@ -76,7 +82,8 @@ protected:
 
 	bool _isViewTurnCenter=false;
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
+	class UCharacterStateComponent* _stateComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
 

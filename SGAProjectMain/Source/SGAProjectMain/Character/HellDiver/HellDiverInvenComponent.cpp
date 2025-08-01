@@ -7,6 +7,7 @@
 #include "../../Gun/GunDataTable.h"
 
 #include "../../Object/Item/Backpack.h"
+#include "../../Object/Item/SampleResources.h"
 
 // Sets default values for this component's properties
 UHellDiverInvenComponent::UHellDiverInvenComponent()
@@ -25,6 +26,7 @@ void UHellDiverInvenComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	_sampleBundle.Clear();
 	// ...
 	
 }
@@ -128,5 +130,24 @@ void UHellDiverInvenComponent::DropBackpack()
 	_backpack->SetActorLocation(dropLocation);
 
 	_backpack = nullptr;
+}
+
+void UHellDiverInvenComponent::AddSample(FSampleBundle sample)
+{
+	_sampleBundle.AddSample(sample);
+}
+
+void UHellDiverInvenComponent::DropSample()
+{
+	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
+	FRotator dropRotation = FRotator::ZeroRotator;
+
+	ASampleResources* sampleBundleActor = GetOwner()->GetWorld()->SpawnActor<ASampleResources>(_sampleClass, dropLocation, dropRotation);
+
+	if (sampleBundleActor)
+	{
+		sampleBundleActor->SetBundle(_sampleBundle); // 번들(개수) 데이터 전달
+		_sampleBundle.Clear(); // 인벤토리 비우기
+	}
 }
 

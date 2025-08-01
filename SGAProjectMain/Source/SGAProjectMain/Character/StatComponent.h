@@ -44,6 +44,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+
+	virtual void Reset();
+
 	bool IsDead();
 
 	float GetDefaultSpeed() { return _defaultSpeed; }
