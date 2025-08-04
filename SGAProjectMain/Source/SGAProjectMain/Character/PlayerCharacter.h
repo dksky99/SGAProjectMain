@@ -105,13 +105,13 @@ public:
 	void TryRolling(const  FInputActionValue& value);
 
 	UFUNCTION()
-	void SwitchWeapon1(const  FInputActionValue& value) { SwitchWeapon(0, value); }
+	void SwitchWeapon1(const  FInputActionValue& value) { SwitchGun(0, value); }
 	UFUNCTION()
-	void SwitchWeapon2(const  FInputActionValue& value) { SwitchWeapon(1, value); }
+	void SwitchWeapon2(const  FInputActionValue& value) { SwitchGun(1, value); }
 	UFUNCTION()
-	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
+	void SwitchWeapon3(const  FInputActionValue& value) { SwitchGun(2, value); }
 
-	void SwitchWeapon(int32 index, const FInputActionValue& value);
+	void SwitchGun(int32 index, const FInputActionValue& value);
 	void PickupGun(AGunBase* gun) override;
 	void AddSample(struct FSampleBundle sample) override;
 	void DropBackpack();

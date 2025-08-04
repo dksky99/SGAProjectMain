@@ -1403,25 +1403,41 @@ void APlayerCharacter::OpenMap()
 	}
 }
 
-void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
+void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 		return;
 
 	if (!_invenComponent->CanSwitchGun(index))
-		return;
+		return; // 바꿀 수 없으면 중단하고 리턴 false
 
+	// 바꿀 수 있다면 장전 중단
+	if (_stateComponent->IsReloading())
+		_invenComponent->GetEquippedGun()->CancelReload();
+
+	// 현재 상태 저장 후
+	bool wasAiming = _stateComponent->IsAiming();
+	bool wasFiring = _stateComponent->IsFiring();
+
+	// 하던 행동 중단
+	_stateComponent->SetAiming(false);
+	_stateComponent->SetFiring(false);
+
+	// 총 비활성화
+	_invenComponent->GetEquippedGun()->DeactivateGun();
 	auto previousGun = _invenComponent->GetEquippedGun();
 	previousGun->_ammoChanged.RemoveAll(_gunWidget);
 	previousGun->_magChanged.RemoveAll(_gunWidget);
 
-	bool wasAiming = _stateComponent->IsAiming();
-	bool wasFiring = _stateComponent->IsFiring();
+	EquipGun(index); // 총 변경
 
-	SwitchGun(index);
+	// 총 활성화
 	auto newGun = _invenComponent->GetEquippedGun();
 	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+	_invenComponent->GetEquippedGun()->ActivateGun();
+
+	_stateComponent->SetEquipIndex(index);
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
