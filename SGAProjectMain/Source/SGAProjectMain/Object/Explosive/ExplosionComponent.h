@@ -29,10 +29,10 @@ public:
 	void Explode();
 
 protected:
-	// 실제 폭발 처리: 감지 → 감쇠 → 한 컴포넌트만 데미지 → 이펙트
+	// 폭발 감지 및 이펙트 재생
 	void HandleExplosion();
 
-	// 단일 액터당 한 번만 ApplyPointDamage 호출
+	// 실제 폭발 데미지 감쇠
 	void ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps);
 
 protected:

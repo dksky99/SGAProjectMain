@@ -76,76 +76,50 @@ void UExplosionComponent::HandleExplosion()
 
 void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps)
 {
-	// 액터별로 모든 Overlap 결과를 모아둠
-	TMap<AActor*, TArray<FOverlapResult>> OverlapsPerActor;
-	for (const FOverlapResult& Ov : Overlaps)
+	for (const FOverlapResult& OverlapResult : Overlaps) 
 	{
-		if (AActor* Actor = Ov.GetActor())
-			OverlapsPerActor.FindOrAdd(Actor).Add(Ov);
-	}
-
-	for (auto & Pair : OverlapsPerActor)
-	{
-		AActor* Actor = Pair.Key;
-		auto& OvArray = Pair.Value;
-
-		// 폭발 중심에서 가장 가까운 거리 순으로 정렬
-		OvArray.Sort([this](const FOverlapResult& A, const FOverlapResult& B) {
-			return FVector::Dist(GetOwner()->GetActorLocation(), A.GetActor()->GetActorLocation())
-				< FVector::Dist(GetOwner()->GetActorLocation(), B.GetActor()->GetActorLocation());
-			});
-
-		// 첫 번째 유효 콜리더 찾기 (체력 0인 부위 스킵)
-		FOverlapResult* Selected = nullptr;
-
-		if (UStatComponent* Stat = Actor->FindComponentByClass<UStatComponent>())
+		if (AActor* HitActor = OverlapResult.GetActor()) 
 		{
-			for (FOverlapResult& Ov : OvArray)
+			if (UPrimitiveComponent* HitComp = OverlapResult.GetComponent())
 			{
-				if (UPrimitiveComponent* Comp = Ov.GetComponent())
-				{
-					// 콜리더 태그로 부위 판별
-					float PartHP = Stat->GetCoreHP(); // 태그가 없다면 코어
-					if (Comp->ComponentHasTag("Head"))			  PartHP = Stat->GetHeadHP();
-					else if (Comp->ComponentHasTag("Torso"))	  PartHP = Stat->GetTorsoHP();
-					else if (Comp->ComponentHasTag("LeftArm"))    PartHP = Stat->GetLeftArmHP();
-					else if (Comp->ComponentHasTag("RightArm"))   PartHP = Stat->GetRightArmHP();
-					else if (Comp->ComponentHasTag("LeftLeg"))    PartHP = Stat->GetLeftLegHP();
-					else if (Comp->ComponentHasTag("RightLeg"))   PartHP = Stat->GetRightLegHP();
+				// 콜리더 태그로 부위 판별 및 HP 조회 (태그 없으면 Core 로 간주)
+				UStatComponent* StatComp = HitActor->FindComponentByClass<UStatComponent>();
+				float PartHP = StatComp->GetCoreHP(); // 태그가 없다면 코어
+				if (HitComp->ComponentHasTag("Head"))			  PartHP = StatComp->GetHeadHP();
+				else if (HitComp->ComponentHasTag("Torso"))	  PartHP = StatComp->GetTorsoHP();
+				else if (HitComp->ComponentHasTag("LeftArm"))    PartHP = StatComp->GetLeftArmHP();
+				else if (HitComp->ComponentHasTag("RightArm"))   PartHP = StatComp->GetRightArmHP();
+				else if (HitComp->ComponentHasTag("LeftLeg"))    PartHP = StatComp->GetLeftLegHP();
+				else if (HitComp->ComponentHasTag("RightLeg"))   PartHP = StatComp->GetRightLegHP();
 
-					// HP가 0 이하인 부위는 건너뜀
-					if (PartHP <= 0.0f)
-						continue;
+				// HP가 0 이하인 부위는 건너뜀
+				if (PartHP <= 0.0f)                          
+					continue;                                
 
-					Selected = &Ov;
-					break;
-				}
+				// 거리 기반 감쇠 및 실제 데미지 계산
+				const FVector Center = GetOwner()->GetActorLocation();					// 폭발 중심        
+				const FVector ColliderLoc = HitComp->GetComponentLocation();			// 맞은 컴포넌트
+				float Distance = FVector::Dist(Center, ColliderLoc);					// 폭발과의 거리
+				float Ratio = FMath::Clamp(1.0f - (Distance / _radius), 0.0f, 1.0f);	// 거리 감쇠 비율
+				float ActualDmg = _damage * Ratio;										// 최종 적용할 데미지
+
+				// 데미지 히트 정보 세팅 및 적용
+				FHitResult HitInfo;                                              
+				HitInfo.TraceStart = Center;                                     
+				HitInfo.ImpactPoint = ColliderLoc;                               
+				HitInfo.Component = HitComp;                                     
+				HitInfo.bBlockingHit = true;                                     
+
+				UGameplayStatics::ApplyPointDamage(                              
+					HitActor,                                                    
+					ActualDmg,                                                   
+					(ColliderLoc - Center).GetSafeNormal(),                      
+					HitInfo,                                                     
+					GetOwner()->GetInstigatorController(),                       
+					GetOwner(),                                                  
+					UDamageType::StaticClass()                                   
+				);                                                               
 			}
 		}
-
-		if (!Selected)
-			continue;
-
-		// 거리 기반 감쇠 및 데미지 적용
-		float Distance = FVector::Distance(GetOwner()->GetActorLocation(), Selected->GetComponent()->GetComponentLocation());
-		float Ratio = FMath::Clamp(1.0f - (Distance / _radius), 0.0f, 1.0f);
-		float ActualDmg = _damage * Ratio;
-
-		FHitResult Hit;
-		Hit.TraceStart = GetOwner()->GetActorLocation();
-		Hit.ImpactPoint = Selected->GetComponent()->GetComponentLocation();
-		Hit.Component = Selected->GetComponent();
-		Hit.bBlockingHit = true;
-
-		UGameplayStatics::ApplyPointDamage(
-			Actor,
-			ActualDmg,
-			(Actor->GetActorLocation() - GetOwner()->GetActorLocation()).GetSafeNormal(),
-			Hit,
-			GetOwner()->GetInstigatorController(),
-			GetOwner(),
-			UDamageType::StaticClass()
-		);
 	}
 }
-

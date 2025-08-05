@@ -32,8 +32,8 @@ struct FBulletData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _vsDurableDamage = 3500.f; // 내구 데미지
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _explosionDamage = 150.f; // 폭발 데미지
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//float _explosionDamage = 150.f; // 폭발 데미지
 
 	// 관통력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -50,10 +50,11 @@ struct FBulletData : public FTableRowBase
 	float _falloff100 = 0.133f;
 
 	// 폭발 범위
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _innerRadius = 150.f; // 중심 범위
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _outerRadius = 600.f; // 전체 범위
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//float _innerRadius = 150.f; // 중심 범위
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//float _outerRadius = 600.f; // 전체 범위
+
 };
 
 UCLASS()
@@ -100,4 +101,8 @@ private:
 
 	float _baseSpeed;
 	float _moveDistance = 0.f;
+
+	// 폭발 데미지 컴포넌트
+	UPROPERTY(EditAnywhere, Category = "Game/GunBullet/Explosion")
+	class UExplosionComponent* _explosionComponent;
 };

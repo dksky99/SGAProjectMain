@@ -15,6 +15,8 @@ class SGAPROJECTMAIN_API ATimedGrenadeBase : public AThrowable
 	GENERATED_BODY()
 	
 public:
+	ATimedGrenadeBase();
+
 	virtual void StartCookingGrenade();
 	virtual void UpdateCookingGrenade();
 	virtual void Throw(FVector direction) override;
@@ -30,16 +32,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
 	float _cookedTime = 0.0f; // ÄíÅ· ½Ã°£
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
-	float _explosionRadius = 300.0f; // Æø¹ß ¹Ý°æ
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade")
-	float _explosionDamage = 100.0f; // Æø¹ß µ¥¹ÌÁö
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Grenade/Explosion")
+	class UExplosionComponent* _explosionComponent;
 
 	bool _isExploded = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Effect")
-	UParticleSystem* _explosionEffect; // Æø¹ß ÀÌÆåÆ®
 
 	FTimerHandle _explosionTimerHandle;
 };
