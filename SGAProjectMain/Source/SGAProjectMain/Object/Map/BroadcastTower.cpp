@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "DestructFieldActor.h"
-#include "../MainGameMode.h"
+#include "../../MainGameMode.h"
 
 // Sets default values
 ABroadcastTower::ABroadcastTower()

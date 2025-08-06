@@ -22,6 +22,7 @@
 
 #include "Components/SphereComponent.h"
 #include "../Object/Item/ItemBase.h"
+#include "../Object/Map/TerminalConsole.h"
 
 #include "../Gun/GunBase.h"
 #include "../Gun/ExplosiveGun.h"
@@ -491,6 +492,8 @@ FRotator APlayerCharacter::Focusing_Legacy()
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (_stateComponent->GetActionState() == EActionState::Stratagem)// 스트라타젬입력 모드에서는 동작안함
+		return;
+	if (_stateComponent->GetActionState() == EActionState::InterActing) // 상호작용 중일 때 동작 안 함
 		return;
 	if (GetCharacterMovement()->IsFalling())
 		return;
@@ -1519,6 +1522,17 @@ void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
 		_stratagemInputBuffer.Add(EKeys::W);
 		CheckStratagemInputCombo();
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::W);
+	}
 }
 
 void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
@@ -1528,6 +1542,17 @@ void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
 		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::A);
 		CheckStratagemInputCombo();
+	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::A);
 	}
 }
 
@@ -1539,6 +1564,17 @@ void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
 		_stratagemInputBuffer.Add(EKeys::S);
 		CheckStratagemInputCombo();
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::S);
+	}
 }
 
 void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
@@ -1548,6 +1584,17 @@ void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
 		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::D);
 		CheckStratagemInputCombo();
+	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::D);
 	}
 }
 
@@ -1614,6 +1661,18 @@ void APlayerCharacter::CheckStratagemInputCombo()
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 		_stratagemWidget->OpenWidget(false);
 	}
+}
+
+void APlayerCharacter::BeginTerminalInputMode(ATerminalConsole* terminal)
+{
+	_stateComponent->SetActionState(EActionState::InterActing);
+	_curTerminal = terminal;
+}
+
+void APlayerCharacter::EndTerminalInputMode()
+{
+	_stateComponent->SetActionState(EActionState::None);
+	_curTerminal = nullptr;
 }
 
 void APlayerCharacter::Interact(const FInputActionValue& value)

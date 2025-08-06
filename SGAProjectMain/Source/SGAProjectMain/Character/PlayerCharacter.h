@@ -138,7 +138,8 @@ public:
 
 	void CheckStratagemInputCombo();
 	
-
+	void BeginTerminalInputMode(class ATerminalConsole* console); // 상호작용 시작 시 콘솔에서 호출
+	void EndTerminalInputMode(); // 상호작용 종료 시 콘솔에서 호출
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
 
@@ -317,4 +318,8 @@ protected:
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere;
+
+	// 커맨드 콘솔
+	UPROPERTY()
+	ATerminalConsole* _curTerminal;
 };

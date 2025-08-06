@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "CommandWidget.h"
 #include "StratagemSlotWidget.generated.h"
 
 UENUM(BlueprintType)
@@ -17,22 +17,22 @@ enum class EStgSlotWgtState : uint8
  * 
  */
 UCLASS()
-class SGAPROJECTMAIN_API UStratagemSlotWidget : public UUserWidget
+class SGAPROJECTMAIN_API UStratagemSlotWidget : public UCommandWidget
 {
 	GENERATED_BODY()
 
 public:
 	void InitializeSlot(const class AStratagem* stg, class UStratagemWidget* parentWidget);
-	void ResetSlot();
+	void ResetSlot() override;
 
-	void UpdateSlot(int32 comboNum);
+	void UpdateSlot(int32 comboNum) override;
 	void SetCooldown(float remainingTime);
 
 	void SetSlotDeactivatingState();
 	void SetSlotOperatingState();
 	void SetSlotCooldownState(float remainingTime);
 
-	void SetSlotOpacity(float opacity);
+	void SetSlotOpacity(float opacity) override;
 
 	bool IsForcedShowing() { return _isForcedShowing; }
 	void SetForcedShowing(bool isForcedShowing) { _isForcedShowing = isForcedShowing; }
@@ -52,13 +52,7 @@ private:
 	class UImage* _stgIcon;
 
 	UPROPERTY(meta = (BindWidget))
-	class UHorizontalBox* _stgCommands;
-
-	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* _widgetSwitcher;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
-	class UTexture2D* _arrow; // ¿À¸¥ÂÊ
 
 	EStgSlotWgtState _slotState = EStgSlotWgtState::Normal;
 

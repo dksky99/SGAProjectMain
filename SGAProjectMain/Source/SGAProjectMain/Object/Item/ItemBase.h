@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "../../Character/HellDiver/HellDiver.h"
 #include "ItemBase.generated.h"
 
 UCLASS()

@@ -4,7 +4,7 @@
 #include "EscapePlane.h"
 
 #include "Components/BoxComponent.h"
-#include "../MainGameMode.h"
+#include "../../MainGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
