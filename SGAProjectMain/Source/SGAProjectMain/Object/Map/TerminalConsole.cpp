@@ -4,6 +4,7 @@
 #include "TerminalConsole.h"
 
 #include "Components/WidgetComponent.h"
+#include "../../MainGameMode.h"
 #include "../../Character/PlayerCharacter.h"
 #include "../../UI/CommandWidget.h"
 
@@ -71,7 +72,12 @@ void ATerminalConsole::CheckInputCombo()
 	// 완전 일치 → 장비
 	if (_playerInputBuffer == _command)
 	{
-		//Operating머시기
+		// 추후 다른 흐름으로 변경 예정
+		AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+		if (GM)
+		{
+			GM->CallEscapePlane();
+		}
 
 		ResetInput();
 

@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "../../MainGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "../../Character/HellDiver/HellDiver.h"
 
 // Sets default values
 AEscapePlane::AEscapePlane()
@@ -33,6 +34,9 @@ void AEscapePlane::BeginPlay()
 void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!_isEscapeEnabled) return;
+
+    AHellDiver* hellDiver = Cast<AHellDiver>(OtherActor);
+    if (!hellDiver) return;
 
     AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
     GM->OnBattleEnd();
