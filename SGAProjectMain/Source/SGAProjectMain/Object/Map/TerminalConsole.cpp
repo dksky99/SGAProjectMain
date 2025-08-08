@@ -14,8 +14,6 @@ ATerminalConsole::ATerminalConsole()
 	_terminalWidgetComponent->SetupAttachment(RootComponent);
 
 	_terminalWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-
-
 }
 
 void ATerminalConsole::BeginPlay()
