@@ -118,7 +118,7 @@ void UHellDiverInvenComponent::DropBackpack()
 	_backpack->SetActorEnableCollision(true);
 	_backpack->SetOwner(nullptr);
 
-	UStaticMeshComponent* mesh = _backpack->GetMesh(); // 또는 CustomMesh 이름
+	USkeletalMeshComponent* mesh = _backpack->GetMesh();
 	if (mesh)
 	{
 		mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

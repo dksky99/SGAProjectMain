@@ -7,9 +7,13 @@
 
 ABackpack::ABackpack()
 {
-	_mesh->SetCollisionProfileName("PhysicsActor");
-	_mesh->SetGenerateOverlapEvents(true);
-	_mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+    _skeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+    _skeletalMesh->SetSimulatePhysics(true);
+    RootComponent = _skeletalMesh;
+
+    _skeletalMesh->SetCollisionProfileName("PhysicsActor");
+    _skeletalMesh->SetGenerateOverlapEvents(true);
+    _skeletalMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void ABackpack::PickupItem(AHellDiver* player)
@@ -19,11 +23,11 @@ void ABackpack::PickupItem(AHellDiver* player)
 
     if (USkeletalMeshComponent* characterMesh = player->GetMesh())
     {
-        _mesh->SetEnableGravity(false);
-        _mesh->SetSimulatePhysics(false);
-        _mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        _skeletalMesh->SetEnableGravity(false);
+        _skeletalMesh->SetSimulatePhysics(false);
+        _skeletalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         
         AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("EquipSocket_BackPack"));
-        _mesh->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
+        _skeletalMesh->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
     }
 }

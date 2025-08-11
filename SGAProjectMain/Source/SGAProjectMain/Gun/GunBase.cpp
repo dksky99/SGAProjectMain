@@ -405,7 +405,7 @@ void AGunBase::AttachToHand()
 				needToMove.ConcatenateRotation(extraRotation.Quaternion());
 
 				_gunMesh->SetRelativeTransform(needToMove); // 그립의 트랜스폼을 기준으로 현재 액터 이동
-				
+				_gunMesh->SetRelativeScale3D(FVector(1.f));
 			}
 			else
 			{
