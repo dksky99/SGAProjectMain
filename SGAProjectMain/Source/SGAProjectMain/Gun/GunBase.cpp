@@ -395,8 +395,26 @@ void AGunBase::AttachToHand()
 			}
 
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
-			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
+			
+			if (_gunMesh->DoesSocketExist(TEXT("Grip")))
+			{
+				FTransform gripTransform = _gunMesh->GetSocketTransform(TEXT("Grip"), RTS_Component); // 그립의 트랜스폼을 구하고
+				FTransform needToMove = gripTransform.Inverse(); // 그 트랜스폼을 반대로 적용
+				
+				FRotator extraRotation = FRotator(0.f, -90.f, 0.f); // 추가 회전값 설정
+				needToMove.ConcatenateRotation(extraRotation.Quaternion());
+
+				_gunMesh->SetRelativeTransform(needToMove); // 그립의 트랜스폼을 기준으로 현재 액터 이동
+				
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("GripSocket does not exist in the gun mesh!"));
+				SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
+			}
 		}
+
+		
 	}
 }
 
