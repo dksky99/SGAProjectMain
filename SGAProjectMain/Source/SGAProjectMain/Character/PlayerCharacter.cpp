@@ -213,7 +213,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	if (_staminaBarWidget)
+	if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
 		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
