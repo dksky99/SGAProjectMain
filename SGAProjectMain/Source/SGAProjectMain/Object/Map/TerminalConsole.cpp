@@ -75,8 +75,9 @@ void ATerminalConsole::CheckInputCombo()
 		_commandSuccess.Broadcast();
 
 		ResetInput();
+		_terminalWidget->OnCompleted();
+		_isInteractable = false; // 상호작용 불가 상태로 변경
 
-		_terminalWidgetComponent->SetVisibility(false); // test
 		return;
 	}
 	

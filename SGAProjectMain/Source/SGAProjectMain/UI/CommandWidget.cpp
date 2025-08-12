@@ -3,6 +3,8 @@
 
 #include "CommandWidget.h"
 
+#include "Components/WidgetSwitcher.h"
+
 void UCommandWidget::InitializeSlot(const TArray<FKey>& combo)
 {
     for (auto key : combo)
@@ -29,15 +31,44 @@ void UCommandWidget::InitializeSlot(const TArray<FKey>& combo)
 
 void UCommandWidget::ResetSlot()
 {
-    SetSlotOpacity(0.8f);
+    if (_effectType == EArrowEffectType::Opacity)
+        SetSlotOpacity(0.8f);
+    else
+    {
+        auto commands = _commandArrows->GetAllChildren();
+        for (auto command : commands)
+        {
+            if (auto image = Cast<UImage>(command))
+            {
+                image->SetColorAndOpacity(FLinearColor::White);
+            }
+		}
+    }
+
+    _widgetSwitcher->SetActiveWidgetIndex(0);
 }
 
 void UCommandWidget::UpdateSlot(int32 comboNum)
 {
     if (!_commandArrows) return;
 
-    _commandArrows->GetChildAt(comboNum - 1)->SetRenderOpacity(0.5f);
-    _commandArrows->GetChildAt(comboNum)->SetRenderOpacity(1.f);
+    if (_effectType == EArrowEffectType::Opacity)
+    {
+        _commandArrows->GetChildAt(comboNum - 1)->SetRenderOpacity(0.5f);
+        _commandArrows->GetChildAt(comboNum)->SetRenderOpacity(1.f);
+    }
+    else
+    {
+        if (auto* image = Cast<UImage>(_commandArrows->GetChildAt(comboNum - 1)))
+        {
+            image->SetColorAndOpacity(FLinearColor::Yellow);
+        }
+    }
+}
+
+void UCommandWidget::OnCompleted()
+{
+    _widgetSwitcher->SetActiveWidgetIndex(1);
 }
 
 void UCommandWidget::SetSlotOpacity(float opacity)

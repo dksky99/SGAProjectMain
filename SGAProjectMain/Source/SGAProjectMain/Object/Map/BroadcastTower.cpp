@@ -65,6 +65,7 @@ float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& Damage
         if (!World) return DamageAmount;
 
         OnCommandCompleted();
+        _terminalChild->SetChildActorClass(nullptr); // 터미널 제거
     }
 
     return DamageAmount;
@@ -77,7 +78,5 @@ void ABroadcastTower::OnCommandCompleted()
     {
         GM->OnMissionEnd();
     }
-
-	_terminalChild->SetChildActorClass(nullptr); // 터미널 제거
 }
 
