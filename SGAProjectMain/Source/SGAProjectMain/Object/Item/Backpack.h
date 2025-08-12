@@ -19,5 +19,9 @@ public:
 
 	virtual void PickupItem(class AHellDiver* player);
 
-	UStaticMeshComponent* GetMesh() { return _mesh; }
+	USkeletalMeshComponent* GetMesh() { return _skeletalMesh; }
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Game/Item")
+	USkeletalMeshComponent* _skeletalMesh;
 };

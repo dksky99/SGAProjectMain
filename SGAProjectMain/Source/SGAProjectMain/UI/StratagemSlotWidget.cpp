@@ -5,8 +5,6 @@
 
 #include "../Object/Stratagem/Stratagem.h"
 
-#include "Components/Image.h"
-#include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
 #include "StratagemWidget.h"
@@ -15,26 +13,7 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
 {
 	TArray<FKey> combo = stg->GetInputSequence();
 
-	for (auto key : combo)
-	{
-        UImage* arrowImage = NewObject<UImage>(this);
-        if (!arrowImage) continue;
-
-        arrowImage->SetBrushFromTexture(_arrow);
-        arrowImage->Brush.ImageSize = FVector2D(16.0f, 16.0f);
-        arrowImage->SetDesiredSizeOverride(FVector2D(16.0f, 16.0f));
-        //arrowImage->SetColorAndOpacity(FLinearColor::Gray); // 초기엔 회색
-
-        if (key == EKeys::W)
-            arrowImage->SetRenderTransformAngle(-90.0f);
-        else if (key == EKeys::S)
-            arrowImage->SetRenderTransformAngle(90.0f);
-        else if (key == EKeys::A)
-            arrowImage->SetRenderTransformAngle(180.0f);
-        //else if (key == EKeys::D) -> 회전 생략
-
-        _stgCommands->AddChildToHorizontalBox(arrowImage);
-	}
+    Super::InitializeSlot(combo);
 
     auto text = stg->GetStgName().ToString();
     _stgNameText->SetText(FText::FromString(text));
@@ -47,15 +26,15 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
 
 void UStratagemSlotWidget::ResetSlot()
 {
-    SetSlotOpacity(0.8f);
+    Super::ResetSlot();
+
     _widgetSwitcher->SetActiveWidgetIndex(0);
     _slotState = EStgSlotWgtState::Normal;
 }
 
-void UStratagemSlotWidget::UpdateSlot(int32 inputNum)
+void UStratagemSlotWidget::UpdateSlot(int32 comboNum)
 {
-    _stgCommands->GetChildAt(inputNum - 1)->SetRenderOpacity(0.5f);
-    _stgCommands->GetChildAt(inputNum)->SetRenderOpacity(1.f);
+    Super::UpdateSlot(comboNum);
 
     _stgNameText->SetRenderOpacity(1.f);
     _stgIcon->SetRenderOpacity(1.f);
@@ -144,12 +123,7 @@ void UStratagemSlotWidget::SetSlotCooldownState(float remainingTime)
 
 void UStratagemSlotWidget::SetSlotOpacity(float opacity)
 {
-    auto commands = _stgCommands->GetAllChildren();
-
-    for (auto command : commands)
-    {
-        command->SetRenderOpacity(opacity);
-    }
+    Super::SetSlotOpacity(opacity);
 
     _stgNameText->SetRenderOpacity(opacity);
     _stgIcon->SetRenderOpacity(opacity);

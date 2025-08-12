@@ -22,6 +22,7 @@
 
 #include "Components/SphereComponent.h"
 #include "../Object/Item/ItemBase.h"
+#include "../Object/Map/TerminalConsole.h"
 
 #include "../Gun/GunBase.h"
 #include "../Gun/ExplosiveGun.h"
@@ -212,7 +213,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	if (_staminaBarWidget)
+	if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
 		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
@@ -491,6 +492,8 @@ FRotator APlayerCharacter::Focusing_Legacy()
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
 	if (_stateComponent->GetActionState() == EActionState::Stratagem)// 스트라타젬입력 모드에서는 동작안함
+		return;
+	if (_stateComponent->GetActionState() == EActionState::InterActing) // 상호작용 중일 때 동작 안 함
 		return;
 	if (GetCharacterMovement()->IsFalling())
 		return;
@@ -1541,25 +1544,46 @@ void APlayerCharacter::OpenMap()
 	}
 }
 
-void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
+void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 		return;
 
 	if (!_invenComponent->CanSwitchGun(index))
-		return;
+		return; // 바꿀 수 없으면 중단하고 리턴 false
 
+	// 바꿀 수 있다면 장전 중단
+	if (_stateComponent->IsReloading())
+		_invenComponent->GetEquippedGun()->CancelReload();
+
+	// 현재 상태 저장 후
+	bool wasAiming = _stateComponent->IsAiming();
+	bool wasFiring = _stateComponent->IsFiring();
+
+	// 하던 행동 중단
+	_stateComponent->SetAiming(false);
+	_stateComponent->SetFiring(false);
+
+	// 총 비활성화
+	_invenComponent->GetEquippedGun()->DeactivateGun();
 	auto previousGun = _invenComponent->GetEquippedGun();
 	previousGun->_ammoChanged.RemoveAll(_gunWidget);
 	previousGun->_magChanged.RemoveAll(_gunWidget);
 
-	bool wasAiming = _stateComponent->IsAiming();
-	bool wasFiring = _stateComponent->IsFiring();
+
+	wasAiming = _stateComponent->IsAiming();
+	wasFiring = _stateComponent->IsFiring();
 	
-	SwitchGun(index);
+	//SwitchGun(index);
+	EquipGun(index); // 총 변경
+
+	// 총 활성화
 	auto newGun = _invenComponent->GetEquippedGun();
 	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+	_invenComponent->GetEquippedGun()->ActivateGun();
+
+	_stateComponent->SetEquipIndex(index);
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
@@ -1641,6 +1665,17 @@ void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
 		_stratagemInputBuffer.Add(EKeys::W);
 		CheckStratagemInputCombo();
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::W);
+	}
 }
 
 void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
@@ -1650,6 +1685,17 @@ void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
 		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::A);
 		CheckStratagemInputCombo();
+	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::A);
 	}
 }
 
@@ -1661,6 +1707,17 @@ void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
 		_stratagemInputBuffer.Add(EKeys::S);
 		CheckStratagemInputCombo();
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::S);
+	}
 }
 
 void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
@@ -1670,6 +1727,17 @@ void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
 		StratagemInputting();
 		_stratagemInputBuffer.Add(EKeys::D);
 		CheckStratagemInputCombo();
+	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+	{
+		if (!_curTerminal) // 현재 조작 중인 콘솔이 없다면 -> 오류
+		{
+			EndTerminalInputMode();
+			return;
+		}
+
+		_curTerminal->ReceiveInput(EKeys::D);
 	}
 }
 
@@ -1736,6 +1804,18 @@ void APlayerCharacter::CheckStratagemInputCombo()
 		_stratagemInputBuffer.Empty(); // 조합 초기화
 		_stratagemWidget->OpenWidget(false);
 	}
+}
+
+void APlayerCharacter::BeginTerminalInputMode(ATerminalConsole* terminal)
+{
+	_stateComponent->SetActionState(EActionState::InterActing);
+	_curTerminal = terminal;
+}
+
+void APlayerCharacter::EndTerminalInputMode()
+{
+	_stateComponent->SetActionState(EActionState::None);
+	_curTerminal = nullptr;
 }
 
 void APlayerCharacter::Interact(const FInputActionValue& value)

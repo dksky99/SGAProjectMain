@@ -7,7 +7,7 @@
 #include "CGameInstance.h"
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
-#include "Object/EscapePlane.h"
+#include "Object/Map/EscapePlane.h"
 #include "Game/EnemyReinforceManager.h"
 void AMainGameMode::BeginPlay()
 {

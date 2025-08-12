@@ -2,7 +2,6 @@
 
 
 #include "ItemBase.h"
-#include "../../Character/HellDiver/HellDiver.h"
 
 // Sets default values
 AItemBase::AItemBase()

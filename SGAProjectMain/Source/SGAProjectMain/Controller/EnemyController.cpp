@@ -129,6 +129,7 @@ void AEnemyController::PerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
     for (AActor* UpdatedActor : UpdatedActors)
     {
+        
         FAIStimulus AIStimulus;
         AIStimulus = CanSenseActor(UpdatedActor, EAIPerceptionSense::EPS_Sight);
         if (AIStimulus.WasSuccessfullySensed())

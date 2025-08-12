@@ -58,7 +58,7 @@ FVector AItemSpawner::FindSpawnLocation()
 
         if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility))
         {
-            return hit.Location + FVector(0, 0, 10.f);
+            return hit.Location + FVector(0, 0, 0);
         }
     }
 

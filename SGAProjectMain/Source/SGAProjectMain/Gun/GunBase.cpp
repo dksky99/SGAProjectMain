@@ -398,7 +398,8 @@ void AGunBase::AttachToHand()
 			}
 
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket"));
-			
+
+
 		}
 	}
 }

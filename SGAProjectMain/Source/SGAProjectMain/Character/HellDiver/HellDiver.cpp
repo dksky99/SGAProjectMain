@@ -476,9 +476,13 @@ void AHellDiver::SwitchGun(int32 index)
     if (!_invenComponent->CanSwitchGun(index))
         return; // 바꿀 수 없으면 중단하고 리턴 false
 
-    // 바꿀 수 있다면
+    // 바꿀 수 있다면 장전 중단
     if (_stateComponent->IsReloading())
-        _invenComponent->GetEquippedGun()->CancelReload(); // 장전 중단
+        _invenComponent->GetEquippedGun()->CancelReload();
+
+    // 현재 상태 저장 후
+    bool wasAiming = _stateComponent->IsAiming();
+    bool wasFiring = _stateComponent->IsFiring();
 
     // 하던 행동 중단
     _stateComponent->SetAiming(false);
@@ -491,6 +495,12 @@ void AHellDiver::SwitchGun(int32 index)
     _invenComponent->GetEquippedGun()->ActivateGun();
     _invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
     _stateComponent->SetEquipIndex(index);
+
+    if (wasAiming) // 에임 중이었을 경우 유지
+        StartAiming();
+
+    if (wasFiring) // 사격 중이었을 경우 유지
+        StartFiring();
 }
 
 AGunBase* AHellDiver::GetEquippedGun()

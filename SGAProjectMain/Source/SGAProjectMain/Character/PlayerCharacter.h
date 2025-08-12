@@ -105,13 +105,13 @@ public:
 	void TryRolling(const  FInputActionValue& value);
 
 	UFUNCTION()
-	void SwitchWeapon1(const  FInputActionValue& value) { SwitchWeapon(0, value); }
+	void SwitchWeapon1(const  FInputActionValue& value) { SwitchGun(0, value); }
 	UFUNCTION()
-	void SwitchWeapon2(const  FInputActionValue& value) { SwitchWeapon(1, value); }
+	void SwitchWeapon2(const  FInputActionValue& value) { SwitchGun(1, value); }
 	UFUNCTION()
-	void SwitchWeapon3(const  FInputActionValue& value) { SwitchWeapon(2, value); }
+	void SwitchWeapon3(const  FInputActionValue& value) { SwitchGun(2, value); }
 
-	void SwitchWeapon(int32 index, const FInputActionValue& value);
+	void SwitchGun(int32 index, const FInputActionValue& value);
 	void PickupGun(AGunBase* gun) override;
 	void AddSample(struct FSampleBundle sample) override;
 	void DropBackpack();
@@ -138,7 +138,8 @@ public:
 
 	void CheckStratagemInputCombo();
 	
-
+	void BeginTerminalInputMode(class ATerminalConsole* console); // 상호작용 시작 시 콘솔에서 호출
+	void EndTerminalInputMode(); // 상호작용 종료 시 콘솔에서 호출
 	
 	void SetViewData(const class UPlayerControlDataAsset* characterControlData);
 
@@ -324,4 +325,8 @@ protected:
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere;
+
+	// 커맨드 콘솔
+	UPROPERTY()
+	ATerminalConsole* _curTerminal;
 };
