@@ -67,14 +67,13 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_tpsZoomCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("TPSZoomCamera")) ;
 	_fpsCameraActor = CreateDefaultSubobject<UChildActorComponent>(TEXT("FPSCamera")) ;
 
-
 	SetRootComponent(GetCapsuleComponent());
 	GetMesh()->SetupAttachment(RootComponent);
 	_cameraRoot->SetupAttachment(RootComponent); 
 	//_cameraRoot->SetupAttachment(GetMesh(), FName("CameraSocket"));
 	_tpsSpringArm->SetupAttachment(_cameraRoot);
 	_tpsZoomSpringArm->SetupAttachment(_cameraRoot);
-	_fpsSpringArm->SetupAttachment(GetMesh(), FName("head_Socket"));
+	_fpsSpringArm->SetupAttachment(GetMesh(), FName("head"));
 
 
 	_tpsCameraActor->SetupAttachment(_tpsSpringArm);
@@ -89,7 +88,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_itemDetectionSphere->SetSphereRadius(100.f);
 	_itemDetectionSphere->SetGenerateOverlapEvents(true);
 
-
+	_aimOffset_.X = 0.0f;
+	_aimOffset_.Y = 0.0f;
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -535,6 +535,9 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 }
 void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 {
+
+	_vertical = 0.0f;
+	_horizontal = 0.0f;
 	if (_stateComponent->IsFocusing())
 	{
 
@@ -544,8 +547,6 @@ void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 
 		ViewTurnBack();
 		// 멈추는 경우
-		_vertical = 0.0f;
-		_horizontal = 0.0f;
 
 	}
 }
@@ -560,7 +561,17 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerYawInput(lookAxisVector.X);
 		AddControllerPitchInput(lookAxisVector.Y);
 
+		CalcYaw();
+		CalcPitch();
+
+		FRotator AimRot = FRotator(_pitch, 0.f, _yaw);
+		_pitch = AimRot.Pitch;
+		//_yaw = AimRot.Yaw;
+
+
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
+		
+
 		if (_isViewTurnCenter && _deltaAngle * _deltaAngle <= 0.01)
 		{
 			_isViewTurnCenter = false;
@@ -1160,6 +1171,8 @@ void APlayerCharacter::DefaultLook()
 	const FRotator actorRot = GetActorRotation();
 	const FRotator controlRot = GetControlRotation();
 
+	const float standard = _deltaAngle;
+
 	if (_stateComponent->GetCharacterState() == ECharacterState::Proning||_stateComponent->IsRolling())
 	{
 		//UE_LOG(LogTemp, Error, TEXT("ProningLook"));
@@ -1169,23 +1182,87 @@ void APlayerCharacter::DefaultLook()
 		return;
 	}
 
-	if ( FMath::Abs(_deltaAngle) > 80.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
+	if ( FMath::Abs(standard) > 50.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
 		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"),_deltaAngle);
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 
-		_isTurnLeft = (_deltaAngle < -80.0f);
-		_isTurnRight = (_deltaAngle > 80.0f);
+		_isTurnLeft = (standard < -50.f);
+		_isTurnRight = (standard > 50.0f);
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	}
-	else if (FMath::Abs(_deltaAngle) < 1.0f)
+	else if (FMath::Abs(standard) < 1.0f)
 	{
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), _deltaAngle);
+		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 		_isTurnLeft = false;
 		_isTurnRight = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	}
+}
+
+
+void APlayerCharacter::CalcPitch()
+{
+	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
+
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
+	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
+	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
+
+	FVector controlForward = GetControlRotation().Vector().GetSafeNormal();
+	FVector charForward = GetActorForwardVector().GetSafeNormal();
+	charForward.ProjectOnToNormal(spineRight).GetSafeNormal();
+	controlForward.ProjectOnToNormal(spineRight).GetSafeNormal();
+
+	float dot = FVector::DotProduct(charForward, controlForward);
+	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
+	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
+
+	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
+
+	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
+	float directionSign = FVector::DotProduct(crossProduct, spineRight);
+
+	// --- 3. 최종 부호 있는 각도 계산 ---
+	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
+	float signedAngle = angleInDegree * FMath::Sign(directionSign);
+
+	_pitch = signedAngle;
+
+}
+
+
+void APlayerCharacter::CalcYaw()
+{
+
+	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
+
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
+	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
+	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
+
+	FVector controlForward = GetControlRotation().Vector().GetSafeNormal();
+	FVector charForward = GetActorForwardVector().GetSafeNormal();
+	charForward.ProjectOnToNormal(spineUp).GetSafeNormal();
+	controlForward.ProjectOnToNormal(spineUp).GetSafeNormal();
+	
+	float dot = FVector::DotProduct(charForward, controlForward);
+	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
+	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
+
+	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
+
+	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
+	float directionSign = FVector::DotProduct(crossProduct, spineUp);
+
+	// --- 3. 최종 부호 있는 각도 계산 ---
+	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
+	float signedAngle = angleInDegree * FMath::Sign(directionSign);
+
+
+	_yaw = signedAngle;
+
 }
 
 
@@ -1313,6 +1390,67 @@ void APlayerCharacter::UpdateCameraOcclusion()
 	}
 
 }
+FVector APlayerCharacter::GetCenterLoc()
+{
+	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
+	APlayerController* pc = Cast<APlayerController>(GetController());
+	FVector CameraLoc, CameraForward;
+	if (pc == nullptr)
+	{
+
+		CameraLoc = GetCurCamera()->GetComponentLocation();
+		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
+
+	}
+	else
+	{
+		CameraLoc = pc->PlayerCameraManager->GetCameraLocation();
+		CameraForward = pc->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
+	}
+
+	// 1. 화면의 정중앙 좌표 구하기
+	int32 ViewportSizeX, ViewportSizeY;
+	pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	float ScreenCenterX = (float)ViewportSizeX / 2.f;
+	float ScreenCenterY = (float)ViewportSizeY / 2.f;
+
+	float traceRange = 100000.f;
+	FVector AimTarget;
+	// 2. 화면 좌표를 월드 방향으로 변환
+	FVector WorldLocation, WorldDirection;
+	if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
+	{
+
+		// 3. 라인 트레이스를 정중앙 방향으로 쏨
+		FVector TraceEnd = WorldLocation + WorldDirection * traceRange;
+		FHitResult HitResult;
+
+		FCollisionQueryParams Params;
+		Params.bReturnPhysicalMaterial = false;
+		Params.AddIgnoredActor(this); // 자기 자신 무시
+
+		if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
+		{
+			// 4. 명중 시 → 충돌 지점 반환
+			AimTarget = HitResult.ImpactPoint;
+			//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
+		}
+		else
+		{
+
+			AimTarget = TraceEnd;
+		}
+		// 5. 미명중 시 → 끝 지점 반환
+	}
+	else
+	{
+		AimTarget = CameraLoc + CameraForward * traceRange;
+	}
+
+
+
+	return AimTarget;
+}
 void APlayerCharacter::ViewTurnBack()
 {
 	UE_LOG(LogTemp, Display, TEXT("TurnBack"));
@@ -1417,7 +1555,7 @@ void APlayerCharacter::SwitchWeapon(int32 index, const FInputActionValue& value)
 
 	bool wasAiming = _stateComponent->IsAiming();
 	bool wasFiring = _stateComponent->IsFiring();
-
+	
 	SwitchGun(index);
 	auto newGun = _invenComponent->GetEquippedGun();
 	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);

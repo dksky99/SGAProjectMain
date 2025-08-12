@@ -23,6 +23,8 @@ public:
 	void CallEscapePlane();
 
 	void OnBattleEnd();
+
+	class AEnemyReinforceManager* GetEnemyReinforceManager() { return _enemyReinforceManager; }
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")

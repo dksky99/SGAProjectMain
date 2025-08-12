@@ -16,6 +16,9 @@ void AMainGameMode::BeginPlay()
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
+
+   
+
 }
 
 void AMainGameMode::StartPlay()

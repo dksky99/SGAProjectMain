@@ -183,6 +183,9 @@ void AGunBase::Fire()
 		_burstCount--;
 	}
 
+
+
+
 	ApplyFireRecoil(); // 반동 계산
 	ExecuteShot(); // 라인트레이스
 
@@ -394,8 +397,8 @@ void AGunBase::AttachToHand()
 				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 
-			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_R"));
-			SetActorRelativeRotation(FRotator(0.f, 90.f, 0.f));
+			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket"));
+			
 		}
 	}
 }

@@ -485,9 +485,11 @@ void AHellDiver::SwitchGun(int32 index)
     _stateComponent->SetFiring(false);
 
     _invenComponent->GetEquippedGun()->DeactivateGun();
+    _invenComponent->PutBackWeapon(_invenComponent->GetEquippedGun());
+    
     EquipGun(index); // ÃÑ º¯°æ
     _invenComponent->GetEquippedGun()->ActivateGun();
-
+    _invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
     _stateComponent->SetEquipIndex(index);
 }
 
@@ -792,7 +794,7 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     FVector resultLoc;
     FRotator resultRot;
     GetMesh()->TransformToBoneSpace(TEXT("hand_r"), temp.GetLocation(), temp.GetRotation().Rotator(), resultLoc,resultRot);
-    temp.SetLocation(resultLoc+FVector(0,6,6));
+    temp.SetLocation(resultLoc+FVector(0,6,0));
     temp.SetRotation(resultRot.Quaternion());
     return temp ;
 }
@@ -832,9 +834,9 @@ void AHellDiver::Dead()
 FTransform  AHellDiver::GetHandSocketTransform() const
 {
 	USkeletalMeshComponent* mesh = GetMesh();
-	if (mesh && mesh->DoesSocketExist(TEXT("hand_R")))
+	if (mesh && mesh->DoesSocketExist(TEXT("cc_weaponbone_r")))
 	{
-		return mesh->GetSocketTransform(TEXT("hand_R"));
+		return mesh->GetSocketTransform(TEXT("cc_weaponbone_r"));
 	}
 	return GetActorTransform(); // fallback
 }
@@ -842,9 +844,9 @@ FTransform  AHellDiver::GetHandSocketTransform() const
 FTransform AHellDiver::GetEquip1SocketTransform() const
 {
     USkeletalMeshComponent* mesh = GetMesh();
-    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_l")))
+    if (mesh && mesh->DoesSocketExist(TEXT("cc_pocket01_L")))
     {
-        return mesh->GetSocketTransform(TEXT("EquipSocket_l"));
+        return mesh->GetSocketTransform(TEXT("cc_pocket01_L"));
     }
     return GetActorTransform(); // fallback
 }
@@ -852,9 +854,9 @@ FTransform AHellDiver::GetEquip1SocketTransform() const
 FTransform AHellDiver::GetEquip2SocketTransform() const
 {
     USkeletalMeshComponent* mesh = GetMesh();
-    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_r")))
+    if (mesh && mesh->DoesSocketExist(TEXT("cc_pocket01_R")))
     {
-        return mesh->GetSocketTransform(TEXT("EquipSocket_r"));
+        return mesh->GetSocketTransform(TEXT("cc_pocket01_R"));
     }
     return GetActorTransform(); // fallback
 }
@@ -862,9 +864,9 @@ FTransform AHellDiver::GetEquip2SocketTransform() const
 FTransform AHellDiver::GetEquip3SocketTransform() const
 {
     USkeletalMeshComponent* mesh = GetMesh();
-    if (mesh && mesh->DoesSocketExist(TEXT("EquipSocket_c")))
+    if (mesh && mesh->DoesSocketExist(TEXT("cc_backpack")))
     {
-        return mesh->GetSocketTransform(TEXT("EquipSocket_c"));
+        return mesh->GetSocketTransform(TEXT("cc_backpack"));
     }
     return GetActorTransform(); // fallback
 }

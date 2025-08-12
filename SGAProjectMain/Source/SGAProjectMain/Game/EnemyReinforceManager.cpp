@@ -24,6 +24,16 @@ void AEnemyReinforceManager::BeginPlay()
 void AEnemyReinforceManager::Init()
 {
 
+	FActorSpawnParameters param;
+	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	for (auto pair : _squadList)
+	{
+		for (int i = 0; i < pair.Value; i++)
+		{
+			auto temp = GetWorld()->SpawnActor< AReinforcementSquad>(pair.Key, FVector::ZeroVector, FRotator::ZeroRotator, param);
+			_squadPool.Add(temp);
+		}
+	}
 
 
 }
@@ -33,5 +43,17 @@ void AEnemyReinforceManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint)
+{
+	for (auto& squad : _squadPool)
+	{
+		if(squad->CheckAbleToCall(callPoint))
+		{
+			return squad;
+		}
+	}
+	return nullptr;
 }
 

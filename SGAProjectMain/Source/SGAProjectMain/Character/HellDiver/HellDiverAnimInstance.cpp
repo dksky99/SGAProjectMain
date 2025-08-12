@@ -5,11 +5,13 @@
 #include "HellDiver.h"
 #include "../../Gun/GunBase.h"
 #include "HellDiverStateComponent.h"
+#include "HellDiverStatComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimNode_StateMachine.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "Perception/AISense_Hearing.h"
 
-#include "../../Gun/GunBase.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UHellDiverAnimInstance::UHellDiverAnimInstance()
 {
@@ -47,6 +49,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
 			_isVaulting = _hellDiver->GetStateComponent()->IsVaulting();
+			GetAimOffset();
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
@@ -73,6 +76,22 @@ void UHellDiverAnimInstance::AnimNotify_Reload()
 	{
 		gun->ChangeReloadStage();
 	}
+}
+
+void UHellDiverAnimInstance::AnimNotify_FootStep()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Footstep 애님 노티파이 실행됨"));
+	
+	if (!_hellDiver) return;
+
+	UAISense_Hearing::ReportNoiseEvent(
+		_hellDiver->GetWorld(),
+		_hellDiver->GetActorLocation(),
+		_moveSpeed/_hellDiver->GetStatComponent()->GetDefaultSpeed(),
+		_hellDiver
+	);
+
+
 }
 
 bool UHellDiverAnimInstance::MoveStateChanged(FString curState)
@@ -207,5 +226,51 @@ void UHellDiverAnimInstance::CheckEquipChange(uint8 index)
 	}
 	_changeWeapon = true;
 	_curEquipIndex = index;
+
+}
+
+void UHellDiverAnimInstance::GetAimOffset()
+{
+	// 캐릭터 레퍼런스가 유효한지 확인하고, 없다면 가져옵니다.
+	if (!_hellDiver)
+	{
+		auto pawn = TryGetPawnOwner();
+		if (pawn)
+		{
+			_hellDiver = Cast<AHellDiver>(pawn);
+
+		}
+	}
+
+	if (!_hellDiver)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
+	if (!mesh)
+	{
+		return;
+	}
+
+	const FRotator controlRotation = _hellDiver->GetControlRotation();
+	const FRotator actorRotation = _hellDiver->GetActorRotation();
+	// 2. 'spine_01' 본의 월드 회전 값
+	const FName spineBoneName = TEXT("spine_01");
+	 FTransform spineTransform = mesh->GetSocketTransform(spineBoneName);
+
+	 FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
+	 FRotator temp= UKismetMathLibrary::NormalizedDeltaRotator(actorRotation, controlRotation);
+	
+	 FQuat DeltaQuat = FQuat::FindBetweenNormals(spineUp, FVector::UpVector);
+
+	 // 필요하면 Rotator로 변환
+	 FRotator DeltaRot = DeltaQuat.Rotator();
+	 FRotator Result = UKismetMathLibrary::ComposeRotators(temp, DeltaRot);
+
+
+	 _yaw = -Result.Yaw;
+	 _pitch = Result.Pitch;
+
 
 }

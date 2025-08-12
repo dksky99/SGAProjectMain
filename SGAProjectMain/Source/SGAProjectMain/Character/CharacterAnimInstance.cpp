@@ -45,8 +45,8 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 			FRotator controlRotation = _pawn->GetControlRotation();
 			FRotator actorRotation = _pawn->GetActorRotation();
-			_yaw = FMath::FindDeltaAngleDegrees(actorRotation.Yaw, controlRotation.Yaw);
-			_pitch = FMath::FindDeltaAngleDegrees(actorRotation.Pitch, controlRotation.Pitch);
+			_yaw = _pawn->MyYaw();
+			_pitch = _pawn->MyPitch();
 
 			auto player = Cast<APlayerCharacter>(_pawn);
 			if (player)

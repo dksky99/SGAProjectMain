@@ -129,6 +129,8 @@ protected:
 	UAnimMontage* _reloadMontage;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* _fireMontage;
 	UPROPERTY()
 	class AImpactMarker* _marker;
 

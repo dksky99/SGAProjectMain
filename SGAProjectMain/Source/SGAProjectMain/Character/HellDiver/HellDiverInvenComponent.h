@@ -35,12 +35,21 @@ public:
 	void AddSample(struct FSampleBundle sample);
 	void DropSample();
 
+	void PutBackWeapon(AGunBase* gun);
+	void PutBackMainWeapon();
+	void PutBackSubWeapon();
+	void PutBackSupportWeapon();
+	void BringWeapon(AGunBase* gun);
 	TArray<AGunBase*> GetAllGun() { return _gunSlot; } // 들고있는 총 목록 전달
 	AGunBase* GetEquippedGun() { return _equippedGun; } // 현재 장착 중인 총 전달
 	ABackpack* GetBackpack() { return _backpack; }
 	FSampleBundle GetSampleBundle() { return _sampleBundle; }
 
 private:
+
+	UPROPERTY(Transient)
+	class AHellDiver* _hellDiver;
+
 	UPROPERTY(VisibleAnywhere, Category = "Game/Inven")
 	AGunBase* _equippedGun;
 

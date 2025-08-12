@@ -32,6 +32,8 @@ public:
 	float MyVertical() { return _vertical; }
 	float MyHorizontal() { return _horizontal; }
 	float MyDeltaAngle() { return _deltaAngle; }
+	float MyYaw() { return _yaw; }
+	float MyPitch() { return _pitch; }
 
 	FText GetCharacterName() { return _name; }
 
@@ -80,6 +82,8 @@ protected:
 
 	float _deltaAngle = 0.0f;
 
+	float _yaw=0.0f;
+	float _pitch = 0.0f;
 	bool _isViewTurnCenter=false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))

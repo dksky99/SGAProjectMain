@@ -11,6 +11,12 @@
 
 #include "../../Controller/EnemyController.h"
 #include "EnemySquad.h"
+
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Damage.h"
+
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
@@ -20,6 +26,15 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     _hpBarWidget->SetupAttachment(GetMesh());
     _hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
     _hpBarWidget->SetRelativeLocation(FVector(0, 0, 230.0f));
+
+    _stimuliSourceComp = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+    _stimuliSourceComp->bAutoRegister = true;
+
+    // 어떤 감각에 반응할지 등록
+    _stimuliSourceComp->RegisterForSense(UAISense_Sight::StaticClass());
+    _stimuliSourceComp->RegisterForSense(UAISense_Hearing::StaticClass());
+    _stimuliSourceComp->RegisterForSense(UAISense_Damage::StaticClass());
+
 }
 
 void AEnemy::BeginPlay()

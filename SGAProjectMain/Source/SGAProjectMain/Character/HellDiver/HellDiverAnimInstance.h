@@ -36,6 +36,10 @@ public:
 	UFUNCTION()
 	void AnimNotify_Reload();
 
+
+	UFUNCTION()
+	void AnimNotify_FootStep();
+
 	FOnMoveAnimStateChanged _moveChanged;
 	FOnLookAnimStateChanged _lookChanged;
 
@@ -49,8 +53,11 @@ protected:
 	bool IsUsingLeftHand();
 	bool IsUsingFocusing();
 	void CheckEquipChange(uint8 index);
-protected:
 
+	void GetAimOffset();
+
+protected:
+	UPROPERTY(Transient)
 	class AHellDiver* _hellDiver;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
@@ -92,6 +99,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useLeftHandIk = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _moveSpeed = 0.f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

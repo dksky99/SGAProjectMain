@@ -147,6 +147,8 @@ public:
 
 	void MovingLook();
 	void DefaultLook();
+	void CalcPitch();
+	void CalcYaw();
 
 	void ChangeViewCamera(ECharacterViewType type);
 	void DeactiveAnotherCamera();
@@ -162,7 +164,7 @@ public:
 	virtual FRotator Focusing() override;
 	virtual FRotator Focusing_Legacy() ;
 	void UpdateCameraOcclusion();
-
+	FVector GetCenterLoc();
 	void ViewTurnBack();
 
 	virtual void SetStandingCollisionCamera() override;
@@ -251,6 +253,8 @@ protected:
 	ECharacterViewType _viewType = ECharacterViewType::TPS;
 
 
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _gunWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
@@ -305,6 +309,9 @@ protected:
 	UPROPERTY()
 	TArray<UPrimitiveComponent*> _fadedComponents;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
+	FVector _aimOffset_;
 	// À§Á¬ -> ÃÑ ¼³Á¤
 	float _reloadPressedTime = 0.0f;
 	bool _isGunSettingMode = false;

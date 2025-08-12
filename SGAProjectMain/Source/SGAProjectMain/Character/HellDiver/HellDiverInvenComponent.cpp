@@ -9,6 +9,7 @@
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/SampleResources.h"
 
+#include "HellDiver.h"
 // Sets default values for this component's properties
 UHellDiverInvenComponent::UHellDiverInvenComponent()
 {
@@ -28,6 +29,7 @@ void UHellDiverInvenComponent::BeginPlay()
 
 	_sampleBundle.Clear();
 	// ...
+	_hellDiver = Cast<AHellDiver>(GetOwner());
 	
 }
 
@@ -149,5 +151,97 @@ void UHellDiverInvenComponent::DropSample()
 		sampleBundleActor->SetBundle(_sampleBundle); // 번들(개수) 데이터 전달
 		_sampleBundle.Clear(); // 인벤토리 비우기
 	}
+}
+
+void UHellDiverInvenComponent::PutBackWeapon(AGunBase* gun)
+{
+	gun->SetActorHiddenInGame(false);
+	switch (gun->GetGunData()._slotType)
+	{
+	case EGunSlotType::Primary:
+		PutBackMainWeapon();
+		break;
+	case EGunSlotType::Secondary:
+		PutBackSubWeapon();
+		break;
+	case EGunSlotType::Support:
+		PutBackSupportWeapon();
+		break;
+	default:
+		break;
+	}
+}
+
+void UHellDiverInvenComponent::PutBackMainWeapon()
+{
+	if (!_hellDiver)
+	{
+		return;
+	}
+	if (USkeletalMeshComponent* characterMesh = _hellDiver->GetMesh())
+	{
+		// 물리 & 충돌 비활성화
+		USkeletalMeshComponent* gunMesh = _gunSlot[0]->GetMesh();
+		if (!gunMesh)
+		{
+			return;
+		}
+		gunMesh->SetSimulatePhysics(false);
+		gunMesh->SetEnableGravity(false);
+		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		
+		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_mainweapon_socket"));
+
+	}
+}
+
+void UHellDiverInvenComponent::PutBackSubWeapon()
+{
+	if (!_hellDiver)
+	{
+		return;
+	}
+	if (USkeletalMeshComponent* characterMesh = _hellDiver->GetMesh())
+	{
+		// 물리 & 충돌 비활성화
+		USkeletalMeshComponent* gunMesh = _gunSlot[1]->GetMesh();
+		if (!gunMesh)
+		{
+			return;
+		}
+		gunMesh->SetSimulatePhysics(false);
+		gunMesh->SetEnableGravity(false);
+		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_subweapon_socket"));
+
+	}
+
+}
+
+void UHellDiverInvenComponent::PutBackSupportWeapon()
+{
+	if (!_hellDiver)
+	{
+		return;
+	}
+	if (USkeletalMeshComponent* characterMesh = _hellDiver->GetMesh())
+	{
+		// 물리 & 충돌 비활성화
+		USkeletalMeshComponent* gunMesh = _gunSlot[2]->GetMesh();
+		if (!gunMesh)
+		{
+			return;
+		}
+		gunMesh->SetSimulatePhysics(false);
+		gunMesh->SetEnableGravity(false);
+		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_supportweapon_socket"));
+
+	}
+}
+
+void UHellDiverInvenComponent::BringWeapon(AGunBase* gun)
+{
+	gun->AttachToHand();
 }
 

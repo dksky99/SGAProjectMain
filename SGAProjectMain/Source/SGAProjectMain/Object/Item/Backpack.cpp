@@ -23,7 +23,6 @@ void ABackpack::PickupItem(AHellDiver* player)
         _mesh->SetSimulatePhysics(false);
         _mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         
-        AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("EquipSocket_BackPack"));
-        _mesh->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
+        AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("cc_backpack_socket"));
     }
 }

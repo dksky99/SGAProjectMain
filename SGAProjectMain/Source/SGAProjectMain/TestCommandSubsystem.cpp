@@ -8,6 +8,7 @@
 #include "Engine/Engine.h"
 #include "Character/CharacterBase.h"
 #include "MainGameMode.h"
+#include "Game/EnemyReinforceManager.h"
 
 void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -57,6 +58,15 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         CallEscapePlaneDelegate,
         ECVF_Cheat
     );
+
+    CallEnemyReinforceDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnCallEnemyReinforce);
+    CallEnemyReinforceCommand = IConsoleManager::Get().RegisterConsoleCommand(
+        TEXT("CallEnemyReinforce"),
+        TEXT("자신의 위치에 적 증원을 소환합니다."),
+        CallEnemyReinforceDelegate,
+        ECVF_Cheat
+    );
+
 }
 
 void UTestCommandSubsystem::Deinitialize()
@@ -90,6 +100,14 @@ void UTestCommandSubsystem::Deinitialize()
         IConsoleManager::Get().UnregisterConsoleObject(CallEscapePlaneCommand);
         CallEscapePlaneCommand = nullptr;
     }
+
+    if (CallEnemyReinforceCommand)
+    {
+
+        IConsoleManager::Get().UnregisterConsoleObject(CallEnemyReinforceCommand);
+        CallEnemyReinforceCommand = nullptr;
+    }
+
 
     Super::Deinitialize();
 }
@@ -154,4 +172,24 @@ void UTestCommandSubsystem::OnCallEscapePlane()
     {
         GM->CallEscapePlane();
     }
+}
+
+void UTestCommandSubsystem::OnCallEnemyReinforce()
+{
+
+    UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+    if (!World) return;
+
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (!GM)return;
+    if (!GM->GetEnemyReinforceManager()) return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+    if (!PC) return;
+
+    ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
+    if (!MyChar)return;
+
+    GM->GetEnemyReinforceManager()->GetExtraCallableSquad(MyChar->GetActorLocation());
+    
 }

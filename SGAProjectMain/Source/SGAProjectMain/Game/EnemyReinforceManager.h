@@ -27,6 +27,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+
+	class AReinforcementSquad* GetExtraCallableSquad(FVector callPoint);
+
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
