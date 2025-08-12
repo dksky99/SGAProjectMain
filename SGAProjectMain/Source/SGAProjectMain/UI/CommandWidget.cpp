@@ -34,12 +34,16 @@ void UCommandWidget::ResetSlot()
 
 void UCommandWidget::UpdateSlot(int32 comboNum)
 {
+    if (!_commandArrows) return;
+
     _commandArrows->GetChildAt(comboNum - 1)->SetRenderOpacity(0.5f);
     _commandArrows->GetChildAt(comboNum)->SetRenderOpacity(1.f);
 }
 
 void UCommandWidget::SetSlotOpacity(float opacity)
 {
+    if (!_commandArrows) return;
+
     auto commands = _commandArrows->GetAllChildren();
 
     for (auto command : commands)

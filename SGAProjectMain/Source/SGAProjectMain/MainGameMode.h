@@ -21,8 +21,8 @@ public:
 
 	virtual void StartPlay() override;
 
+	void OnMissionEnd();
 	void CallEscapePlane();
-
 	void OnBattleEnd();
 	
 private:
@@ -31,6 +31,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	FVector _planeSpawnLoc;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Console")
+	class ADropPlaneBeacon* _planeBeacon;
 
 
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")

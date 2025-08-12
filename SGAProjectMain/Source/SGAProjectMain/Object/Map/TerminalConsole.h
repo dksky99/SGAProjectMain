@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE(FCommandCompleted);
+
 UCLASS()
 class SGAPROJECTMAIN_API ATerminalConsole : public AItemBase
 {
@@ -21,6 +23,10 @@ public:
 
 	virtual void PickupItem(class AHellDiver* hellDiver);
 	void ReceiveInput(FKey key);
+
+	FCommandCompleted _commandSuccess;
+
+	void SetInteractable(bool isInteractable) { _isInteractable = isInteractable; }
 
 protected:
 	void CheckInputCombo();
@@ -40,4 +46,7 @@ protected:
 	TArray<FKey> _command;
 
 	TArray<FKey> _playerInputBuffer;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Console")
+	bool _isInteractable = true;
 };

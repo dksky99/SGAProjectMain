@@ -30,6 +30,8 @@ void ATerminalConsole::BeginPlay()
 
 void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 {
+	if (!_isInteractable) return;
+
 	// 터미널이 누군가와 이미 상호작용 중일 때
 	if (_player)
 	{
@@ -70,12 +72,7 @@ void ATerminalConsole::CheckInputCombo()
 	// 완전 일치 → 장비
 	if (_playerInputBuffer == _command)
 	{
-		// 추후 다른 흐름으로 변경 예정
-		AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
-		if (GM)
-		{
-			GM->CallEscapePlane();
-		}
+		_commandSuccess.Broadcast();
 
 		ResetInput();
 

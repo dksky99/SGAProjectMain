@@ -64,13 +64,20 @@ float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& Damage
         UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
         if (!World) return DamageAmount;
 
-        AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
-        if (GM)
-        {
-            GM->CallEscapePlane();
-        }
+        OnCommandCompleted();
     }
 
     return DamageAmount;
+}
+
+void ABroadcastTower::OnCommandCompleted()
+{
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (GM)
+    {
+        GM->OnMissionEnd();
+    }
+
+	_terminalChild->SetChildActorClass(nullptr); // 터미널 제거
 }
 
