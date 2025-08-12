@@ -37,7 +37,7 @@ public:
 	void AnimNotify_Reload();
 
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void AnimNotify_FootStep();
 
 	FOnMoveAnimStateChanged _moveChanged;
