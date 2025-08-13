@@ -35,6 +35,7 @@
 #include "../UI/StaminaBarWidget.h"
 #include "../UI/CompassWidget.h"
 #include "../UI/SampleWidget.h"
+#include "../UI/MissionWidget.h"
 
 #include "../Object/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -109,6 +110,8 @@ void APlayerCharacter::PostInitializeComponents()
 		_compassWidget = CreateWidget<UCompassWidget>(GetWorld(), _compassWidgetClass);
 	if (_sampleWidgetClass)
 		_sampleWidget = CreateWidget<USampleWidget>(GetWorld(), _sampleWidgetClass);
+	if (_missionWidgetClass)
+		_missionWidget = CreateWidget<UMissionWidget>(GetWorld(), _missionWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -191,6 +194,11 @@ void APlayerCharacter::BeginPlay()
 	if (_sampleWidget)
 		_sampleWidget->AddToViewport();
 
+	if (_missionWidget)
+	{
+		_missionWidget->AddToViewport();
+	}
+
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 }
@@ -213,12 +221,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
+	if (_stratagemWidget)
 	{
-		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
-		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
+		if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
-			_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
+			// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
+			if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
+			{
+				_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
+			}
 		}
 	}
 }
@@ -1404,6 +1415,11 @@ void APlayerCharacter::OpenMap()
 		_minimapWidget->SetVisibility(ESlateVisibility::Visible);
 		_stateComponent->SetCheckingMap(true);
 	}
+}
+
+void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
+{
+	_missionWidget->AddMissionSlot(texture, name);
 }
 
 void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)

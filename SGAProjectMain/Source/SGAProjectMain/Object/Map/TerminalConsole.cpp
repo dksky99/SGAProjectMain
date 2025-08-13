@@ -25,7 +25,8 @@ void ATerminalConsole::BeginPlay()
 		_terminalWidget = commandWidget;
 
 	_terminalWidget->InitializeSlot(_command);
-	_terminalWidgetComponent->SetVisibility(false);
+	_terminalWidgetComponent->SetVisibility(true);
+	_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
@@ -39,9 +40,8 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 		if (_player == hellDiver)
 		{
 			// 상호작용 해제
-			_player->EndTerminalInputMode();
-			_terminalWidgetComponent->SetVisibility(false);
-			_player = nullptr;
+			ResetTerminalConsole();
+			_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
 		}
 
 		else // 다른 사람이 상호작용을 시도할 경우 작동 x
@@ -52,7 +52,7 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
 		player->BeginTerminalInputMode(this);
-		_terminalWidgetComponent->SetVisibility(true);
+		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
 		_player = player;
 	}
 
@@ -74,7 +74,7 @@ void ATerminalConsole::CheckInputCombo()
 	{
 		_commandSuccess.Broadcast();
 
-		ResetInput();
+		ResetTerminalConsole();
 		_terminalWidget->OnCompleted();
 		_isInteractable = false; // 상호작용 불가 상태로 변경
 
@@ -97,7 +97,7 @@ void ATerminalConsole::CheckInputCombo()
 
 	if (!bPrefixMatch)
 	{
-		ResetInput();
+		ResetTerminalConsole();
 	}
 	else
 	{
@@ -105,9 +105,10 @@ void ATerminalConsole::CheckInputCombo()
 	}
 }
 
-void ATerminalConsole::ResetInput()
+void ATerminalConsole::ResetTerminalConsole()
 {
 	_player->EndTerminalInputMode();
 	_playerInputBuffer.Empty();
+	_player = nullptr;
 	_terminalWidget->ResetSlot();
 }

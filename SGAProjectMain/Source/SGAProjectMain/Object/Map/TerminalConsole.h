@@ -30,7 +30,7 @@ public:
 
 protected:
 	void CheckInputCombo();
-	void ResetInput();
+	void ResetTerminalConsole();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Command")

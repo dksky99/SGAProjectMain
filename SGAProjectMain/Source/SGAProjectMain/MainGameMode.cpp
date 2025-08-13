@@ -32,6 +32,12 @@ void AMainGameMode::OnMissionEnd()
     {
         _planeBeacon->SetInteractable(true); // 꺼져있던 비콘 활성화
 	}
+
+    APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (player)
+    {
+		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Avaliable"));
+    }
 }
 
 void AMainGameMode::CallEscapePlane()
