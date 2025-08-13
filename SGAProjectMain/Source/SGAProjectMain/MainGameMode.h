@@ -21,8 +21,8 @@ public:
 
 	virtual void StartPlay() override;
 
+	void OnMissionEnd();
 	void CallEscapePlane();
-
 	void OnBattleEnd();
 
 	class AEnemyReinforceManager* GetEnemyReinforceManager() { return _enemyReinforceManager; }
@@ -34,6 +34,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	FVector _planeSpawnLoc;
 
+	UPROPERTY(EditAnywhere, Category = "Game/Console")
+	class ADropPlaneBeacon* _planeBeacon;
+
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
+	class UTexture2D* _planeMissionIcon; // 임시. 추후 삭제 예정
 
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;

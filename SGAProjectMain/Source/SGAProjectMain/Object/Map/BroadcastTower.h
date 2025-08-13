@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "TerminalOperable.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
 #include "BroadcastTower.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API ABroadcastTower : public AActor
+class SGAPROJECTMAIN_API ABroadcastTower : public ATerminalOperable
 {
 	GENERATED_BODY()
 	
@@ -21,7 +21,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	//UFUNCTION()
-	//void OnBreakEvent(const FChaosBreakEvent& BreakEvent); // 빠각 트리거
+	//void OnBreakEvent(const FChaosBreakEvent& BreakEvent); // 부서지는 트리거
 
 public:	
 	// Called every frame
@@ -30,6 +30,8 @@ public:
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
+	virtual void OnCommandCompleted() override;
+
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UGeometryCollectionComponent> _geometryCollection;
 };

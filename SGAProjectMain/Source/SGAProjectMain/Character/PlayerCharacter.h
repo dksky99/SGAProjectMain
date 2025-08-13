@@ -174,6 +174,7 @@ public:
 
 	void SetSceneCapturer(class ASceneCapturer* capturer) { _sceneCapturer = capturer; }
 	void OpenMap();
+	void AddMissionSlot(UTexture2D* texture, FString name); // 임시. 추후 삭제 예정
 
 protected:
 
@@ -282,7 +283,10 @@ protected:
 	TSubclassOf<UUserWidget> _sampleWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class USampleWidget* _sampleWidget;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _missionWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UMissionWidget* _missionWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;

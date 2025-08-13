@@ -25,11 +25,14 @@ void ATerminalConsole::BeginPlay()
 		_terminalWidget = commandWidget;
 
 	_terminalWidget->InitializeSlot(_command);
-	_terminalWidgetComponent->SetVisibility(false);
+	_terminalWidgetComponent->SetVisibility(true);
+	_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 {
+	if (!_isInteractable) return;
+
 	// 터미널이 누군가와 이미 상호작용 중일 때
 	if (_player)
 	{
@@ -37,9 +40,8 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 		if (_player == hellDiver)
 		{
 			// 상호작용 해제
-			_player->EndTerminalInputMode();
-			_terminalWidgetComponent->SetVisibility(false);
-			_player = nullptr;
+			ResetTerminalConsole();
+			_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
 		}
 
 		else // 다른 사람이 상호작용을 시도할 경우 작동 x
@@ -50,7 +52,7 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
 		player->BeginTerminalInputMode(this);
-		_terminalWidgetComponent->SetVisibility(true);
+		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
 		_player = player;
 	}
 
@@ -70,16 +72,12 @@ void ATerminalConsole::CheckInputCombo()
 	// 완전 일치 → 장비
 	if (_playerInputBuffer == _command)
 	{
-		// 추후 다른 흐름으로 변경 예정
-		AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
-		if (GM)
-		{
-			GM->CallEscapePlane();
-		}
+		_commandSuccess.Broadcast();
 
-		ResetInput();
+		ResetTerminalConsole();
+		_terminalWidget->OnCompleted();
+		_isInteractable = false; // 상호작용 불가 상태로 변경
 
-		_terminalWidgetComponent->SetVisibility(false); // test
 		return;
 	}
 	
@@ -99,7 +97,7 @@ void ATerminalConsole::CheckInputCombo()
 
 	if (!bPrefixMatch)
 	{
-		ResetInput();
+		ResetTerminalConsole();
 	}
 	else
 	{
@@ -107,9 +105,10 @@ void ATerminalConsole::CheckInputCombo()
 	}
 }
 
-void ATerminalConsole::ResetInput()
+void ATerminalConsole::ResetTerminalConsole()
 {
 	_player->EndTerminalInputMode();
 	_playerInputBuffer.Empty();
+	_player = nullptr;
 	_terminalWidget->ResetSlot();
 }
