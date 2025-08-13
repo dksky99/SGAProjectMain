@@ -94,6 +94,9 @@ protected:
 	FVector _jointTargetLoc = FVector();
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	FVector _targetPos = FVector();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	uint8 _curEquipIndex=0;
 

@@ -49,6 +49,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
 			_isVaulting = _hellDiver->GetStateComponent()->IsVaulting();
+			_targetPos = _hellDiver->GetTargetLoc();
 			GetAimOffset();
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
@@ -252,25 +253,38 @@ void UHellDiverAnimInstance::GetAimOffset()
 	{
 		return;
 	}
+	//정말 가장 확실한 메시의 로테이션을 가지고있는 루트를 가져와보자
+	const FName rootBoneName = TEXT("root");
+	 FTransform rootTransform = mesh->GetSocketTransform(rootBoneName);
 
-	const FRotator controlRotation = _hellDiver->GetControlRotation();
-	const FRotator actorRotation = _hellDiver->GetActorRotation();
-	// 2. 'spine_01' 본의 월드 회전 값
-	const FName spineBoneName = TEXT("spine_01");
+	 //사격하는 위치와 높이와 가장 근접한 본의 로테이션을 가져와보자
+	 const FName spineBoneName = TEXT("spine_3");
 	 FTransform spineTransform = mesh->GetSocketTransform(spineBoneName);
+	 //본의 위치와 타겟의 위치를 빼 조준할 방향을 조정한다.
+	 FVector aimLine = _targetPos - spineTransform.GetLocation();
+	 //루트는 발바닥 밑에 있으니 로테이션은 그대로 위치만 스파인 3번과 동일하게 한다.
+	 rootTransform.SetLocation(spineTransform.GetLocation());
+	 //
+	 FTransform temp = rootTransform;
+	 
+	 
+	const FRotator controlRotation = _hellDiver->GetControlRotation();
+	const FRotator actorRotation = spineTransform.Rotator();
+	// 2. 'spine_01' 본의 월드 회전 값
 
-	 FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
+	 //기존의 오프셋과 
+	 FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal(); // 캐릭터 상방
 	 FRotator temp= UKismetMathLibrary::NormalizedDeltaRotator(actorRotation, controlRotation);
 	
-	 FQuat DeltaQuat = FQuat::FindBetweenNormals(spineUp, FVector::UpVector);
+	// FQuat DeltaQuat = FQuat::FindBetweenNormals( FVector::UpVector, spineUp);
+	//
+	// // 필요하면 Rotator로 변환
+	// FRotator DeltaRot = DeltaQuat.Rotator();
+	// FRotator Result = UKismetMathLibrary::ComposeRotators(temp, DeltaRot);
 
-	 // 필요하면 Rotator로 변환
-	 FRotator DeltaRot = DeltaQuat.Rotator();
-	 FRotator Result = UKismetMathLibrary::ComposeRotators(temp, DeltaRot);
 
-
-	 _yaw = -Result.Yaw;
-	 _pitch = Result.Pitch;
+	 _yaw = temp.Yaw;
+	 _pitch = temp.Pitch;
 
 
 }

@@ -564,11 +564,9 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 		AddControllerYawInput(lookAxisVector.X);
 		AddControllerPitchInput(lookAxisVector.Y);
 
-		CalcYaw();
-		CalcPitch();
 
-		FRotator AimRot = FRotator(_pitch, 0.f, _yaw);
-		_pitch = AimRot.Pitch;
+		
+
 		//_yaw = AimRot.Yaw;
 
 
@@ -1453,6 +1451,10 @@ FVector APlayerCharacter::GetCenterLoc()
 
 
 	return AimTarget;
+}
+FVector APlayerCharacter::GetTargetLoc()
+{
+	return GetCenterLoc();
 }
 void APlayerCharacter::ViewTurnBack()
 {

@@ -56,6 +56,9 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 
+
+	virtual FVector GetTargetLoc() {};
+
 	virtual void SpawnGhost();
 
 	virtual void ResetUnit();
