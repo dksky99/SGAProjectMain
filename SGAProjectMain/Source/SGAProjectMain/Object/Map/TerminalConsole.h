@@ -26,7 +26,7 @@ public:
 
 	FCommandCompleted _commandSuccess;
 
-	void SetInteractable(bool isInteractable) { _isInteractable = isInteractable; }
+	void SetInteractable(bool isInteractable);
 
 protected:
 	void CheckInputCombo();
@@ -49,4 +49,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	bool _isInteractable = true;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Command")
+	class UWidgetComponent* _interactionMark;
 };

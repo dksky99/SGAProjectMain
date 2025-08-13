@@ -13,7 +13,11 @@ ATerminalConsole::ATerminalConsole()
 	_terminalWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ConsoleWidget"));
 	_terminalWidgetComponent->SetupAttachment(RootComponent);
 
+	_interactionMark = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionMark"));
+	_interactionMark->SetupAttachment(RootComponent);
+
 	_terminalWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	_interactionMark->SetWidgetSpace(EWidgetSpace::Screen);
 }
 
 void ATerminalConsole::BeginPlay()
@@ -27,6 +31,8 @@ void ATerminalConsole::BeginPlay()
 	_terminalWidget->InitializeSlot(_command);
 	_terminalWidgetComponent->SetVisibility(true);
 	_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	_interactionMark->SetVisibility(_isInteractable); // 상호작용 가능할 때만 표시
 }
 
 void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
@@ -53,6 +59,7 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 	{
 		player->BeginTerminalInputMode(this);
 		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
+		_interactionMark->SetVisibility(false);
 		_player = player;
 	}
 
@@ -67,6 +74,16 @@ void ATerminalConsole::ReceiveInput(FKey key)
 	CheckInputCombo();
 }
 
+void ATerminalConsole::SetInteractable(bool isInteractable)
+{
+	_isInteractable = isInteractable;
+
+	if (_interactionMark)
+	{
+		_interactionMark->SetVisibility(_isInteractable);
+	}
+}
+
 void ATerminalConsole::CheckInputCombo()
 {
 	// 완전 일치 → 장비
@@ -74,9 +91,9 @@ void ATerminalConsole::CheckInputCombo()
 	{
 		_commandSuccess.Broadcast();
 
+		SetInteractable(false); // 상호작용 불가 상태로 변경
 		ResetTerminalConsole();
 		_terminalWidget->OnCompleted();
-		_isInteractable = false; // 상호작용 불가 상태로 변경
 
 		return;
 	}
@@ -98,6 +115,7 @@ void ATerminalConsole::CheckInputCombo()
 	if (!bPrefixMatch)
 	{
 		ResetTerminalConsole();
+		_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 	else
 	{
@@ -111,4 +129,5 @@ void ATerminalConsole::ResetTerminalConsole()
 	_playerInputBuffer.Empty();
 	_player = nullptr;
 	_terminalWidget->ResetSlot();
+	_interactionMark->SetVisibility(_isInteractable);
 }
