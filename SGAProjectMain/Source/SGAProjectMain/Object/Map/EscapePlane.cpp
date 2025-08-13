@@ -46,6 +46,8 @@ void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AAct
     {
         AnimInst->PlayMontageFromSection(_planeMontage, "TakeOff");
     }
+
+	_isEscapeEnabled = false;
 }
 
 void AEscapePlane::EnableTriggerBox()
