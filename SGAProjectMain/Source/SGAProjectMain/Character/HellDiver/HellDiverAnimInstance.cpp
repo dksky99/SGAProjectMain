@@ -265,7 +265,7 @@ void UHellDiverAnimInstance::GetAimOffset()
 	 //루트는 발바닥 밑에 있으니 로테이션은 그대로 위치만 스파인 3번과 동일하게 한다.
 	 rootTransform.SetLocation(spineTransform.GetLocation());
 	 //
-	 FTransform temp = rootTransform;
+	 FTransform temp2 = rootTransform;
 	 
 	 
 	const FRotator controlRotation = _hellDiver->GetControlRotation();

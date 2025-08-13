@@ -57,7 +57,7 @@ public:
 	virtual void Dead();
 
 
-	virtual FVector GetTargetLoc() {};
+	virtual FVector GetTargetLoc() { return FVector(); }
 
 	virtual void SpawnGhost();
 
