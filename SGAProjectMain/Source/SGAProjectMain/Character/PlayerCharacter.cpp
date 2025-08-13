@@ -127,7 +127,7 @@ void APlayerCharacter::BeginPlay()
 	{
 		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
-		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
 		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
 		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
 

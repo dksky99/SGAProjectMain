@@ -166,7 +166,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Game/Throwables")
 	int32 _curGrenade = 2;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Throwables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem", meta = (AllowPrivateAccess = "true"))
 	class UStratagemComponent* _stratagemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwables/Trajectory", meta = (AllowPrivateAccess = "true"))

@@ -70,12 +70,20 @@ public:
 	float GetLeftLegHP()  const { return _leftLegHP; }
 	float GetRightLegHP() const { return _rightLegHP; }
 
+	void ChangeHeadHP(float Damage);
+
 	// 사망 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnDeath OnDeath;
 
 	// 체력 변화 알림
-	FHPChanged _hpChanged;
+	FHPChanged _coreHpChanged;
+	FHPChanged _headHpChanged;
+	FHPChanged _torsoHpChanged;
+	FHPChanged _rightArmHpChanged;
+	FHPChanged _leftArmHpChanged;
+	FHPChanged _rightLegHpChanged;
+	FHPChanged _leftLegHpChanged;
 
 	// 부위 파괴 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")

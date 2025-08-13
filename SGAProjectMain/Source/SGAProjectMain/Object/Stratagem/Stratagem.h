@@ -27,6 +27,7 @@ public:
 	const FName GetStgName() const { return _name; }
 	class UTexture2D* GetStgIcon() const { return _icon; }
 
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	TSubclassOf<AActor> _objectToSpawn; // 실제 폭격/센트리 등
@@ -50,4 +51,8 @@ protected:
 	AActor* _targetActor = nullptr;
 
 	FTimerHandle _deployTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
+	UAnimMontage* _animMontage;
+
 };

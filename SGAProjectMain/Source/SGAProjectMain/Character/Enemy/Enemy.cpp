@@ -32,7 +32,7 @@ void AEnemy::BeginPlay()
     if (hpBar)
     {
        // _statComponent->_enemyHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
-        _statComponent->_hpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
+        _statComponent->_coreHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
     }
 }
 
