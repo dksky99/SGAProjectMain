@@ -1582,6 +1582,7 @@ void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 
 	// ÃÑ ºñÈ°¼ºÈ­
 	_invenComponent->GetEquippedGun()->DeactivateGun();
+	_invenComponent->PutBackWeapon(_invenComponent->GetEquippedGun());
 	auto previousGun = _invenComponent->GetEquippedGun();
 	previousGun->_ammoChanged.RemoveAll(_gunWidget);
 	previousGun->_magChanged.RemoveAll(_gunWidget);
@@ -1598,6 +1599,7 @@ void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 	_invenComponent->GetEquippedGun()->ActivateGun();
+	_invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
 
 	_stateComponent->SetEquipIndex(index);
 
