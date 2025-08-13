@@ -12,7 +12,7 @@ AThrowable::AThrowable()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	RootComponent = _mesh;
 
 

@@ -35,8 +35,9 @@
 #include "../UI/StaminaBarWidget.h"
 #include "../UI/CompassWidget.h"
 #include "../UI/SampleWidget.h"
+#include "../UI/MissionWidget.h"
 
-#include "../Object/Grenade/TimedGrenadeBase.h"
+#include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
 #include "../StratagemComponent.h"
 
@@ -109,6 +110,8 @@ void APlayerCharacter::PostInitializeComponents()
 		_compassWidget = CreateWidget<UCompassWidget>(GetWorld(), _compassWidgetClass);
 	if (_sampleWidgetClass)
 		_sampleWidget = CreateWidget<USampleWidget>(GetWorld(), _sampleWidgetClass);
+	if (_missionWidgetClass)
+		_missionWidget = CreateWidget<UMissionWidget>(GetWorld(), _missionWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -128,7 +131,7 @@ void APlayerCharacter::BeginPlay()
 	{
 		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
-		_statComponent->_hpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
 		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
 		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
 
@@ -191,6 +194,11 @@ void APlayerCharacter::BeginPlay()
 	if (_sampleWidget)
 		_sampleWidget->AddToViewport();
 
+	if (_missionWidget)
+	{
+		_missionWidget->AddToViewport();
+	}
+
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 }
@@ -213,12 +221,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 	}
 
-	if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
+	if (_stratagemWidget)
 	{
-		// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
-		if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
+		if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
-			_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
+			// 현재 달리는 상태가 아니고 스태미나가 꽉 차있으면
+			if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
+			{
+				_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // 위젯 감추기
+			}
 		}
 	}
 }
@@ -1546,6 +1557,11 @@ void APlayerCharacter::OpenMap()
 	}
 }
 
+void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
+{
+	_missionWidget->AddMissionSlot(texture, name);
+}
+
 void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
@@ -1568,6 +1584,7 @@ void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 
 	// 총 비활성화
 	_invenComponent->GetEquippedGun()->DeactivateGun();
+	_invenComponent->PutBackWeapon(_invenComponent->GetEquippedGun());
 	auto previousGun = _invenComponent->GetEquippedGun();
 	previousGun->_ammoChanged.RemoveAll(_gunWidget);
 	previousGun->_magChanged.RemoveAll(_gunWidget);
@@ -1584,6 +1601,7 @@ void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 	_invenComponent->GetEquippedGun()->ActivateGun();
+	_invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
 
 	_stateComponent->SetEquipIndex(index);
 

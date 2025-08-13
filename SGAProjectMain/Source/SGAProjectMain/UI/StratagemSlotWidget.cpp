@@ -28,7 +28,6 @@ void UStratagemSlotWidget::ResetSlot()
 {
     Super::ResetSlot();
 
-    _widgetSwitcher->SetActiveWidgetIndex(0);
     _slotState = EStgSlotWgtState::Normal;
 }
 

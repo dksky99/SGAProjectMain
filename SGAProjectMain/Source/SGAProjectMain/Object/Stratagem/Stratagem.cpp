@@ -7,46 +7,41 @@
 
 void AStratagem::DeployStratagem()
 {
-	if (_objectToSpawn)
+	if (!_objectToSpawn)
 	{
-		FActorSpawnParameters spawnParams;
-		spawnParams.Owner = this;
-		spawnParams.Instigator = Cast<APawn>(_owner); // 플레이어를 Instigator로 설정
+		DestroySelf();
+		return;
+	}
 
-		FVector targetLocation = GetActorLocation();
+	FActorSpawnParameters sp;
+	sp.Owner = this;
+	sp.Instigator = Cast<APawn>(_owner);
 
-		// 스폰 위치 결정
-		FVector dropOrigin;
-		if (_isAttackStratagem)
-		{
-			dropOrigin = FVector(0, 0, 0); // 맵 중앙 기준
-		}
-		else
-		{
-			dropOrigin = targetLocation; // 신호기 바로 위
-		}
+	const FVector targetLocation = GetActorLocation();
 
-		// 낙하 시작 위치 = 기준점 + 위로 높이
-		FVector spawnLocation = dropOrigin + FVector(0, 0, 1500.f);
+	if (_isAttackStratagem)
+	{
+		// 공격형: 컨트롤러를 신호기 위치에 바로 스폰
+		const FVector spawnLocation = targetLocation;
+		const FRotator spawnRotation = FRotator::ZeroRotator;
 
-		// 방향 = 타겟 - 스폰 위치
-		FVector direction = (targetLocation - spawnLocation).GetSafeNormal();
-		FRotator spawnRotation = FRotator(0.0f, direction.Rotation().Yaw, 0.0f);
+		GetWorld()->SpawnActor<AActor>(_objectToSpawn, spawnLocation, spawnRotation, sp);
+		// 낙하/속도/웨이브/산포는 컨트롤러 내부에서 처리
+	}
+	else
+	{
+		// 비공격형:  신호기 바로 위에서 떨어뜨림
+		const FVector dropOrigin = targetLocation;
+		const FVector spawnLocation = dropOrigin + FVector(0.0f, 0.0f, 1500.0f);
 
-		// 스폰
-		AActor* spawned = GetWorld()->SpawnActor<AActor>(
-			_objectToSpawn,
-			spawnLocation,
-			spawnRotation,
-			spawnParams
-		);
+		const FVector direction = (targetLocation - spawnLocation).GetSafeNormal();
+		const FRotator spawnRotation = FRotator(0.0f, direction.Rotation().Yaw, 0.0f);
 
-		// 속도 설정
-		if (spawned)
+		if (AActor* spawned = GetWorld()->SpawnActor<AActor>(_objectToSpawn, spawnLocation, spawnRotation, sp))
 		{
 			if (UProjectileMovementComponent* projectile = spawned->FindComponentByClass<UProjectileMovementComponent>())
 			{
-				projectile->Velocity = direction * 8000.f;
+				projectile->Velocity = direction * 8000.0f;
 			}
 		}
 	}
@@ -60,16 +55,27 @@ void AStratagem::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 
 	if (IsSurfaceAttachable(Hit))
 	{
-		// 1. 수직으로 회전 보정 (하늘 방향을 향하게)
+		// 수직으로 회전 보정 (하늘 방향을 향하게)
 		FVector currentForward = GetActorForwardVector();
 		FRotator uprightRotation = FRotationMatrix::MakeFromXZ(currentForward, FVector::UpVector).Rotator();
 		SetActorRotation(uprightRotation);
 
-		// 2. 부착 처리 (회전은 위에서 직접 세팅했으므로 유지됨)
+		// 부착 처리 (회전은 위에서 직접 세팅했으므로 유지됨)
 		AttachToComponent(Hit.Component.Get(), FAttachmentTransformRules::KeepWorldTransform);
 
-		// 3. 이동 멈춤 및 타이머
+		// 이동 멈춤
 		_projectileMovement->StopMovementImmediately();
+
+		// 애니메이션 재생
+		if (_animMontage)
+		{
+			if (UAnimInstance* animInst = _mesh->GetAnimInstance() )
+			{
+				animInst->Montage_Play(_animMontage);
+			}
+		}
+
+		// 타이머 등록
 		GetWorldTimerManager().SetTimer(_deployTimerHandle, this, &AStratagem::DeployStratagem, _deployDelay, false);
 	}
 }
@@ -80,3 +86,4 @@ bool AStratagem::IsSurfaceAttachable(const FHitResult& Hit)
 	float dot = FVector::DotProduct(Hit.ImpactNormal, FVector::UpVector);
 	return dot > 0.5f; // 0.7 이상이면 거의 땅에 가까운 경사
 }
+

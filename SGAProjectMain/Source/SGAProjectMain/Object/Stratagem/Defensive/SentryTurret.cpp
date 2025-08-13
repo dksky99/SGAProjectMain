@@ -13,35 +13,32 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 
+#include "../../../Gun/GunBulletBase.h"
 #include "../../../SGAProjectMain.h"
 
 // Sets default values
 ASentryTurret::ASentryTurret()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	// ─────────── 터렛 몸통(Static Mesh) ───────────
-	_bodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BodyMesh"));
-	RootComponent = _bodyMesh;
-	_bodyMesh->SetCollisionProfileName(TEXT("BlockAll"));
-
-	// ─────────── 터렛 총구(Static Mesh) ───────────
-	_barrelMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BarrelMesh"));
-	_barrelMesh->SetupAttachment(_bodyMesh);
-	_barrelMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
+	RootComponent = _mesh;
 
 	_curAmmo = 0;
 
-	// 머즐 플래시 컴포넌트
-	_muzzleFlashComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlashComponent"));
-	_muzzleFlashComponent->SetupAttachment(_barrelMesh);
+	// 머즐 플래시 컴포넌트를 muzzle 본에 직접 어태치
+	_muzzleFlashComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
+	_muzzleFlashComponent->SetupAttachment(_mesh, TEXT("muzzle"));  // “muzzle” 본 이름 사용
 	_muzzleFlashComponent->bAutoActivate = false;
-	// 에디터에서 해당 컴포넌트의 Template(ParticleSystem)을 할당해야 합니다.
 
-	// 트레이서 컴포넌트
-	_tracerComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TracerComponent"));
-	_tracerComponent->SetupAttachment(_barrelMesh);
+	// 트레이서 컴포넌트를 muzzle 본에 어태치
+	_tracerComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Tracer"));
+	_tracerComponent->SetupAttachment(_mesh, TEXT("muzzle"));
 	_tracerComponent->bAutoActivate = false;
-	// 에디터에서 해당 컴포넌트의 Asset(NiagaraSystem)을 할당해야 합니다.
+
+	// 머즐 포인트 컴포넌트 생성
+	_muzzlePoint = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzlePoint"));
+	_muzzlePoint->SetupAttachment(_mesh, TEXT("muzzle"));
 }
 
 void ASentryTurret::BeginPlay()
@@ -60,20 +57,20 @@ void ASentryTurret::Tick(float DeltaTime)
 
 void ASentryTurret::AIStartFire()
 {
-	// 이미 타이머가 활성화되어 있거나, fireInterval이 0 이하일 경우 리턴
-	if (_fireTimerHandle.IsValid() || _sentryData._fireInterval <= 0.0f)
+	// 이미 타이머가 실행 중이면 재시작하지 않음
+	if (GetWorld()->GetTimerManager().IsTimerActive(_fireTimerHandle))
 	{
 		return;
 	}
 
-	// SetTimer로 _sentryData._fireInterval 간격마다 Fire() 호출을 반복 설정
-	GetWorldTimerManager().SetTimer(
+	// 일정 간격마다 Fire() 호출
+	GetWorld()->GetTimerManager().SetTimer
+	(
 		_fireTimerHandle,
 		this,
 		&ASentryTurret::Fire,
-		_sentryData._fireInterval,
-		true,   // 반복 모드
-		0.0f    // 첫 호출 딜레이
+		_fireInterval,
+		true
 	);
 }
 
@@ -92,45 +89,17 @@ void ASentryTurret::Fire()
 		return;
 	}
 
-	// 라인트레이스를 수행해서 Hit 정보를 가져온다.
-	FHitResult Hit = GetHitResult();
 
-	// Start → End 지점을 삼항 연산으로 정해 디버그 라인 그리기
-	FVector Start = Hit.TraceStart;
-	FVector End = Hit.bBlockingHit ? Hit.ImpactPoint : Hit.TraceEnd;
+	// 총알 스폰
+	// 머즐 위치와 방향 가져오기
+	FVector muzzleLocation = _muzzlePoint->GetComponentLocation();
+	FVector fireDirection = _muzzlePoint->GetForwardVector();
+	SpawnBullet(muzzleLocation, fireDirection);
 
-	DrawDebugLine(
-		GetWorld(),
-		Start,
-		End,
-		FColor::Red,
-		false,   // Depth Test 불필요
-		1.0f,    // 1초 동안 표시
-		0,       // 스크린 오프셋 없음
-		2.0f     // 선 두께
-	);
-
-	// 머즐 플래시 재생
+	// 이펙트 재생
 	PlayMuzzleFlash();
 
-	// 트레이서 재생
-	PlayTracer(End);
-
-	// Hit이 발생한 경우에만 데미지 계산 → 대미지 적용
-	if (Hit.bBlockingHit)
-	{
-		// TraceStart와 ImpactPoint 사이의 거리(cm) → m 단위로 변환
-		float DistanceCm = FVector::Dist(Hit.TraceStart, Hit.ImpactPoint);
-		float DistanceMeters = DistanceCm / 100.0f;
-
-		// CalculateDamage() 호출
-		float DamageToApply = CalculateDamage(DistanceMeters);
-
-		// ApplyDamage 호출 
-		ApplyHitDamage(Hit, DamageToApply);
-	}
-
-	_curAmmo--;
+		_curAmmo--;
 	if (_curAmmo <= 0)
 	{
 		HandleOutOfAmmo();
@@ -138,86 +107,31 @@ void ASentryTurret::Fire()
 	}
 }
 
-FHitResult ASentryTurret::GetHitResult() const
+void ASentryTurret::SpawnBullet(const FVector& muzzleLocation, const FVector& direction)
 {
-	FHitResult Hit;
+	if (!_bulletClass) return;
 
-	// 총구 소켓이 없으므로 Actor 위치 & 회전으로 시작점과 방향을 잡음
-	FVector TraceStart = GetActorLocation();
-	FVector TraceDirection = GetActorForwardVector();  // Actor의 정면
-	FVector TraceEnd = TraceStart + (TraceDirection * _range);
+	// 스폰 파라미터 설정
+	FActorSpawnParameters spawnParams;
+	spawnParams.Owner = this;
+	spawnParams.Instigator = GetInstigator();
 
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
+	// 회전 값 계산
+	FRotator spawnRot = direction.Rotation();
 
-	GetWorld()->LineTraceSingleByChannel
-	(
-		Hit,
-		TraceStart,
-		TraceEnd,
-		ECC_GameDamage,
-		Params
-	);
+	// 탄환 스폰
+	AGunBulletBase* bullet = GetWorld()->SpawnActor<AGunBulletBase>
+		(
+			_bulletClass,
+			muzzleLocation,
+			spawnRot,
+			spawnParams
+		);
 
-	// 나중 디버그 라인용으로 보관
-	Hit.TraceStart = TraceStart;
-	Hit.TraceEnd = TraceEnd;
-	return Hit;
-}
-
-float ASentryTurret::CalculateDamage(float distance) const
-{
-	// DistanceMeters 기준 거리별 데미지 감쇠 계산
-	// (SentryData._falloff25 / _falloff50 / _falloff100 사용)
-	if (distance <= 25.0f)
+	if (bullet)
 	{
-		float Alpha = distance / 25.0f;
-		float Falloff = FMath::Lerp(0.0f, _sentryData._falloff25, Alpha);
-		return _sentryData._baseDamage * (1.0f - Falloff);
+		bullet->InitializeProjectile();
 	}
-	else if (distance <= 50.0f)
-	{
-		float Alpha = (distance - 25.0f) / 25.0f;
-		float Falloff = FMath::Lerp(_sentryData._falloff25, _sentryData._falloff50, Alpha);
-		return _sentryData._baseDamage * (1.0f - Falloff);
-	}
-	else if (distance <= 100.0f)
-	{
-		float Alpha = (distance - 50.0f) / 50.0f;
-		float Falloff = FMath::Lerp(_sentryData._falloff50, _sentryData._falloff100, Alpha);
-		return _sentryData._baseDamage * (1.0f - Falloff);
-	}
-	else
-	{
-		return _sentryData._baseDamage * (1.0f - _sentryData._falloff100);
-	}
-}
-
-void ASentryTurret::ApplyHitDamage(const FHitResult& hit, float damage) 
-{
-	// 명중한 액터 가져오기
-	AActor* HitActor = hit.GetActor();
-	if (!HitActor)
-	{
-		return;
-	}
-
-	// 포인트 데미지 호출: 어느 콜리전 컴포넌트에 맞았는지 정보까지 전달
-	const FVector shotDirection = (hit.TraceStart - hit.ImpactPoint).GetSafeNormal();
-	UGameplayStatics::ApplyPointDamage(
-		HitActor,                   // 데미지를 받을 액터
-		damage,                     // 적용할 기본 데미지 값
-		shotDirection,              // 데미지가 들어온 방향 벡터
-		hit,                        // 충돌 정보(FHitResult)
-		GetInstigatorController(),  // 데미지를 유발한 컨트롤러
-		this,                       // 데미지 발생 주체 액터
-		UDamageType::StaticClass()  // 사용할 데미지 타입 클래스
-	);
-
-	// 원한다면, 맞은 액터가 파괴 가능한 인터페이스를 구현했다면 호출하거나,
-	// 테스트용으로 Destroy()를 바로 해 버려도 됩니다.
-	// 예시:
-	// HitActor->Destroy();
 }
 
 void ASentryTurret::PlayMuzzleFlash()

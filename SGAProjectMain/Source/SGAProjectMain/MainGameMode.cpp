@@ -8,6 +8,8 @@
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
 #include "Object/Map/EscapePlane.h"
+#include "Object/Map/DropPlaneBeacon.h"
+#include "Object/Map/TerminalConsole.h"
 #include "Game/EnemyReinforceManager.h"
 void AMainGameMode::BeginPlay()
 {
@@ -16,9 +18,7 @@ void AMainGameMode::BeginPlay()
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
-
-   
-
+    _planeBeacon = Cast<ADropPlaneBeacon>(UGameplayStatics::GetActorOfClass(this, ADropPlaneBeacon::StaticClass()));
 }
 
 void AMainGameMode::StartPlay()
@@ -26,12 +26,27 @@ void AMainGameMode::StartPlay()
     Super::StartPlay();
 }
 
+void AMainGameMode::OnMissionEnd()
+{
+    if (_planeBeacon)
+    {
+        _planeBeacon->SetInteractable(true); // 꺼져있던 비콘 활성화
+	}
+
+    APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (player)
+    {
+		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Avaliable"));
+    }
+}
+
 void AMainGameMode::CallEscapePlane()
 {
     UWorld* world = GetWorld();
     if (!world) return;
 
-    AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, FRotator::ZeroRotator);
+    FRotator rotation(0.f, 90.f, 0.f);
+    AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, rotation);
 }
 
 void AMainGameMode::OnBattleEnd() // 게임이 끝났을 경우

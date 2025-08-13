@@ -4,9 +4,8 @@
 #include "EscapePlane.h"
 
 #include "Components/BoxComponent.h"
-#include "../../MainGameMode.h"
-#include "Kismet/GameplayStatics.h"
 #include "../../Character/HellDiver/HellDiver.h"
+#include "PlaneAnimInstance.h"
 
 // Sets default values
 AEscapePlane::AEscapePlane()
@@ -14,7 +13,7 @@ AEscapePlane::AEscapePlane()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    _planeMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaneMesh"));
+    _planeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh"));
     RootComponent = _planeMesh;
 
     _escapeTriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeTriggerBox"));
@@ -29,6 +28,11 @@ void AEscapePlane::BeginPlay()
     _escapeTriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 초기엔 충돌을 꺼둠
     _escapeTriggerBox->SetGenerateOverlapEvents(false);
     _escapeTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AEscapePlane::OnTriggerBoxOverlap);
+
+    if (UPlaneAnimInstance* AnimInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
+    {
+        AnimInst->PlayMontageFromSection(_planeMontage, "Landing");
+    }
 }
 
 void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -38,8 +42,12 @@ void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AAct
     AHellDiver* hellDiver = Cast<AHellDiver>(OtherActor);
     if (!hellDiver) return;
 
-    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
-    GM->OnBattleEnd();
+    if (UPlaneAnimInstance* AnimInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
+    {
+        AnimInst->PlayMontageFromSection(_planeMontage, "TakeOff");
+    }
+
+	_isEscapeEnabled = false;
 }
 
 void AEscapePlane::EnableTriggerBox()
@@ -54,18 +62,18 @@ void AEscapePlane::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    if (_isLanding)
-    {
-        FVector curLocation = GetActorLocation();
-        FVector newLocation = FMath::VInterpTo(curLocation, _targetLocation, DeltaTime, 1.f);
-        SetActorLocation(newLocation);
+    //if (_isLanding)
+    //{
+    //    FVector curLocation = GetActorLocation();
+    //    FVector newLocation = FMath::VInterpTo(curLocation, _targetLocation, DeltaTime, 1.f);
+    //    SetActorLocation(newLocation);
 
-        float Distance = FVector::Dist(newLocation, _targetLocation);
-        if (Distance <= 5.0f)
-        {
-            _isLanding = false;
-            EnableTriggerBox();  // 트리거 켜기
-        }
-    }
+    //    float Distance = FVector::Dist(newLocation, _targetLocation);
+    //    if (Distance <= 5.0f)
+    //    {
+    //        _isLanding = false;
+    //        //EnableTriggerBox();  // 트리거 켜기
+    //    }
+    //}
 }
 

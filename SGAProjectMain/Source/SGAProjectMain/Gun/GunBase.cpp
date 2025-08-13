@@ -403,7 +403,7 @@ void AGunBase::AttachToHand()
 	}
 }
 
-void AGunBase::Reload() // 애니메이션과 연결 필요
+void AGunBase::Reload()
 {
 	if (_curAmmo == _gunData._maxAmmo)
 		return;

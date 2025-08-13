@@ -51,9 +51,6 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _stgIcon;
 
-	UPROPERTY(meta = (BindWidget))
-	class UWidgetSwitcher* _widgetSwitcher;
-
 	EStgSlotWgtState _slotState = EStgSlotWgtState::Normal;
 
 	FTimerHandle _startCooldownHandle;

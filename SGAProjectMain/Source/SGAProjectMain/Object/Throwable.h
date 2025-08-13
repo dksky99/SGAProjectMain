@@ -28,7 +28,7 @@ public:
 	virtual void Throw(FVector direction); // 던지기
 	virtual void OnLifeTimeExpired(); // 수명 만료
 
-	UStaticMeshComponent* GetMesh() const { return _mesh; }
+	USkeletalMeshComponent* GetMesh() const { return _mesh; }
 	void DestroySelf();
 
 	UFUNCTION()
@@ -36,7 +36,8 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
-	UStaticMeshComponent* _mesh;
+
+	USkeletalMeshComponent* _mesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
 	class UProjectileMovementComponent* _projectileMovement;
