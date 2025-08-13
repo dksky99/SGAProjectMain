@@ -17,7 +17,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "Components/SplineMeshComponent.h"
 #include "Components/SplineComponent.h"
-#include "../../Object/Grenade/TimedGrenadeBase.h"
+#include "../../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../../Object/Stratagem/Stratagem.h"
 #include "../../StratagemComponent.h"
 

@@ -7,6 +7,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "../Object/Explosive/ExplosionComponent.h"
+
 // Sets default values
 AGunBulletBase::AGunBulletBase()
 {
@@ -25,6 +27,9 @@ AGunBulletBase::AGunBulletBase()
     _projectileMovement->MaxSpeed = _bulletData._initialSpeed;
     //_projectileMovement->bRotationFollowsVelocity = true;
     //_projectileMovement->ProjectileGravityScale = 0.f;
+
+    // 폭발 컴포넌트
+    _explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -106,25 +111,27 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 void AGunBulletBase::Explode()
 {
-    UGameplayStatics::ApplyRadialDamageWithFalloff(
-        this,
-        _bulletData._explosionDamage,   // 중심 폭발 피해
-        0.f,                            // 최소 피해
-        GetActorLocation(),             // 폭발 위치
-        _bulletData._innerRadius,       // 최대 피해 거리
-        _bulletData._outerRadius,       // 최소 피해 거리
-        1.0f,                           // 거리에 비례하여 피해 감소
-        UDamageType::StaticClass(),     
-        TArray<AActor*>(),              // 무시 액터 목록
-        this,
-        GetInstigatorController(),
-        ECC_Visibility
-    );
+    _explosionComponent->Explode();
 
-    // 디버깅용
-    FColor drawColor = FColor::Red;
-    DrawDebugSphere(GetWorld(), GetActorLocation(), _bulletData._innerRadius, 10, drawColor, false, 1.0f);
-    DrawDebugSphere(GetWorld(), GetActorLocation(), _bulletData._outerRadius, 10, drawColor, false, 1.0f);
+    //UGameplayStatics::ApplyRadialDamageWithFalloff(
+    //    this,
+    //    _bulletData._explosionDamage,   // 중심 폭발 피해
+    //    0.f,                            // 최소 피해
+    //    GetActorLocation(),             // 폭발 위치
+    //    _bulletData._innerRadius,       // 최대 피해 거리
+    //    _bulletData._outerRadius,       // 최소 피해 거리
+    //    1.0f,                           // 거리에 비례하여 피해 감소
+    //    UDamageType::StaticClass(),     
+    //    TArray<AActor*>(),              // 무시 액터 목록
+    //    this,
+    //    GetInstigatorController(),
+    //    ECC_Visibility
+    //);
+
+    //// 디버깅용
+    //FColor drawColor = FColor::Red;
+    //DrawDebugSphere(GetWorld(), GetActorLocation(), _bulletData._innerRadius, 10, drawColor, false, 1.0f);
+    //DrawDebugSphere(GetWorld(), GetActorLocation(), _bulletData._outerRadius, 10, drawColor, false, 1.0f);
 }
 
 float AGunBulletBase::GetSpeedMultiplier(float distance)

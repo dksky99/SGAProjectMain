@@ -121,37 +121,51 @@ void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)
 	// 부위별 현 체력 포인터 및 최대 체력 참조
 	float* CurrentHP = nullptr;
 	float MaxHP = 0.0f;
+
+	// 각 부위별 데미지 브로드캐스트
 	switch (Part)
 	{
 	case EBodyPart::Head:
 		CurrentHP = &_headHP;
 		MaxHP = _headMaxHP;
+		if (_headHpChanged.IsBound())
+			_headHpChanged.Broadcast(_headHP / _headMaxHP);
 		break;
 	case EBodyPart::Torso:
 		CurrentHP = &_torsoHP;
 		MaxHP = _torsoMaxHP;
+		if (_torsoHpChanged.IsBound())
+			_torsoHpChanged.Broadcast(_torsoHP / _torsoMaxHP);
 		break;
 	case EBodyPart::LeftArm:
 		CurrentHP = &_leftArmHP;
 		MaxHP = _leftArmMaxHP;
+		if (_leftArmHpChanged.IsBound())
+			_leftArmHpChanged.Broadcast(_leftArmHP / _leftArmMaxHP);
 		break;
 	case EBodyPart::RightArm:
 		CurrentHP = &_rightArmHP;
 		MaxHP = _rightArmMaxHP;
+		if (_rightArmHpChanged.IsBound())
+			_rightArmHpChanged.Broadcast(_rightArmHP / _rightArmMaxHP);
 		break;
 	case EBodyPart::LeftLeg:
 		CurrentHP = &_leftLegHP;
 		MaxHP = _leftLegMaxHP;
+		if (_leftLegHpChanged.IsBound())
+			_leftLegHpChanged.Broadcast(_leftLegHP / _leftLegMaxHP);
 		break;
 	case EBodyPart::RightLeg:
 		CurrentHP = &_rightLegHP;
 		MaxHP = _rightLegMaxHP;
+		if (_rightLegHpChanged.IsBound())
+			_rightLegHpChanged.Broadcast(_rightLegHP / _rightLegMaxHP);
 		break;
 	default:
 		// 코어 직접 처리
 		_coreHP = FMath::Max(0.0f, _coreHP - Damage);
 
-		_hpChanged.Broadcast(_coreHP / _coreMaxHP);
+		_coreHpChanged.Broadcast(_coreHP / _coreMaxHP);
 
 		if (_coreHP == 0.0f)
 			OnDeath.Broadcast();
@@ -167,7 +181,7 @@ void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)
 	*CurrentHP = FMath::Max(0.f, *CurrentHP - DamageToPart);
 	_coreHP = FMath::Max(0.0f, _coreHP - DamageToCore);
 
-	_hpChanged.Broadcast(_coreHP / _coreMaxHP);
+	_coreHpChanged.Broadcast(_coreHP / _coreMaxHP);
 
 	// 코어 사망 우선 체크
 	if (_coreHP == 0.0f)

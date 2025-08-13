@@ -328,19 +328,26 @@ UCharacterStateComponent* ACharacterBase::GetStateComponent()
 }
 void ACharacterBase::OnPartDestroyed_Handler(EBodyPart part)
 {
-	// 각 부위 파괴 동작 구현 
-	// if (part == EBodyPart::Head)
-	// {
-	// }
-	// else if (part == EBodyPart::Torso)
-	// {
-	// }
-	// else if (part == EBodyPart::LeftArm || part == EBodyPart::RightArm)
-	// {
-	// }
-	// else if (part == EBodyPart::LeftLeg || part == EBodyPart::RightLeg)
-	// {
-	// }
+	 // 각 부위 파괴 동작 구현 
+	if (part == EBodyPart::Head)
+	{
+		
+	}
+	else if (part == EBodyPart::Torso)
+	{
+	}
+	else if (part == EBodyPart::LeftArm)
+	{
+	}
+	else if (part == EBodyPart::RightArm)
+	{
+	}
+	else if (part == EBodyPart::LeftLeg)
+	{
+	}
+	else if (part == EBodyPart::RightLeg)
+	{
+	}
 
 	// 부위 파괴 시 로그 출력
 	UE_LOG(LogTemp, Warning, TEXT("%s: Part Destroyed -> %d"), *GetName(), static_cast<int32>(part));
