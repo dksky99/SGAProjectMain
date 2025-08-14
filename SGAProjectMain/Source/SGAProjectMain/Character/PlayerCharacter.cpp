@@ -580,6 +580,8 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		//_yaw = AimRot.Yaw;
 
+		CalcYaw();
+		CalcPitch();
 
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
 		
@@ -1216,24 +1218,48 @@ void APlayerCharacter::DefaultLook()
 
 void APlayerCharacter::CalcPitch()
 {
+	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다.
 	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
-
+	//각자 메시에서 실제 각방향의 축을 확인.
 	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	FVector controlForward = GetControlRotation().Vector().GetSafeNormal();
-	FVector charForward = GetActorForwardVector().GetSafeNormal();
-	charForward.ProjectOnToNormal(spineRight).GetSafeNormal();
-	controlForward.ProjectOnToNormal(spineRight).GetSafeNormal();
 
+	//조준점과 가장 가깝고 영향이 큰 본. 
+	FTransform aimTransform = GetMesh()->GetSocketTransform(TEXT("spine_03"), RTS_World);
+	FTransform temp = spineTransform;
+	temp.SetLocation(aimTransform.GetLocation());
+	//본의 정면 벡터를 가져옴.
+	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
+	//비교할 방향. 컨트롤러의 방향이나 조준선.
+	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
+	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+aimFwd*50.f, 50.0f, FColor::Green, false, 0.1f, 0, 2.0f);
+	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+ controlForward *50.f, 50.0f, FColor::Yellow, false, 0.1f, 0, 2.0f);
+	//기준이 될 선.
+	FVector charForward = aimFwd;
+	controlForward = controlForward.GetSafeNormal();
+	charForward = charForward.GetSafeNormal();
+	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
+	charForward= FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
+	controlForward= FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
+	
+
+
+	DrawDebugLine(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation() + controlForward * 500.f, FColor::Yellow, false, 0.1f, 0, 2.0f);
+	
+	//두 선의 내적으로 일치하는정도를 확인.
 	float dot = FVector::DotProduct(charForward, controlForward);
+	//라디안으로 변환
 	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
+	//각도로 변환
 	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
 
+	//둘을 외적.
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
 
-	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
+	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다. 외적결과와의 내적이니 일치하거나 반대방향이거나 둘중하나가 나옴.
+	
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
 
 	// --- 3. 최종 부호 있는 각도 계산 ---
@@ -1241,6 +1267,7 @@ void APlayerCharacter::CalcPitch()
 	float signedAngle = angleInDegree * FMath::Sign(directionSign);
 
 	_pitch = signedAngle;
+	UE_LOG(LogTemp, Display, TEXT("pitch : %f "), _pitch);
 
 }
 
@@ -1248,17 +1275,38 @@ void APlayerCharacter::CalcPitch()
 void APlayerCharacter::CalcYaw()
 {
 
+	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다.
 	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
-
+	//각자 메시에서 실제 각방향의 축을 확인.
 	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // 캐릭터 상방
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	FVector controlForward = GetControlRotation().Vector().GetSafeNormal();
-	FVector charForward = GetActorForwardVector().GetSafeNormal();
-	charForward.ProjectOnToNormal(spineUp).GetSafeNormal();
-	controlForward.ProjectOnToNormal(spineUp).GetSafeNormal();
-	
+
+	//조준점과 가장 가깝고 영향이 큰 본. 
+	FTransform aimTransform = GetMesh()->GetSocketTransform(TEXT("spine_03"), RTS_World);
+	FTransform temp = spineTransform;
+	temp.SetLocation(aimTransform.GetLocation());
+	//본의 정면 벡터를 가져옴.
+	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
+
+	//비교할 방향. 컨트롤러의 방향이나 조준선.
+	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
+	//기준이 될 선.
+	FVector charForward = aimFwd;
+	controlForward=controlForward.GetSafeNormal();
+	charForward=charForward.GetSafeNormal();
+	UE_LOG(LogTemp, Display, TEXT("controlForward : %f %f %f"), controlForward.X, controlForward.Y, controlForward.Z);
+
+	UE_LOG(LogTemp, Display, TEXT("charForward : %f %f %f"), charForward.X, charForward.Y, charForward.Z);
+
+	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
+	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
+	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
+
+	DrawDebugLine(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation() + controlForward * 500.f, FColor::Red, false, 0.1f, 0, 2.0f);
+
+
 	float dot = FVector::DotProduct(charForward, controlForward);
 	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
 	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
@@ -1274,6 +1322,7 @@ void APlayerCharacter::CalcYaw()
 
 
 	_yaw = signedAngle;
+	UE_LOG(LogTemp, Display, TEXT("Yaw : %f "), _yaw);
 
 }
 
@@ -1407,41 +1456,23 @@ FVector APlayerCharacter::GetCenterLoc()
 	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	FVector CameraLoc, CameraForward;
+	FVector AimTarget;
+	float traceRange = 10000.f;
 	if (pc == nullptr)
 	{
 
 		CameraLoc = GetCurCamera()->GetComponentLocation();
 		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
 
-	}
-	else
-	{
-		CameraLoc = pc->PlayerCameraManager->GetCameraLocation();
-		CameraForward = pc->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
-	}
-
-	// 1. 화면의 정중앙 좌표 구하기
-	int32 ViewportSizeX, ViewportSizeY;
-	pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
-	float ScreenCenterX = (float)ViewportSizeX / 2.f;
-	float ScreenCenterY = (float)ViewportSizeY / 2.f;
-
-	float traceRange = 100000.f;
-	FVector AimTarget;
-	// 2. 화면 좌표를 월드 방향으로 변환
-	FVector WorldLocation, WorldDirection;
-	if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
-	{
-
 		// 3. 라인 트레이스를 정중앙 방향으로 쏨
-		FVector TraceEnd = WorldLocation + WorldDirection * traceRange;
+		FVector TraceEnd = CameraLoc + CameraForward * traceRange;
 		FHitResult HitResult;
 
 		FCollisionQueryParams Params;
 		Params.bReturnPhysicalMaterial = false;
 		Params.AddIgnoredActor(this); // 자기 자신 무시
 
-		if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, CameraLoc, TraceEnd, ECC_Visibility, Params))
 		{
 			// 4. 명중 시 → 충돌 지점 반환
 			AimTarget = HitResult.ImpactPoint;
@@ -1452,12 +1483,53 @@ FVector APlayerCharacter::GetCenterLoc()
 
 			AimTarget = TraceEnd;
 		}
-		// 5. 미명중 시 → 끝 지점 반환
+
 	}
 	else
 	{
-		AimTarget = CameraLoc + CameraForward * traceRange;
+		CameraLoc = pc->PlayerCameraManager->GetCameraLocation();
+		CameraForward = pc->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
+
+		// 1. 화면의 정중앙 좌표 구하기
+		int32 ViewportSizeX, ViewportSizeY;
+		pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
+		float ScreenCenterX = (float)ViewportSizeX / 2.f;
+		float ScreenCenterY = (float)ViewportSizeY / 2.f;
+
+		// 2. 화면 좌표를 월드 방향으로 변환
+		FVector WorldLocation, WorldDirection;
+		if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
+		{
+
+			// 3. 라인 트레이스를 정중앙 방향으로 쏨
+			FVector TraceEnd = WorldLocation + WorldDirection * traceRange;
+			FHitResult HitResult;
+
+			FCollisionQueryParams Params;
+			Params.bReturnPhysicalMaterial = false;
+			Params.AddIgnoredActor(this); // 자기 자신 무시
+
+			if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
+			{
+				// 4. 명중 시 → 충돌 지점 반환
+				AimTarget = HitResult.ImpactPoint;
+				//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
+			}
+			else
+			{
+
+				AimTarget = TraceEnd;
+			}
+			// 5. 미명중 시 → 끝 지점 반환
+		}
+		else
+		{
+			AimTarget = CameraLoc + CameraForward * traceRange;
+		}
+
 	}
+
+	//UE_LOG(LogTemp, Display, TEXT("Center Loc: %f %f %f"), AimTarget.X, AimTarget.Y, AimTarget.Z);
 
 
 

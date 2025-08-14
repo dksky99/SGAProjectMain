@@ -50,7 +50,9 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
 			_isVaulting = _hellDiver->GetStateComponent()->IsVaulting();
 			_targetPos = _hellDiver->GetTargetLoc();
-			GetAimOffset();
+			_yaw = _hellDiver->MyYaw();
+			_pitch = _hellDiver->MyPitch();
+			//GetAimOffset();
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
@@ -258,13 +260,13 @@ void UHellDiverAnimInstance::GetAimOffset()
 	 FTransform rootTransform = mesh->GetSocketTransform(rootBoneName);
 
 	 //사격하는 위치와 높이와 가장 근접한 본의 로테이션을 가져와보자
-	 const FName spineBoneName = TEXT("spine_3");
+	 const FName spineBoneName = TEXT("spine_03");
 	 FTransform spineTransform = mesh->GetSocketTransform(spineBoneName);
-	 //본의 위치와 타겟의 위치를 빼 조준할 방향을 조정한다.
+	 //본의 위치를 타겟의 위치에서 빼 조준할 방향을 조정한다.
 	 FVector aimLine = _targetPos - spineTransform.GetLocation();
 	 //루트는 발바닥 밑에 있으니 로테이션은 그대로 위치만 스파인 3번과 동일하게 한다.
 	 rootTransform.SetLocation(spineTransform.GetLocation());
-	 //
+	 //트랜스폼의 X는 정면이다. 복제의 정면이 타겟을 바라보게 하자. 
 	 FTransform temp2 = rootTransform;
 	 
 	 
