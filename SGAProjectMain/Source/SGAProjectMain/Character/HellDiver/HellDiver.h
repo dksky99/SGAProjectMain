@@ -125,6 +125,10 @@ protected:
 	virtual void SetCrouchingCollisionCamera();
 	virtual void SetProningCollisionCamera() ;
 
+	// 플레이어에서 위젯 관리 위치 (순서 보장)
+	virtual void OnPreSwitchGun(AGunBase* prevGun) {};
+	virtual void OnPostSwitchGun(AGunBase* newGun) {};
+
 private:
 	void ClearThrowSpline(); 
 	void DrawThrowSplineMeshes();

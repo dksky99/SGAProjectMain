@@ -1560,57 +1560,27 @@ void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
 	_missionWidget->AddMissionSlot(texture, name);
 }
 
+void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)
+{
+	prevGun->_ammoChanged.RemoveAll(_gunWidget);
+	prevGun->_magChanged.RemoveAll(_gunWidget);
+}
+
+void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
+{
+	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+
+	if (_gunWidget)
+		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
 void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
 		return;
 
-	if (!_invenComponent->CanSwitchGun(index))
-		return; // 바꿀 수 없으면 중단하고 리턴 false
-
-	// 바꿀 수 있다면 장전 중단
-	if (_stateComponent->IsReloading())
-		_invenComponent->GetEquippedGun()->CancelReload();
-
-	// 현재 상태 저장 후
-	bool wasAiming = _stateComponent->IsAiming();
-	bool wasFiring = _stateComponent->IsFiring();
-
-	// 하던 행동 중단
-	_stateComponent->SetAiming(false);
-	_stateComponent->SetFiring(false);
-
-	// 총 비활성화
-	_invenComponent->GetEquippedGun()->DeactivateGun();
-	_invenComponent->PutBackWeapon(_invenComponent->GetEquippedGun());
-	auto previousGun = _invenComponent->GetEquippedGun();
-	previousGun->_ammoChanged.RemoveAll(_gunWidget);
-	previousGun->_magChanged.RemoveAll(_gunWidget);
-
-
-	wasAiming = _stateComponent->IsAiming();
-	wasFiring = _stateComponent->IsFiring();
-	
-	//SwitchGun(index);
-	EquipGun(index); // 총 변경
-
-	// 총 활성화
-	auto newGun = _invenComponent->GetEquippedGun();
-	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
-	_invenComponent->GetEquippedGun()->ActivateGun();
-	_invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
-
-	_stateComponent->SetEquipIndex(index);
-
-	if (_gunWidget)
-		_gunWidget->SetGun(newGun->GetGunData()._icon);
-
-	if (wasAiming) // 에임 중이었을 경우 유지
-		StartAiming(value);
-
-	if (wasFiring) // 사격 중이었을 경우 유지
-		StartFiring(value);
+	Super::SwitchGun(index);
 }
 
 void APlayerCharacter::PickupGun(AGunBase* newGun)

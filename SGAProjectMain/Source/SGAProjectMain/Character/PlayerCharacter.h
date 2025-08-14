@@ -177,7 +177,8 @@ public:
 	void AddMissionSlot(UTexture2D* texture, FString name); // 임시. 추후 삭제 예정
 
 protected:
-
+	void OnPreSwitchGun(AGunBase* prevGun) override;
+	void OnPostSwitchGun(AGunBase* newGun) override;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
