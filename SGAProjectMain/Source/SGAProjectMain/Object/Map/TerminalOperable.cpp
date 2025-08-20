@@ -24,7 +24,7 @@ void ATerminalOperable::BeginPlay()
 	{
 		if (auto terminalConsole = Cast<ATerminalConsole>(_terminalChild->GetChildActor()))
 		{
-			terminalConsole->_commandSuccess.AddUObject(this, &ATerminalOperable::OnCommandCompleted);
+			terminalConsole->_missionCompletedEvent.AddUObject(this, &ATerminalOperable::OnCommandCompleted);
 		}
 	}
 }

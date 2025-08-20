@@ -9,7 +9,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE(FCommandCompleted);
+DECLARE_MULTICAST_DELEGATE(FMissionCompleted);
 
 UCLASS()
 class SGAPROJECTMAIN_API ATerminalConsole : public AItemBase
@@ -24,28 +24,28 @@ public:
 	virtual void PickupItem(class AHellDiver* hellDiver);
 	void ReceiveInput(FKey key);
 
-	FCommandCompleted _commandSuccess;
+	FMissionCompleted _missionCompletedEvent;
 
 	void SetInteractable(bool isInteractable);
 
 protected:
-	void CheckInputCombo();
 	void ResetTerminalConsole();
+	
+	void OnTaskCompleted();
 
 protected:
+	// 위젯
 	UPROPERTY(EditAnywhere, Category = "Game/Command")
 	class UWidgetComponent* _terminalWidgetComponent;
-
 	UPROPERTY()
-	class UCommandWidget* _terminalWidget;
+	class UUserWidget* _terminalWidget;
+
+	// 현재 수행중인 작업
+	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 변경
+	class UTerminalTaskBase* _curTask = nullptr;
 
 	UPROPERTY()
 	class APlayerCharacter* _player;
-
-	UPROPERTY(EditAnywhere, Category = "Game/Command")
-	TArray<FKey> _command;
-
-	TArray<FKey> _playerInputBuffer;
 
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	bool _isInteractable = true;
