@@ -68,7 +68,10 @@ void UCompassWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     // 머티리얼 오프셋 조정 -> 눈금 사진 움직임
     if (_compassMat)
     {
-        _compassMat->SetScalarParameterValue("CompassOffset", curYaw / 360.f); // 오프셋은 0~1
+		float tilesForTurn = 36.f; // 한 바퀴에 눈금 36칸
+		float compassTiles = curYaw / 360.f * tilesForTurn; // 현재 각도에 해당하는 눈금 수치
+        compassTiles += 0.5f; // 눈금이 중앙에 위치하도록 조정
+        _compassMat->SetScalarParameterValue("CompassTiles", compassTiles);
     }
 
     // 핑이 찍혔을 경우 핑 표시
@@ -85,7 +88,7 @@ void UCompassWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         // 두 각도의 최소 회전차 (-180 ~ +180)
         float delta = FMath::FindDeltaAngleDegrees(curYaw, targetYaw);
         
-        if (FMath::Abs(delta) < 90.f) // 두 값의 차이가 91도 이하일 경우
+        if (FMath::Abs(delta) < 90.f) // 두 값의 차이가 90도 미만일 경우
         {
             _pingImage->SetRenderOpacity(1.f); // 완전히 불투명하게
             UpdateWidgetPos(_pingImage, delta);
