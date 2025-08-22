@@ -470,7 +470,7 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	UE_LOG(LogTemp, Display, TEXT("pitchDirection : %f "), directionSign);
 	// --- 3. 최종 부호 있는 각도 계산 ---
 	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
-	float signedAngle = 300.f * FMath::Sign(directionSign);
+	float signedAngle = 400.f * FMath::Sign(directionSign);
 
 
 	_addPitch += signedAngle * deltaTime * (1.1f - dot);
@@ -545,7 +545,7 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 
 	// --- 3. 최종 부호 있는 각도 계산 ---
 	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
-	float signedAngle = 300.f * FMath::Sign(directionSign);
+	float signedAngle = 400.f * FMath::Sign(directionSign);
 
 
 	_addYaw += signedAngle * deltaTime * (1.1f - dot);
