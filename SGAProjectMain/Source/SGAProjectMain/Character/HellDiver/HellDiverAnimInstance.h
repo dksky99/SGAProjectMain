@@ -40,6 +40,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AnimNotify_FootStep();
 
+
 	FOnMoveAnimStateChanged _moveChanged;
 	FOnLookAnimStateChanged _lookChanged;
 
@@ -54,7 +55,11 @@ protected:
 	bool IsUsingFocusing();
 	void CheckEquipChange(uint8 index);
 
-	void GetAimOffset();
+	void GetAimOffset(float deltaTime);
+	void CalcYaw();
+	void CalcPitch();
+	void CalcAimPitch(float deltaTime);
+	void CalcAimYaw(float deltaTime);
 
 protected:
 	UPROPERTY(Transient)
@@ -75,6 +80,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FRotator _focusRotate=FRotator();
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	class AGunBase* _curWeapon;
+
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _focusAlpha = 0.0f;
 
@@ -90,9 +101,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FTransform _leftHandTrans = FTransform();
 	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FTransform _muzzleTrans = FTransform();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FVector _jointTargetLoc = FVector();
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	FVector _targetPos = FVector();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	uint8 _curEquipIndex=0;
@@ -120,6 +138,19 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isVaulting = false;
+
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _addYaw=0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _addPitch = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _finalYaw = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _finalPitch = 0.0f;
 
 	FString _currentMoveState;
 	FString _currentLookState;

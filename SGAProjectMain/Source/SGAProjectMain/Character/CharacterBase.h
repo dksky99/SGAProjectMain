@@ -28,6 +28,7 @@ public:
 	void UpDown(float value);
 	void RightLeft(float value);
 
+	void MakeSound(float loudness, FString soundName);
 
 	float MyVertical() { return _vertical; }
 	float MyHorizontal() { return _horizontal; }
@@ -56,6 +57,9 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 
+
+	virtual FVector GetTargetLoc() { return FVector(); }
+
 	virtual void SpawnGhost();
 
 	virtual void ResetUnit();
@@ -76,6 +80,9 @@ protected:
 	class UStatComponent* _statComponent;
 
 	static const FName StatComponentName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/AIPerception", meta = (AllowPrivateAccess = "true"))
+	class UAIPerceptionStimuliSourceComponent* _stimuliSourceComp;
 
 	float _vertical = 0;
 	float _horizontal = 0;

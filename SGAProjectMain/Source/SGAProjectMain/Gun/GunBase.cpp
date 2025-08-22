@@ -365,7 +365,7 @@ void AGunBase::DeactivateGun()
 	StopAiming();
 
 	_isActive = false;
-	SetActorHiddenInGame(true);
+	//SetActorHiddenInGame(true);
 
 	if (_tacticalLight && _owner)
 		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
@@ -396,9 +396,8 @@ void AGunBase::AttachToHand()
 				_gunMesh->SetEnableGravity(false);
 				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
-
+			DetachRootComponentFromParent();
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket"));
-
 
 		}
 	}

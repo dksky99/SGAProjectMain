@@ -166,6 +166,8 @@ public:
 	virtual FRotator Focusing_Legacy() ;
 	void UpdateCameraOcclusion();
 	FVector GetCenterLoc();
+	virtual FVector GetTargetLoc() override;
+
 	void ViewTurnBack();
 
 	virtual void SetStandingCollisionCamera() override;
@@ -177,7 +179,8 @@ public:
 	void AddMissionSlot(UTexture2D* texture, FString name); // 임시. 추후 삭제 예정
 
 protected:
-
+	void OnPreSwitchGun(AGunBase* prevGun) override;
+	void OnPostSwitchGun(AGunBase* newGun) override;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))

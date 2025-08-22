@@ -102,6 +102,7 @@ public:
 	//virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	FTransform GetLeftHandSocketTransform() const;
+	FTransform GetMuzzleTransform() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }
 
 	FGrenadeChanged _grenadeChanged;
@@ -124,6 +125,10 @@ protected:
 	virtual void SetStandingCollisionCamera();
 	virtual void SetCrouchingCollisionCamera();
 	virtual void SetProningCollisionCamera() ;
+
+	// 플레이어에서 위젯 관리 위치 (순서 보장)
+	virtual void OnPreSwitchGun(AGunBase* prevGun) {};
+	virtual void OnPostSwitchGun(AGunBase* newGun) {};
 
 private:
 	void ClearThrowSpline(); 

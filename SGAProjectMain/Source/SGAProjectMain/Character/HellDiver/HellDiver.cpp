@@ -488,12 +488,21 @@ void AHellDiver::SwitchGun(int32 index)
     _stateComponent->SetAiming(false);
     _stateComponent->SetFiring(false);
 
-    _invenComponent->GetEquippedGun()->DeactivateGun();
-    _invenComponent->PutBackWeapon(_invenComponent->GetEquippedGun());
+    // 이전 총 비활성화
+    auto prevGun = _invenComponent->GetEquippedGun();
+    prevGun->DeactivateGun();
+    _invenComponent->PutBackWeapon(prevGun);
+    OnPreSwitchGun(prevGun);
     
-    EquipGun(index); // 총 변경
-    _invenComponent->GetEquippedGun()->ActivateGun();
-    _invenComponent->BringWeapon(_invenComponent->GetEquippedGun());
+    // 총 변경
+    EquipGun(index); 
+
+    // 현재 총 활성화
+	auto newGun = _invenComponent->GetEquippedGun();
+    _invenComponent->BringWeapon(newGun);
+	OnPostSwitchGun(newGun);
+    newGun->ActivateGun();
+
     _stateComponent->SetEquipIndex(index);
 
     if (wasAiming) // 에임 중이었을 경우 유지
@@ -807,6 +816,18 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     temp.SetLocation(resultLoc+FVector(0,6,0));
     temp.SetRotation(resultRot.Quaternion());
     return temp ;
+}
+
+FTransform AHellDiver::GetMuzzleTransform() const
+{
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (equippedGun == nullptr)
+    {
+        return GetActorTransform(); // fallback
+    }
+    FTransform temp = equippedGun->GetMuzzleTrans();
+    return temp;
 }
 
 void AHellDiver::KnockDown()

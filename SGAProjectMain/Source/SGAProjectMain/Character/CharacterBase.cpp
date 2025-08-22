@@ -12,6 +12,12 @@
 #include "StatComponent.h"
 #include "CharacterStateComponent.h"
 
+
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Damage.h"
+
 #include "../Object/Corpse.h"
 
 const FName ACharacterBase::StatComponentName = "StatComponent";
@@ -25,6 +31,15 @@ ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
 
 	_statComponent = CreateDefaultSubobject<UStatComponent>(StatComponentName);
 
+
+	_stimuliSourceComp = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	_stimuliSourceComp->bAutoRegister = true;
+
+	// 어떤 감각에 반응할지 등록
+	_stimuliSourceComp->RegisterForSense(UAISense_Sight::StaticClass());
+	_stimuliSourceComp->RegisterForSense(UAISense_Hearing::StaticClass());
+	_stimuliSourceComp->RegisterForSense(UAISense_Damage::StaticClass());
+	_stimuliSourceComp->RegisterWithPerceptionSystem();
 }
 
 void ACharacterBase::PostInitializeComponents()
@@ -77,6 +92,19 @@ void ACharacterBase::RightLeft(float value)
 	FVector right = FRotationMatrix(yawOnly).GetUnitAxis(EAxis::Y); // 우측 방향
 
 	AddMovementInput(right * value * 10.0f);
+}
+
+void ACharacterBase::MakeSound(float loudness,FString soundName)
+{
+	UAISense_Hearing::ReportNoiseEvent(
+		this->GetWorld(),
+		this->GetActorLocation(),
+		loudness,
+		this,
+		0.0f,
+		*soundName
+	);
+
 }
 
 

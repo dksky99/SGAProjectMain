@@ -61,6 +61,7 @@ int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)
 	}
 
 	_gunSlot[index] = gun;
+	PutBackWeapon(gun);
 	return index;
 }
 
@@ -68,6 +69,7 @@ void UHellDiverInvenComponent::EquipGun(int32 index)
 {
 	_equippedGun = _gunSlot[index];
 	_equippedGun->ActivateGun();
+	_equippedGun->AttachToHand();
 }
 
 void UHellDiverInvenComponent::DropGun(int32 index)
@@ -156,6 +158,7 @@ void UHellDiverInvenComponent::DropSample()
 void UHellDiverInvenComponent::PutBackWeapon(AGunBase* gun)
 {
 	gun->SetActorHiddenInGame(false);
+
 	switch (gun->GetGunData()._slotType)
 	{
 	case EGunSlotType::Primary:
@@ -189,8 +192,10 @@ void UHellDiverInvenComponent::PutBackMainWeapon()
 		gunMesh->SetSimulatePhysics(false);
 		gunMesh->SetEnableGravity(false);
 		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		
-		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_mainweapon_socket"));
+
+
+		_gunSlot[0]->DetachRootComponentFromParent();
+		_gunSlot[0]->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_mainweapon_socket"));
 
 	}
 }
@@ -212,7 +217,10 @@ void UHellDiverInvenComponent::PutBackSubWeapon()
 		gunMesh->SetSimulatePhysics(false);
 		gunMesh->SetEnableGravity(false);
 		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_subweapon_socket"));
+
+
+		_gunSlot[1]->DetachRootComponentFromParent();
+		_gunSlot[1]->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_subweapon_socket"));
 
 	}
 
@@ -235,7 +243,9 @@ void UHellDiverInvenComponent::PutBackSupportWeapon()
 		gunMesh->SetSimulatePhysics(false);
 		gunMesh->SetEnableGravity(false);
 		gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		gunMesh->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_supportweapon_socket"));
+
+		_gunSlot[2]->DetachRootComponentFromParent();
+		_gunSlot[2]->AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_supportweapon_socket"));
 
 	}
 }

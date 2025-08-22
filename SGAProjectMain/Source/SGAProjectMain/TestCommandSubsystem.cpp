@@ -35,7 +35,7 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
     MoveLobbyDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnMoveLobby);
     MoveLobbyCommand = IConsoleManager::Get().RegisterConsoleCommand(
-        TEXT("MoveLevel"),
+        TEXT("MoveToLobby"),
         TEXT("게임을 종료하고 로비로 이동합니다."),
         MoveLobbyDelegate,
         ECVF_Cheat
@@ -44,7 +44,7 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
     MoveMainGameDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnMoveMainGame);
     MoveMainGameCommand = IConsoleManager::Get().RegisterConsoleCommand(
-        TEXT("MoveMainGame"),
+        TEXT("MoveToMainGame"),
         TEXT("로비에서 게임으로 이동합니다."),
         MoveMainGameDelegate,
         ECVF_Cheat

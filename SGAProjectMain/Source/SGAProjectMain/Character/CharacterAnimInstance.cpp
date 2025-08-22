@@ -11,6 +11,8 @@
 #include "Animation/AnimMontage.h"
 #include "Math/UnrealMathUtility.h"
 
+#include "KismetAnimationLibrary.h"
+
 UCharacterAnimInstance::UCharacterAnimInstance()
 {
 }
@@ -26,6 +28,8 @@ void UCharacterAnimInstance::NativeInitializeAnimation()
 	}
 	else
 		_pawn = nullptr;
+
+
 }
 
 void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -45,9 +49,8 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 			FRotator controlRotation = _pawn->GetControlRotation();
 			FRotator actorRotation = _pawn->GetActorRotation();
-			_yaw = _pawn->MyYaw();
-			_pitch = _pawn->MyPitch();
 
+			_rotation = UKismetAnimationLibrary::CalculateDirection(_pawn->GetVelocity(), controlRotation);
 			auto player = Cast<APlayerCharacter>(_pawn);
 			if (player)
 			{

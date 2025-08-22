@@ -80,6 +80,9 @@ public:
 
 
 	FAmmoChanged _ammoChanged;
+	
+		
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	FTransform GetMuzzleTrans();
 	FVector GetMuzzleLoc();
 	FRotator GetMuzzleRot();
