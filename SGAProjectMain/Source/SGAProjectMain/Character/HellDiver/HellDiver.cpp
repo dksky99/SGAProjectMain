@@ -142,8 +142,8 @@ void AHellDiver::EquipGrenade()
 	if (_heldThrowable)
 	{
 		// 손 소켓에 부착
-		_heldThrowable->AttachToHand(TEXT("hand_R")); // 던질 수 있는 오브젝트에게 맡김
-	}
+		_heldThrowable->AttachToHand(TEXT("cc_weaponbone_r_socket")); // 던질 수 있는 오브젝트에게 맡김
+    }
 }
 
 void AHellDiver::EquipStratagem()
@@ -166,7 +166,7 @@ void AHellDiver::EquipStratagem()
 
 	if (_heldThrowable)
 	{
-		_heldThrowable->AttachToHand(TEXT("hand_R"));
+		_heldThrowable->AttachToHand(TEXT("cc_weaponbone_r_socket"));
 	}
 
 }

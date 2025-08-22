@@ -47,4 +47,8 @@ protected:
 	// Æø¹ß ÀÌÆåÆ®
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Explosion")
 	UParticleSystem* _effect = nullptr;
+
+	// Æø¹ß »ç¿îµå
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Projectile")
+	USoundBase* _sound = nullptr;
 };
