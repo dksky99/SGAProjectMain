@@ -209,6 +209,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	auto statComponent = GetStatComponent();
 
+	FindBestItem();
+
 	if (_stratagemComponent && _stratagemWidget)
 	{
 		for (int32 i = 0; i < _stratagemComponent->GetStratagemSlots().Num(); ++i)
@@ -1879,32 +1881,40 @@ void APlayerCharacter::EndTerminalInputMode()
 
 void APlayerCharacter::Interact(const FInputActionValue& value)
 {
+	if (_bestItem)
+	{
+		_bestItem->Interact(this);
+	}
+}
+
+void APlayerCharacter::FindBestItem()
+{
 	TArray<AActor*> overlapped;
-	_itemDetectionSphere->GetOverlappingActors(overlapped, AItemBase::StaticClass());
+	_itemDetectionSphere->GetOverlappingActors(overlapped, AInteractable::StaticClass());
 
 	// 1) 완전히 겹친 아이템(혹은 거의 동일 위치)에 대해서는 바로 픽업
 	for (AActor* actor : overlapped)
 	{
-		AItemBase* item = Cast<AItemBase>(actor);
+		AInteractable* item = Cast<AInteractable>(actor);
 		if (!item) continue;
 
 		float dist = FVector::Dist(GetActorLocation(), item->GetActorLocation());
 		if (dist <= KINDA_SMALL_NUMBER)
 		{
-			item->PickupItem(this);
-			return;  // 가장 먼저 발견된 겹친 아이템만 처리
+			_bestItem = item;
+			return;  // 가장 먼저 발견된 겹친 아이템만 저장
 		}
 	}
 
 	// 2) 겹치지 않은 아이템들에 대해 기존 스코어 로직 실행
-	AItemBase* bestItem = nullptr; // 최종 선택할 아이템 포인터
+	AInteractable* bestItem = nullptr; // 최종 선택할 아이템 포인터
 	float bestScore = -1.0f; // 비교용 스코어(클수록 우선)
 	const FVector forward = GetActorForwardVector().GetSafeNormal();
 	const FVector playerLoc = GetActorLocation();
 
 	for (AActor* actor : overlapped)
 	{
-		AItemBase* item = Cast<AItemBase>(actor);
+		AInteractable* item = Cast<AInteractable>(actor);
 		if (!item) continue;
 
 		FVector toItem = item->GetActorLocation() - playerLoc;
@@ -1918,14 +1928,13 @@ void APlayerCharacter::Interact(const FInputActionValue& value)
 		if (score > bestScore)
 		{
 			bestScore = score;
-			bestItem = item;
+			_bestItem = item;
+			return;
 		}
 	}
 
-	if (bestItem)
-	{
-		bestItem->PickupItem(this);
-	}
+	// 만약 겹친 아이템이 없으면
+	_bestItem = nullptr; // 상호작용 불가능
 }
 
 void APlayerCharacter::StopAiming(const FInputActionValue& value)

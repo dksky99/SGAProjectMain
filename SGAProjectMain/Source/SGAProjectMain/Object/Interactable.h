@@ -3,32 +3,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Interactable.h"
-#include "../../Character/HellDiver/HellDiver.h"
-#include "ItemBase.generated.h"
+#include "GameFramework/Actor.h"
+#include "Interactable.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API AItemBase : public AInteractable
+class SGAPROJECTMAIN_API AInteractable : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AItemBase();
+	AInteractable();
+
+	virtual void Interact(class AHellDiver* player) {};
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interact(class AHellDiver* player) override;
-	virtual void PickupItem(class AHellDiver* player);
-
-protected:
-	UPROPERTY(EditAnywhere, Category = "Game/Item")
-	UStaticMeshComponent* _mesh;
 };

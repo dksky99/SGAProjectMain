@@ -119,6 +119,7 @@ public:
 
 	UFUNCTION()
 	void Interact(const  FInputActionValue& value);
+	void FindBestItem();
 
 	UFUNCTION()
 	void BeginStratagemInputMode(const FInputActionValue& value);
@@ -332,6 +333,8 @@ protected:
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere;
+
+	class AInteractable* _bestItem; // 상호작용 1순위
 
 	// 커맨드 콘솔
 	UPROPERTY()

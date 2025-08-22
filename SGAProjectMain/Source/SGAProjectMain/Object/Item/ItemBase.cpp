@@ -21,6 +21,11 @@ void AItemBase::BeginPlay()
 	
 }
 
+void AItemBase::Interact(AHellDiver* player)
+{
+	PickupItem(player);
+}
+
 void AItemBase::PickupItem(AHellDiver* player)
 {
 

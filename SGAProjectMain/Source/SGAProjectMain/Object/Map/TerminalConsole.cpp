@@ -36,7 +36,7 @@ void ATerminalConsole::BeginPlay()
 	_interactionMark->SetVisibility(_isInteractable); // 상호작용 가능할 때만 표시
 }
 
-void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
+void ATerminalConsole::Interact(AHellDiver* hellDiver)
 {
 	if (!_isInteractable) return;
 

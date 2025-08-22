@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Item/ItemBase.h"
+#include "../Interactable.h"
 #include "TerminalConsole.generated.h"
 
 /**
@@ -12,7 +12,7 @@
 DECLARE_MULTICAST_DELEGATE(FMissionCompleted);
 
 UCLASS()
-class SGAPROJECTMAIN_API ATerminalConsole : public AItemBase
+class SGAPROJECTMAIN_API ATerminalConsole : public AInteractable
 {
 	GENERATED_BODY()
 	
@@ -21,7 +21,7 @@ public:
 
 	void BeginPlay();
 
-	virtual void PickupItem(class AHellDiver* hellDiver);
+	virtual void Interact(class AHellDiver* hellDiver);
 	void ReceiveInput(FKey key);
 
 	FMissionCompleted _missionCompletedEvent;
@@ -41,7 +41,7 @@ protected:
 	class UUserWidget* _terminalWidget;
 
 	// 현재 수행중인 작업
-	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 변경
+	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 배열로 변경
 	class UTerminalTaskBase* _curTask = nullptr;
 
 	UPROPERTY()
