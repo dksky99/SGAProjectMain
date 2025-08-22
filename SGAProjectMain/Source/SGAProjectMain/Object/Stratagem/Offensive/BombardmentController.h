@@ -45,9 +45,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")
 	float _waveInterval = 0.6f;
 
-	// 같은 웨이브 내 포탄 간 간격(초)
+	// 같은 웨이브 내 포탄 간 간격(초) 최소 0.01f는 세팅되어 있어야한다
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")
-	float _intraWaveInterval = 0.08f;
+	float _intraWaveInterval = 0.08f; 
 
 	// 산포 반경(센티미터)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")
