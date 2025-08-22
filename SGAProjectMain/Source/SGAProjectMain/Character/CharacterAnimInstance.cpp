@@ -50,7 +50,7 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			FRotator controlRotation = _pawn->GetControlRotation();
 			FRotator actorRotation = _pawn->GetActorRotation();
 
-			_rotation = UKismetAnimationLibrary::CalculateDirection(_pawn->GetVelocity(), controlRotation);
+			_moveRotation = UKismetAnimationLibrary::CalculateDirection(_pawn->GetVelocity(), actorRotation);
 			auto player = Cast<APlayerCharacter>(_pawn);
 			if (player)
 			{
