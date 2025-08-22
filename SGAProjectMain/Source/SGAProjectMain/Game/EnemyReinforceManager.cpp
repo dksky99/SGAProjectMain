@@ -47,13 +47,17 @@ void AEnemyReinforceManager::Tick(float DeltaTime)
 
 AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint)
 {
+	UE_LOG(LogTemp, Display, TEXT("CallReinforcement : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
 	for (auto& squad : _squadPool)
 	{
-		if(squad->CheckAbleToCall(callPoint))
+		if(squad->CheckAbleToCall(callPoint,callPoint))
 		{
+			UE_LOG(LogTemp, Display, TEXT("Call Success"));
 			return squad;
 		}
 	}
+
+	UE_LOG(LogTemp, Error, TEXT("Call Fail"));
 	return nullptr;
 }
 

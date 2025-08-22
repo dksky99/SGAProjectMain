@@ -90,6 +90,8 @@ protected:
 	USceneComponent* _rootComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* _spawnPoint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game/Squad", meta = (AllowPrivateAccess = "true"))
+	ESquadState _squadState = ESquadState::Deactivate;
 
 	UPROPERTY()
 	TArray<class ACharacterBase*> _targets;

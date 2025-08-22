@@ -54,13 +54,21 @@ public:
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
 
+	
+
+	EUnitState GetUnitState() { return _unitState; }
+	void SetStay();
+	void SetPatrol(FVector loc);
+	void SetWeak_Alert(FVector loc);
+	void SetStrong_Alert(FVector loc);
+	void SetInBattle(AActor* target);
+
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/AIPerception", meta = (AllowPrivateAccess = "true"))
-	class UAIPerceptionStimuliSourceComponent* _stimuliSourceComp;
 private:
 
 	FTimerHandle _respawnTimer;

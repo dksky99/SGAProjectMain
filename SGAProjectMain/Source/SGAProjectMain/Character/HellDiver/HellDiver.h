@@ -102,6 +102,7 @@ public:
 	//virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	FTransform GetLeftHandSocketTransform() const;
+	FTransform GetMuzzleTransform() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }
 
 	FGrenadeChanged _grenadeChanged;

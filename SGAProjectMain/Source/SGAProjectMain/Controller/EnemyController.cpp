@@ -205,3 +205,24 @@ FAIStimulus AEnemyController::CanSenseActor(AActor* Actor, EAIPerceptionSense AI
     }
     return ResultStimulus;
 }
+
+void AEnemyController::SetNone()
+{
+    _soundCheckThreshold = 2.0f;
+}
+
+void AEnemyController::SetLowAlert()
+{
+
+    _soundCheckThreshold = 0.8f;
+}
+
+void AEnemyController::SetMediumAlert()
+{
+    _soundCheckThreshold = 0.5f;
+}
+
+void AEnemyController::SetHighAlert()
+{
+    _soundCheckThreshold = 0.3f;
+}

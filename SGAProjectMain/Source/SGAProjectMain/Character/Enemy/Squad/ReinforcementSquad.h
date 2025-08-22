@@ -7,7 +7,14 @@
 #include "ReinforcementSquad.generated.h"
 
 
+/*
+	일부 유닛들이 증원을 요청할 시 소환되는 병력들. 5분의 재 소환 쿨타임을 가지고있고 특정 포인트가 찍히면 소환가능지역인지 확인 후 소환. 
 
+
+
+
+
+*/
 
 UCLASS()
 class SGAPROJECTMAIN_API AReinforcementSquad : public AEnemySquad
@@ -19,10 +26,11 @@ public:
 
 	virtual void Init() override;
 
-	bool CheckAbleToCall(FVector origin);
+	bool CheckAbleToCall(FVector origin,FVector target);
 
 	void CallReinforcement();
 
+	bool SetTargetLoc(FVector target);
 
 	
 	FVector GetCallPoint(FVector origin);
@@ -33,6 +41,9 @@ public:
 protected:
 	FTimerHandle _reinforcementTimer;
 	FTimerHandle _callUnitTimer;
+
+	FVector _targetLoc;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
 	float _coolDown=300.0f;

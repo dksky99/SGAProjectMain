@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "../../UI/DummyHpBar.h"
 #include "../StatComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 #include "../../Controller/EnemyController.h"
 #include "EnemySquad.h"
@@ -27,13 +28,6 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     _hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
     _hpBarWidget->SetRelativeLocation(FVector(0, 0, 230.0f));
 
-    _stimuliSourceComp = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
-    _stimuliSourceComp->bAutoRegister = true;
-
-    // 어떤 감각에 반응할지 등록
-    _stimuliSourceComp->RegisterForSense(UAISense_Sight::StaticClass());
-    _stimuliSourceComp->RegisterForSense(UAISense_Hearing::StaticClass());
-    _stimuliSourceComp->RegisterForSense(UAISense_Damage::StaticClass());
 
 }
 
@@ -154,6 +148,41 @@ void AEnemy::SpawnGhost()
 
     UnitDeactivate();
 
+}
+
+void AEnemy::SetStay()
+{
+    _unitState = EUnitState::Stay;
+    GetCharacterMovement()->MaxWalkSpeed = 200.0f;
+   
+
+
+
+}
+
+void AEnemy::SetPatrol(FVector loc)
+{
+    _unitState = EUnitState::Patrol;
+    GetCharacterMovement()->MaxWalkSpeed = 200.0f;
+}
+
+void AEnemy::SetWeak_Alert(FVector loc)
+{
+    _unitState = EUnitState::Weak_Alert;
+
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+}
+
+void AEnemy::SetStrong_Alert(FVector loc)
+{
+    _unitState = EUnitState::Strong_Alert;
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+}
+
+void AEnemy::SetInBattle(AActor* target)
+{
+    _unitState = EUnitState::InBattle;
+    GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
 

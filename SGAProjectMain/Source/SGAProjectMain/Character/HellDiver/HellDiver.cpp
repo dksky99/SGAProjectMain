@@ -809,6 +809,18 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     return temp ;
 }
 
+FTransform AHellDiver::GetMuzzleTransform() const
+{
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (equippedGun == nullptr)
+    {
+        return GetActorTransform(); // fallback
+    }
+    FTransform temp = equippedGun->GetMuzzleTrans();
+    return temp;
+}
+
 void AHellDiver::KnockDown()
 {
     Super::KnockDown();

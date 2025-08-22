@@ -17,6 +17,17 @@ enum class EAIPerceptionSense : uint8
 	EPS_MAX
 };
 
+
+UENUM(BlueprintType)
+enum class EAIAlertStep : uint8
+{
+	None UMETA(DisplayName = "None"),
+	LowAlert UMETA(DisplayName = "LowAlert"),
+	MediumAlert UMETA(DisplayName = "MediumAlert"),
+	HighAlert UMETA(DisplayName = "HighAlert"),
+	MAX
+};
+
 /**
  * 
  */
@@ -43,6 +54,12 @@ public:
 	void HandleSensedDamage(AActor* Actor);
 
 	FAIStimulus CanSenseActor(AActor* Actor, EAIPerceptionSense AIPerceptionSense);
+
+	void SetNone();
+	void SetLowAlert();
+	void SetMediumAlert();
+	void SetHighAlert();
+
 public:
 
 	UPROPERTY()
@@ -60,6 +77,12 @@ protected:
 	UPROPERTY()
 	FTimerHandle _timerHandle;
 
+	TArray<class ACharacterBase*> _targets;
+
+	UPROPERTY(VisibleAnywhere ,Category="AIertStep")
+	EAIAlertStep _alertStep = EAIAlertStep::None;
+
+	float _soundCheckThreshold = 1.0f;
 
 	UPROPERTY()
 	class UAISenseConfig_Sight* _sightConfig;

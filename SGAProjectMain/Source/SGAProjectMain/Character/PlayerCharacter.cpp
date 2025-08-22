@@ -578,10 +578,7 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		
 
-		//_yaw = AimRot.Yaw;
 
-		CalcYaw();
-		CalcPitch();
 
 		_deltaAngle = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetControlRotation().Yaw);
 		
