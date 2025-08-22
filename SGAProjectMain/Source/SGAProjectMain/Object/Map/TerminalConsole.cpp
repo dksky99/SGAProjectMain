@@ -7,6 +7,7 @@
 #include "../../MainGameMode.h"
 #include "../../Character/PlayerCharacter.h"
 #include "../../UI/CommandWidget.h"
+#include "../../Game/Mission/TerminalTaskBase.h"
 
 ATerminalConsole::ATerminalConsole()
 {
@@ -24,14 +25,14 @@ void ATerminalConsole::BeginPlay()
 {
 	Super::BeginPlay();
 
-	auto widget = _terminalWidgetComponent->GetUserWidgetObject();
-	if (auto commandWidget = Cast<UCommandWidget>(widget))
-		_terminalWidget = commandWidget;
-
-	_terminalWidget->InitializeSlot(_command);
 	_terminalWidgetComponent->SetVisibility(true);
-	_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
+	_terminalWidgetComponent->SetWidgetClass(_curTask->GetTerminalWidgetClass());
+	_terminalWidgetComponent->InitWidget();
+	_terminalWidget = _terminalWidgetComponent->GetUserWidgetObject();
 
+	_curTask->InitializeTask(_terminalWidget); // 임시
+	_curTask->_taskCompletedEvent.AddUObject(this, &ATerminalConsole::OnTaskCompleted);
+	
 	_interactionMark->SetVisibility(_isInteractable); // 상호작용 가능할 때만 표시
 }
 
@@ -48,6 +49,7 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 			// 상호작용 해제
 			ResetTerminalConsole();
 			_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
+			return;
 		}
 
 		else // 다른 사람이 상호작용을 시도할 경우 작동 x
@@ -58,20 +60,16 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
 		player->BeginTerminalInputMode(this);
+		_curTask->StartTask(); // 현재 작업 시작
 		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
 		_interactionMark->SetVisibility(false);
 		_player = player;
 	}
-
-	// 누군가와 상호작용 중일 때
-
-	_playerInputBuffer.Empty();
 }
 
 void ATerminalConsole::ReceiveInput(FKey key)
 {
-	_playerInputBuffer.Add(key);
-	CheckInputCombo();
+	_curTask->ReceiveInput(key);
 }
 
 void ATerminalConsole::SetInteractable(bool isInteractable)
@@ -84,50 +82,18 @@ void ATerminalConsole::SetInteractable(bool isInteractable)
 	}
 }
 
-void ATerminalConsole::CheckInputCombo()
-{
-	// 완전 일치 → 장비
-	if (_playerInputBuffer == _command)
-	{
-		_commandSuccess.Broadcast();
-
-		SetInteractable(false); // 상호작용 불가 상태로 변경
-		ResetTerminalConsole();
-		_terminalWidget->OnCompleted();
-
-		return;
-	}
-	
-	// 입력이 끝나지 않은 동안에는
-	bool bPrefixMatch = true;
-	if (_playerInputBuffer.Num() <= _command.Num())
-	{
-		for (int32 i = 0; i < _playerInputBuffer.Num(); ++i)
-		{
-			if (_playerInputBuffer[i] != _command[i]) // 입력이 틀림
-			{
-				bPrefixMatch = false;
-				break;
-			}
-		}
-	}
-
-	if (!bPrefixMatch)
-	{
-		ResetTerminalConsole();
-		_terminalWidget->SetVisibility(ESlateVisibility::Hidden);
-	}
-	else
-	{
-		_terminalWidget->UpdateSlot(_playerInputBuffer.Num());
-	}
-}
-
 void ATerminalConsole::ResetTerminalConsole()
 {
 	_player->EndTerminalInputMode();
-	_playerInputBuffer.Empty();
+	_curTask->ResetTask();
 	_player = nullptr;
-	_terminalWidget->ResetSlot();
 	_interactionMark->SetVisibility(_isInteractable);
+}
+
+void ATerminalConsole::OnTaskCompleted()
+{
+	_missionCompletedEvent.Broadcast();
+
+	SetInteractable(false); // 상호작용 불가 상태로 변경
+	ResetTerminalConsole();
 }

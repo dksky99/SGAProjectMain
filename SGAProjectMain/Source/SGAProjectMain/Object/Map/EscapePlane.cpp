@@ -29,9 +29,9 @@ void AEscapePlane::BeginPlay()
     _escapeTriggerBox->SetGenerateOverlapEvents(false);
     _escapeTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AEscapePlane::OnTriggerBoxOverlap);
 
-    if (UPlaneAnimInstance* AnimInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
+    if (UPlaneAnimInstance* animInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
     {
-        AnimInst->PlayMontageFromSection(_planeMontage, "Landing");
+        animInst->PlayMontageFromSection(_planeMontage, "Landing");
     }
 }
 
@@ -42,9 +42,9 @@ void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AAct
     AHellDiver* hellDiver = Cast<AHellDiver>(OtherActor);
     if (!hellDiver) return;
 
-    if (UPlaneAnimInstance* AnimInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
+    if (UPlaneAnimInstance* animInst = Cast<UPlaneAnimInstance>(_planeMesh->GetAnimInstance()))
     {
-        AnimInst->PlayMontageFromSection(_planeMontage, "TakeOff");
+        animInst->PlayMontageFromSection(_planeMontage, "TakeOff");
     }
 
 	_isEscapeEnabled = false;
@@ -62,18 +62,5 @@ void AEscapePlane::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    //if (_isLanding)
-    //{
-    //    FVector curLocation = GetActorLocation();
-    //    FVector newLocation = FMath::VInterpTo(curLocation, _targetLocation, DeltaTime, 1.f);
-    //    SetActorLocation(newLocation);
-
-    //    float Distance = FVector::Dist(newLocation, _targetLocation);
-    //    if (Distance <= 5.0f)
-    //    {
-    //        _isLanding = false;
-    //        //EnableTriggerBox();  // 트리거 켜기
-    //    }
-    //}
 }
 
