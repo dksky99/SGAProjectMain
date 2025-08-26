@@ -25,4 +25,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void ShowDefaultMark();
+	virtual void ShowKeyButtonMark();
+	void HideMark();
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
+	class UWidgetComponent* _interactionMark;
 };

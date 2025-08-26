@@ -26,6 +26,8 @@ public:
 
 	FMissionCompleted _missionCompletedEvent;
 
+	void ShowDefaultMark() override;
+	void ShowKeyButtonMark() override;
 	void SetInteractable(bool isInteractable);
 
 protected:
@@ -35,7 +37,7 @@ protected:
 
 protected:
 	// À§Á¬
-	UPROPERTY(EditAnywhere, Category = "Game/Command")
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	class UWidgetComponent* _terminalWidgetComponent;
 	UPROPERTY()
 	class UUserWidget* _terminalWidget;
@@ -49,7 +51,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	bool _isInteractable = true;
-
-	UPROPERTY(EditAnywhere, Category = "Game/Command")
-	class UWidgetComponent* _interactionMark;
 };

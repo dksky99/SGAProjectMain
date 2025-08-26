@@ -13,12 +13,7 @@ ATerminalConsole::ATerminalConsole()
 {
 	_terminalWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ConsoleWidget"));
 	_terminalWidgetComponent->SetupAttachment(RootComponent);
-
-	_interactionMark = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionMark"));
-	_interactionMark->SetupAttachment(RootComponent);
-
 	_terminalWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-	_interactionMark->SetWidgetSpace(EWidgetSpace::Screen);
 }
 
 void ATerminalConsole::BeginPlay()
@@ -33,7 +28,7 @@ void ATerminalConsole::BeginPlay()
 	_curTask->InitializeTask(_terminalWidget); // 임시
 	_curTask->_taskCompletedEvent.AddUObject(this, &ATerminalConsole::OnTaskCompleted);
 	
-	_interactionMark->SetVisibility(_isInteractable); // 상호작용 가능할 때만 표시
+	_interactionMark->SetVisibility(false);
 }
 
 void ATerminalConsole::Interact(AHellDiver* hellDiver)
@@ -70,6 +65,18 @@ void ATerminalConsole::Interact(AHellDiver* hellDiver)
 void ATerminalConsole::ReceiveInput(FKey key)
 {
 	_curTask->ReceiveInput(key);
+}
+
+void ATerminalConsole::ShowDefaultMark()
+{
+	Super::ShowDefaultMark();
+	_interactionMark->SetVisibility(_isInteractable);
+}
+
+void ATerminalConsole::ShowKeyButtonMark()
+{
+	Super::ShowKeyButtonMark();
+	_interactionMark->SetVisibility(_isInteractable);
 }
 
 void ATerminalConsole::SetInteractable(bool isInteractable)
