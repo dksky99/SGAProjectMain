@@ -12,6 +12,7 @@
 
 #include "../../Controller/EnemyController.h"
 #include "EnemySquad.h"
+#include "PatrolComponent.h"
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
@@ -28,6 +29,7 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     _hpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
     _hpBarWidget->SetRelativeLocation(FVector(0, 0, 230.0f));
 
+    _patrolComponent=CreateDefaultSubobject<UPatrolComponent>(TEXT("Patrol"));
 
 }
 

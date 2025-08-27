@@ -43,8 +43,6 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_speed = _pawn->GetVelocity().Size();
 			_isFalling = _pawn->GetMovementComponent()->IsFalling();
 
-			_vertical = _pawn->MyVertical();
-			_horizontal = _pawn->MyHorizontal();
 			_deltaAngle = _pawn->MyDeltaAngle();
 
 			FRotator controlRotation = _pawn->GetControlRotation();

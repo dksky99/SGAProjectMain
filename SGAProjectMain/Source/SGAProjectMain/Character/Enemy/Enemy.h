@@ -18,6 +18,16 @@ enum class EUnitState : uint8
 	MAX
 };
 
+
+UENUM(BlueprintType)
+enum class EBattleState : uint8
+{
+	None UMETA(DisplayName = "None"),				//타겟이 없다.
+	Far UMETA(DisplayName = "Far"),					//매우 멀다. 타겟의 위치로 이동을 해야한다.
+	Middle UMETA(DisplayName = "Middle"),				//스킬 시전거리 내. 차저라면 돌격을 시전할것이고 헌터계열은 도약을 쓸것. 기술의 사용조건이 안됬다면 근접공격거리까지 가까이 가게될것. 
+	Near UMETA(DisplayName = "Near"),		//매우 근접. 기본공격이 닿는 지점.
+	MAX
+};
 /**
  * 
  */
@@ -51,6 +61,7 @@ public:
 
 	void UnitDeactivate();
 
+	class UPatrolComponent* GetPatrol() { return _patrolComponent; }
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
 
@@ -68,6 +79,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Patrol", meta = (AllowPrivateAccess = "true"))
+	class UPatrolComponent* _patrolComponent;
 
 private:
 

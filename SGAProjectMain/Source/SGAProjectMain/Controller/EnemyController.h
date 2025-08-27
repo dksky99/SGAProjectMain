@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"	//감각 구분 제어, 감각 자극 관리
 #include "EnemyController.generated.h"
 
 
