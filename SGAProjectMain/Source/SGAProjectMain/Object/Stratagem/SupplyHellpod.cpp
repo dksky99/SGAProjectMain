@@ -2,6 +2,7 @@
 
 
 #include "SupplyHellpod.h"
+#include "../Item/SupplyBox.h"
 
 // Sets default values
 ASupplyHellpod::ASupplyHellpod()
@@ -12,6 +13,8 @@ ASupplyHellpod::ASupplyHellpod()
 	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	RootComponent = _mesh;
 
+	_currentHp = _maxHp;
+
 }
 
 // Called when the game starts or when spawned
@@ -19,13 +22,64 @@ void ASupplyHellpod::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// 소환 시 연출
+	PlaySpawnMontage();
+
+	// 보급품 스폰 및 부착
+	SpawnAndAttachSupplies();
+}
+
+void ASupplyHellpod::ApplyDamage(float damageAmount)
+{
+}
+
+void ASupplyHellpod::SpawnAndAttachSupplies()
+{
+
+	if (!_supplyBoxClass || !_mesh)
+		return;
+
+	FString base = TEXT("SupplySocket_");
+
+	for (int32 i = 1; i <= 4; ++i)
+	{
+		FString nameStr = base + FString::FromInt(i);
+		FName socketName(*nameStr); 
+		if (!_mesh->DoesSocketExist(socketName))
+		{
+			continue;
+		}
+
+	}
 
 }
 
-// Called every frame
-void ASupplyHellpod::Tick(float DeltaTime)
+void ASupplyHellpod::DropAllSuppliesToGround()
 {
-	Super::Tick(DeltaTime);
+}
 
+void ASupplyHellpod::PlaySpawnMontage()
+{
+}
+
+void ASupplyHellpod::PlayDespawnAndDestroy()
+{
+}
+
+ASupplyBox* ASupplyHellpod::SpawnAndAttachOne(const FName& socketName)
+{
+	return nullptr;
+}
+
+void ASupplyHellpod::OnSupplyTaken(AActor* byActor)
+{
+}
+
+void ASupplyHellpod::DestroySelf()
+{
+}
+
+void ASupplyHellpod::DestroyAfterMontage(UAnimMontage* montage)
+{
 }
 

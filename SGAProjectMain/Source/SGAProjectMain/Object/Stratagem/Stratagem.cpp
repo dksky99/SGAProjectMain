@@ -55,16 +55,14 @@ void AStratagem::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 
 	if (IsSurfaceAttachable(Hit))
 	{
-		// 수직으로 회전 보정 (하늘 방향을 향하게)
-		FVector currentForward = GetActorForwardVector();
-		FRotator uprightRotation = FRotationMatrix::MakeFromXZ(currentForward, FVector::UpVector).Rotator();
-		SetActorRotation(uprightRotation);
-
 		// 부착 처리 (회전은 위에서 직접 세팅했으므로 유지됨)
 		AttachToComponent(Hit.Component.Get(), FAttachmentTransformRules::KeepWorldTransform);
 
 		// 이동 멈춤
 		_projectileMovement->StopMovementImmediately();
+
+		// 스트라타젬 방향이 위를 향하게 설정
+		SetActorRotation(FRotationMatrix::MakeFromX(FVector::ZeroVector).Rotator());
 
 		// 애니메이션 재생
 		if (_animMontage)

@@ -37,6 +37,11 @@ void AThrowable::BeginPlay()
 		_mesh->SetNotifyRigidBodyCollision(true);
 	}
 
+	if (_projectileMovement)
+	{
+		_projectileMovement->OnProjectileStop.AddDynamic(this, &AThrowable::OnStopped);
+	}
+
 	_owner = Cast<AHellDiver>(GetOwner());
 	
 }
@@ -128,5 +133,10 @@ void AThrowable::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 {
 	if (!OtherActor || OtherActor == this || OtherActor == _owner)
 		return; // 무시: 자기 자신 또는 소유자
+}
+
+void AThrowable::OnStopped(const FHitResult& Hit)
+{
+	_mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
