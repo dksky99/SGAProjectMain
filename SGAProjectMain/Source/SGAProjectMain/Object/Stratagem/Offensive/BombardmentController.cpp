@@ -91,11 +91,12 @@ void ABombardmentController::SpawnOneShellAt(const FVector& target)
 
 	// 방향 = 타깃 - 스폰 위치
 	const FVector direction = (target - spawnLocation).GetSafeNormal();
-	const FRotator spawnRotation = FRotator(0.0f, direction.Rotation().Yaw, 0.0f);
+	const FRotator spawnRotation = direction.Rotation();
 
 	FActorSpawnParameters sp;
 	sp.Owner = _owner ? _owner : this;
 	sp.Instigator = _owner ? Cast<APawn>(_owner) : nullptr;
+	sp.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	AActor* shell = GetWorld()->SpawnActor<AActor>(_projectileClass, spawnLocation, spawnRotation, sp);
 	if (shell)

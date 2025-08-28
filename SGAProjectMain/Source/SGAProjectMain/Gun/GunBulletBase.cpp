@@ -25,7 +25,8 @@ AGunBulletBase::AGunBulletBase()
     _projectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
     _projectileMovement->InitialSpeed = _bulletData._initialSpeed;
     _projectileMovement->MaxSpeed = _bulletData._initialSpeed;
-    //_projectileMovement->bRotationFollowsVelocity = true;
+    _projectileMovement->bRotationFollowsVelocity = true;
+    _projectileMovement->SetUpdatedComponent(_collisionComp);
     //_projectileMovement->ProjectileGravityScale = 0.f;
 
     // Æø¹ß ÄÄÆ÷³ÍÆ®
@@ -45,6 +46,8 @@ void AGunBulletBase::BeginPlay()
         _collisionComp->IgnoreActorWhenMoving(GetInstigator(), true);
 
     _baseSpeed = _bulletData._initialSpeed;
+
+
 }
 
 // Called every frame

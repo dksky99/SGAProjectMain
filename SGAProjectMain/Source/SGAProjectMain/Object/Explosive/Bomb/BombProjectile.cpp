@@ -2,7 +2,7 @@
 
 
 #include "BombProjectile.h"
-#include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "../ExplosionComponent.h"
@@ -13,11 +13,11 @@ ABombProjectile::ABombProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// 캡슐 콜리전 루트
-	_collisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision"));
-	_collisionComponent->InitCapsuleSize(15.0f, 40.0f);						// 반경, 하프 높이
-	_collisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));  // 프리셋
-	_collisionComponent->SetNotifyRigidBodyCollision(true);					// 물리적 블록 충돌 시 Hit 이벤트(OnComponentHit)가 발생하도록 설정합니다.
-	_collisionComponent->SetGenerateOverlapEvents(false);					// Overlap 이벤트는 생성하지 않도록 합니다(충돌=Block만 사용).
+	_collisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
+	_collisionComponent->InitSphereRadius(15.0f);                      // 반경
+	_collisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+	_collisionComponent->SetNotifyRigidBodyCollision(true);            // Block 충돌 시 OnComponentHit 발생
+	_collisionComponent->SetGenerateOverlapEvents(false);              // Overlap 비활성(필요 시 채널별 혼합 권장)
 	RootComponent = _collisionComponent;                                    
 
 	// 메시(렌더 전용, 콜리전 비활성)
@@ -30,6 +30,7 @@ ABombProjectile::ABombProjectile()
 	_projectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement")); 
 	_projectileMovement->bRotationFollowsVelocity = true;                   // 속도 벡터 방향으로 액터가 자동 회전하도록 설정합니다(낙하 방향을 주시).
 	_projectileMovement->bShouldBounce = false;                             // 지면/오브젝트 충돌 후 튀지 않도록(bounce 비활성) 설정합니다.
+	_projectileMovement->SetUpdatedComponent(_collisionComponent);			// 갱신 대상 지정
 
 	// 폭발 컴포넌트(데미지/반경/이펙트 재생 담당)
 	_explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));  
@@ -42,19 +43,11 @@ ABombProjectile::ABombProjectile()
 void ABombProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ABombProjectile::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	// 메시만 로컬 롤 회전(액터는 속도방향을 유지)
-	if (_spinDegreesPerSecond != 0.0f && _mesh)
-	{
-		const float rollDelta = _spinDegreesPerSecond * DeltaSeconds;
-		_mesh->AddLocalRotation(FRotator(0.0f, 0.0f, rollDelta));
-	}
 }
 
 void ABombProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

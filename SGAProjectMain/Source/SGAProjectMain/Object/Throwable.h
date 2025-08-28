@@ -34,6 +34,9 @@ public:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp,AActor* OtherActor,	UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
 
+	UFUNCTION()
+	void OnStopped(const FHitResult& Hit);
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Throwable")
 

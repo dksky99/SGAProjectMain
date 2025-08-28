@@ -28,7 +28,7 @@ protected:
 protected:
 	// 충돌 루트(간단한 스피어 콜리전)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Bomb")
-	class UCapsuleComponent* _collisionComponent;
+	class USphereComponent* _collisionComponent;
 
 	// 렌더용 메시(콜리전 비활성)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Bomb")
@@ -41,8 +41,4 @@ protected:
 	// 폭발 처리 전용 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Bomb")
 	class UExplosionComponent* _explosionComponent;
-
-	// 메시에만 적용할 롤 스핀 속도(도/초). 0.0f이면 회전 없음
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Bomb")
-	float _spinDegreesPerSecond = 90.0f;
-};
+	};
