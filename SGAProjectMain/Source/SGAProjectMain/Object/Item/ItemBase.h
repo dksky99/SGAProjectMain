@@ -7,6 +7,9 @@
 #include "../../Character/HellDiver/HellDiver.h"
 #include "ItemBase.generated.h"
 
+// 아이템이 제거되기 직전에 알림을 보내는 델리게이트 (블루프린트에서도 바인딩 가능)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemPreDespawn, class AItemBase*, item);
+
 UCLASS()
 class SGAPROJECTMAIN_API AItemBase : public AActor
 {
@@ -26,6 +29,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PickupItem(class AHellDiver* player);
+
+
+	UPROPERTY(BlueprintAssignable, Category = "Game/Item")
+	FOnItemPreDespawn _onPreDespawn;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Item")

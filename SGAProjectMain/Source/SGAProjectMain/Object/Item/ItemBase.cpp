@@ -23,7 +23,11 @@ void AItemBase::BeginPlay()
 
 void AItemBase::PickupItem(AHellDiver* player)
 {
-
+	// 어태치 대상에게 먼저 알림
+	if (_onPreDespawn.IsBound())
+	{
+		_onPreDespawn.Broadcast(this);
+	}
 
 	Destroy();
 }
