@@ -14,6 +14,8 @@ ABackpack::ABackpack()
     _skeletalMesh->SetCollisionProfileName("PhysicsActor");
     _skeletalMesh->SetGenerateOverlapEvents(true);
     _skeletalMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
+    _interactionMark->SetupAttachment(RootComponent);
 }
 
 void ABackpack::PickupItem(AHellDiver* player)

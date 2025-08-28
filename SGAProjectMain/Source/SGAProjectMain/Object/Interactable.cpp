@@ -12,9 +12,20 @@ AInteractable::AInteractable()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	_mesh->SetSimulatePhysics(true);
+	RootComponent = _mesh;
+
 	_interactionMark = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionMark"));
 	_interactionMark->SetupAttachment(RootComponent);
 	_interactionMark->SetWidgetSpace(EWidgetSpace::Screen);
+	_interactionMark->SetRelativeLocation(FVector::ZeroVector);
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> widgetBP(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/BP_InteractionWidget.BP_InteractionWidget_C'"));
+	if (widgetBP.Succeeded())
+	{
+		_interactionMark->SetWidgetClass(widgetBP.Class);
+	}
 }
 
 // Called when the game starts or when spawned

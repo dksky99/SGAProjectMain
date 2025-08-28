@@ -54,11 +54,11 @@ void ATerminalConsole::Interact(AHellDiver* hellDiver)
 	// 아무도 상호작용하고 있지 않을 때
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
-		player->BeginTerminalInputMode(this);
-		_curTask->StartTask(); // 현재 작업 시작
-		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
-		_interactionMark->SetVisibility(false);
 		_player = player;
+		_player->BeginTerminalInputMode(this);
+		_curTask->StartTask(); // 현재 작업 시작
+		_interactionMark->SetVisibility(false);
+		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -75,6 +75,9 @@ void ATerminalConsole::ShowDefaultMark()
 
 void ATerminalConsole::ShowKeyButtonMark()
 {
+	if (_player)
+		return;
+
 	Super::ShowKeyButtonMark();
 	_interactionMark->SetVisibility(_isInteractable);
 }
@@ -99,7 +102,8 @@ void ATerminalConsole::ResetTerminalConsole()
 
 void ATerminalConsole::OnTaskCompleted()
 {
-	_missionCompletedEvent.Broadcast();
+	//if (_missionCompletedEvent.IsBound())
+	//	_missionCompletedEvent.Broadcast();
 
 	SetInteractable(false); // 상호작용 불가 상태로 변경
 	ResetTerminalConsole();

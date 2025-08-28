@@ -27,8 +27,4 @@ public:
 
 	virtual void Interact(class AHellDiver* player) override;
 	virtual void PickupItem(class AHellDiver* player);
-
-protected:
-	UPROPERTY(EditAnywhere, Category = "Game/Item")
-	UStaticMeshComponent* _mesh;
 };

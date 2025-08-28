@@ -1909,6 +1909,8 @@ void APlayerCharacter::OnItemInRange(UPrimitiveComponent* OverlappedComponent, A
 	{
 		_detectedItems.AddUnique(item);
 		item->ShowDefaultMark();
+
+		UE_LOG(LogTemp, Warning, TEXT("Overlapped with %s"), *GetNameSafe(OtherActor));
 	}
 }
 
