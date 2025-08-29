@@ -128,6 +128,7 @@ public:
 	UFUNCTION()
 	void OnItemNonInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 	
+	void CheckInitialOverlaps(); // BeginPlay() ¿¡¼­¸¸
 	void FindBestItem();
 
 

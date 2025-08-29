@@ -217,6 +217,9 @@ void APlayerCharacter::BeginPlay()
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
+
+	// 다음 프레임에 실행 (모든 액터 생성 완료 후)
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::CheckInitialOverlaps);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -1950,6 +1953,34 @@ void APlayerCharacter::OnItemNonInteractable(UPrimitiveComponent* OverlappedComp
 	}
 }
 
+void APlayerCharacter::CheckInitialOverlaps()
+{
+	// 감지 가능 범위 체크
+	TArray<AActor*> detectedOverlaps;
+	_itemDetectionSphere->GetOverlappingActors(detectedOverlaps, AInteractable::StaticClass());
+
+	for (AActor* actor : detectedOverlaps)
+	{
+		if (auto item = Cast<AInteractable>(actor))
+		{
+			_detectedItems.AddUnique(item);
+			item->ShowDefaultMark();
+		}
+	}
+
+	// 상호작용 가능 범위 체크
+	TArray<AActor*> interactableOverlaps;
+	_itemInteractionSphere->GetOverlappingActors(interactableOverlaps, AInteractable::StaticClass());
+
+	for (AActor* actor : interactableOverlaps)
+	{
+		if (AInteractable* item = Cast<AInteractable>(actor))
+		{
+			_interactableItems.AddUnique(item);
+		}
+	}
+}
+
 void APlayerCharacter::FindBestItem()
 {
 	// 원래는 이 방법을 사용하였으나, 함수가 틱에서 실행되는 것으로 변경되면서, 성능을 위해 방식을 조금 수정
@@ -1966,8 +1997,6 @@ void APlayerCharacter::FindBestItem()
 		return;
 	}
 
-	AInteractable* prevBestItem = _bestItem;
-
 	// 1) 완전히 겹친 아이템(혹은 거의 동일 위치)에 대해서는 바로 픽업
 	for (auto item : _interactableItems)
 	{
@@ -1976,6 +2005,7 @@ void APlayerCharacter::FindBestItem()
 		float dist = FVector::Dist(GetActorLocation(), item->GetActorLocation());
 		if (dist <= KINDA_SMALL_NUMBER)
 		{
+			AInteractable* prevBestItem = _bestItem;
 			_bestItem = item;
 			_bestItem->ShowKeyButtonMark();
 
@@ -2009,6 +2039,7 @@ void APlayerCharacter::FindBestItem()
 
 		if (score > bestScore)
 		{
+			AInteractable* prevBestItem = _bestItem;
 			bestScore = score;
 			_bestItem = item;
 			_bestItem->ShowKeyButtonMark();
@@ -2018,8 +2049,6 @@ void APlayerCharacter::FindBestItem()
 				if (prevBestItem && _detectedItems.Contains(prevBestItem))
 					prevBestItem->ShowDefaultMark();
 			}
-
-			return;
 		}
 	}
 }
