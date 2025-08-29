@@ -86,10 +86,10 @@ void ATerminalConsole::SetInteractable(bool isInteractable)
 {
 	_isInteractable = isInteractable;
 
-	if (_interactionMark)
-	{
-		_interactionMark->SetVisibility(_isInteractable);
-	}
+	//if (_interactionMark)
+	//{
+	//	_interactionMark->SetVisibility(_isInteractable);
+	//}
 }
 
 void ATerminalConsole::ResetTerminalConsole()
@@ -102,8 +102,8 @@ void ATerminalConsole::ResetTerminalConsole()
 
 void ATerminalConsole::OnTaskCompleted()
 {
-	//if (_missionCompletedEvent.IsBound())
-	//	_missionCompletedEvent.Broadcast();
+	if (_missionCompletedEvent.IsBound())
+		_missionCompletedEvent.Broadcast();
 
 	SetInteractable(false); // 상호작용 불가 상태로 변경
 	ResetTerminalConsole();

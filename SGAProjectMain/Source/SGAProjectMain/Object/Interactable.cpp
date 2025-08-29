@@ -32,8 +32,8 @@ AInteractable::AInteractable()
 void AInteractable::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	_interactionMark->SetVisibility(false);
+
+	InitializeMark();
 }
 
 // Called every frame
@@ -41,6 +41,16 @@ void AInteractable::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AInteractable::InitializeMark()
+{
+	if (auto widget = Cast<UInteractionWidget>(_interactionMark->GetUserWidgetObject()))
+	{
+		widget->InitializeWidget(_interactableInfo);
+	}
+
+	_interactionMark->SetVisibility(false);
 }
 
 void AInteractable::ShowDefaultMark()

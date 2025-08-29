@@ -57,6 +57,11 @@ void AGunBase::BeginPlay()
 		SetGunData(data);
 	}
 
+	_interactableInfo._interactionText = FText::FromName(_gunData._name);
+	_interactableInfo._type = EInteractableIconType::Gun;
+
+	InitializeMark();
+
 	if (_gunData._crosshairClass)
 	{
 		_crosshair = CreateWidget<UUserWidget>(GetWorld(), _gunData._crosshairClass);

@@ -25,7 +25,7 @@ struct FInteractableInfo
 	EInteractableIconType _type = EInteractableIconType::None; // 표시되는 아이템 종류
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText _text; // 상호작용 마크 옆에 뜨는 글씨
+	FText _interactionText; // 상호작용 마크 옆에 뜨는 글씨
 };
 
 UCLASS()
@@ -47,6 +47,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void InitializeMark();
 	virtual void ShowDefaultMark();
 	virtual void ShowKeyButtonMark();
 	void HideMark();

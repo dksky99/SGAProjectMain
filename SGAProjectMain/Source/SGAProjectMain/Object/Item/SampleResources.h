@@ -56,6 +56,8 @@ class SGAPROJECTMAIN_API ASampleResources : public AItemBase
 	GENERATED_BODY()
 
 public:
+    ASampleResources();
+
 	virtual void PickupItem(class AHellDiver* player);
 
     void SetBundle(FSampleBundle bundle) { _sampleBundle = bundle; }
