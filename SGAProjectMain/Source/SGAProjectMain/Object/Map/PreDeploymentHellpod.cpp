@@ -7,18 +7,12 @@
 
 APreDeploymentHellpod::APreDeploymentHellpod()
 {
-	if (_mesh)  // AItemBaseÀÇ StaticMesh »èÁ¦
-	{
-		_mesh->DestroyComponent();
-		_mesh->SetHiddenInGame(true);
-	}
-
 	_hellpodMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
 	_hellpodMesh->SetGenerateOverlapEvents(true);
 	RootComponent = _hellpodMesh;
 }
 
-void APreDeploymentHellpod::PickupItem(AHellDiver* player)
+void APreDeploymentHellpod::Interact(AHellDiver* player)
 {
 	if (!player)
 		return;

@@ -16,5 +16,7 @@ class SGAPROJECTMAIN_API ASupplyBox : public AItemBase
 	
 
 public:
+	ASupplyBox();
+
 	virtual void PickupItem(AHellDiver* player) override;
 };

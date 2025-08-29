@@ -15,6 +15,8 @@ ABroadcastTower::ABroadcastTower()
 
 	_geometryCollection = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("GeometryCollection"));
 	RootComponent = _geometryCollection;
+
+    _terminalChild->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
