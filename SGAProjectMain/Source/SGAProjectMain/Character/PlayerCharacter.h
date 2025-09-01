@@ -112,7 +112,7 @@ public:
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchGun(2, value); }
 
 	void SwitchGun(int32 index, const FInputActionValue& value);
-	void PickupGun(AGunBase* gun) override;
+	void PickupGun(class AGunBase* gun) override;
 	void AddSample(struct FSampleBundle sample) override;
 	void DropBackpack();
 	

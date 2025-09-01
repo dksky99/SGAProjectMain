@@ -17,9 +17,16 @@ class SGAPROJECTMAIN_API APreDeploymentHellpod : public AInteractable
 public:
 	APreDeploymentHellpod();
 
-	virtual void Interact(class AHellDiver* player);
+	virtual void Interact(class AHellDiver* hellDiver);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Mesh")
 	TObjectPtr<USkeletalMeshComponent> _hellpodMesh;
+
+	// √‚∞› »Â∏ß
+	UPROPERTY()
+	class UPreDeploymentFlow* _preDeployFlow;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Flow")
+	TSubclassOf<UPreDeploymentFlow> _preDeployFlowClass;
 };
