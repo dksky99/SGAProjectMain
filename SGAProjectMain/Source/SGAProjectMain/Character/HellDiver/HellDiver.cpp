@@ -24,7 +24,6 @@
 #include "../StimPackComponent.h"
 
 #include "../../Data/CollisionCameraDataAsset.h"
-#include "../../CGameInstance.h"
 
 #include "../../Gun/GunBase.h"
 #include "../../Gun/ExplosiveGun.h"
@@ -68,15 +67,15 @@ void AHellDiver::BeginPlay()
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
 
-    //if (_gunClass1 && _gunClass2 && _gunClass3)
-    //{
-    //    // 임시 세팅
-    //    SpawnGun(_gunClass1);
-    //    SpawnGun(_gunClass2);
-    //    SpawnGun(_gunClass3);
+    if (_gunClass1 && _gunClass2 && _gunClass3)
+    {
+        // 임시 세팅
+        SpawnGun(_gunClass1);
+        SpawnGun(_gunClass2);
+        SpawnGun(_gunClass3);
 
-    //    EquipGun(0); // 첫 번째 무기 장착
-    //}
+        EquipGun(0); // 첫 번째 무기 장착
+    }
 }
 
 void AHellDiver::Tick(float DeltaTime)
@@ -446,9 +445,13 @@ void AHellDiver::Proning()
     GetCharacterMovement()->MaxWalkSpeed = statComponent->GetProneSpeed();
 }
 
-void AHellDiver::InitWeapon()
+void AHellDiver::SpawnGun(TSubclassOf<AGunBase> gunClass)
 {
-    EquipGun(0);
+    AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
+    gun->SetOwner(this);
+    gun->InitializeGun();
+    _invenComponent->SetGun(gun);
+    _stateComponent->SetWeaponState(EWeaponType::Gun);
 }
 
 void AHellDiver::EquipGun(int32 index)

@@ -111,7 +111,6 @@ public:
 	UFUNCTION()
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchGun(2, value); }
 
-	void InitWeapon() override;
 	void SwitchGun(int32 index, const FInputActionValue& value);
 	void PickupGun(class AGunBase* gun) override;
 	void AddSample(struct FSampleBundle sample) override;

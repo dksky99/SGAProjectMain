@@ -22,7 +22,7 @@ public:
 private:
 	UFUNCTION() 
 	void HandleLaunch();
-
+	
 
 	UPROPERTY()
 	class UPreDeploymentState* _state;

@@ -4,20 +4,12 @@
 #include "CGameInstance.h"
 
 #include "Gun/GunDataTable.h"
-#include "Gun/GunBase.h"
 
 FGunData UCGameInstance::GetGunDataFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
 	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
 	return *row;
-}
-
-TSubclassOf<AGunBase> UCGameInstance::GetGunClassFromTable(int32 id)
-{
-	FString rowName = FString::FromInt(id);
-	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
-	return *row->_gunClass;
 }
 
 void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)

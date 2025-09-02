@@ -21,14 +21,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	void ApplyLoadOut(class UPreDeploymentState* preDeployState);
-	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void SpawnGun(TSubclassOf<AGunBase> gunClass); // ÃÑ ¼ÒÈ¯
-	int32 SetGun(AGunBase* gun); // ½½·Ô¿¡ ÃÑ ÀåÂø
-	void EquipGun(int32 index); // ÇöÀç µé°íÀÖ´Â ÃÑ ¼³Á¤
+	int32 SetGun(class AGunBase* gun);
+	void EquipGun(int32 index);
 	void DropGun(int32 index);
 	bool CanSwitchGun(int32 index);
 
@@ -49,16 +46,9 @@ public:
 	FSampleBundle GetSampleBundle() { return _sampleBundle; }
 
 private:
+
 	UPROPERTY(Transient)
 	class AHellDiver* _hellDiver;
-
-	// ÃÑ±â Å¬·¡½º
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass1;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass2;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass3;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Inven")
 	AGunBase* _equippedGun;
