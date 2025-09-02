@@ -37,6 +37,7 @@ void UHellDiverInvenComponent::BeginPlay()
 	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
 	ApplyLoadOut(GI->GetPreDeployState());
 
+	if (!_gunClass1) return;
 	SpawnGun(_gunClass1);
 	SpawnGun(_gunClass2);
 	SpawnGun(_gunClass3);

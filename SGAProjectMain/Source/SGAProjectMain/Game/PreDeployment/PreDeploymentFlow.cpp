@@ -35,12 +35,18 @@ void UPreDeploymentFlow::EnterFlow()
     }
     
     APlayerController* PC = Cast<APlayerController>(_player->GetController());
+    FInputModeUIOnly mode;
+    mode.SetWidgetToFocus(_hubWidget->TakeWidget());
+    mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(mode);
     PC->bShowMouseCursor = true;
 }
 
 void UPreDeploymentFlow::HandleLaunch()
 {
     APlayerController* PC = Cast<APlayerController>(_player->GetController());
+    FInputModeGameOnly mode;
+    PC->SetInputMode(mode);
     PC->bShowMouseCursor = false;
 
     UWidgetBlueprintLibrary::SetFocusToGameViewport();

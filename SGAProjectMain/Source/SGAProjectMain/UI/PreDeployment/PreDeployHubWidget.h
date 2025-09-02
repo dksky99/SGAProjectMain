@@ -30,6 +30,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* _launchBtn;
 
-	/*UPROPERTY(meta = (BindWidget))
-	class UPreDeployPanelBase* _test;*/
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployPanelBase* _primary;
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployPanelBase* _secondary;
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployPanelBase* _support;
 };

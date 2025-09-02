@@ -26,6 +26,8 @@ class SGAPROJECTMAIN_API UCGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
+	virtual void Init() override;
+
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
 

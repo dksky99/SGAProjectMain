@@ -11,6 +11,7 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
     for (int32 i = 0; i < Count; ++i) {
         if (USelectableEntryBase* entry = Cast<USelectableEntryBase>(_panel->GetChildAt(i)))
         {
+            _entries.Add(entry);
             entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked);
         }
     }
@@ -20,5 +21,11 @@ void UPreDeployPanelBase::HandlePicked(int32 itemID)
 {
     // state에 정보 넘겨주기
     // 임시
-    _state->SetPrimaryGunID(itemID);
+    _state->SetGunID(itemID);
+
+    for (auto* entry : _entries)
+    {
+        bool isSelected = (entry->GetItemID() == itemID);
+        entry->SetSelected(isSelected);
+    }
 }

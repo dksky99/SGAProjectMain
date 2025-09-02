@@ -3,8 +3,16 @@
 
 #include "CGameInstance.h"
 
+#include "Game/PreDeployment/PreDeploymentState.h"
 #include "Gun/GunDataTable.h"
 #include "Gun/GunBase.h"
+
+void UCGameInstance::Init()
+{
+	Super::Init();
+
+	_preDeployState = NewObject<UPreDeploymentState>(this);
+}
 
 FGunData UCGameInstance::GetGunDataFromTable(int32 id)
 {

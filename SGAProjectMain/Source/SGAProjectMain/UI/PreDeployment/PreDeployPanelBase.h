@@ -28,4 +28,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _panel;
+
+	UPROPERTY()
+	TArray<class USelectableEntryBase*> _entries;
 };

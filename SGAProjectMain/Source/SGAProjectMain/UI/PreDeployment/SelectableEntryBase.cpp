@@ -4,6 +4,7 @@
 #include "SelectableEntryBase.h"
 
 #include "Components/Button.h"
+#include "Components/Border.h"
 
 void USelectableEntryBase::NativeOnInitialized()
 {
@@ -16,4 +17,10 @@ void USelectableEntryBase::HandlePick()
 {
 	if (_onPickedEvent.IsBound())
 		_onPickedEvent.Broadcast(_itemID);
+}
+
+void USelectableEntryBase::SetSelected(bool isSelected)
+{
+	FLinearColor color = isSelected ? FLinearColor::Yellow : FLinearColor::White;
+	_border->SetBrushColor(color);
 }

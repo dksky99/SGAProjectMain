@@ -15,6 +15,8 @@ class SGAPROJECTMAIN_API UPreDeploymentState : public UObject
 	GENERATED_BODY()
 
 public:
+	void SetGunID(int32 id);
+
 	void SetPrimaryGunID(int32 id) { _primaryGunID = id; }
 	int32 GetPrimaryGunID() { return _primaryGunID; }
 
