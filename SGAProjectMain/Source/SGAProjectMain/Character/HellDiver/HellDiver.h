@@ -61,9 +61,9 @@ public:
 	void Proning();
 
 	// ÃÑ
-	void SpawnGun(TSubclassOf<class AGunBase> gunClass);
+	virtual void InitWeapon(); // Ã³À½ ÇÑ ¹ø¸¸ ½ÇÇà
 	void EquipGun(int32 index); // ½½·Ô¿¡¼­ ÀÎµ¦½º·Î ÀåÂø
-	virtual void PickupGun(AGunBase* gun); // ÃÑÀ» Á÷Á¢ ½Àµæ
+	virtual void PickupGun(class AGunBase* gun); // ÃÑÀ» Á÷Á¢ ½Àµæ
 	void SwitchGun(int32 index);
 	AGunBase* GetEquippedGun();
 
@@ -127,8 +127,8 @@ protected:
 	virtual void SetProningCollisionCamera() ;
 
 	// ÇÃ·¹ÀÌ¾î¿¡¼­ À§Á¬ °ü¸® À§Ä¡ (¼ø¼­ º¸Àå)
-	virtual void OnPreSwitchGun(AGunBase* prevGun) {};
-	virtual void OnPostSwitchGun(AGunBase* newGun) {};
+	virtual void OnPreSwitchGun(class AGunBase* prevGun) {};
+	virtual void OnPostSwitchGun(class AGunBase* newGun) {};
 
 private:
 	void ClearThrowSpline(); 
@@ -203,14 +203,6 @@ protected:
 	class UCollisionCameraDataAsset* _crouchingStance;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stance", meta=(AllowPrivateAccess = "true"))
 	class UCollisionCameraDataAsset* _proningStance;
-
-	// ÃÑ±â
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass1;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass2;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AGunBase> _gunClass3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Anim")
 	FVector _jointTargetLoc = FVector(20,45,-90);
