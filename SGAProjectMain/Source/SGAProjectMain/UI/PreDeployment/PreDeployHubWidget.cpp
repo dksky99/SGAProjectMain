@@ -13,7 +13,7 @@ void UPreDeployHubWidget::NativeOnInitialized()
 
 void UPreDeployHubWidget::InitializeWidget(UPreDeploymentState* state)
 {
-
+	// 패널들이랑 연결해주기
 }
 
 void UPreDeployHubWidget::HandleLaunchRequest()

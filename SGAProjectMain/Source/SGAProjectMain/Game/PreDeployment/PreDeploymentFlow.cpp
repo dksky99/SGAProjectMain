@@ -8,6 +8,7 @@
 #include "PreDeploymentState.h"
 #include "../../UI/PreDeployment/PreDeployHubWidget.h"
 #include "../../Character/PlayerCharacter.h"
+#include "../../CGameInstance.h"
 
 void UPreDeploymentFlow::Initialize(APlayerCharacter* player)
 {
@@ -18,8 +19,9 @@ void UPreDeploymentFlow::EnterFlow()
 {
     if (!_player) return;
 
-    if (!_state)
-        _state = NewObject<UPreDeploymentState>(this);
+    UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+    if (!GI) return;
+    _state = GI->GetPreDeployState();
     
     _hubWidgetClass = LoadClass<UPreDeployHubWidget>(nullptr, TEXT("/Game/Blueprints/UI/PreDeployment/BP_PreDeployHub.BP_PreDeployHub_C"));
 

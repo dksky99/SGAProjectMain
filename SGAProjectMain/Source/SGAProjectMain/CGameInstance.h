@@ -30,9 +30,12 @@ public:
 	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
 
 	struct FGunData GetGunDataFromTable(int32 id);
+	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
 
 	void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample() { return _savedSample; }
+
+	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
@@ -40,4 +43,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Sample")
 	FSampleBundle _savedSample;
+
+	UPROPERTY()
+	UPreDeploymentState* _preDeployState;
 };

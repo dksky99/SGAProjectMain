@@ -129,8 +129,6 @@ void APlayerCharacter::BeginPlay()
 	//InitView();
 	SetTPSView();
 
-	auto equippedGun = _invenComponent->GetEquippedGun();
-
 	if (_itemDetectionSphere)
 	{
 		_itemDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnItemInRange);
@@ -141,23 +139,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		_itemInteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnItemInteractable);
 		_itemInteractionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnItemNonInteractable);
-	}
-	
-	if (_gunWidget)
-	{
-		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
-		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
-		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
-		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
-
-		_gunWidget->AddToViewport();
-
-		equippedGun->ActivateGun();
-		_stimPackComponent->BroadcastStimPackChanged();
-		_gunWidget->SetGun(equippedGun->GetGunData()._icon);
-		if (_grenadeChanged.IsBound())
-			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
 	}
 
 	if (_stratagemWidget)
@@ -305,7 +286,6 @@ FTransform APlayerCharacter::GetLeftHandPos()
 
 	return FTransform();
 }
-
 
 FRotator APlayerCharacter::Focusing()
 {
@@ -1665,6 +1645,30 @@ void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
+void APlayerCharacter::InitWeapon()
+{
+	Super::InitWeapon();
+
+	auto equippedGun = _invenComponent->GetEquippedGun();
+
+	if (_gunWidget)
+	{
+		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
+		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
+
+		_gunWidget->AddToViewport();
+
+		equippedGun->ActivateGun();
+		_stimPackComponent->BroadcastStimPackChanged();
+		_gunWidget->SetGun(equippedGun->GetGunData()._icon);
+		if (_grenadeChanged.IsBound())
+			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
+	}
 }
 
 void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
