@@ -1684,7 +1684,8 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 	if (_isGunSettingMode)
 		return;
 
-	int32 index = _invenComponent->SetGun(newGun);
+	//int32 index = _invenComponent->SetGun(newGun);
+	int32 index = newGun->GetGunSlotIndex();
 	if (index == -1) return;
 
 	auto previousGun = _invenComponent->GetEquippedGun();

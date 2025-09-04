@@ -69,6 +69,7 @@ public:
 
 	void ResetCanFire() { _canFire = true; }
 
+	int32 GetGunSlotIndex();
 	const FGunData& GetGunData() { return _gunData; }
 	void SetGunData(const FGunData& gunData) { _gunData = gunData; }
 	int32 GetCurAmmo() { return _isChamberLoaded ? _curAmmo + 1 : _curAmmo; }

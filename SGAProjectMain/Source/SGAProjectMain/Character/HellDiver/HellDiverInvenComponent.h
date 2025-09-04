@@ -27,7 +27,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void SpawnGun(TSubclassOf<AGunBase> gunClass); // ÃÑ ¼ÒÈ¯
-	int32 SetGun(AGunBase* gun); // ½½·Ô¿¡ ÃÑ ÀåÂø
+	void SetGun(AGunBase* gun); // ½½·Ô¿¡ ÃÑ ÀåÂø
 	void EquipGun(int32 index); // ÇöÀç µé°íÀÖ´Â ÃÑ ¼³Á¤
 	void DropGun(int32 index);
 	bool CanSwitchGun(int32 index);
