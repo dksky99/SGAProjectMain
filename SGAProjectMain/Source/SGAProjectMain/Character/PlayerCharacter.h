@@ -111,14 +111,27 @@ public:
 	UFUNCTION()
 	void SwitchWeapon3(const  FInputActionValue& value) { SwitchGun(2, value); }
 
+	void InitWeapon() override;
 	void SwitchGun(int32 index, const FInputActionValue& value);
-	void PickupGun(AGunBase* gun) override;
+	void PickupGun(class AGunBase* gun) override;
 	void AddSample(struct FSampleBundle sample) override;
 	void DropBackpack();
 	
 
 	UFUNCTION()
 	void Interact(const  FInputActionValue& value);
+	UFUNCTION()
+	void OnItemInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnItemOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
+	UFUNCTION()
+	void OnItemInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnItemNonInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
+	
+	void CheckInitialOverlaps(); // BeginPlay() 에서만
+	void FindBestItem();
+
 
 	UFUNCTION()
 	void BeginStratagemInputMode(const FInputActionValue& value);
@@ -331,7 +344,15 @@ protected:
 
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
-	class USphereComponent* _itemDetectionSphere;
+	class USphereComponent* _itemDetectionSphere; // 아이템 감지 범위
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
+	class USphereComponent* _itemInteractionSphere; // 아이템 상호작용 범위
+	UPROPERTY()
+	TArray<class AInteractable*> _detectedItems; // 감지된 아이템
+	UPROPERTY()
+	TArray<class AInteractable*> _interactableItems; // 상호작용 가능한 아이템
+	UPROPERTY()
+	class AInteractable* _bestItem; // 상호작용 1순위
 
 	// 커맨드 콘솔
 	UPROPERTY()

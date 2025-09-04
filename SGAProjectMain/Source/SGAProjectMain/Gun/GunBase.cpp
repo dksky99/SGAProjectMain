@@ -26,17 +26,19 @@ AGunBase::AGunBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	if (_mesh)  // AItemBase의 StaticMesh 삭제
-	{ 
-		_mesh->DestroyComponent();
-		_mesh->SetHiddenInGame(true);
-	}
-
 	_gunMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
 	_gunMesh->SetCollisionProfileName("PhysicsActor");
 	_gunMesh->SetGenerateOverlapEvents(true);
 	_gunMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	RootComponent = _gunMesh;
+
+	_interactionMark->SetupAttachment(RootComponent);
+
+	if (_mesh)  // AItemBase의 StaticMesh 삭제
+	{ 
+		_mesh->DestroyComponent();
+		_mesh->SetHiddenInGame(true);
+	}
 
 	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
 	_tacticalLight->SetupAttachment(RootComponent);
@@ -54,6 +56,11 @@ void AGunBase::BeginPlay()
 		const auto data = gameInstance->GetGunDataFromTable(_gunID);
 		SetGunData(data);
 	}
+
+	_interactableInfo._interactionText = FText::FromName(_gunData._name);
+	_interactableInfo._type = EInteractableIconType::Gun;
+
+	InitializeMark();
 
 	if (_gunData._crosshairClass)
 	{

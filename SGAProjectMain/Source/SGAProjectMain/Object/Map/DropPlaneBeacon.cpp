@@ -11,6 +11,8 @@ ADropPlaneBeacon::ADropPlaneBeacon()
 {
     _mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     RootComponent = _mesh;
+
+    _terminalChild->SetupAttachment(RootComponent);
 }
 
 void ADropPlaneBeacon::OnCommandCompleted()

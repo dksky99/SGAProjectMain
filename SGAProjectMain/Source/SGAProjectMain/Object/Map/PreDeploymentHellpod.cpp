@@ -3,25 +3,29 @@
 
 #include "PreDeploymentHellpod.h"
 
-#include "Kismet/GameplayStatics.h"
+#include "../../Game/PreDeployment/PreDeploymentFlow.h"
+#include "../../Character/PlayerCharacter.h"
 
 APreDeploymentHellpod::APreDeploymentHellpod()
 {
-	if (_mesh)  // AItemBaseÀÇ StaticMesh »èÁ¦
-	{
-		_mesh->DestroyComponent();
-		_mesh->SetHiddenInGame(true);
-	}
-
-	_hellpodMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMesh"));
+	_hellpodMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	_hellpodMesh->SetGenerateOverlapEvents(true);
 	RootComponent = _hellpodMesh;
+	_interactionMark->SetupAttachment(RootComponent);
 }
 
-void APreDeploymentHellpod::PickupItem(AHellDiver* player)
+void APreDeploymentHellpod::Interact(AHellDiver* hellDiver)
 {
-	if (!player)
+	if (!hellDiver)
 		return;
 
-	UGameplayStatics::OpenLevel(this, FName("FirstPersonMap"));
+	if (!_preDeployFlow)
+	{
+		_preDeployFlow = NewObject<UPreDeploymentFlow>(this);
+	}
+
+	auto player = Cast<APlayerCharacter>(hellDiver);
+
+	_preDeployFlow->Initialize(player);
+	_preDeployFlow->EnterFlow();
 }

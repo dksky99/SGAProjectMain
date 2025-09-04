@@ -13,12 +13,7 @@ ATerminalConsole::ATerminalConsole()
 {
 	_terminalWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ConsoleWidget"));
 	_terminalWidgetComponent->SetupAttachment(RootComponent);
-
-	_interactionMark = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionMark"));
-	_interactionMark->SetupAttachment(RootComponent);
-
 	_terminalWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-	_interactionMark->SetWidgetSpace(EWidgetSpace::Screen);
 }
 
 void ATerminalConsole::BeginPlay()
@@ -33,10 +28,10 @@ void ATerminalConsole::BeginPlay()
 	_curTask->InitializeTask(_terminalWidget); // 임시
 	_curTask->_taskCompletedEvent.AddUObject(this, &ATerminalConsole::OnTaskCompleted);
 	
-	_interactionMark->SetVisibility(_isInteractable); // 상호작용 가능할 때만 표시
+	_interactionMark->SetVisibility(false);
 }
 
-void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
+void ATerminalConsole::Interact(AHellDiver* hellDiver)
 {
 	if (!_isInteractable) return;
 
@@ -59,11 +54,11 @@ void ATerminalConsole::PickupItem(AHellDiver* hellDiver)
 	// 아무도 상호작용하고 있지 않을 때
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
-		player->BeginTerminalInputMode(this);
-		_curTask->StartTask(); // 현재 작업 시작
-		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
-		_interactionMark->SetVisibility(false);
 		_player = player;
+		_player->BeginTerminalInputMode(this);
+		_curTask->StartTask(); // 현재 작업 시작
+		_interactionMark->SetVisibility(false);
+		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -72,14 +67,29 @@ void ATerminalConsole::ReceiveInput(FKey key)
 	_curTask->ReceiveInput(key);
 }
 
+void ATerminalConsole::ShowDefaultMark()
+{
+	Super::ShowDefaultMark();
+	_interactionMark->SetVisibility(_isInteractable);
+}
+
+void ATerminalConsole::ShowKeyButtonMark()
+{
+	if (_player)
+		return;
+
+	Super::ShowKeyButtonMark();
+	_interactionMark->SetVisibility(_isInteractable);
+}
+
 void ATerminalConsole::SetInteractable(bool isInteractable)
 {
 	_isInteractable = isInteractable;
 
-	if (_interactionMark)
-	{
-		_interactionMark->SetVisibility(_isInteractable);
-	}
+	//if (_interactionMark)
+	//{
+	//	_interactionMark->SetVisibility(_isInteractable);
+	//}
 }
 
 void ATerminalConsole::ResetTerminalConsole()
@@ -92,7 +102,8 @@ void ATerminalConsole::ResetTerminalConsole()
 
 void ATerminalConsole::OnTaskCompleted()
 {
-	_missionCompletedEvent.Broadcast();
+	if (_missionCompletedEvent.IsBound())
+		_missionCompletedEvent.Broadcast();
 
 	SetInteractable(false); // 상호작용 불가 상태로 변경
 	ResetTerminalConsole();
