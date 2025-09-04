@@ -12,3 +12,12 @@ void UPreDeploymentState::SetGunID(int32 id)
 	else
 		_supportGunID = id;
 }
+
+void UPreDeploymentState::SetStratagemID(int32 id)
+{
+	if (!_stratagemIDs.Contains(id))
+	{
+		_stratagemIDs.Add(id);
+		_stratagemIDs.Sort();
+	}
+}

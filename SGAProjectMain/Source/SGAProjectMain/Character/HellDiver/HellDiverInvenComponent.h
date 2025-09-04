@@ -26,7 +26,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void SpawnGun(TSubclassOf<AGunBase> gunClass); // √— º“»Ø
+	void SpawnGun(TSubclassOf<class AGunBase> gunClass); // √— º“»Ø
 	int32 SetGun(AGunBase* gun); // ΩΩ∑‘ø° √— ¿Â¬¯
 	void EquipGun(int32 index); // «ˆ¿Á µÈ∞Ì¿÷¥¬ √— º≥¡§
 	void DropGun(int32 index);

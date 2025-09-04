@@ -12,6 +12,7 @@ APreDeploymentHellpod::APreDeploymentHellpod()
 	_hellpodMesh->SetGenerateOverlapEvents(true);
 	RootComponent = _hellpodMesh;
 	_interactionMark->SetupAttachment(RootComponent);
+	_mesh->SetupAttachment(RootComponent);
 }
 
 void APreDeploymentHellpod::Interact(AHellDiver* hellDiver)

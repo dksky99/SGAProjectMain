@@ -34,6 +34,9 @@ public:
 	struct FGunData GetGunDataFromTable(int32 id);
 	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
 
+	struct FStratagemSlot GetStratagemSlotFromTable(int32 id);
+	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
+
 	void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample() { return _savedSample; }
 
@@ -42,6 +45,9 @@ public:
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _stratagemTable;
 
 	UPROPERTY(EditAnywhere, Category = "Sample")
 	FSampleBundle _savedSample;

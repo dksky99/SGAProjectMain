@@ -20,7 +20,7 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 public:
 	void InitializePanel(class UPreDeploymentState* state);
 
-	void HandlePicked(int32 itemID);
+	virtual void HandlePicked(int32 itemID);
 	
 protected:
 	UPROPERTY()

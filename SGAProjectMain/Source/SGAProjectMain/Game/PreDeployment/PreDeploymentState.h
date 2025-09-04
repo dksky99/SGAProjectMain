@@ -25,10 +25,16 @@ public:
 
 	void SetSupportGunID(int32 id) { _supportGunID = id; }
 	int32 GetSupportGunID() { return _supportGunID; }
+
+	void SetStratagemID(int32 id);
+	TArray<int32> GetStratagemIDs() { return _stratagemIDs; }
 	
 private:
 	// юс╫ц
 	int32 _primaryGunID = 1;
 	int32 _secondaryGunID = 101;
 	int32 _supportGunID = 201;
+
+	UPROPERTY()
+	TArray<int32> _stratagemIDs;
 };

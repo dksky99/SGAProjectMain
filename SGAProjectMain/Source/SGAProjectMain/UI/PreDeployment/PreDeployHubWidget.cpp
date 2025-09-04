@@ -2,6 +2,7 @@
 
 #include "Components/Button.h"
 #include "PreDeployPanelBase.h"
+#include "PreDeployStratagemPanel.h"
 
 
 void UPreDeployHubWidget::NativeOnInitialized()
@@ -18,6 +19,7 @@ void UPreDeployHubWidget::InitializeWidget(UPreDeploymentState* state)
 	_primary->InitializePanel(state);
 	_secondary->InitializePanel(state);
 	_support->InitializePanel(state);
+	_stratagem->InitializePanel(state);
 }
 
 void UPreDeployHubWidget::HandleLaunchRequest()
