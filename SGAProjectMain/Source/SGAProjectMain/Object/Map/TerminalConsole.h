@@ -41,13 +41,26 @@ protected:
 	// 위젯
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	class UWidgetComponent* _terminalWidgetComponent;
+
 	UPROPERTY()
 	class UUserWidget* _terminalWidget;
 
+	// 카메라
+	UPROPERTY()
+	ACameraActor* _cutInCam;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _camAnchor; // 카메라 고정 위치
 
-	// 현재 수행중인 작업
-	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 배열로 변경
-	class UTerminalTaskBase* _curTask = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _lookAt;
+
+	UPROPERTY()
+	AActor* _playerViewTarget;
+
+	// 캐릭터
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _playerAnchor; // 캐릭터 고정 위치
 
 	UPROPERTY()
 	class APlayerCharacter* _player;
@@ -55,16 +68,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	bool _isInteractable = true;
 
-	// 카메라
-	UPROPERTY()
-	ACameraActor* _cutInCam;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
-	USceneComponent* _camAnchor;
+	// 현재 수행중인 작업
+	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 배열로 변경
+	class UTerminalTaskBase* _curTask = nullptr;
 
-	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
-	USceneComponent* _camLookAt;
-
-	UPROPERTY()
-	AActor* _playerViewTarget;
 };
