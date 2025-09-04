@@ -4,6 +4,10 @@
 #include "TerminalConsole.h"
 
 #include "Components/WidgetComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Camera/CameraActor.h"
+#include "Kismet/KismetMathLibrary.h"
+
 #include "../../MainGameMode.h"
 #include "../../Character/PlayerCharacter.h"
 #include "../../UI/CommandWidget.h"
@@ -14,6 +18,12 @@ ATerminalConsole::ATerminalConsole()
 	_terminalWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ConsoleWidget"));
 	_terminalWidgetComponent->SetupAttachment(RootComponent);
 	_terminalWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+
+	_camAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("CamAnchor"));
+	_camAnchor->SetupAttachment(RootComponent);
+
+	_camLookAt = CreateDefaultSubobject<USceneComponent>(TEXT("CamLookAt"));
+	_camLookAt->SetupAttachment(RootComponent);
 }
 
 void ATerminalConsole::BeginPlay()
@@ -55,10 +65,7 @@ void ATerminalConsole::Interact(AHellDiver* hellDiver)
 	if (auto player = Cast<APlayerCharacter>(hellDiver))
 	{
 		_player = player;
-		_player->BeginTerminalInputMode(this);
-		_curTask->StartTask(); // 현재 작업 시작
-		_interactionMark->SetVisibility(false);
-		_terminalWidget->SetVisibility(ESlateVisibility::Visible);
+		ActivateTerminalConsole();
 	}
 }
 
@@ -85,17 +92,40 @@ void ATerminalConsole::ShowKeyButtonMark()
 void ATerminalConsole::SetInteractable(bool isInteractable)
 {
 	_isInteractable = isInteractable;
+}
 
-	//if (_interactionMark)
-	//{
-	//	_interactionMark->SetVisibility(_isInteractable);
-	//}
+void ATerminalConsole::ActivateTerminalConsole()
+{
+	_player->BeginTerminalInputMode(this);
+	_curTask->StartTask(); // 현재 작업 시작
+	_interactionMark->SetVisibility(false);
+	_terminalWidget->SetVisibility(ESlateVisibility::Visible);
+
+	_cutInCam = GetWorld()->SpawnActor<ACameraActor>();
+	_cutInCam->GetCameraComponent()->bConstrainAspectRatio = false;
+
+	// 카메라 위치 세팅
+	const FVector camLoc = _camAnchor->GetComponentLocation();
+	const FRotator camRot = UKismetMathLibrary::FindLookAtRotation(camLoc, _camLookAt->GetComponentLocation()); // 화면을 바라보게
+
+	_cutInCam->SetActorLocation(camLoc);
+	_cutInCam->SetActorRotation(camRot);
+
+	// 뷰 전환
+	APlayerController* PC = Cast<APlayerController>(_player->GetController());
+	_playerViewTarget = PC->GetViewTarget();
+	PC->SetViewTargetWithBlend(_cutInCam, 0.85f, EViewTargetBlendFunction::VTBlend_Cubic);
 }
 
 void ATerminalConsole::ResetTerminalConsole()
 {
 	_player->EndTerminalInputMode();
 	_curTask->ResetTask();
+
+	APlayerController* PC = Cast<APlayerController>(_player->GetController());
+	PC->SetViewTargetWithBlend(_playerViewTarget, 0.85f, EViewTargetBlendFunction::VTBlend_Cubic);
+	_cutInCam->Destroy();
+
 	_player = nullptr;
 	_interactionMark->SetVisibility(_isInteractable);
 }

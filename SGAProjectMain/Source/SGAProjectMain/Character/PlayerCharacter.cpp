@@ -570,6 +570,9 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 	if (_isDraggingMap)
 		return;
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	FVector2D lookAxisVector = value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -635,6 +638,9 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		_stateComponent->SetCheckingMap(false);
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
 
 	switch (_stateComponent->GetCharacterState())
 	{
@@ -845,6 +851,9 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 		return;
 	}
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	if (GetCharacterMovement()->bOrientRotationToMovement == true)
 	{
 		ViewTurnBack();
@@ -891,6 +900,9 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode || _stateComponent->IsCheckingMap())
+		return;
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
 		return;
 
 	switch (_stateComponent->GetWeaponState())
@@ -1676,6 +1688,9 @@ void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 	if (_isGunSettingMode)
 		return;
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	Super::SwitchGun(index);
 }
 
@@ -2069,6 +2084,9 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 		return;
 	}
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	_stateComponent->SetAiming(false);
 	SetTPSView();
 	switch (_stateComponent->GetWeaponState())
@@ -2090,6 +2108,9 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 
 void APlayerCharacter::HoldReload(const FInputActionValue& value)
 {
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	_reloadPressedTime = GetWorld()->GetTimeSeconds();
 	_isGunSettingMode = false;
 
@@ -2098,6 +2119,9 @@ void APlayerCharacter::HoldReload(const FInputActionValue& value)
 
 void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 {
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	GetWorldTimerManager().ClearTimer(_gunSettingTimer);
 
 	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)
