@@ -14,7 +14,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/DamageEvents.h"
 
-#include "../../SGAProjectMain.h"
+#include "../../../SGAProjectMain.h"
 
 // Sets default values
 ADropPod::ADropPod()

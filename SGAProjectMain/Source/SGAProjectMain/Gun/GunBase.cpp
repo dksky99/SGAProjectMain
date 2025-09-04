@@ -821,6 +821,8 @@ void AGunBase::UseTacticalLight(bool isAiming)
 void AGunBase::PickupItem(AHellDiver* player)
 {
 	player->PickupGun(this);
+
+	Super::PickupItem(_owner);
 }
 
 FTransform AGunBase::GetMuzzleTrans()
