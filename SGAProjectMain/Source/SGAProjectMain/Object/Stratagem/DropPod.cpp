@@ -72,7 +72,7 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 
 		HandleGroundLanding(SweepResult.ImpactPoint);
 
-		DestroySelf();
+		//DestroySelf();
 	}
 
 	if (ACharacter* hitCharacter = Cast<ACharacter>(OtherActor))
@@ -97,25 +97,6 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		);
 	}
 }
-
-//void ADropPod::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-//{
-//	if (isAlreadySpawned)
-//		return;
-//
-//	if (!_isGrounded && OtherComp && OtherComp->ComponentHasTag(FName("Ground")))
-//	{
-//		_isGrounded = true;
-//
-//		float hellpodHeight = _mesh->Bounds.BoxExtent.Z * 2.0f;
-//
-//		FVector sunkenLocation = GetActorLocation() - FVector(0, 0, hellpodHeight);
-//		SetActorLocation(sunkenLocation);
-//
-//		LaunchOverlappedActors(Hit.ImpactPoint);
-//
-//	}
-//}
 
 void ADropPod::LaunchOverlappedActors(const FVector& hitPoint)
 {
@@ -202,7 +183,13 @@ void ADropPod::SpawnInternalActor(const FVector& SpawnLocation)
 
 void ADropPod::HandleGroundLanding(const FVector& hitPoint)
 {
-	
+	// 포드를 착지 지점으로 이동 (회전은 그대로: 수직 유지)
+	_projectile->StopMovementImmediately();
+	_projectile->SetComponentTickEnabled(false);
+	SetActorLocation(hitPoint, false);
+
+	_mesh->SetGenerateOverlapEvents(false);
+	_mesh->SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
 
 	LaunchOverlappedActors(hitPoint);
 	SpawnInternalActor(hitPoint);

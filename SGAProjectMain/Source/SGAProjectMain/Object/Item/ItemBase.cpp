@@ -9,9 +9,7 @@ AItemBase::AItemBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	_mesh->SetSimulatePhysics(true);
-	RootComponent = _mesh;
+	// mesh는 Interactable에서 생성
 }
 
 // Called when the game starts or when spawned
@@ -21,9 +19,18 @@ void AItemBase::BeginPlay()
 	
 }
 
+void AItemBase::Interact(AHellDiver* player)
+{
+	PickupItem(player);
+}
+
 void AItemBase::PickupItem(AHellDiver* player)
 {
-
+	// 어태치 대상에게 먼저 알림
+	if (_onPreDespawn.IsBound())
+	{
+		_onPreDespawn.Broadcast(this);
+	}
 
 	Destroy();
 }

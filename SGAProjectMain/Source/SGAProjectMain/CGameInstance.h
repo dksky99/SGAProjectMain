@@ -29,30 +29,24 @@ public:
 
 
 	UCGameInstance();
+	virtual void Init() override;
+
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
 
 	struct FGunData GetGunDataFromTable(int32 id);
+	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
+
+	struct FStratagemSlot GetStratagemSlotFromTable(int32 id);
+	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
 
 	void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample() { return _savedSample; }
 
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	void PlayMusic(int32 index = 0);
 
-	virtual void Init() override;
+	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
-	void C_OnWorldCreated(UWorld* world) ;
-protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Audio")
-	TArray<class USoundCue*> _bgmCues;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Audio")
-	class UAudioComponent* _bgmComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Audio")
-	int32 _cueIndex;
 
 
 
@@ -60,6 +54,12 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
 
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _stratagemTable;
+
 	UPROPERTY(EditAnywhere, Category = "Sample")
 	FSampleBundle _savedSample;
+
+	UPROPERTY()
+	UPreDeploymentState* _preDeployState;
 };

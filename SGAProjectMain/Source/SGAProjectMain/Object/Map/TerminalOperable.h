@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "TerminalOperable.generated.h"
 
+// 터미널로 조작 가능한 오브젝트
+
 UCLASS()
 class SGAPROJECTMAIN_API ATerminalOperable : public AActor
 {

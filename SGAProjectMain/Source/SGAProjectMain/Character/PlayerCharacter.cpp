@@ -87,8 +87,13 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 
 	_itemDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("ItemDetectionSphere"));
 	_itemDetectionSphere->SetupAttachment(RootComponent);
-	_itemDetectionSphere->SetSphereRadius(100.f);
+	_itemDetectionSphere->SetSphereRadius(500.f);
 	_itemDetectionSphere->SetGenerateOverlapEvents(true);
+
+	_itemInteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("ItemInteractionSphere"));
+	_itemInteractionSphere->SetupAttachment(RootComponent);
+	_itemInteractionSphere->SetSphereRadius(100.f);
+	_itemInteractionSphere->SetGenerateOverlapEvents(true);
 
 	_aimOffset_.X = 0.0f;
 	_aimOffset_.Y = 0.0f;
@@ -124,24 +129,16 @@ void APlayerCharacter::BeginPlay()
 	//InitView();
 	SetTPSView();
 
-	auto equippedGun = _invenComponent->GetEquippedGun();
-	
-
-	if (_gunWidget)
+	if (_itemDetectionSphere)
 	{
-		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
-		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
-		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
-		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
-
-		_gunWidget->AddToViewport();
-
-		equippedGun->ActivateGun();
-		_stimPackComponent->BroadcastStimPackChanged();
-		_gunWidget->SetGun(equippedGun->GetGunData()._icon);
-		if (_grenadeChanged.IsBound())
-			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
+		_itemDetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnItemInRange);
+		_itemDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnItemOutOfRange);
+	}
+	
+	if (_itemInteractionSphere)
+	{
+		_itemInteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnItemInteractable);
+		_itemInteractionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnItemNonInteractable);
 	}
 
 	if (_stratagemWidget)
@@ -201,6 +198,9 @@ void APlayerCharacter::BeginPlay()
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
+
+	// 다음 프레임에 실행 (모든 액터 생성 완료 후)
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::CheckInitialOverlaps);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -208,6 +208,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	auto statComponent = GetStatComponent();
+
+	FindBestItem();
 
 	if (_stratagemComponent && _stratagemWidget)
 	{
@@ -284,7 +286,6 @@ FTransform APlayerCharacter::GetLeftHandPos()
 
 	return FTransform();
 }
-
 
 FRotator APlayerCharacter::Focusing()
 {
@@ -569,6 +570,9 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 	if (_isDraggingMap)
 		return;
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	FVector2D lookAxisVector = value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -634,6 +638,9 @@ void APlayerCharacter::StartFiring(const FInputActionValue& value)
 		_stateComponent->SetCheckingMap(false);
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
 
 	switch (_stateComponent->GetCharacterState())
 	{
@@ -844,6 +851,9 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 		return;
 	}
 
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	if (GetCharacterMovement()->bOrientRotationToMovement == true)
 	{
 		ViewTurnBack();
@@ -890,6 +900,9 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode || _stateComponent->IsCheckingMap())
+		return;
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
 		return;
 
 	switch (_stateComponent->GetWeaponState())
@@ -1646,9 +1659,36 @@ void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
 }
 
+void APlayerCharacter::InitWeapon()
+{
+	Super::InitWeapon();
+
+	auto equippedGun = _invenComponent->GetEquippedGun();
+
+	if (_gunWidget)
+	{
+		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
+		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
+		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
+
+		_gunWidget->AddToViewport();
+
+		equippedGun->ActivateGun();
+		_stimPackComponent->BroadcastStimPackChanged();
+		_gunWidget->SetGun(equippedGun->GetGunData()._icon);
+		if (_grenadeChanged.IsBound())
+			_grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
+	}
+}
+
 void APlayerCharacter::SwitchGun(int32 index, const FInputActionValue& value)
 {
 	if (_isGunSettingMode)
+		return;
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
 		return;
 
 	Super::SwitchGun(index);
@@ -1879,34 +1919,135 @@ void APlayerCharacter::EndTerminalInputMode()
 
 void APlayerCharacter::Interact(const FInputActionValue& value)
 {
-	TArray<AActor*> overlapped;
-	_itemDetectionSphere->GetOverlappingActors(overlapped, AItemBase::StaticClass());
+	if (_bestItem)
+	{
+		_bestItem->Interact(this);
+	}
+}
+
+void APlayerCharacter::OnItemInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (AInteractable* item = Cast<AInteractable>(OtherActor))
+	{
+		_detectedItems.AddUnique(item);
+		item->ShowDefaultMark();
+
+		UE_LOG(LogTemp, Warning, TEXT("Overlapped with %s"), *GetNameSafe(OtherActor));
+	}
+}
+
+void APlayerCharacter::OnItemOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
+{
+	if (AInteractable* item = Cast<AInteractable>(OtherActor))
+	{
+		_detectedItems.Remove(item);
+		item->HideMark();
+
+		if (_bestItem == item)
+			_bestItem = nullptr;
+	}
+}
+
+void APlayerCharacter::OnItemInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (AInteractable* item = Cast<AInteractable>(OtherActor))
+	{
+		_interactableItems.AddUnique(item);
+	}
+}
+
+void APlayerCharacter::OnItemNonInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
+{
+	if (AInteractable* item = Cast<AInteractable>(OtherActor))
+	{
+		_interactableItems.Remove(item);
+
+		if (_detectedItems.Contains(item))
+			item->ShowDefaultMark();
+		else
+			item->HideMark();
+
+		if (_bestItem == item)
+			_bestItem = nullptr;
+	}
+}
+
+void APlayerCharacter::CheckInitialOverlaps()
+{
+	// 감지 가능 범위 체크
+	TArray<AActor*> detectedOverlaps;
+	_itemDetectionSphere->GetOverlappingActors(detectedOverlaps, AInteractable::StaticClass());
+
+	for (AActor* actor : detectedOverlaps)
+	{
+		if (auto item = Cast<AInteractable>(actor))
+		{
+			_detectedItems.AddUnique(item);
+			item->ShowDefaultMark();
+		}
+	}
+
+	// 상호작용 가능 범위 체크
+	TArray<AActor*> interactableOverlaps;
+	_itemInteractionSphere->GetOverlappingActors(interactableOverlaps, AInteractable::StaticClass());
+
+	for (AActor* actor : interactableOverlaps)
+	{
+		if (AInteractable* item = Cast<AInteractable>(actor))
+		{
+			_interactableItems.AddUnique(item);
+		}
+	}
+}
+
+void APlayerCharacter::FindBestItem()
+{
+	// 원래는 이 방법을 사용하였으나, 함수가 틱에서 실행되는 것으로 변경되면서, 성능을 위해 방식을 조금 수정
+	//TArray<AActor*> overlapped;
+	//_itemDetectionSphere->GetOverlappingActors(overlapped, AInteractable::StaticClass());
+
+	// 키를 누를 때마다 GetOverlappingActors()를 실행하는 대신,
+	// 아이템이 감지될 때마다 델리게이트로 배열에 추가되고, 그 배열을 검사하는 방식
+
+	//0) 만약 겹친 아이템이 없으면
+	if (_interactableItems.Num() == 0)
+	{
+		_bestItem = nullptr; // 상호작용 불가능
+		return;
+	}
 
 	// 1) 완전히 겹친 아이템(혹은 거의 동일 위치)에 대해서는 바로 픽업
-	for (AActor* actor : overlapped)
+	for (auto item : _interactableItems)
 	{
-		AItemBase* item = Cast<AItemBase>(actor);
-		if (!item) continue;
-
+		/*AInteractable* item = Cast<AInteractable>(actor);
+		if (!item) continue;*/
 		float dist = FVector::Dist(GetActorLocation(), item->GetActorLocation());
 		if (dist <= KINDA_SMALL_NUMBER)
 		{
-			item->PickupItem(this);
-			return;  // 가장 먼저 발견된 겹친 아이템만 처리
+			AInteractable* prevBestItem = _bestItem;
+			_bestItem = item;
+			_bestItem->ShowKeyButtonMark();
+
+			if (prevBestItem != _bestItem) // 만약 베스트 아이템이 바뀌었다면 UI 갱신
+			{
+				if (prevBestItem && _interactableItems.Contains(prevBestItem)) // 아직도 상호작용이 가능한 경우라면
+					prevBestItem->ShowDefaultMark(); // 다시 일반 상호작용 마크로
+			}
+
+			return;  // 가장 먼저 발견된 겹친 아이템만 저장
 		}
 	}
 
 	// 2) 겹치지 않은 아이템들에 대해 기존 스코어 로직 실행
-	AItemBase* bestItem = nullptr; // 최종 선택할 아이템 포인터
+	//AInteractable* bestItem = nullptr; // 최종 선택할 아이템 포인터
 	float bestScore = -1.0f; // 비교용 스코어(클수록 우선)
 	const FVector forward = GetActorForwardVector().GetSafeNormal();
 	const FVector playerLoc = GetActorLocation();
 
-	for (AActor* actor : overlapped)
+	for (auto item : _interactableItems)
 	{
-		AItemBase* item = Cast<AItemBase>(actor);
-		if (!item) continue;
-
+		/*AInteractable* item = Cast<AInteractable>(actor);
+		if (!item) continue;*/
 		FVector toItem = item->GetActorLocation() - playerLoc;
 		float dist = toItem.Size();
 
@@ -1917,14 +2058,17 @@ void APlayerCharacter::Interact(const FInputActionValue& value)
 
 		if (score > bestScore)
 		{
+			AInteractable* prevBestItem = _bestItem;
 			bestScore = score;
-			bestItem = item;
-		}
-	}
+			_bestItem = item;
+			_bestItem->ShowKeyButtonMark();
 
-	if (bestItem)
-	{
-		bestItem->PickupItem(this);
+			if (prevBestItem != _bestItem)
+			{
+				if (prevBestItem && _detectedItems.Contains(prevBestItem))
+					prevBestItem->ShowDefaultMark();
+			}
+		}
 	}
 }
 
@@ -1939,6 +2083,9 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 		_isDraggingMap = false;
 		return;
 	}
+
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
 
 	_stateComponent->SetAiming(false);
 	SetTPSView();
@@ -1961,6 +2108,9 @@ void APlayerCharacter::StopAiming(const FInputActionValue& value)
 
 void APlayerCharacter::HoldReload(const FInputActionValue& value)
 {
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	_reloadPressedTime = GetWorld()->GetTimeSeconds();
 	_isGunSettingMode = false;
 
@@ -1969,6 +2119,9 @@ void APlayerCharacter::HoldReload(const FInputActionValue& value)
 
 void APlayerCharacter::ReleaseReload(const FInputActionValue& value)
 {
+	if (_stateComponent->GetActionState() == EActionState::InterActing)
+		return;
+
 	GetWorldTimerManager().ClearTimer(_gunSettingTimer);
 
 	if (_stateComponent->GetWeaponState() != EWeaponType::Gun)

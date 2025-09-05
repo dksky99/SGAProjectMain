@@ -8,8 +8,11 @@
 
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/SampleResources.h"
+#include "../../Game/PreDeployment/PreDeploymentState.h"
+#include "../../CGameInstance.h"
 
 #include "HellDiver.h"
+
 // Sets default values for this component's properties
 UHellDiverInvenComponent::UHellDiverInvenComponent()
 {
@@ -28,11 +31,31 @@ void UHellDiverInvenComponent::BeginPlay()
 	Super::BeginPlay();
 
 	_sampleBundle.Clear();
-	// ...
+
 	_hellDiver = Cast<AHellDiver>(GetOwner());
 	
+	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	ApplyLoadOut(GI->GetPreDeployState());
+
+	if (!_gunClass1) return;
+	SpawnGun(_gunClass1);
+	SpawnGun(_gunClass2);
+	SpawnGun(_gunClass3);
+
+	_hellDiver->InitWeapon();
 }
 
+void UHellDiverInvenComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
+{
+	if (!preDeployState) return;
+
+	auto GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (!GI) return;
+	
+	_gunClass1 = GI->GetGunClassFromTable(preDeployState->GetPrimaryGunID());
+	_gunClass2 = GI->GetGunClassFromTable(preDeployState->GetSecondaryGunID());
+	_gunClass3 = GI->GetGunClassFromTable(preDeployState->GetSupportGunID());
+}
 
 // Called every frame
 void UHellDiverInvenComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -40,6 +63,14 @@ void UHellDiverInvenComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UHellDiverInvenComponent::SpawnGun(TSubclassOf<class AGunBase> gunClass)
+{
+	AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
+	gun->SetOwner(_hellDiver);
+	gun->InitializeGun();
+	SetGun(gun);
 }
 
 int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)

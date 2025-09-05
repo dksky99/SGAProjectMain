@@ -3,23 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Item/ItemBase.h"
+#include "../Interactable.h"
 #include "PreDeploymentHellpod.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SGAPROJECTMAIN_API APreDeploymentHellpod : public AItemBase
+class SGAPROJECTMAIN_API APreDeploymentHellpod : public AInteractable
 {
 	GENERATED_BODY()
 	
 public:
 	APreDeploymentHellpod();
 
-	virtual void PickupItem(class AHellDiver* player);
+	virtual void Interact(class AHellDiver* hellDiver);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Mesh")
 	TObjectPtr<USkeletalMeshComponent> _hellpodMesh;
+
+	// √‚∞› »Â∏ß
+	UPROPERTY()
+	class UPreDeploymentFlow* _preDeployFlow;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Flow")
+	TSubclassOf<UPreDeploymentFlow> _preDeployFlowClass;
 };

@@ -3,6 +3,8 @@
 
 #include "StratagemComponent.h"
 #include "Object/Stratagem/Stratagem.h"
+#include "Game/PreDeployment/PreDeploymentState.h"
+#include "CGameInstance.h"
 
 // Sets default values for this component's properties
 UStratagemComponent::UStratagemComponent()
@@ -20,8 +22,27 @@ void UStratagemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	ApplyLoadOut(GI->GetPreDeployState());
+}
+
+void UStratagemComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
+{
+	if (!preDeployState) return;
+
+	auto GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (!GI) return;
+
+	TArray<int32> stratagemIDs = preDeployState->GetStratagemIDs();
+	if (stratagemIDs.Num() < 1) // state에 세팅이 안 되어있을 경우 기본값 사용
+		return;
+
+	StratagemSlots.Empty(); // 되어있을 경우 기본값 삭제
+	for (int32 id : stratagemIDs)
+	{
+		FStratagemSlot stratagemSlot = GI->GetStratagemSlotFromTable(id);
+		StratagemSlots.Add(stratagemSlot);
+	}
 }
 
 void UStratagemComponent::TryUseCurrentStratagem()
