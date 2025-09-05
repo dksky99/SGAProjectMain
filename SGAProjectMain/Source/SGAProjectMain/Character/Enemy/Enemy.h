@@ -68,12 +68,19 @@ public:
 	
 
 	EUnitState GetUnitState() { return _unitState; }
+	void SetUnitState(EUnitState state);
 	void SetStay();
-	void SetPatrol(FVector loc);
-	void SetWeak_Alert(FVector loc);
-	void SetStrong_Alert(FVector loc);
-	void SetInBattle(AActor* target);
+	void SetPatrol();
+	void SetWeak_Alert();
+	void SetStrong_Alert();
+	void SetInBattle();
 
+	virtual bool TryNear(ACharacterBase* target) { return false; }
+	virtual bool TryMiddle(ACharacterBase* target) { return false; }
+	virtual bool TryFar(ACharacterBase* target) { return false; }
+
+	bool CheckHitted(AActor* target);
+	void ClearHitted();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -90,18 +97,22 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
 	float _respawnCoolDown;
-	EUnitState _unitState =EUnitState::Patrol;
+
+
+
+	TArray<class AActor*> _hitted;
+
 
 	TArray<class ACharacterBase*> _targets;
 
-
+	EUnitState _unitState=EUnitState::Stay;
 	UPROPERTY()
 	TWeakObjectPtr<class AEnemySquad> _squad;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _spawnMontage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _deadMontage;
 };

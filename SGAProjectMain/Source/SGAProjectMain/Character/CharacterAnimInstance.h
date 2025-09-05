@@ -30,6 +30,8 @@ public:
 
 	bool IsMoving();
 
+	UFUNCTION()
+	void AnimNotify_Attack();
 protected:
 
 	class ACharacterBase* _pawn = nullptr;

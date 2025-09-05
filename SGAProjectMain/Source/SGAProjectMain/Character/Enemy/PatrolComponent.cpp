@@ -87,6 +87,31 @@ void UPatrolComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (patrolCurve)
+	{
+		FOnTimelineEvent TimelineFinishedDelegate;
+		FOnTimelineFloat TimelineUpdateDelegate;
+
+		TimelineUpdateDelegate.BindUFunction(this, FName("OnTimelineUpdate"));
+		TimelineFinishedDelegate.BindUFunction(this, FName("OnTimelineFinished"));
+
+
+		patrolTimeline.AddInterpFloat(
+			patrolCurve,
+			TimelineUpdateDelegate
+		);
+		patrolTimeline.SetTimelineFinishedFunc(
+			TimelineFinishedDelegate
+		);
+
+
+		float minT, maxT;
+
+		patrolCurve->GetTimeRange(minT,maxT);
+
+		patrolTimeline.SetTimelineLength(maxT);
+	}
+
 	// ...
 	
 }
@@ -97,6 +122,45 @@ void UPatrolComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	patrolTimeline.TickTimeline(DeltaTime);
 	// ...
+}
+
+void UPatrolComponent::OnTimeLineUpdate(float value)
+{
+	//스플라인 경로를 받아와서 해당 경로의 그래픽상의 진행 정도를 추적해서 따라가기
+
+	USplineComponent* spline = _path->GetSpline();
+
+
+	float splineLength = spline->GetSplineLength();
+
+	float pathDistance = splineLength * value;
+
+
+	FVector location = spline->GetLocationAtDistanceAlongSpline(
+		pathDistance,
+		ESplineCoordinateSpace::World
+	);
+	FRotator rotation = spline->GetRotationAtDistanceAlongSpline(
+		pathDistance,
+		ESplineCoordinateSpace::World
+	);
+	FVector scale(1, 1, 1);
+	FTransform transform;
+	transform.SetLocation(location);
+	transform.SetRotation(rotation);
+	transform.SetScale3D(scale);
+}
+
+void UPatrolComponent::OnTimelineFinished()
+{
+	//타임라인 종료시 필요한 동작 작성
+}
+
+void UPatrolComponent::StartTimeline()
+{
+
+	patrolTimeline.PlayFromStart();
 }
 

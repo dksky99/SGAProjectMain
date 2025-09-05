@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/TimelineComponent.h"
 #include "PatrolComponent.generated.h"
 
 
@@ -33,6 +34,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION()
+	void OnTimeLineUpdate(float value);
+
+	UFUNCTION()
+	void OnTimelineFinished();
+
+	UFUNCTION()
+	void StartTimeline();
 
 protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
@@ -50,7 +59,10 @@ protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class ACPatrolPath* _path;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UCurveFloat* patrolCurve;
 
+	FTimeline patrolTimeline;
 
 
 };

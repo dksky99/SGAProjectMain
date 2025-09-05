@@ -30,7 +30,7 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     _hpBarWidget->SetRelativeLocation(FVector(0, 0, 230.0f));
 
     _patrolComponent=CreateDefaultSubobject<UPatrolComponent>(TEXT("Patrol"));
-
+    SetGenericTeamId(FGenericTeamId((int32)ETeamID::Enemy));
 }
 
 void AEnemy::BeginPlay()
@@ -152,6 +152,34 @@ void AEnemy::SpawnGhost()
 
 }
 
+void AEnemy::SetUnitState(EUnitState state)
+{
+    if (_unitState == state)
+        return;
+    switch (state)
+    {
+    case EUnitState::Stay:
+        SetStay();
+        break;
+    case EUnitState::Patrol:
+        SetPatrol();
+        break;
+    case EUnitState::Weak_Alert:
+        SetWeak_Alert();
+        break;
+    case EUnitState::Strong_Alert:
+        SetStrong_Alert();
+        break;
+    case EUnitState::InBattle:
+        SetInBattle();
+        break;
+    case EUnitState::MAX:
+        break;
+    default:
+        break;
+    }
+}
+
 void AEnemy::SetStay()
 {
     _unitState = EUnitState::Stay;
@@ -162,29 +190,41 @@ void AEnemy::SetStay()
 
 }
 
-void AEnemy::SetPatrol(FVector loc)
+void AEnemy::SetPatrol()
 {
     _unitState = EUnitState::Patrol;
     GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 }
 
-void AEnemy::SetWeak_Alert(FVector loc)
+void AEnemy::SetWeak_Alert()
 {
     _unitState = EUnitState::Weak_Alert;
 
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
-void AEnemy::SetStrong_Alert(FVector loc)
+void AEnemy::SetStrong_Alert()
 {
     _unitState = EUnitState::Strong_Alert;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
-void AEnemy::SetInBattle(AActor* target)
+void AEnemy::SetInBattle()
 {
     _unitState = EUnitState::InBattle;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+}
+
+bool AEnemy::CheckHitted(AActor* target)
+{
+    if(_hitted.Contains(target))
+         return true;
+    return false;
+}
+
+void AEnemy::ClearHitted()
+{
+    _hitted.Empty();
 }
 
 

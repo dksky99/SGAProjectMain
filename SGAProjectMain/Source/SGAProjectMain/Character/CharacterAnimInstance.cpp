@@ -79,3 +79,8 @@ bool UCharacterAnimInstance::IsMoving()
 	_isMoving= 0.1 <= (_vertical * _vertical + _horizontal * _horizontal);
 	return _isMoving;
 }
+
+void UCharacterAnimInstance::AnimNotify_Attack()
+{
+
+}

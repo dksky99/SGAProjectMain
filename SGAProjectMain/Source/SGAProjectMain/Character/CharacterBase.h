@@ -4,12 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "../Interface/Targetable.h"
+
+#include "Perception/AIPerceptionTypes.h"	//감각 구분 제어, 감각 자극 관리
+#include "GenericTeamAgentInterface.h"
 #include "CharacterBase.generated.h"
 
 
 
+
+UENUM(BlueprintType)
+enum class ETeamID : uint8
+{
+	HellDiver =0 UMETA(DisplayName = "HellDiver"),				
+	Enemy = 1 UMETA(DisplayName = "Far"),
+	MAX
+};
+
 UCLASS()
-class SGAPROJECTMAIN_API ACharacterBase : public ACharacter
+class SGAPROJECTMAIN_API ACharacterBase : public ACharacter, public ITargetable, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -41,6 +54,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override { TeamId = NewTeamId; }
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 
 	virtual void Landed(const FHitResult& Hit) override;
 
@@ -75,6 +90,10 @@ public:
 	UFUNCTION()
 	virtual void OnDeath_Handler(); // 상속받아서 죽었을 시 동작 구현
 
+	// ITargetable을(를) 통해 상속됨
+	bool IsTargetable() const override;
+	// ITargetable을(를) 통해 상속됨
+	FTransform GetTargetTransform() const override;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat")
 	class UStatComponent* _statComponent;
@@ -101,5 +120,10 @@ protected:
 	FTimerHandle _knockDownTimerHandle;
 
 	
+
+	FGenericTeamId TeamId;
+
+
+
 
 };

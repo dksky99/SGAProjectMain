@@ -97,13 +97,15 @@ void ACharacterBase::RightLeft(float value)
 void ACharacterBase::MakeSound(float loudness,FString soundName)
 {
 	UAISense_Hearing::ReportNoiseEvent(
-		this->GetWorld(),
+		this,
 		this->GetActorLocation(),
 		loudness,
 		this,
 		0.0f,
 		*soundName
 	);
+
+	DrawDebugSphere(GetWorld(), this->GetActorLocation(), 10.f*loudness, 10, FColor::Yellow, false, 1.f);
 
 }
 
@@ -392,5 +394,15 @@ void ACharacterBase::OnDeath_Handler()
 
 	// 사망 시 로그 출력
 	UE_LOG(LogTemp, Error, TEXT("%s: Character Dead"), *GetName());
+}
+
+bool ACharacterBase::IsTargetable() const
+{
+	return _statComponent->IsDead()==false;
+}
+
+FTransform ACharacterBase::GetTargetTransform() const
+{
+	return GetActorTransform();
 }
 

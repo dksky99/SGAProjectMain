@@ -50,6 +50,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
     _invenComponent = CreateDefaultSubobject<UHellDiverInvenComponent>(TEXT("InvenComponent"));
 
+    SetGenericTeamId(FGenericTeamId((int32)ETeamID::HellDiver));
 }
 
 void AHellDiver::BeginPlay()

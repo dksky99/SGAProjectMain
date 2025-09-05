@@ -607,7 +607,7 @@ void APlayerCharacter::TryPakour(const FInputActionValue& value)
 		case ECharacterState::Standing:
 		case ECharacterState::Crouching:
 		{
-			UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
+			//UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
 			_pakourComponent->TriggerPakour();
 
 		}
@@ -1196,7 +1196,7 @@ void APlayerCharacter::DefaultLook()
 	if ( FMath::Abs(standard) > 50.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
 		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
+		//UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 
 		_isTurnLeft = (standard < -50.f);
 		_isTurnRight = (standard > 50.0f);
@@ -1205,7 +1205,7 @@ void APlayerCharacter::DefaultLook()
 	}
 	else if (FMath::Abs(standard) < 1.0f)
 	{
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
+		//UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 		_isTurnLeft = false;
 		_isTurnRight = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
