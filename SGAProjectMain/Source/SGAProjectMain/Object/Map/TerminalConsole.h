@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "../Interactable.h"
+#include "Components/SceneComponent.h"
 #include "TerminalConsole.generated.h"
 
 /**
@@ -31,6 +32,7 @@ public:
 	void SetInteractable(bool isInteractable);
 
 protected:
+	void ActivateTerminalConsole();
 	void ResetTerminalConsole();
 	
 	void OnTaskCompleted();
@@ -39,16 +41,35 @@ protected:
 	// 위젯
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	class UWidgetComponent* _terminalWidgetComponent;
+
 	UPROPERTY()
 	class UUserWidget* _terminalWidget;
 
-	// 현재 수행중인 작업
-	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 배열로 변경
-	class UTerminalTaskBase* _curTask = nullptr;
+	// 카메라
+	UPROPERTY()
+	ACameraActor* _cutInCam;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _camAnchor; // 카메라 고정 위치
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _lookAt;
+
+	UPROPERTY()
+	AActor* _playerViewTarget;
+
+	// 캐릭터
+	UPROPERTY(VisibleAnywhere, Category = "Game/Camera")
+	USceneComponent* _playerAnchor; // 캐릭터 고정 위치
 
 	UPROPERTY()
 	class APlayerCharacter* _player;
 
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	bool _isInteractable = true;
+
+	// 현재 수행중인 작업
+	UPROPERTY(EditAnywhere, Category = "Terminal Tasks") // 추후 배열로 변경
+	class UTerminalTaskBase* _curTask = nullptr;
+
 };

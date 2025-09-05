@@ -7,6 +7,9 @@
 #include "Gun/GunDataTable.h"
 #include "Gun/GunBase.h"
 
+#include "StratagemComponent.h"
+#include "Object/Stratagem/Stratagem.h"
+
 void UCGameInstance::Init()
 {
 	Super::Init();
@@ -26,6 +29,20 @@ TSubclassOf<AGunBase> UCGameInstance::GetGunClassFromTable(int32 id)
 	FString rowName = FString::FromInt(id);
 	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
 	return *row->_gunClass;
+}
+
+FStratagemSlot UCGameInstance::GetStratagemSlotFromTable(int32 id)
+{
+	FString rowName = FString::FromInt(id);
+	auto row = _stratagemTable->FindRow<FStratagemSlot>(*rowName, TEXT(""));
+	return *row;
+}
+
+TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 id)
+{
+	FString rowName = FString::FromInt(id);
+	auto row = _stratagemTable->FindRow<FStratagemSlot>(*rowName, TEXT(""));
+	return *row->StratagemClass;
 }
 
 void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)

@@ -31,7 +31,7 @@ void UHellDiverInvenComponent::BeginPlay()
 	Super::BeginPlay();
 
 	_sampleBundle.Clear();
-	// ...
+
 	_hellDiver = Cast<AHellDiver>(GetOwner());
 	
 	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());

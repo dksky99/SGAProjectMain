@@ -36,4 +36,7 @@ protected:
 	class UPreDeployPanelBase* _secondary;
 	UPROPERTY(meta = (BindWidget))
 	class UPreDeployPanelBase* _support;
+
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployStratagemPanel* _stratagem;
 };

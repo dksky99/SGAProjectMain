@@ -7,7 +7,7 @@
 #include "StratagemComponent.generated.h"
 
 USTRUCT(BlueprintType)
-struct FStratagemSlot
+struct FStratagemSlot : public FTableRowBase
 {
 	GENERATED_BODY();
 
@@ -37,6 +37,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+	void ApplyLoadOut(class UPreDeploymentState* preDeployState);
+
 	void TryUseCurrentStratagem();
 	
 	TSubclassOf<class AStratagem> GetSelectedStratagemClass() const;
