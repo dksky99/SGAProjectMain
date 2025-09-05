@@ -149,7 +149,7 @@ void UPatrolComponent::OnTimeLineUpdate(float value)
 	FVector scale(1, 1, 1);
 	FTransform transform;
 	transform.SetLocation(location);
-	transform.SetRotation(rotation);
+	transform.SetRotation(rotation.Quaternion());
 	transform.SetScale3D(scale);
 }
 

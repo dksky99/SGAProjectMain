@@ -36,7 +36,7 @@ protected:
 	void PlayDespawnAndDestroy();
 
 	// 개별 상자 스폰 + 부착
-	ASupplyBox* SpawnAndAttachOne(const FName& socketName);
+	class ASupplyBox* SpawnAndAttachOne(const FName& socketName);
 
 	// -------------------------------------------------------
 private:
