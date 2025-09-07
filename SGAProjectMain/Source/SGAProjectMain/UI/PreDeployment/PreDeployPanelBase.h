@@ -18,7 +18,7 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void InitializePanel(class UPreDeploymentState* state);
+	virtual void InitializePanel(class UPreDeploymentState* state);
 
 	virtual void HandlePicked(int32 itemID);
 	

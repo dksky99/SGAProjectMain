@@ -11,7 +11,7 @@
  */
 
 UENUM(BlueprintType)
-enum class EGunType : uint8
+enum class EGunGripType : uint8
 {
 	OneHanded,
 	TwoHanded
@@ -23,6 +23,16 @@ enum class EGunSlotType : uint8
 	Primary,
 	Secondary,
 	Support
+};
+
+UENUM(BlueprintType)
+enum class EGunCategory : uint8
+{
+	AssaultRifle	UMETA(DisplayName = "Assault Rifle"),
+	MarksmanRifle	UMETA(DisplayName = "Marksman Rifle"),
+	Shotgun			UMETA(DisplayName = "Shotgun"),
+	Pistol			UMETA(DisplayName = "Pistol"),
+	Support			UMETA(DisplayName = "Support")
 };
 
 UENUM(BlueprintType)
@@ -67,16 +77,23 @@ struct FGunData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName _name = "gun";
+	FText _name = FText::FromString(TEXT("gun"));
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGunType _type; // 한손 혹은 두손
+	EGunGripType _gripType; // 한손 혹은 두손
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGunSlotType _slotType; // 어느 슬롯에 장착되는지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGunCategory _category; // 총의 종류
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UTexture2D* _icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _previewImage;
+
 
 	// 데미지 요소
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -91,6 +108,7 @@ struct FGunData : public FTableRowBase
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _fireInterval = 60.0f / 640.0f;
+
 
 	// 탄약
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -108,6 +126,7 @@ struct FGunData : public FTableRowBase
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	//float _ergo = 54;
 
+
 	// 반동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _recoil = 14.f;
@@ -118,6 +137,7 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _shakeAmount = 4.f;           // 탄퍼짐
 
+
 	// 거리에 따른 데미지 감소량
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff25 = 0.04f;
@@ -126,6 +146,7 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff100 = 0.133f;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<EFireMode> _fireModes = { EFireMode::FireAuto };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -133,19 +154,18 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> _scopeModes = {};
 
+
 	// 클래스나 블루프린트 지정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AGunBase> _gunClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AImpactMarker> _impactMarkerClass;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> _crosshairClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* _laserFX;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* _laserImpactFX;
 };

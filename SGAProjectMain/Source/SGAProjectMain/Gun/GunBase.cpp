@@ -57,7 +57,7 @@ void AGunBase::BeginPlay()
 		SetGunData(data);
 	}
 
-	_interactableInfo._interactionText = FText::FromName(_gunData._name);
+	_interactableInfo._interactionText = _gunData._name;
 	_interactableInfo._type = EInteractableIconType::Gun;
 
 	InitializeMark();

@@ -13,6 +13,7 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
         {
             _entries.Add(entry);
             entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked);
+            entry->InitializeEntry(entry->GetItemID()); // юс╫ц
         }
     }
 }

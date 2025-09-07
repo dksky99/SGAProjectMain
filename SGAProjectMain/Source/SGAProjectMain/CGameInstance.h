@@ -36,6 +36,7 @@ public:
 
 	struct FGunData GetGunDataFromTable(int32 id);
 	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
+	class UTexture2D* GetGunPreviewFromTable(int32 id);
 
 	struct FStratagemSlot GetStratagemSlotFromTable(int32 id);
 	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
