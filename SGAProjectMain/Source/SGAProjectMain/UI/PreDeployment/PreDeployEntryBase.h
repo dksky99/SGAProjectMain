@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "../../CGameInstance.h"
-#include "SelectableEntryBase.generated.h"
+#include "PreDeployEntryBase.generated.h"
 
 /**
  * 
@@ -13,7 +13,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryPicked, int32);
 
 UCLASS()
-class SGAPROJECTMAIN_API USelectableEntryBase : public UUserWidget
+class SGAPROJECTMAIN_API UPreDeployEntryBase : public UUserWidget
 {
 	GENERATED_BODY()
 

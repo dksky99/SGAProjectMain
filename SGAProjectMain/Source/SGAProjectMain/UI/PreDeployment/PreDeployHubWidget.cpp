@@ -13,12 +13,11 @@ void UPreDeployHubWidget::NativeOnInitialized()
 		_launchBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::HandleLaunchRequest);
 }
 
-void UPreDeployHubWidget::InitializeWidget(UPreDeploymentState* state)
+void UPreDeployHubWidget::InitializeHubWidget(UPreDeploymentState* state)
 {
 	// 패널들이랑 연결해주기
 	_primary->InitializePanel(state);
 	_secondary->InitializePanel(state);
-	_support->InitializePanel(state);
 	_stratagem->InitializePanel(state);
 }
 

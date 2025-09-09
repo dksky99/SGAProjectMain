@@ -28,7 +28,7 @@ void UPreDeploymentFlow::EnterFlow()
     if (_hubWidgetClass)
     {
         _hubWidget = CreateWidget<UPreDeployHubWidget>(GetWorld(), _hubWidgetClass);
-        _hubWidget->InitializeWidget(_state);
+        _hubWidget->InitializeHubWidget(_state);
         _hubWidget->AddToViewport();
 
         _hubWidget->_OnLaunchEvent.AddDynamic(this, &UPreDeploymentFlow::HandleLaunch);

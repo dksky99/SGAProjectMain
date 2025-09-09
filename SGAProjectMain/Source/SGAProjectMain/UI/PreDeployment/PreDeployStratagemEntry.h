@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SelectableEntryBase.h"
-#include "SelectableStratagemEntry.generated.h"
+#include "PreDeployEntryBase.h"
+#include "PreDeployStratagemEntry.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SGAPROJECTMAIN_API USelectableStratagemEntry : public USelectableEntryBase
+class SGAPROJECTMAIN_API UPreDeployStratagemEntry : public UPreDeployEntryBase
 {
 	GENERATED_BODY()
 

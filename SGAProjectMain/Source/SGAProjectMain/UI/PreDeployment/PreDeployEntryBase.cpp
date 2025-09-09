@@ -1,26 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SelectableEntryBase.h"
+#include "PreDeployEntryBase.h"
 
 #include "Components/Button.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
 
-void USelectableEntryBase::NativeOnInitialized()
+void UPreDeployEntryBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	
-	_button->OnClicked.AddDynamic(this, &USelectableEntryBase::HandlePick);
+	_button->OnClicked.AddDynamic(this, &UPreDeployEntryBase::HandlePick);
 }
 
-void USelectableEntryBase::HandlePick()
+void UPreDeployEntryBase::HandlePick()
 {
 	if (_onPickedEvent.IsBound())
-		_onPickedEvent.Broadcast(_itemID);
+		_onPickedEvent.Broadcast(_itemID); // 세션에 자신의 ID 전달
 }
 
-void USelectableEntryBase::InitializeEntry(int32 id)
+void UPreDeployEntryBase::InitializeEntry(int32 id)
 {
 	_itemID = id;
 
@@ -30,7 +30,7 @@ void USelectableEntryBase::InitializeEntry(int32 id)
 		_itemImage->SetBrushFromTexture(image);
 }
 
-void USelectableEntryBase::SetSelected(bool isSelected)
+void UPreDeployEntryBase::SetSelected(bool isSelected)
 {
 	FLinearColor color = isSelected ? FLinearColor::Yellow : FLinearColor::White;
 	_border->SetBrushColor(color);

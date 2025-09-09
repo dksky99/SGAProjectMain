@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/PanelWidget.h"
-#include "SelectableEntryBase.h"
+#include "PreDeployEntryBase.h"
+#include "PreDeployCategorySection.h"
 #include "../../Game/PreDeployment/PreDeploymentState.h"
+#include "../../Gun/GunDataTable.h"
+#include "../../CGameInstance.h"
 #include "PreDeployPanelBase.generated.h"
 
 /**
@@ -20,15 +23,21 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 public:
 	virtual void InitializePanel(class UPreDeploymentState* state);
 
-	virtual void HandlePicked(int32 itemID);
+	virtual void HandlePicked(int32 itemID, UPreDeployEntryBase* entry);
 	
 protected:
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
+	TSubclassOf<class UPreDeployCategorySection> _categoryClass;
+
+	UPROPERTY(meta = (BindWidget))
+	class UPanelWidget* _sectionPanel;
+
 	UPROPERTY()
 	class UPreDeploymentState* _state;
 
-	UPROPERTY(meta = (BindWidget))
-	class UPanelWidget* _panel;
-
 	UPROPERTY()
-	TArray<class USelectableEntryBase*> _entries;
+	UPreDeployEntryBase* _curSelectedEntry;
+
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
+	EGunSlotType _panelSlotType = EGunSlotType::Primary;
 };
