@@ -103,7 +103,6 @@ public:
 	void SetFiring(bool isFiring) { _isFiring = isFiring; }
 	bool IsAiming() { return _isAiming; }
 	void SetAiming(bool isAiming) { _isAiming = isAiming; }
-	bool IsVaulting() { return _isVaulting; }
 
 	bool IsFocusing();
 	bool IsCookingGrenade() { return _isCookingGrenade; }
@@ -169,7 +168,6 @@ protected:
 	bool _isShocking = false;
 	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
-	bool _isVaulting = false;
 	uint8 _curEquipIndex = 0;
 
 	FString _waitingMove;

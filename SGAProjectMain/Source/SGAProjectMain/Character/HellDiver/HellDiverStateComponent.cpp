@@ -201,22 +201,22 @@ bool UHellDiverStateComponent::FinishReload()
 
 bool UHellDiverStateComponent::StartPakour()
 {
-	if (_isVaulting)
+	if (_isActing)
 		return false;
 	if (_characterState == ECharacterState::Proning || _isRolling)
 		return false;
 
-	_isVaulting = true;
+	_isActing = true;
 
 	return true;
 }
 
 bool UHellDiverStateComponent::FinishPakour()
 {
-	if (_isVaulting == false)
+	if (_isActing == false)
 		return false;
 
-	_isVaulting = false;
+	_isActing = false;
 	
 
 	return true;
@@ -232,7 +232,7 @@ bool UHellDiverStateComponent::IsFocusing()
 		return false;
 	if (_isWeaponChange)
 		return false;
-	if (_isVaulting)
+	if (_isActing)
 		return false;
 	if (_isFiring)
 		return true;

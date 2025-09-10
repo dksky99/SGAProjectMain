@@ -59,7 +59,6 @@ public:
 
 	bool AddToSquad(class AEnemySquad* temp);
 
-	void UnitDeactivate();
 
 	class UPatrolComponent* GetPatrol() { return _patrolComponent; }
 	virtual void Dead() override;
@@ -75,12 +74,10 @@ public:
 	void SetStrong_Alert();
 	void SetInBattle();
 
-	virtual bool TryNear(ACharacterBase* target) { return false; }
-	virtual bool TryMiddle(ACharacterBase* target) { return false; }
-	virtual bool TryFar(ACharacterBase* target) { return false; }
+	virtual bool TryNear(AActor* target) { return false; }
+	virtual bool TryMiddle(AActor* target) { return false; }
+	virtual bool TryFar(AActor* target) { return false; }
 
-	bool CheckHitted(AActor* target);
-	void ClearHitted();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -88,6 +85,17 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Patrol", meta = (AllowPrivateAccess = "true"))
 	class UPatrolComponent* _patrolComponent;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _spawnMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _reinforcementMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _deadMontage;
 
 private:
 
@@ -100,7 +108,6 @@ private:
 
 
 
-	TArray<class AActor*> _hitted;
 
 
 	TArray<class ACharacterBase*> _targets;
@@ -110,9 +117,4 @@ private:
 	TWeakObjectPtr<class AEnemySquad> _squad;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* _spawnMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* _deadMontage;
 };

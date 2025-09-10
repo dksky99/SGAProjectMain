@@ -4,6 +4,8 @@
 #include "CharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/ShapeComponent.h"
+#include "Components/BoxComponent.h"
 
 #include "Physics/PhysicsInterfacePhysX.h"
 #include "PhysicsEngine/PhysicsAsset.h"
@@ -11,6 +13,7 @@
 #include "PhysicsEngine/ConstraintTypes.h"
 #include "StatComponent.h"
 #include "CharacterStateComponent.h"
+#include "CharacterAnimInstance.h"
 
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -18,7 +21,11 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Damage.h"
 
+#include "../Data/UnitAttackDataAsset.h"
+
 #include "../Object/Corpse.h"
+
+#include "Kismet/GameplayStatics.h"
 
 const FName ACharacterBase::StatComponentName = "StatComponent";
 
@@ -304,10 +311,11 @@ void ACharacterBase::Dead()
 	{
 		CurrentController->UnPossess();
 	}
-	//CharacterToRagdoll();
-	SpawnGhost();
+	CharacterToRagdoll();
+	//SpawnGhost();
 
 
+	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromKnockDown, 60.0f, false);
 
 
 }
@@ -347,6 +355,22 @@ void ACharacterBase::ResetUnit()
 	SetActorTickEnabled(true);
 }
 
+void ACharacterBase::UnitDeactivate()
+{
+
+	
+	if (GetController())
+	{
+		GetController()->UnPossess();
+	}
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+
+
+	SetActorLocation(FVector::ZeroVector);
+
+}
 UStatComponent* ACharacterBase::GetStatComponent()
 {
 	return _statComponent;
@@ -404,5 +428,122 @@ bool ACharacterBase::IsTargetable() const
 FTransform ACharacterBase::GetTargetTransform() const
 {
 	return GetActorTransform();
+}
+
+void ACharacterBase::InitMeleeColliders()
+{
+	for (auto col : _meleeColliders)
+	{
+		col.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		col.Value->SetCollisionObjectType(ECC_WorldDynamic);
+		col.Value->SetCollisionResponseToAllChannels(ECR_Ignore);
+		col.Value->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // Pawn만 감지
+		col.Value->OnComponentBeginOverlap.AddDynamic(this, &ACharacterBase::OnWeaponOverlap);
+	}
+	_activateColliders.Reserve(_meleeColliders.Num());
+}
+
+void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	if (OtherActor && OtherActor != this)
+	{
+		CheckHitted(OtherActor);
+
+		float finalDamage = _meleeDamage;// 속도에 비례하는 최종 데미지
+
+		FVector shotDirection = SweepResult.ImpactNormal; // 데미지 방향
+
+		UGameplayStatics::ApplyPointDamage(
+			OtherActor,                     // 데미지를 받을 액터
+			finalDamage,                    // 적용할 기본 데미지 값
+			shotDirection,                  // 데미지가 들어온 방향 벡터
+			SweepResult,                    // 충돌 정보(FHitResult)
+			GetInstigatorController(),      // 데미지를 유발한 컨트롤러
+			this,                           // 데미지 발생 주체 액터
+			UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
+		);
+
+		UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
+
+		AddHitted(OtherActor);
+
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Melee Hit!"));
+}
+
+bool ACharacterBase::AttackMelee()
+{
+	UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+
+
+	if (_meleeAttackDatas.IsEmpty())
+		return false;
+	if (anim == nullptr)
+		return false;
+	if (_stateComp->ActionBegin() == false)
+		return false;
+	int32 randomIndex = FMath::RandRange(0, _meleeAttackDatas.Num() - 1);
+
+	anim->PlayAnimMontage(_meleeAttackDatas[randomIndex]->Motion);
+	_meleeDamage = _meleeAttackDatas[randomIndex]->Attack;
+	SetMeleeColisions(randomIndex);
+	return true;
+}
+
+
+void ACharacterBase::SetMeleeColisions(int index)
+{
+	for (FName colName : _meleeAttackDatas[index]->ActiveColliders)
+	{
+		if (_meleeColliders.Contains(colName))
+		{
+			_activateColliders.Add(_meleeColliders[colName]);
+		}
+	}
+}
+
+void ACharacterBase::ReleaseMeleeColision()
+{
+	DeactivateMeleeColision();
+	_activateColliders.Empty();
+}
+
+void ACharacterBase::ActivateMeleeColision()
+{
+	for (auto col : _activateColliders)
+	{
+
+		col->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+}
+
+void ACharacterBase::DeactivateMeleeColision()
+{
+	for (auto col : _activateColliders)
+	{
+
+		col->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	ClearHitted();
+	
+}
+
+bool ACharacterBase::CheckHitted(AActor* target)
+{
+	if (_hitted.Contains(target))
+		return true;
+	return false;
+}
+
+void ACharacterBase::AddHitted(AActor* target)
+{
+	_hitted.AddUnique(target);
+}
+
+void ACharacterBase::ClearHitted()
+{
+	_hitted.Empty();
 }
 

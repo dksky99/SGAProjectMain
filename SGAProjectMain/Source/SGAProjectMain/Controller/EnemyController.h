@@ -67,6 +67,9 @@ public:
 	void AddTargetActor(class AActor* target);
 
 	void AddAlertStack(float loudness);
+	void ReadyToStack();
+	void ResetAlertStack();
+
 	float GetAlertStack() { return _curLoudnessStack; }
 	class AActor* GetCurTargetActor() { return _curTarget; }
 	//블랙보드에 타겟을 갱신할 목적. 지금 적용된타겟보다 더 가까운 위치에 타겟이될수있는 오브젝트가 있다면 그 오브젝트로 바뀌게될 예정.
@@ -91,8 +94,15 @@ public:
 	class UBehaviorTree* _behaviorTree;
 
 protected:
+	//스택이 너무빠른시간내에 다 차오르지 않게하기위해
 	UPROPERTY()
-	FTimerHandle _timerHandle;
+	FTimerHandle _alertStackTimer;
+	float _alertStackTime = 1.0f;
+	bool _isReadyToStack = true;
+	//얕은경계와 강한경계때 15초이상 소리를 듣지 못하면 경계치를 리셋
+	UPROPERTY()
+	FTimerHandle _alertResetTimer;
+	float _alertResetTime = 15.0f;
 
 	//타겟
 	UPROPERTY(VisibleAnywhere)
@@ -109,6 +119,7 @@ protected:
 	//경계치
 	float _highAlertThreshold = 5.0f;
 	float _curLoudnessStack = 0.0f;
+
 	//마지막 소리가 들린위치
 	FVector _lastSensedLoc;
 

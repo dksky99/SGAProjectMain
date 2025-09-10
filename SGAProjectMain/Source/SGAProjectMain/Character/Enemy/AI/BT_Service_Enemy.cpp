@@ -46,6 +46,7 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	if (threashold >= 5.0f)
 	{
 		behavior->ChangeUnitType(EUnitState::Strong_Alert); // 대상이 없지만 임계치가 일정이상 올라간다면 강한 경계
+
 		behavior->SetTargetLoc(behavior->GetTargetLoc());
 		return;
 
@@ -55,6 +56,8 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	if (threashold >= 1.0f)
 	{
 		behavior->ChangeUnitType(EUnitState::Weak_Alert); // 대상이 없지만 한번이라도 소리를 듣는다면 약한경계
+
+		behavior->SetTargetLoc(behavior->GetTargetLoc());
 		return;
 
 	}
@@ -63,7 +66,7 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	float acceptance;
 	if (selfRef->GetPatrol()->GetMoveTo(location,acceptance))
 	{
-		behavior->ChangeUnitType(EUnitState::Patrol); // 대상이 없지만 한번이라도 소리를 듣는다면 약한경계
+		behavior->ChangeUnitType(EUnitState::Patrol); 
 
 		return;
 	}

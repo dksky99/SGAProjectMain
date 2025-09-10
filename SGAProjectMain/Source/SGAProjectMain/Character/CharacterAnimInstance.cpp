@@ -5,7 +5,7 @@
 
 #include "CharacterBase.h"
 #include "PlayerCharacter.h"
-
+#include "CharacterStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Animation/AnimMontage.h"
@@ -44,26 +44,25 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isFalling = _pawn->GetMovementComponent()->IsFalling();
 
 			_deltaAngle = _pawn->MyDeltaAngle();
+			_isActing = _pawn->GetStateComponent()->IsActing();
 
 			FRotator controlRotation = _pawn->GetControlRotation();
 			FRotator actorRotation = _pawn->GetActorRotation();
 
 			_moveRotation = UKismetAnimationLibrary::CalculateDirection(_pawn->GetVelocity(), actorRotation);
-			auto player = Cast<APlayerCharacter>(_pawn);
-			if (player)
-			{
-				_isTurnLeft = player->_isTurnLeft;
-				_isTurnRight = player->_isTurnRight;
-			}
+
+			_isTurnLeft = _pawn->_isTurnLeft;
+			_isTurnRight = _pawn->_isTurnRight;
+			
 		}
 	}
 }
 
-void UCharacterAnimInstance::PlayAnimMontage(UAnimMontage* animMontage)
+void UCharacterAnimInstance::PlayAnimMontage(UAnimMontage* animMontage, float playRate)
 {
 	if (!Montage_IsPlaying(animMontage))
 	{
-		Montage_Play(animMontage);
+		Montage_Play(animMontage,playRate);
 	}
 }
 
