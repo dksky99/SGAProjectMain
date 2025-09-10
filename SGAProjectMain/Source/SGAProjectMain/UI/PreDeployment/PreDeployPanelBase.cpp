@@ -26,9 +26,10 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
     for (auto& group : groupedGuns)
     {
         UPreDeployCategorySection* section = CreateWidget<UPreDeployCategorySection>(this, _categoryClass);
+		section->_onEntrySpawnedEvent.AddUObject(this, &UPreDeployPanelBase::OnEntrySpawned); // 섹션의 엔트리 생성 이벤트 바인딩
         FText title = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)group.Key);
 		section->InitializeSection(title, group.Value);
-		section->_onSectionPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked); // 섹션의 선택 이벤트 바인딩
+		//section->_onSectionPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked); // 섹션의 선택 이벤트 바인딩
         //section->SetTitleText(title); // 섹션 이름 설정
 
         //for (const int32 id : group.Value) // 각 그룹 내의 총들에 대해
@@ -57,10 +58,11 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
  //   }
 
 
-void UPreDeployPanelBase::HandlePicked(int32 itemID, UPreDeployEntryBase* entry)
+void UPreDeployPanelBase::HandleEntryPicked(UPreDeployEntryBase* entry)
 {
     // state에 정보 넘겨주기
     // 임시
+	int32 itemID = entry->GetItemID();
     _state->SetGunID(itemID);
 
     if (_curSelectedEntry)
@@ -68,4 +70,9 @@ void UPreDeployPanelBase::HandlePicked(int32 itemID, UPreDeployEntryBase* entry)
 
 	entry->SetSelected(true); // 새로 선택된 엔트리 강조
     _curSelectedEntry = entry;
+}
+
+void UPreDeployPanelBase::OnEntrySpawned(UPreDeployEntryBase* entry)
+{
+	entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandleEntryPicked);
 }

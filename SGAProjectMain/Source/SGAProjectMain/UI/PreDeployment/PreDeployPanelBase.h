@@ -23,9 +23,11 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 public:
 	virtual void InitializePanel(class UPreDeploymentState* state);
 
-	virtual void HandlePicked(int32 itemID, UPreDeployEntryBase* entry);
+	virtual void HandleEntryPicked(UPreDeployEntryBase* entry);
 	
 protected:
+	void OnEntrySpawned(UPreDeployEntryBase* entry);
+
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<class UPreDeployCategorySection> _categoryClass;
 
