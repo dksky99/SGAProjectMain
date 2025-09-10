@@ -36,6 +36,7 @@
 #include "../UI/CompassWidget.h"
 #include "../UI/SampleWidget.h"
 #include "../UI/MissionWidget.h"
+#include "../UI/InventoryWheelWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -192,9 +193,7 @@ void APlayerCharacter::BeginPlay()
 		_sampleWidget->AddToViewport();
 
 	if (_missionWidget)
-	{
 		_missionWidget->AddToViewport();
-	}
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
@@ -277,7 +276,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
 		enhancedInputComponent->BindAction(_mapAction, ETriggerEvent::Started, this, &APlayerCharacter::OpenMap);
-		enhancedInputComponent->BindAction(_invenAction, ETriggerEvent::Started, this, &APlayerCharacter::DropBackpack); // юс╫ц
+		enhancedInputComponent->BindAction(_inventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::HoldInvenKey);
+		enhancedInputComponent->BindAction(_inventoryAction, ETriggerEvent::Completed, this, &APlayerCharacter::ReleaseInvenKey);
 	}
 }
 
@@ -1714,6 +1714,52 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
 }
 
+void APlayerCharacter::HoldInvenKey()
+{
+	if (!_invenWidgetClass) return;
+
+	_invenWidget = CreateWidget<UInventoryWheelWidget>(GetWorld(), _invenWidgetClass);
+	_invenWidget->AddToViewport();
+
+	auto PC = Cast<APlayerController>(GetController());
+	PC->bShowMouseCursor = true;
+}
+
+void APlayerCharacter::ReleaseInvenKey()
+{
+	if (!_invenWidget) return;
+
+	const int32 curIndex = _invenWidget->GetCurIndex();
+
+	_invenWidget->RemoveFromParent();
+	_invenWidget = nullptr;
+
+	auto PC = Cast<APlayerController>(GetController());
+	PC->bShowMouseCursor = false;
+
+	ExecuteInvenAction(curIndex);
+}
+
+void APlayerCharacter::ExecuteInvenAction(int32 index)
+{
+	switch (index)
+	{
+	case 0: 
+		_invenComponent->DropSample();
+		_sampleWidget->SetSampleCount(_invenComponent->GetSampleBundle());
+		break;
+	case 1:
+		_invenComponent->DropBackpack();
+		 break;
+	case 2:
+		break;
+	case 3:
+		_invenComponent->DropGun(2);
+		break;
+	default: break;
+	}
+}
+
 void APlayerCharacter::AddSample(FSampleBundle sample)
 {
 	Super::AddSample(sample);
@@ -1723,11 +1769,6 @@ void APlayerCharacter::AddSample(FSampleBundle sample)
 		const FSampleBundle& sample = _invenComponent->GetSampleBundle();
 		_sampleWidget->SetSampleCount(sample);
 	}
-}
-
-void APlayerCharacter::DropBackpack()
-{
-	_invenComponent->DropBackpack();
 }
 
 void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)

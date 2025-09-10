@@ -36,9 +36,12 @@ public:
 
 	struct FGunData GetGunDataFromTable(int32 id);
 	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
+	class UTexture2D* GetGunPreviewFromTable(int32 id);
+	class UDataTable* GetGunTable() { return _gunTable; }
 
 	struct FStratagemSlot GetStratagemSlotFromTable(int32 id);
 	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
+	class UDataTable* GetStratagemTable() { return _stratagemTable; }
 
 	void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample() { return _savedSample; }

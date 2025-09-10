@@ -42,7 +42,14 @@ TSubclassOf<AGunBase> UCGameInstance::GetGunClassFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
 	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
-	return *row->_gunClass;
+	return row->_gunClass;
+}
+
+UTexture2D* UCGameInstance::GetGunPreviewFromTable(int32 id)
+{
+	FString rowName = FString::FromInt(id);
+	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
+	return row->_previewImage;
 }
 
 FStratagemSlot UCGameInstance::GetStratagemSlotFromTable(int32 id)

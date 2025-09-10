@@ -19,7 +19,7 @@ class SGAPROJECTMAIN_API UPreDeployHubWidget : public UUserWidget
 	virtual void NativeOnInitialized() override;
 
 public:
-	void InitializeWidget(class UPreDeploymentState* state);
+	void InitializeHubWidget(class UPreDeploymentState* state);
 
 	FOnRequestLaunch _OnLaunchEvent;
 
@@ -34,9 +34,6 @@ protected:
 	class UPreDeployPanelBase* _primary;
 	UPROPERTY(meta = (BindWidget))
 	class UPreDeployPanelBase* _secondary;
-	UPROPERTY(meta = (BindWidget))
-	class UPreDeployPanelBase* _support;
-
 	UPROPERTY(meta = (BindWidget))
 	class UPreDeployStratagemPanel* _stratagem;
 };

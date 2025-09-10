@@ -114,8 +114,14 @@ public:
 	void InitWeapon() override;
 	void SwitchGun(int32 index, const FInputActionValue& value);
 	void PickupGun(class AGunBase* gun) override;
+
+	UFUNCTION()
+	void HoldInvenKey();
+	UFUNCTION()
+	void ReleaseInvenKey();
+
+	void ExecuteInvenAction(int32 index);
 	void AddSample(struct FSampleBundle sample) override;
-	void DropBackpack();
 	
 
 	UFUNCTION()
@@ -225,6 +231,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _weapon3ChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _inventoryAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _grenadeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _lightChangeAction;
@@ -251,8 +260,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _stimPackAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* _invenAction;
 
 
 
@@ -287,6 +294,7 @@ protected:
 	class UMiniMapWidget* _minimapWidget;
 	UPROPERTY()
 	class ASceneCapturer* _sceneCapturer;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> _staminaBarWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
@@ -303,6 +311,10 @@ protected:
 	TSubclassOf<UUserWidget> _missionWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class UMissionWidget* _missionWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _invenWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UInventoryWheelWidget* _invenWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;

@@ -7,8 +7,13 @@
 
 void USampleWidget::SetSampleCount(const FSampleBundle& sampleBundle)
 {
+    _commonSampleText->SetText(FText::AsNumber(0));
+    _rareSampleText->SetText(FText::AsNumber(0));
+    _superSampleText->SetText(FText::AsNumber(0));
+
     for (const auto& sample : sampleBundle._samples)
     {
+
         FString text = FString::Printf(TEXT("%d"), sample.Value);
 
         if (sample.Key == ESampleType::Common)
