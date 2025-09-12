@@ -143,6 +143,11 @@ bool UHellDiverInvenComponent::CanSwitchGun(int32 index)
 
 void UHellDiverInvenComponent::EquipBackpack(ABackpack* backpack)
 {
+	if (_backpack) // 이미 배낭이 있을 경우
+	{
+		DropBackpack();
+	}
+
 	_backpack = backpack;
 }
 

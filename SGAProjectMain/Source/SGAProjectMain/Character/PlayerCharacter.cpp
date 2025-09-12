@@ -1719,10 +1719,8 @@ void APlayerCharacter::HoldInvenKey()
 	if (!_invenWidgetClass) return;
 
 	_invenWidget = CreateWidget<UInventoryWheelWidget>(GetWorld(), _invenWidgetClass);
+	_invenWidget->InitializeWheel(_invenComponent);
 	_invenWidget->AddToViewport();
-
-	auto PC = Cast<APlayerController>(GetController());
-	PC->bShowMouseCursor = true;
 }
 
 void APlayerCharacter::ReleaseInvenKey()
@@ -1733,9 +1731,6 @@ void APlayerCharacter::ReleaseInvenKey()
 
 	_invenWidget->RemoveFromParent();
 	_invenWidget = nullptr;
-
-	auto PC = Cast<APlayerController>(GetController());
-	PC->bShowMouseCursor = false;
 
 	ExecuteInvenAction(curIndex);
 }
