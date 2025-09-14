@@ -184,10 +184,37 @@ void AEnemyController::HandleSensedSight(AActor* Actor)
 void AEnemyController::HandleSensedHearing(FVector directionHeared)
 {
     _lastSensedLoc = directionHeared;
+    if (_isReadyToStack == false)
+        return;
+    _isReadyToStack = false;
+    GetWorld()->GetTimerManager().SetTimer(
+        _alertStackTimer, // 관리할 타이머 핸들
+        this,                      // 타이머가 만료됐을 때 함수를 호출할 오브젝트
+        &AEnemyController::ReadyToStack, // 호출될 함수
+        _alertStackTime,                     // 지연 시간 (초)
+        false                      // 반복 여부 (false = 한 번만 실행)
+    );
+    
 	 _curLoudnessStack +=1.f;
     
      UE_LOG(LogTemp, Display, TEXT("%s LoudnessStack : %f"),*_pawn->GetName(), _curLoudnessStack);
 
+     if (_pawn->GetUnitState() == EUnitState::InBattle)
+     {
+         return;
+     }
+     if (GetWorld()->GetTimerManager().IsTimerActive(_alertResetTimer))
+     {
+         // 이미 실행 중이라면, 기존 타이머를 중단하고 새로 시작
+         GetWorld()->GetTimerManager().ClearTimer(_alertResetTimer);
+     }
+     GetWorld()->GetTimerManager().SetTimer(
+         _alertResetTimer, // 관리할 타이머 핸들
+         this,                      // 타이머가 만료됐을 때 함수를 호출할 오브젝트
+         &AEnemyController::ResetAlertStack, // 호출될 함수
+         _alertResetTime,                     // 지연 시간 (초)
+         false                      // 반복 여부 (false = 한 번만 실행)
+     );
 }
 
 void AEnemyController::HandleSensedDamage(AActor* Actor)
@@ -317,6 +344,17 @@ void AEnemyController::AddAlertStack(float loudness)
 {
 
     _curLoudnessStack += loudness;
+}
+
+void AEnemyController::ReadyToStack()
+{
+    _isReadyToStack = true;
+}
+
+void AEnemyController::ResetAlertStack()
+{
+
+    _curLoudnessStack = 0.0f;
 }
 
 AActor* AEnemyController::GetNewTargetActor()

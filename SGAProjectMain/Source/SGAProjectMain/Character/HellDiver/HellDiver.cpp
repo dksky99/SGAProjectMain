@@ -39,6 +39,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
     _statComp= Cast<UHellDiverStatComponent>(Super::_statComponent);
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
+    Super::_stateComp = _stateComponent;
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
     _stratagemComponent = CreateDefaultSubobject<UStratagemComponent>(TEXT("StratagemComponent"));

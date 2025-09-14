@@ -120,22 +120,6 @@ bool AEnemy::AddToSquad(AEnemySquad* squad)
     return true;
 }
 
-void AEnemy::UnitDeactivate()
-{
-
-    AEnemyController* controller = Cast<AEnemyController>(GetController());
-    if (controller)
-    {
-        controller->UnPossess();
-    }
-    SetActorHiddenInGame(true);
-    SetActorEnableCollision(false);
-    SetActorTickEnabled(false);
-
-    
-    SetActorLocation(FVector::ZeroVector);
-
-}
 
 void AEnemy::Dead()
 {
@@ -215,17 +199,6 @@ void AEnemy::SetInBattle()
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
-bool AEnemy::CheckHitted(AActor* target)
-{
-    if(_hitted.Contains(target))
-         return true;
-    return false;
-}
-
-void AEnemy::ClearHitted()
-{
-    _hitted.Empty();
-}
 
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

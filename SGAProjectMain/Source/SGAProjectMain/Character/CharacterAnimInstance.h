@@ -23,7 +23,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	UFUNCTION()
-	void PlayAnimMontage(UAnimMontage* animMontage);
+	void PlayAnimMontage(UAnimMontage* animMontage,float playRate=1.0f);
 
 
 	void JumpToSection(int32 sectionIndex);
@@ -74,5 +74,7 @@ protected:
 	bool _isMoving = false;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isActing = false;
 
 };

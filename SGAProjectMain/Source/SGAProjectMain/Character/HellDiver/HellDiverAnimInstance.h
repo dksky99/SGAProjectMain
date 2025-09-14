@@ -137,8 +137,6 @@ protected:
 	bool _isRolling = false;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	bool _isVaulting = false;
 
 
 
