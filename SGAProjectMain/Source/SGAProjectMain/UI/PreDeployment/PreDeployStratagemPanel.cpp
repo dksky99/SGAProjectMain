@@ -6,6 +6,7 @@
 #include "Components/HorizontalBox.h"
 #include "../../Object/Stratagem/Stratagem.h"
 #include "../../StratagemComponent.h"
+#include "PreDeployStratagemDetail.h"
 
 void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
 {
@@ -53,6 +54,7 @@ void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
     }
 
     _state = state;
+	_detailPanel->SetVisibility(ESlateVisibility::Hidden); // 상세 패널 숨김
 }
 
 void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
@@ -87,6 +89,9 @@ void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
 
     auto slot = Cast<UPreDeployEntryBase>(_slotPanel->GetChildAt(_curSlotIndex));
     slot->InitializeEntry(stgID); // 선택된 슬롯에 스트라타젬 정보 설정
+
+	_detailPanel->SetVisibility(ESlateVisibility::Visible); // 상세 패널 표시
+	_detailPanel->SetDetail(stgID); // 상세 패널에 정보 설정
 
 	int32 nextIndex = FindEmptySlotIndex();
     if (nextIndex != INDEX_NONE)
@@ -141,6 +146,15 @@ void UPreDeployStratagemPanel::OpenPanel()
 		PlayAnimation(_slotPanelUp, 0.f, 1, EUMGSequencePlayMode::Forward, 2.f); // 슬롯 패널 애니메이션 재생
 
 	_sectionPanel->SetVisibility(ESlateVisibility::Visible); // 섹션 패널 표시
+    if (_curSlotIndex != -1)
+    {
+        int32 stgID = _state->GetStratagemIDs()[_curSlotIndex];
+        if (stgID != -1)
+        {
+            _detailPanel->SetVisibility(ESlateVisibility::Visible); // 상세 패널 표시
+            _detailPanel->SetDetail(stgID); // 상세 패널에 정보 설정
+        }
+	}
 
 	if (_panelOpenedEvent.IsBound())
 	    _panelOpenedEvent.Broadcast(true); // 허브 위젯에서 처리
@@ -157,6 +171,7 @@ void UPreDeployStratagemPanel::ClosePanel()
         PlayAnimation(_slotPanelUp, 0.f, 1, EUMGSequencePlayMode::Reverse, 2.f); // 슬롯 패널 애니메이션 역재생
 	
     _sectionPanel->SetVisibility(ESlateVisibility::Hidden); // 섹션 패널 숨김
+	_detailPanel->SetVisibility(ESlateVisibility::Hidden); // 상세 패널 숨김
 
 	if (_panelOpenedEvent.IsBound())
 		_panelOpenedEvent.Broadcast(false); // 허브 위젯에서 처리

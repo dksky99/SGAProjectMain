@@ -50,10 +50,17 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
     _state = state;
 
 	_equipBtn->OnClicked.AddDynamic(this, &UPreDeployPanelBase::HandleEquipRequest);
+
+	int32 gunID = -1;
     if (_panelSlotType == EGunSlotType::Primary)
-        _detailPanel->SetDetail(state->GetPrimaryGunID());
-    else if (_panelSlotType == EGunSlotType::Secondary)
-		_detailPanel->SetDetail(state->GetSecondaryGunID());
+		gunID = state->GetPrimaryGunID();
+	else if (_panelSlotType == EGunSlotType::Secondary)
+		gunID = state->GetSecondaryGunID();
+
+    _detailPanel->SetDetail(gunID);
+    FGunData gunData = GI->GetGunDataFromTable(gunID);
+    FText sectionText = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)gunData._category);
+    _curSectionText->SetText(sectionText);
 }
 
  //   const int32 Count = _panel->GetChildrenCount();

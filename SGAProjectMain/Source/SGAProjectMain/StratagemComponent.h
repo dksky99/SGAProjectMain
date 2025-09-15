@@ -21,6 +21,9 @@ struct FStratagemSlot : public FTableRowBase
 	float Cooldown = 10.f;
 
 	float LastUsedTime = -9999.f;
+
+	UPROPERTY(EditAnywhere)
+	FText Description;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
