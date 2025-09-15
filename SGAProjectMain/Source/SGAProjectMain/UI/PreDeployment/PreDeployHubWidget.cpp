@@ -16,8 +16,13 @@ void UPreDeployHubWidget::NativeOnInitialized()
 	_equipBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::SwitchToEquipPage);
 	_stgBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::SwitchToStratagemPage);
 
-	_primaryGunBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::OpenPrimaryEquipPanel);
-	_secondaryGunBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::OpenSecondaryPanel);
+	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	auto state = GI->GetPreDeployState();
+	_primaryGunSlot->InitializeEntry(state->GetPrimaryGunID());
+	_secondaryGunSlot->InitializeEntry(state->GetSecondaryGunID());
+
+	_primaryGunSlot->_onPickedEvent.AddUObject(this, &UPreDeployHubWidget::OpenPrimaryEquipPanel);
+	_secondaryGunSlot->_onPickedEvent.AddUObject(this, &UPreDeployHubWidget::OpenSecondaryEquipPanel);
 
 	_escBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::OnESCPressed);
 }
@@ -26,7 +31,9 @@ void UPreDeployHubWidget::InitializeHubWidget(UPreDeploymentState* state)
 {
 	// 패널들이랑 연결해주기
 	_primaryEquipPanel->InitializePanel(state);
+	_primaryEquipPanel->_selectChangedEvent.AddUObject(_primaryGunSlot, &UPreDeployEntryBase::InitializeEntry);
 	_secondaryEquipPanel->InitializePanel(state);
+	_secondaryEquipPanel->_selectChangedEvent.AddUObject(_secondaryGunSlot, &UPreDeployEntryBase::InitializeEntry);
 	_stratagemPanel->InitializePanel(state);
 	_stratagemPanel->_panelOpenedEvent.AddUObject(this, &UPreDeployHubWidget::OpenStratagemPanel);
 }
@@ -74,14 +81,18 @@ void UPreDeployHubWidget::OpenStratagemPanel(bool isOpened)
 	}
 }
 
-void UPreDeployHubWidget::OpenPrimaryEquipPanel()
+void UPreDeployHubWidget::OpenPrimaryEquipPanel(UPreDeployEntryBase* gunSlot)
 {
 	_hubSwitcher->SetActiveWidgetIndex(1);
+	gunSlot->SetSelected(true);
+	_secondaryGunSlot->SetSelected(false);
 }
 
-void UPreDeployHubWidget::OpenSecondaryPanel()
+void UPreDeployHubWidget::OpenSecondaryEquipPanel(UPreDeployEntryBase* gunSlot)
 {
 	_hubSwitcher->SetActiveWidgetIndex(2);
+	gunSlot->SetSelected(true);
+	_primaryGunSlot->SetSelected(false);
 }
 
 void UPreDeployHubWidget::ReturnToEquipPage()

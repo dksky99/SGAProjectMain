@@ -63,9 +63,9 @@ protected:
 
 	// 선택창 <-> 무기 패널
 	UFUNCTION()
-	void OpenPrimaryEquipPanel();
+	void OpenPrimaryEquipPanel(UPreDeployEntryBase* gunSlot);
 	UFUNCTION()
-	void OpenSecondaryPanel();
+	void OpenSecondaryEquipPanel(UPreDeployEntryBase* gunSlot);
 	UFUNCTION()
 	void ReturnToEquipPage();
 
@@ -73,9 +73,9 @@ protected:
 	class UWidgetSwitcher* _hubSwitcher;
 
 	UPROPERTY(meta = (BindWidget))
-	class UButton* _primaryGunBtn;
+	class UPreDeployEntryBase* _primaryGunSlot;
 	UPROPERTY(meta = (BindWidget))
-	class UButton* _secondaryGunBtn;
+	class UPreDeployEntryBase* _secondaryGunSlot;
 
 
 	UFUNCTION()

@@ -2,8 +2,11 @@
 
 
 #include "PreDeployPanelBase.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "../../Gun/GunDataTable.h"
 #include "PreDeployCategorySection.h"
+#include "PreDeployDetailBase.h"
 
 void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
 {
@@ -45,6 +48,12 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
     }
 
     _state = state;
+
+	_equipBtn->OnClicked.AddDynamic(this, &UPreDeployPanelBase::HandleEquipRequest);
+    if (_panelSlotType == EGunSlotType::Primary)
+        _detailPanel->SetDetail(state->GetPrimaryGunID());
+    else if (_panelSlotType == EGunSlotType::Secondary)
+		_detailPanel->SetDetail(state->GetSecondaryGunID());
 }
 
  //   const int32 Count = _panel->GetChildrenCount();
@@ -60,19 +69,35 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
 
 void UPreDeployPanelBase::HandleEntryPicked(UPreDeployEntryBase* entry)
 {
-    // state에 정보 넘겨주기
-    // 임시
-	int32 itemID = entry->GetItemID();
-    _state->SetGunID(itemID);
-
     if (_curSelectedEntry)
         _curSelectedEntry->SetSelected(false); // 이전 선택 해제
 
 	entry->SetSelected(true); // 새로 선택된 엔트리 강조
-    _curSelectedEntry = entry;
+    _curSelectedEntry = entry;   
+
+    UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	FGunData gunData = GI->GetGunDataFromTable(entry->GetItemID());
+    FText sectionText = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)gunData._category);
+    if (_curSectionText)
+		_curSectionText->SetText(sectionText); // 현재 섹션 텍스트 업데이트
+
+    if (_detailPanel)
+		_detailPanel->SetDetail(entry->GetItemID()); // 상세 패널 업데이트
 }
 
 void UPreDeployPanelBase::OnEntrySpawned(UPreDeployEntryBase* entry)
 {
 	entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandleEntryPicked);
+}
+
+void UPreDeployPanelBase::HandleEquipRequest()
+{
+	if (!_curSelectedEntry) return;
+
+    // state에 정보 넘겨주기
+    int32 itemID = _curSelectedEntry->GetItemID();
+    _state->SetGunID(itemID);
+
+    if (_selectChangedEvent.IsBound())
+        _selectChangedEvent.Broadcast(itemID); // 패널에서 처리
 }

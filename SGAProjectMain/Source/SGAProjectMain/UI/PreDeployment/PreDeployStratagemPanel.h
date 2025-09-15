@@ -37,7 +37,7 @@ protected:
 	class UHorizontalBox* _slotPanel;
 
 	UPROPERTY()
-	TArray<UPreDeployEntryBase*> _selectedStgEntries; // 선택된 스트라타젬 엔트라
+	TArray<UPreDeployEntryBase*> _selectedStgEntries; // 선택된 스트라타젬 엔트리
 
 	int32 _curSlotIndex = -1;
 
