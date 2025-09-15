@@ -36,6 +36,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UHorizontalBox* _slotPanel;
 
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* _backgroundBorder;
+
 	UPROPERTY()
 	TArray<UPreDeployEntryBase*> _selectedStgEntries; // 선택된 스트라타젬 엔트리
 

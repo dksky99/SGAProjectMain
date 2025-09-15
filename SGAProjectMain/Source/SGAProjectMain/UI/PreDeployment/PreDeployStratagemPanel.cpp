@@ -4,6 +4,7 @@
 #include "PreDeployStratagemPanel.h"
 
 #include "Components/HorizontalBox.h"
+#include "Components/Border.h"
 #include "../../Object/Stratagem/Stratagem.h"
 #include "../../StratagemComponent.h"
 #include "PreDeployStratagemDetail.h"
@@ -55,6 +56,7 @@ void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
 
     _state = state;
 	_detailPanel->SetVisibility(ESlateVisibility::Hidden); // »ó¼¼ ÆÐ³Î ¼û±è
+	_backgroundBorder->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
@@ -146,6 +148,7 @@ void UPreDeployStratagemPanel::OpenPanel()
 		PlayAnimation(_slotPanelUp, 0.f, 1, EUMGSequencePlayMode::Forward, 2.f); // ½½·Ô ÆÐ³Î ¾Ö´Ï¸ÞÀÌ¼Ç Àç»ý
 
 	_sectionPanel->SetVisibility(ESlateVisibility::Visible); // ¼½¼Ç ÆÐ³Î Ç¥½Ã
+	_backgroundBorder->SetVisibility(ESlateVisibility::Visible);
     if (_curSlotIndex != -1)
     {
         int32 stgID = _state->GetStratagemIDs()[_curSlotIndex];
@@ -172,6 +175,7 @@ void UPreDeployStratagemPanel::ClosePanel()
 	
     _sectionPanel->SetVisibility(ESlateVisibility::Hidden); // ¼½¼Ç ÆÐ³Î ¼û±è
 	_detailPanel->SetVisibility(ESlateVisibility::Hidden); // »ó¼¼ ÆÐ³Î ¼û±è
+	_backgroundBorder->SetVisibility(ESlateVisibility::Hidden);
 
 	if (_panelOpenedEvent.IsBound())
 		_panelOpenedEvent.Broadcast(false); // Çãºê À§Á¬¿¡¼­ Ã³¸®
