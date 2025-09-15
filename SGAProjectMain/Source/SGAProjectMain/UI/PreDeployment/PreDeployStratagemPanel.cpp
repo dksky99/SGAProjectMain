@@ -97,7 +97,9 @@ void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
 
 void UPreDeployStratagemPanel::HandleSlotPicked(UPreDeployEntryBase* slot, int32 slotIndex)
 {
-    SelectSlot(slotIndex);
+	SelectSlot(slotIndex); // 슬롯 선택 처리
+
+
 }
 
 void UPreDeployStratagemPanel::SelectSlot(int32 slotIndex)
@@ -112,6 +114,8 @@ void UPreDeployStratagemPanel::SelectSlot(int32 slotIndex)
 
     auto curSlot = Cast<UPreDeployEntryBase>(_slotPanel->GetChildAt(_curSlotIndex));
 	curSlot->SetSelected(true); // 현재 슬롯 선택 표시
+
+	OpenPanel(); // 슬롯 선택 시 패널 열기
 }
 
 int32 UPreDeployStratagemPanel::FindEmptySlotIndex()
@@ -126,6 +130,34 @@ int32 UPreDeployStratagemPanel::FindEmptySlotIndex()
     return INDEX_NONE;
 }
 
+void UPreDeployStratagemPanel::OpenPanel()
+{
+    if (_isPanelOpen)
+        return;
+
+    _isPanelOpen = true;
+
+    if (_slotPanelUp)
+		PlayAnimation(_slotPanelUp, 0.f, 1, EUMGSequencePlayMode::Forward, 2.f); // 슬롯 패널 애니메이션 재생
+
+	_sectionPanel->SetVisibility(ESlateVisibility::Visible); // 섹션 패널 표시
+
+	if (_panelOpenedEvent.IsBound())
+	    _panelOpenedEvent.Broadcast(true); // 허브 위젯에서 처리
+}
+
 void UPreDeployStratagemPanel::ClosePanel()
 {
+    if (!_isPanelOpen)
+        return;
+
+    _isPanelOpen = false;
+
+    if (_slotPanelUp)
+        PlayAnimation(_slotPanelUp, 0.f, 1, EUMGSequencePlayMode::Reverse, 2.f); // 슬롯 패널 애니메이션 역재생
+	
+    _sectionPanel->SetVisibility(ESlateVisibility::Hidden); // 섹션 패널 숨김
+
+	if (_panelOpenedEvent.IsBound())
+		_panelOpenedEvent.Broadcast(false); // 허브 위젯에서 처리
 }

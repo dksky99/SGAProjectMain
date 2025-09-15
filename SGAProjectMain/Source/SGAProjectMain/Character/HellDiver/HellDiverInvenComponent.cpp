@@ -40,7 +40,6 @@ void UHellDiverInvenComponent::BeginPlay()
 	//if (!_gunClass1) return;
 	SpawnGun(_gunClass1);
 	SpawnGun(_gunClass2);
-	//SpawnGun(_gunClass3);
 
 	_hellDiver->InitWeapon();
 }
@@ -138,6 +137,10 @@ bool UHellDiverInvenComponent::CanSwitchGun(int32 index)
 	if (_gunSlot[index] == nullptr)
 		return false;
 
+	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (GI->GetGamePhase() != EGamePhase::InMission)
+		return false;
+
 	return true;
 }
 
@@ -183,7 +186,7 @@ void UHellDiverInvenComponent::DropSample()
 	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
 	FRotator dropRotation = FRotator::ZeroRotator;
 
-	ASampleResources* sampleBundleActor = GetOwner()->GetWorld()->SpawnActor<ASampleResources>(_sampleClass, dropLocation, dropRotation);
+	ASampleResources* sampleBundleActor = GetWorld()->SpawnActor<ASampleResources>(_sampleClass, dropLocation, dropRotation);
 
 	if (sampleBundleActor)
 	{

@@ -11,6 +11,14 @@
  * 
  */
 
+UENUM(BlueprintType)
+enum class EGamePhase : uint8
+{
+	None,
+	Lobby,
+	InMission
+};
+
 USTRUCT(BlueprintType)
 struct FSelectedStratagemSet
 {
@@ -49,7 +57,8 @@ public:
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
-
+	void SetGamePhase(EGamePhase newPhase) { _curGamePhase = newPhase; }
+	EGamePhase GetGamePhase() const { return _curGamePhase; }
 
 
 
@@ -65,4 +74,6 @@ private:
 
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;
+
+	EGamePhase _curGamePhase = EGamePhase::None;
 };

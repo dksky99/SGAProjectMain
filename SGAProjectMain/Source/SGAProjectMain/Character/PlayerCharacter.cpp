@@ -819,7 +819,8 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 		StartSprint();
-		_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
+		if (_staminaBarWidget)
+			_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
 		_pakourComponent->TriggerPakour();
@@ -1774,7 +1775,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_stratagemInputBuffer.Empty();
 	}
 
-	_stratagemWidget->OpenWidget(true);
+	if (_stratagemWidget)
+		_stratagemWidget->OpenWidget(true);
 
 	SetTPSZoomView();
 }

@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPanelOpened, bool);
+
 UCLASS()
 class SGAPROJECTMAIN_API UPreDeployStratagemPanel : public UPreDeployPanelBase
 {
@@ -20,11 +22,16 @@ public:
 	virtual void HandleEntryPicked(UPreDeployEntryBase* entry) override;
 	void HandleSlotPicked(UPreDeployEntryBase* slot, int32 slotIndex);
 
+	FOnPanelOpened _panelOpenedEvent;
+
+	bool IsPanelOpen() const { return _isPanelOpen; }
+
+	void OpenPanel();
+	void ClosePanel();
+
 protected:
 	void SelectSlot(int32 slotIndex);
 	int32 FindEmptySlotIndex();
-
-	void ClosePanel();
 
 	UPROPERTY(meta = (BindWidget))
 	class UHorizontalBox* _slotPanel;
@@ -33,4 +40,9 @@ protected:
 	TArray<UPreDeployEntryBase*> _selectedStgEntries; // 선택된 스트라타젬 엔트라
 
 	int32 _curSlotIndex = -1;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
+	UWidgetAnimation* _slotPanelUp;
+
+	bool _isPanelOpen = false;
 };

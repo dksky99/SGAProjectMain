@@ -17,6 +17,11 @@ void AMainGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (!GI) return;
+
+    GI->SetGamePhase(EGamePhase::InMission);
+
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
