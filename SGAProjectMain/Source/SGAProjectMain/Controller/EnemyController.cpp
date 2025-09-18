@@ -20,8 +20,9 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "../Character/Enemy/Enemy.h"
+#include "../Character/Enemy/BehaviorControlComponent.h"
 
-
+#include "Algo/MinElement.h"
 AEnemyController::AEnemyController()
 {
 
@@ -31,14 +32,14 @@ AEnemyController::AEnemyController()
 
     _sightConfig->SightRadius = 1000.f;
     _sightConfig->LoseSightRadius = 1200.f;
-    _sightConfig->PeripheralVisionAngleDegrees = 60.f;
+    _sightConfig->PeripheralVisionAngleDegrees = 120.f;
 
     //_sightConfig->SetMaxAge(5.f);
     //_sightConfig->AutoSuccessRangeFromLastSeenLocation = -1.f;
 
     _sightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    _sightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-    _sightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+    _sightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+    _sightConfig->DetectionByAffiliation.bDetectNeutrals = false;
 
     PerceptionComponent->ConfigureSense(*_sightConfig);
     PerceptionComponent->SetDominantSense(_sightConfig->GetSenseImplementation());
@@ -49,8 +50,8 @@ AEnemyController::AEnemyController()
     _hearingConfig->SetMaxAge(3.f);
 
     _hearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-    _hearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-    _hearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    _hearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+    _hearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
     PerceptionComponent->ConfigureSense(*_hearingConfig);
 
 
@@ -58,15 +59,31 @@ AEnemyController::AEnemyController()
     
     PerceptionComponent->ConfigureSense(*_damageSenseConfig);
 
+    _behaviorControlComponent = CreateDefaultSubobject<UBehaviorControlComponent>("Behavior Control");
 
+    TeamId = FGenericTeamId(1);
+
+    PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyController::OnTargetDetected);
+    PerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AEnemyController::PerceptionUpdated);
 }
 
 void AEnemyController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    UBlackboardComponent* temp = Blackboard;
+    AEnemy* pawnTemp = Cast<AEnemy>(InPawn);
+    if (pawnTemp)
+    {
+        _pawn = pawnTemp;
+        SetAlertStep(_pawn->GetUnitState());
+    }
 
+    UBlackboardComponent* temp = Blackboard;
+    IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(InPawn);
+    if (TeamAgent)
+    {
+        TeamAgent->SetGenericTeamId(TeamId);
+    }
     if (UseBlackboard(_blackBoard, temp))
     {
 
@@ -103,8 +120,8 @@ void AEnemyController::OnUnPossess()
 void AEnemyController::BeginPlay()
 {
     Super::BeginPlay();
-    PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyController::OnTargetDetected);
-    PerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AEnemyController::PerceptionUpdated);
+    _curTarget = nullptr;
+
 }
 
 void AEnemyController::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
@@ -152,14 +169,63 @@ void AEnemyController::PerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 
 void AEnemyController::HandleSensedSight(AActor* Actor)
 {
+    if (Actor == nullptr)
+        return;
+    ITargetable* temp = Cast<ITargetable>(Actor);
+    if (temp == nullptr)
+        return;
+
+    _curTarget = Actor;
+   
+       // AddTargetActor(Actor);
+        UE_LOG(LogTemp, Display, TEXT("Find Target %s"), *Actor->GetName());
 }
 
 void AEnemyController::HandleSensedHearing(FVector directionHeared)
 {
+    _lastSensedLoc = directionHeared;
+    if (_isReadyToStack == false)
+        return;
+    _isReadyToStack = false;
+    GetWorld()->GetTimerManager().SetTimer(
+        _alertStackTimer, // 관리할 타이머 핸들
+        this,                      // 타이머가 만료됐을 때 함수를 호출할 오브젝트
+        &AEnemyController::ReadyToStack, // 호출될 함수
+        _alertStackTime,                     // 지연 시간 (초)
+        false                      // 반복 여부 (false = 한 번만 실행)
+    );
+    
+	 _curLoudnessStack +=1.f;
+    
+     UE_LOG(LogTemp, Display, TEXT("%s LoudnessStack : %f"),*_pawn->GetName(), _curLoudnessStack);
+
+     if (_pawn->GetUnitState() == EUnitState::InBattle)
+     {
+         return;
+     }
+     if (GetWorld()->GetTimerManager().IsTimerActive(_alertResetTimer))
+     {
+         // 이미 실행 중이라면, 기존 타이머를 중단하고 새로 시작
+         GetWorld()->GetTimerManager().ClearTimer(_alertResetTimer);
+     }
+     GetWorld()->GetTimerManager().SetTimer(
+         _alertResetTimer, // 관리할 타이머 핸들
+         this,                      // 타이머가 만료됐을 때 함수를 호출할 오브젝트
+         &AEnemyController::ResetAlertStack, // 호출될 함수
+         _alertResetTime,                     // 지연 시간 (초)
+         false                      // 반복 여부 (false = 한 번만 실행)
+     );
 }
 
 void AEnemyController::HandleSensedDamage(AActor* Actor)
 {
+
+    ITargetable* temp = Cast<ITargetable>(Actor);
+    if (temp == nullptr)
+        return;
+    UE_LOG(LogTemp, Display, TEXT("Damaged"));
+    AddTargetActor(Actor);
+
 }
 
 FAIStimulus AEnemyController::CanSenseActor(AActor* Actor, EAIPerceptionSense AIPerceptionSense)
@@ -206,23 +272,109 @@ FAIStimulus AEnemyController::CanSenseActor(AActor* Actor, EAIPerceptionSense AI
     return ResultStimulus;
 }
 
+void AEnemyController::SetAlertStep(EUnitState unitState)
+{
+    switch (unitState)
+    {
+    case EUnitState::Stay:
+    case EUnitState::Patrol:
+        SetLowAlert();
+        break;
+    case EUnitState::Weak_Alert:
+        SetMediumAlert();
+        break;
+    case EUnitState::Strong_Alert:
+    case EUnitState::InBattle:
+        SetHighAlert();
+        break;
+    case EUnitState::MAX:
+        break;
+    default:
+        break;
+    }
+}
+
 void AEnemyController::SetNone()
 {
-    _soundCheckThreshold = 2.0f;
+    if (_alertStep == EAIAlertStep::None)
+        return;
+    _alertStep = EAIAlertStep::None;
+    _hearingConfig->HearingRange = 0.f;
+    _sightConfig->SightRadius = 0.f;
 }
 
 void AEnemyController::SetLowAlert()
 {
+    if (_alertStep == EAIAlertStep::LowAlert)
+        return;
+    _alertStep = EAIAlertStep::LowAlert;
 
-    _soundCheckThreshold = 0.8f;
+    _hearingConfig->HearingRange = 500.f;
+    _sightConfig->SightRadius = 1000.f;
 }
 
 void AEnemyController::SetMediumAlert()
 {
-    _soundCheckThreshold = 0.5f;
+    if (_alertStep == EAIAlertStep::MediumAlert)
+        return;
+    _alertStep = EAIAlertStep::MediumAlert;
+    _hearingConfig->HearingRange = 700.f;
+    _sightConfig->SightRadius = 1500.f;
 }
 
 void AEnemyController::SetHighAlert()
 {
-    _soundCheckThreshold = 0.3f;
+    if (_alertStep == EAIAlertStep::HighAlert)
+        return;
+    _alertStep = EAIAlertStep::HighAlert;
+    _hearingConfig->HearingRange = 1000.f;
+    _sightConfig->SightRadius = 2000.f;
+}
+
+void AEnemyController::AddTargetActor(AActor* target)
+{
+    _targets.AddUnique(target);
+
+    if (_curTarget == nullptr)
+        _curTarget = target;
+
+}
+
+void AEnemyController::AddAlertStack(float loudness)
+{
+
+    _curLoudnessStack += loudness;
+}
+
+void AEnemyController::ReadyToStack()
+{
+    _isReadyToStack = true;
+}
+
+void AEnemyController::ResetAlertStack()
+{
+
+    _curLoudnessStack = 0.0f;
+}
+
+AActor* AEnemyController::GetNewTargetActor()
+{
+    RefreshTargets();
+    if(_targets.IsEmpty())
+        return nullptr;
+    AActor* pawn = GetPawn();
+    auto min = Algo::MinElementBy(_targets, [pawn](AActor* target) {return target->GetDistanceTo(pawn); });
+    
+    return *min;
+
+    
+}
+
+void AEnemyController::RefreshTargets()
+{
+    _targets.RemoveAll([](AActor* target)
+        {
+
+            return (target == nullptr || target->IsHidden()||IsValid(target)==false);
+        });
 }

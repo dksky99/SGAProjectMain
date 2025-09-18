@@ -46,6 +46,11 @@ public:
 
 	bool IsMoving();
 
+	bool ActionBegin();
+	void ActionEnd() { _isActing = false; }
+
+	bool IsActing() { return _isActing; }
+
 	virtual void Reset();
 
 protected:
@@ -56,5 +61,7 @@ protected:
 	UPROPERTY(BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "EAbnormalityState"))
 	int32 _activeAbnormalities;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool _isActing=false;
 		
 };

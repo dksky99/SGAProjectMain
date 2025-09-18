@@ -36,6 +36,7 @@
 #include "../UI/CompassWidget.h"
 #include "../UI/SampleWidget.h"
 #include "../UI/MissionWidget.h"
+#include "../UI/InventoryWheelWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -192,9 +193,7 @@ void APlayerCharacter::BeginPlay()
 		_sampleWidget->AddToViewport();
 
 	if (_missionWidget)
-	{
 		_missionWidget->AddToViewport();
-	}
 
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
@@ -277,7 +276,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_interactAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 		enhancedInputComponent->BindAction(_stimPackAction, ETriggerEvent::Started, this, &APlayerCharacter::OnUseStimPack);
 		enhancedInputComponent->BindAction(_mapAction, ETriggerEvent::Started, this, &APlayerCharacter::OpenMap);
-		enhancedInputComponent->BindAction(_invenAction, ETriggerEvent::Started, this, &APlayerCharacter::DropBackpack); // юс╫ц
+		enhancedInputComponent->BindAction(_inventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::HoldInvenKey);
+		enhancedInputComponent->BindAction(_inventoryAction, ETriggerEvent::Completed, this, &APlayerCharacter::ReleaseInvenKey);
 	}
 }
 
@@ -611,7 +611,7 @@ void APlayerCharacter::TryPakour(const FInputActionValue& value)
 		case ECharacterState::Standing:
 		case ECharacterState::Crouching:
 		{
-			UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
+			//UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
 			_pakourComponent->TriggerPakour();
 
 		}
@@ -819,7 +819,8 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 		StartSprint();
-		_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
+		if (_staminaBarWidget)
+			_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
 		_pakourComponent->TriggerPakour();
@@ -1209,7 +1210,7 @@ void APlayerCharacter::DefaultLook()
 	if ( FMath::Abs(standard) > 50.0f||GetCharacterMovement()->Velocity.Size() > 0.01f )
 	{
 		float targetYaw = FMath::RoundToFloat(controlRot.Yaw / 90.f) * 90.f;
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
+		//UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 
 		_isTurnLeft = (standard < -50.f);
 		_isTurnRight = (standard > 50.0f);
@@ -1218,7 +1219,7 @@ void APlayerCharacter::DefaultLook()
 	}
 	else if (FMath::Abs(standard) < 1.0f)
 	{
-		UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
+		//UE_LOG(LogTemp, Error, TEXT("DeltaAngle :%f"), standard);
 		_isTurnLeft = false;
 		_isTurnRight = false;
 		GetCharacterMovement()->bUseControllerDesiredRotation = false;
@@ -1715,6 +1716,47 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
 }
 
+void APlayerCharacter::HoldInvenKey()
+{
+	if (!_invenWidgetClass) return;
+
+	_invenWidget = CreateWidget<UInventoryWheelWidget>(GetWorld(), _invenWidgetClass);
+	_invenWidget->InitializeWheel(_invenComponent);
+	_invenWidget->AddToViewport();
+}
+
+void APlayerCharacter::ReleaseInvenKey()
+{
+	if (!_invenWidget) return;
+
+	const int32 curIndex = _invenWidget->GetCurIndex();
+
+	_invenWidget->RemoveFromParent();
+	_invenWidget = nullptr;
+
+	ExecuteInvenAction(curIndex);
+}
+
+void APlayerCharacter::ExecuteInvenAction(int32 index)
+{
+	switch (index)
+	{
+	case 0: 
+		_invenComponent->DropSample();
+		_sampleWidget->SetSampleCount(_invenComponent->GetSampleBundle());
+		break;
+	case 1:
+		_invenComponent->DropBackpack();
+		 break;
+	case 2:
+		break;
+	case 3:
+		_invenComponent->DropGun(2);
+		break;
+	default: break;
+	}
+}
+
 void APlayerCharacter::AddSample(FSampleBundle sample)
 {
 	Super::AddSample(sample);
@@ -1726,11 +1768,6 @@ void APlayerCharacter::AddSample(FSampleBundle sample)
 	}
 }
 
-void APlayerCharacter::DropBackpack()
-{
-	_invenComponent->DropBackpack();
-}
-
 void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 {
 	if (_stateComponent->GetActionState() == EActionState::None)
@@ -1739,7 +1776,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_stratagemInputBuffer.Empty();
 	}
 
-	_stratagemWidget->OpenWidget(true);
+	if (_stratagemWidget)
+		_stratagemWidget->OpenWidget(true);
 
 	SetTPSZoomView();
 }

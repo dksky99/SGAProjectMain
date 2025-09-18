@@ -3,6 +3,11 @@
 
 #include "PreDeploymentState.h"
 
+UPreDeploymentState::UPreDeploymentState()
+{
+	_stratagemIDs.Init(-1, 4);
+}
+
 void UPreDeploymentState::SetGunID(int32 id)
 {
 	if (id < 100)
@@ -13,11 +18,10 @@ void UPreDeploymentState::SetGunID(int32 id)
 		_supportGunID = id;
 }
 
-void UPreDeploymentState::SetStratagemID(int32 id)
+void UPreDeploymentState::SetStratagemID(int32 index, int32 id)
 {
-	if (!_stratagemIDs.Contains(id))
+	if (index >= 0 && index < _stratagemIDs.Num())
 	{
-		_stratagemIDs.Add(id);
-		_stratagemIDs.Sort();
+		_stratagemIDs[index] = id;
 	}
 }

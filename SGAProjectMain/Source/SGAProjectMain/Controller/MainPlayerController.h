@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GenericTeamAgentInterface.h"
 #include "MainPlayerController.generated.h"
 
 /**
@@ -29,5 +30,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	class UInputMappingContext* _inputMappingContext;
 
+	FGenericTeamId TeamId;
 
 };

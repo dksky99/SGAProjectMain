@@ -10,9 +10,11 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Components/Button.h"
+#include "../Character/PlayerCharacter.h"
 
 AMainPlayerController::AMainPlayerController()
 {
+	TeamId = FGenericTeamId((int32)ETeamID::HellDiver);
 }
 
 void AMainPlayerController::PostInitializeComponents()
@@ -37,6 +39,12 @@ void AMainPlayerController::BeginPlay()
 void AMainPlayerController::OnPossess(APawn* pawn)
 {
 	Super::OnPossess(pawn);
+
+	IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(pawn);
+	if (TeamAgent)
+	{
+		TeamAgent->SetGenericTeamId(TeamId);
+	}
 }
 
 void AMainPlayerController::OnUnPossess()

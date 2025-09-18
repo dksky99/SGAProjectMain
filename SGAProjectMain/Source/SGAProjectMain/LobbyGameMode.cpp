@@ -15,6 +15,8 @@ void ALobbyGameMode::BeginPlay()
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
 
+	GI->SetGamePhase(EGamePhase::Lobby);
+
     APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     if (player)
     {

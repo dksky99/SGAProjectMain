@@ -44,6 +44,7 @@ public:
 	FOnMoveAnimStateChanged _moveChanged;
 	FOnLookAnimStateChanged _lookChanged;
 
+
 protected:
 	bool MoveStateChanged(FString curState);
 	bool LookStateChanged(FString curState);
@@ -136,8 +137,6 @@ protected:
 	bool _isRolling = false;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	bool _isVaulting = false;
 
 
 

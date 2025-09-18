@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"	//감각 구분 제어, 감각 자극 관리
+#include "GenericTeamAgentInterface.h"
+#include "../Interface/Targetable.h"
+#include "../Character/Enemy/Enemy.h"
 #include "EnemyController.generated.h"
 
 
@@ -22,9 +26,9 @@ UENUM(BlueprintType)
 enum class EAIAlertStep : uint8
 {
 	None UMETA(DisplayName = "None"),
-	LowAlert UMETA(DisplayName = "LowAlert"),
-	MediumAlert UMETA(DisplayName = "MediumAlert"),
-	HighAlert UMETA(DisplayName = "HighAlert"),
+	LowAlert UMETA(DisplayName = "LowAlert"),	//청각거리 300, 시야거리 1000
+	MediumAlert UMETA(DisplayName = "MediumAlert"),//청각거리 500, 시야거리 1500
+	HighAlert UMETA(DisplayName = "HighAlert"),// 청각거리 700, 시야거리 2000
 	MAX
 };
 
@@ -55,14 +59,30 @@ public:
 
 	FAIStimulus CanSenseActor(AActor* Actor, EAIPerceptionSense AIPerceptionSense);
 
+	void SetAlertStep(EUnitState unitState);
 	void SetNone();
 	void SetLowAlert();
 	void SetMediumAlert();
 	void SetHighAlert();
+	void AddTargetActor(class AActor* target);
+
+	void AddAlertStack(float loudness);
+	void ReadyToStack();
+	void ResetAlertStack();
+
+	float GetAlertStack() { return _curLoudnessStack; }
+	class AActor* GetCurTargetActor() { return _curTarget; }
+	//블랙보드에 타겟을 갱신할 목적. 지금 적용된타겟보다 더 가까운 위치에 타겟이될수있는 오브젝트가 있다면 그 오브젝트로 바뀌게될 예정.
+	class AActor* GetNewTargetActor();
+	void RefreshTargets();
+	
+	FVector GetTargetLoc() { return _lastSensedLoc; }
+
+	class UBehaviorControlComponent* GetBehaviorControl() { return _behaviorControlComponent; }
 
 public:
 
-	UPROPERTY()
+	
 	class AEnemy* _pawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -74,19 +94,46 @@ public:
 	class UBehaviorTree* _behaviorTree;
 
 protected:
+	//스택이 너무빠른시간내에 다 차오르지 않게하기위해
 	UPROPERTY()
-	FTimerHandle _timerHandle;
+	FTimerHandle _alertStackTimer;
+	float _alertStackTime = 1.0f;
+	bool _isReadyToStack = true;
+	//얕은경계와 강한경계때 15초이상 소리를 듣지 못하면 경계치를 리셋
+	UPROPERTY()
+	FTimerHandle _alertResetTimer;
+	float _alertResetTime = 15.0f;
 
-	TArray<class ACharacterBase*> _targets;
+	//타겟
+	UPROPERTY(VisibleAnywhere)
+	TArray<class AActor*> _targets;
 
+
+	 AActor* _curTarget=nullptr;
+
+	//경계치에따른 감각 확장.
 	UPROPERTY(VisibleAnywhere ,Category="AIertStep")
 	EAIAlertStep _alertStep = EAIAlertStep::None;
 
-	float _soundCheckThreshold = 1.0f;
+
+	//경계치
+	float _highAlertThreshold = 5.0f;
+	float _curLoudnessStack = 0.0f;
+
+	//마지막 소리가 들린위치
+	FVector _lastSensedLoc;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Behavior", meta = (AllowPrivateAccess = "true"))
+	class UBehaviorControlComponent* _behaviorControlComponent;
 
 	UPROPERTY()
 	class UAISenseConfig_Sight* _sightConfig;
+	UPROPERTY()
 	class UAISenseConfig_Hearing* _hearingConfig;
+	UPROPERTY()
 	class UAISenseConfig_Damage* _damageSenseConfig;
 
+	FGenericTeamId TeamId;
+	
 };

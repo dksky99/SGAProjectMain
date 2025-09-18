@@ -39,6 +39,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
     _statComp= Cast<UHellDiverStatComponent>(Super::_statComponent);
     _stateComponent = CreateDefaultSubobject<UHellDiverStateComponent>("State");
+    Super::_stateComp = _stateComponent;
     _stimPackComponent = CreateDefaultSubobject<UStimPackComponent>("StimPack");
 
     _stratagemComponent = CreateDefaultSubobject<UStratagemComponent>(TEXT("StratagemComponent"));
@@ -51,6 +52,7 @@ AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
 
     _invenComponent = CreateDefaultSubobject<UHellDiverInvenComponent>(TEXT("InvenComponent"));
 
+    SetGenericTeamId(FGenericTeamId((int32)ETeamID::HellDiver));
 }
 
 void AHellDiver::BeginPlay()
@@ -448,7 +450,9 @@ void AHellDiver::Proning()
 
 void AHellDiver::InitWeapon()
 {
-    EquipGun(0);
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (GI->GetGamePhase() == EGamePhase::InMission)
+        EquipGun(0);
 }
 
 void AHellDiver::EquipGun(int32 index)

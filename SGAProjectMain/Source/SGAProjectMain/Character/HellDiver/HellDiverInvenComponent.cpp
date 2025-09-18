@@ -37,10 +37,9 @@ void UHellDiverInvenComponent::BeginPlay()
 	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
 	ApplyLoadOut(GI->GetPreDeployState());
 
-	if (!_gunClass1) return;
+	//if (!_gunClass1) return;
 	SpawnGun(_gunClass1);
 	SpawnGun(_gunClass2);
-	SpawnGun(_gunClass3);
 
 	_hellDiver->InitWeapon();
 }
@@ -54,7 +53,7 @@ void UHellDiverInvenComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
 	
 	_gunClass1 = GI->GetGunClassFromTable(preDeployState->GetPrimaryGunID());
 	_gunClass2 = GI->GetGunClassFromTable(preDeployState->GetSecondaryGunID());
-	_gunClass3 = GI->GetGunClassFromTable(preDeployState->GetSupportGunID());
+	//_gunClass3 = GI->GetGunClassFromTable(preDeployState->GetSupportGunID());
 }
 
 // Called every frame
@@ -67,6 +66,7 @@ void UHellDiverInvenComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UHellDiverInvenComponent::SpawnGun(TSubclassOf<class AGunBase> gunClass)
 {
+	if (!gunClass) return;
 	AGunBase* gun = GetWorld()->SpawnActor<AGunBase>(gunClass);
 	gun->SetOwner(_hellDiver);
 	gun->InitializeGun();
@@ -138,11 +138,20 @@ bool UHellDiverInvenComponent::CanSwitchGun(int32 index)
 	if (_gunSlot[index] == nullptr)
 		return false;
 
+	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (GI->GetGamePhase() != EGamePhase::InMission)
+		return false;
+
 	return true;
 }
 
 void UHellDiverInvenComponent::EquipBackpack(ABackpack* backpack)
 {
+	if (_backpack) // 이미 배낭이 있을 경우
+	{
+		DropBackpack();
+	}
+
 	_backpack = backpack;
 }
 
@@ -178,7 +187,7 @@ void UHellDiverInvenComponent::DropSample()
 	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
 	FRotator dropRotation = FRotator::ZeroRotator;
 
-	ASampleResources* sampleBundleActor = GetOwner()->GetWorld()->SpawnActor<ASampleResources>(_sampleClass, dropLocation, dropRotation);
+	ASampleResources* sampleBundleActor = GetWorld()->SpawnActor<ASampleResources>(_sampleClass, dropLocation, dropRotation);
 
 	if (sampleBundleActor)
 	{

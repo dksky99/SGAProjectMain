@@ -9,6 +9,14 @@
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class EStratagemType : uint8
+{
+	Offensive,
+	Defensive,
+	Supply
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API AStratagem : public AThrowable
 {
@@ -26,6 +34,8 @@ public:
 
 	const FName GetStgName() const { return _name; }
 	class UTexture2D* GetStgIcon() const { return _icon; }
+	EStratagemType GetStratagemType() const { return _type; }
+	float GetDeployDelay() const { return _deployDelay; }
 
 
 protected:
@@ -43,6 +53,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	FName _name;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
+	EStratagemType _type;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	class UTexture2D* _icon;

@@ -34,4 +34,7 @@ private:
 
 	UPROPERTY()
 	class APlayerCharacter* _player;
+
+	UPROPERTY()
+	class APreviewStage* _previewStage;
 };

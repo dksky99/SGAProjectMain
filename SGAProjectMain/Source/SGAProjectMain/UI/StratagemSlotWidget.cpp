@@ -15,8 +15,7 @@ void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidge
 
     Super::InitializeSlot(combo);
 
-    auto text = stg->GetStgName().ToString();
-    _stgNameText->SetText(FText::FromString(text));
+    _stgNameText->SetText(FText::FromName(stg->GetStgName()));
 
     _stgIcon->SetBrushFromTexture(stg->GetStgIcon());
 

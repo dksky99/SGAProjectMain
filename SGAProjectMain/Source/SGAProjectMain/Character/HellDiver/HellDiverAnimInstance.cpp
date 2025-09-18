@@ -51,7 +51,6 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_muzzleTrans = _hellDiver->GetMuzzleTransform();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
-			_isVaulting = _hellDiver->GetStateComponent()->IsVaulting();
 			_targetPos = _hellDiver->GetTargetLoc();
 			GetAimOffset(DeltaSeconds);
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
@@ -84,10 +83,10 @@ void UHellDiverAnimInstance::AnimNotify_Reload()
 
 void UHellDiverAnimInstance::AnimNotify_FootStep()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Footstep 애님 노티파이 실행됨"));
+	UE_LOG(LogTemp, Warning, TEXT("Footstep Notify"));
 	
 	if (!_hellDiver) return;
-	_hellDiver->MakeSound(_moveSpeed / _hellDiver->GetStatComponent()->GetDefaultSpeed(), "Footstep");
+	_hellDiver->MakeSound(_speed / _hellDiver->GetStatComponent()->GetDefaultSpeed(), "Footstep");
 
 }
 
@@ -179,7 +178,7 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 		return false;
 	if (_actionState != EActionState::None)
 		return false;
-	if (_isVaulting)
+	if (_isActing)
 		return false;
 	if (gun == nullptr)
 		return false;
@@ -200,7 +199,7 @@ bool UHellDiverAnimInstance::IsUsingFocusing()
 		return false;
 	if (_actionState != EActionState::None)
 		return false;
-	if (_isVaulting)
+	if (_isActing)
 		return false;
 	if (_hellDiver->GetStateComponent()->IsWeaponChanging())
 		return false;
@@ -450,7 +449,7 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 
 	//두 선의 내적으로 일치하는정도를 확인.1일수록 일치 -1이면 반대 0이면 수직
 	float dot = FVector::DotProduct(charForward, controlForward);
-	UE_LOG(LogTemp, Display, TEXT("pitchDot : %f "), dot);
+	//UE_LOG(LogTemp, Display, TEXT("pitchDot : %f "), dot);
 	//일치도가 일정이상 높아지면 굳이 값을 더할필요없다.
 	if (dot > 0.99999f)
 	{
@@ -467,7 +466,7 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
 
-	UE_LOG(LogTemp, Display, TEXT("pitchDirection : %f "), directionSign);
+	//UE_LOG(LogTemp, Display, TEXT("pitchDirection : %f "), directionSign);
 	// --- 3. 최종 부호 있는 각도 계산 ---
 	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
 	float signedAngle = 400.f * FMath::Sign(directionSign);
@@ -475,7 +474,7 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 
 	_addPitch += signedAngle * deltaTime * (1.1f - dot);
 	_addPitch = FMath::Clamp(_addPitch, -90.f, 90.f);
-	UE_LOG(LogTemp, Display, TEXT("AddPitch : %f "), _addPitch);
+	//UE_LOG(LogTemp, Display, TEXT("AddPitch : %f "), _addPitch);
 }
 
 void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
@@ -516,11 +515,6 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 	FVector charForward = gunTrans.GetRotation().Vector().GetSafeNormal();
 	//비교할 방향. 컨트롤러의 방향이나 조준선.
 	FVector controlForward = _targetPos - gunTrans.GetLocation();
-
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + controlForward * 500.f, FColor::Red, false, 0.1f, 0, 2.0f);
-
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + charForward * 500.f, FColor::Blue, false, 0.1f, 0, 2.0f);
-
 	controlForward = controlForward.GetSafeNormal();
 	charForward = charForward.GetSafeNormal();
 	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
@@ -551,7 +545,7 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 	_addYaw += signedAngle * deltaTime * (1.1f - dot);
 
 	_addYaw = FMath::Clamp(_addYaw, -90.f, 90.f);
-	UE_LOG(LogTemp, Display, TEXT("AddYaw : %f "), _addYaw);
+	//UE_LOG(LogTemp, Display, TEXT("AddYaw : %f "), _addYaw);
 
 
 }

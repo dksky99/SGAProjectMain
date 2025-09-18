@@ -20,8 +20,12 @@ public:
 	virtual void PickupItem(class AHellDiver* player);
 
 	USkeletalMeshComponent* GetMesh() { return _skeletalMesh; }
+	FText GetBackpackName() { return _backpackName; }
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Item")
 	USkeletalMeshComponent* _skeletalMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Item");
+	FText _backpackName;
 };

@@ -72,22 +72,17 @@ void UPakourComponent::TriggerPakour()
 		return;
 	FVector hitLoc;
 	FRotator normal;
-	UE_LOG(LogTemp, Display, TEXT("TriggerPakour"));
 	bool bResult=DetectWall(hitLoc, normal);
 	if (bResult == false)
 	{
 
 		return;
 	}
-	UE_LOG(LogTemp, Display, TEXT("Detect"));
 
 	ScanWall(hitLoc, normal);
 
-	UE_LOG(LogTemp, Display, TEXT("ScanFinish"));
 	MeasureWall();
-	UE_LOG(LogTemp, Display, TEXT("MeasureFinish"));
 	TryPakour();
-	UE_LOG(LogTemp, Display, TEXT("TryPakour"));
 }
 
 bool UPakourComponent::DetectWall(FVector& hitLocation, FRotator& normal)
