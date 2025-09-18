@@ -12,35 +12,6 @@ void AShotgun::Fire()
 {
 	FColor drawColor = FColor::Green;
 
-	// 탄창, 약실 모두 비었음
-	if (_curAmmo <= 0 && !_isChamberLoaded)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
-		StopFire();
-		return;
-	}
-
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
-
-	if (_fireMode == EFireMode::FireBoltAction)
-	{
-		if (!_canFire) return;
-
-		_canFire = false;
-		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, _gunData._fireInterval, false);
-	}
-
-	if (_fireMode == EFireMode::FireBurst)
-	{
-		if (_burstCount <= 0)
-		{
-			StopFire();
-			return;
-		}
-		_burstCount--;
-	}
-
 	ApplyFireRecoil();
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사

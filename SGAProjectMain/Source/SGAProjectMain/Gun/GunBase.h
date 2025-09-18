@@ -15,8 +15,8 @@ UCLASS()
 class SGAPROJECTMAIN_API AGunBase : public AItemBase
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AGunBase();
 
@@ -24,12 +24,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual bool CanFire();
+
 	virtual void StartFire();
-	virtual void Fire();
 	virtual void StopFire();
 
 	virtual void ExecuteShot(); // 히트스캔
@@ -56,8 +57,8 @@ public:
 	void ApplyFireRecoil(); // 사격에 따른 반동
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
 
-	FHitResult GetHitResult();
-	
+	FHitResult GetHitResult(ECollisionChannel TraceChannel);
+
 	void ChangeFireMode();
 	void ChangeTacticalLightMode();
 	void ChangeScopeMode();
@@ -69,15 +70,15 @@ public:
 
 	virtual void PlayFireEffect();
 
-	void ResetCanFire() { _canFire = true; }
-
 	const FGunData& GetGunData() { return _gunData; }
-	void SetGunData(const FGunData& gunData) { _gunData = gunData; }
+	void SetGunData(const FGunData& gunData);
+
+	EFireMode GetCurFireMode();
 	int32 GetCurAmmo() { return _isChamberLoaded ? _curAmmo + 1 : _curAmmo; }
-	EFireMode GetCurFireMode() { return _fireMode; }
 	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
 	int32 GetCurScopeMode() { return _scopeMode; }
 	USkeletalMeshComponent* GetMesh() { return _gunMesh; }
+	class AHellDiver* GetOwnerCharacter() { return _owner; }
 
 
 
@@ -93,8 +94,14 @@ public:
 	FTransform GetLeftHandleTrans();
 
 protected:
+	virtual void Fire();
+
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _gunMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/GunComponent")
+	class UGunFireComponent* _fireComp;
+
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class AHellDiver* _owner;
@@ -106,11 +113,6 @@ protected:
 	int32 _gunID; // gunData 초기화용
 
 	bool _isActive = false;
-
-	FTimerHandle _fireTimer;
-	// 볼트액션용
-	FTimerHandle _boltActionTimer;
-	bool _canFire = true;
 
 	int32 _curAmmo;
 	int32 _curMag;
@@ -141,12 +143,6 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* _crosshair;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	EFireMode _fireMode = EFireMode::FireAuto;
-	int32 _fireIndex = 0;
-	int32 _burstCount = 3;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class USpotLightComponent* _tacticalLight;

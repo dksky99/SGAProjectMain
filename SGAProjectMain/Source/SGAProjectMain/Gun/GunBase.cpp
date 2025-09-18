@@ -8,6 +8,8 @@
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
+#include "GunFireComponent.h"
+
 #include "../CGameInstance.h"
 
 #include "../Character/HellDiver/HellDiver.h"
@@ -31,6 +33,9 @@ AGunBase::AGunBase()
 	_gunMesh->SetGenerateOverlapEvents(true);
 	_gunMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	RootComponent = _gunMesh;
+
+	_fireComp = CreateDefaultSubobject<UGunFireComponent>(TEXT("GunFireComponent"));
+
 
 	_interactionMark->SetupAttachment(RootComponent);
 
@@ -68,6 +73,8 @@ void AGunBase::BeginPlay()
 		const auto data = gameInstance->GetGunDataFromTable(_gunID);
 		SetGunData(data);
 	}
+
+	_fireComp->_fireEvent.AddUObject(this, &AGunBase::Fire);
 
 	_interactableInfo._interactionText = _gunData._name;
 	_interactableInfo._type = EInteractableIconType::Gun;
@@ -143,7 +150,6 @@ void AGunBase::BeginPlay()
 
 	_curAmmo = _gunData._maxAmmo;
 	_curMag = _gunData._initialMag;
-	_fireMode = _gunData._fireModes[0];
 	_tacticalLightMode = _gunData._lightModes[0];
 }
 
@@ -151,17 +157,15 @@ void AGunBase::BeginPlay()
 void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	//if (!camera) return;
 	
 	RecoverRecoil(DeltaTime);
 	if (!_isActive) return;
+	if (!_owner) return;
 
 	if (!_owner->GetStateComponent()->IsAiming())
 		return;
 
-	FHitResult hitResult= GetHitResult();
+	FHitResult hitResult = GetHitResult(ECC_Visibility); // 가시성 충돌 채널 (UI용)
 	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 
 	if (_laserpointer)
@@ -173,70 +177,29 @@ void AGunBase::Tick(float DeltaTime)
 		_marker->SetActorLocation(hitPoint);
 }
 
-void AGunBase::StartFire()
+bool AGunBase::CanFire()
 {
 	if (!_owner)
-		return;
-	
-	if(_owner->GetStateComponent()->IsReloading())
-		return;
+		return false;
+	if (_owner->GetStateComponent()->IsReloading())
+		return false;
+	if (_curAmmo <= 0 && !_isChamberLoaded)
+		return false;
+	return true;
+}
 
-	_owner->GetStateComponent()->SetFiring(true);
+void AGunBase::StartFire()
+{
+	if (!CanFire()) return;
 
-	GetWorldTimerManager().ClearTimer(_fireTimer);
-
-	switch (_fireMode)
-	{
-	case EFireMode::FireAuto: // 누르는 동안 발사
-		GetWorldTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true, 0.0f);
-		break;
-	case EFireMode::FireSemi: // 한 번만 발사
-	case EFireMode::FireBoltAction: // 볼트액션
-		Fire();
-		StopFire();
-		break;
-	case EFireMode::FireBurst: // 3발 발사
-		_burstCount = 3;
-		GetWorld()->GetTimerManager().SetTimer(_fireTimer, this, &AGunBase::Fire, _gunData._fireInterval, true);
-	}
+	_fireComp->StartFire();
 }
 
 void AGunBase::Fire()
 {
-	// 탄창, 약실 모두 비었음
-	if (_curAmmo <= 0 && !_isChamberLoaded)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
-		StopFire();
-		return;
-	}
-	
-	/*auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;*/
-
-	if (_fireMode == EFireMode::FireBoltAction)
-	{
-		if (!_canFire) return;
-
-		_canFire = false;
-		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, _gunData._fireInterval, false);
-	}
-
-	if (_fireMode == EFireMode::FireBurst)
-	{
-		if (_burstCount <= 0)
-		{
-			StopFire();
-			return;
-		}
-		_burstCount--;
-	}
-
-
-
-
-	ApplyFireRecoil(); // 반동 계산
 	ExecuteShot(); // 라인트레이스
+	
+	ApplyFireRecoil(); // 반동 계산
 
 	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
 	{
@@ -255,59 +218,20 @@ void AGunBase::Fire()
 
 void AGunBase::StopFire()
 {
-	if (_owner)
-	{
-		_owner->GetStateComponent()->SetFiring(false);
-	}
-
-	GetWorldTimerManager().ClearTimer(_fireTimer);
+	_fireComp->StopFire();
 }
 
 void AGunBase::ExecuteShot()
 {
 	FColor drawColor = FColor::Green; // 디버깅용
 
-	FHitResult hitResult = GetHitResult();
-	/*ApplyFireRecoil();
-
-	FRotator cameraRotation = camera->GetCameraRotation();
-	FVector muzzleLocation;
-
-	if (_mesh && _mesh->DoesSocketExist(TEXT("Muzzle")))
-	{
-		muzzleLocation = _mesh->GetSocketLocation(TEXT("Muzzle"));
-	}
-	else
-	{
-		muzzleLocation = GetActorLocation() + cameraRotation.Vector() * 100;
-	}
-	FVector start = muzzleLocation;
-
-	// 플레이어에게서 화면 중앙 방향으로
-	FVector dir = (_hitPoint - start).GetSafeNormal();
-
-	// 조준하지 않을 경우 탄퍼짐
-	if (!_owner->GetStateComponent()->IsAiming())
-	{
-		dir = FMath::VRandCone(dir, FMath::DegreesToRadians(_gunData._recoil));
-		_hitPoint = start + dir * 10000.0f;
-	}
-
-	FHitResult hitResult;
-	FCollisionQueryParams params(NAME_None, false, this);
-
-	bool bResult = GetWorld()->LineTraceSingleByChannel(
-		OUT hitResult,
-		start,
-		_hitPoint,
-		ECC_Visibility,
-		params);*/
+	FHitResult hitResult = GetHitResult(ECC_GameDamage); // 데미지 충돌 채널
 
 	if (hitResult.bBlockingHit)
 	{
 		drawColor = FColor::Red;
 		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
-		float finalDamage = CalculateDamage(distance / 100);
+		float finalDamage = CalculateDamage(distance / 100.f);
 
 		if (finalDamage < 0) return;
 
@@ -378,6 +302,7 @@ void AGunBase::InitializeGun()
 {
 	if (AHellDiver* owner = Cast<AHellDiver>(GetOwner()))
 	{
+		SetOwner(owner);
 		_owner = owner;
 		AttachToHand();
 		UE_LOG(LogTemp, Log, TEXT("Initialize Gun"));
@@ -612,21 +537,21 @@ void AGunBase::RefillMag()
 		_magChanged.Broadcast(_curMag, _gunData._maxMag);
 }
 
-float AGunBase::CalculateDamage(float distance)
+float AGunBase::CalculateDamage(float distance) // distance는 meter 단위
 {
-	if (distance <= 2500.f) // 25m까지
+	if (distance <= 25.f) // 25m까지
 	{
 		float alpha = distance / 25.0f;
 		float falloff = FMath::Lerp(0.0f, _gunData._falloff25, alpha);
 		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 5000.f) // 50m까지
+	else if (distance <= 50.f) // 50m까지
 	{
 		float alpha = (distance - 25.0f) / 25.0f;
 		float falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, alpha);
 		return _gunData._baseDamage * (1.0f - falloff);
 	}
-	else if (distance <= 10000.f) // 100m까지
+	else if (distance <= 100.f) // 100m까지
 	{
 		float alpha = (distance - 50.0f) / 50.0f;
 		float falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, alpha);
@@ -638,7 +563,7 @@ float AGunBase::CalculateDamage(float distance)
 		float perMeterFalloff = (_gunData._falloff100 - _gunData._falloff50) / 50.0f;
 
 		// 100m 이후부터는 50~100m 구간의 감속 기울기 사용
-		float extraFalloff = perMeterFalloff * ((distance - 10000.f));
+		float extraFalloff = perMeterFalloff * ((distance - 100.f));
 		float finalFalloff = _gunData._falloff100 + extraFalloff;
 
 		return _gunData._baseDamage * (1.0f - finalFalloff);
@@ -745,32 +670,8 @@ float AGunBase::GetRecoilMultiplier()
 }
 
 
-FHitResult AGunBase::GetHitResult()
+FHitResult AGunBase::GetHitResult(ECollisionChannel TraceChannel)
 {
-	//// 화면 중앙 방향
-	//FVector cameraLocation;
-	//FRotator cameraRotation;
-	//GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(cameraLocation, cameraRotation);
-	//
-	//FVector start = cameraLocation;
-	//
-	//// 조준 시 라인트레이스 이용하여 마커 위치 계산
-	//FHitResult hitResult;
-	//FCollisionQueryParams params(NAME_None, false, this);
-	//
-	//FVector end = start + (cameraRotation + _recoilOffset).Vector() * 10000;
-	//bool bResult = GetWorld()->LineTraceSingleByChannel(
-	//	OUT hitResult,
-	//	start,
-	//	end,
-	//	ECC_Visibility,
-	//	params);
-	//
-	//if (bResult)
-	//	return hitResult.Location;
-	//else
-	//	return end;
-
 	// 총구 위치에서 총구가 향하는 방향으로 발사
 	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
 	FVector fireDirection = _gunMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
@@ -788,18 +689,17 @@ FHitResult AGunBase::GetHitResult()
 		hitResult,
 		muzzleLocation,
 		end,
-		ECC_GameDamage);
+		TraceChannel);
+
+	//FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
+	//DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, FColor::Yellow, false, 1.0f);
 
 	return hitResult;
 }
 
 void AGunBase::ChangeFireMode()
 {
-	if (_gunData._fireModes.Num() <= 1)
-		return;
-
-	_fireIndex = (_fireIndex + 1) % _gunData._fireModes.Num();
-	_fireMode = _gunData._fireModes[_fireIndex];
+	_fireComp->ChangeFireMode();
 }
 
 void AGunBase::ChangeTacticalLightMode()
@@ -885,6 +785,18 @@ void AGunBase::PlayFireEffect()
 	{
 		_shellEjectEffect->Activate(true);
 	}
+}
+
+void AGunBase::SetGunData(const FGunData& gunData)
+{
+	_gunData = gunData;
+	_fireComp->SetFireModes(_gunData._fireModes);
+
+}
+
+EFireMode AGunBase::GetCurFireMode()
+{
+	return _fireComp->GetCurFireMode();
 }
 
 FTransform AGunBase::GetMuzzleTrans()
