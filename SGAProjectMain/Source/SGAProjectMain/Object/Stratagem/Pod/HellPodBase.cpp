@@ -10,10 +10,13 @@
 // Sets default values
 AHellPodBase::AHellPodBase()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	SetRootComponent(_mesh);
 
 	_currentHp = _maxHp;
+	_riseStopToleranceZ = 0;
 }
 
 // Called when the game starts or when spawned
@@ -24,10 +27,37 @@ void AHellPodBase::BeginPlay()
 	if (UAnimInstance* anim = _mesh->GetAnimInstance())
 	{
 		anim->OnPlayMontageNotifyBegin.AddDynamic(this, &AHellPodBase::OnMontageNotifyBegin);
+		PlayMontage(_openMontage);
+		anim->Montage_JumpToSection(FName("Loop"), _openMontage);
+		anim->Montage_Pause(_openMontage);
 	}
 
-	PlayMontage(_openMontage);
+	if (_mesh)
+	{
+		_meshHeight = _mesh->Bounds.BoxExtent.Z * 2.0f;
+		_targetHeight = GetActorLocation().Z + _meshHeight + _riseStopToleranceZ;
+	}
+	
 	SpawnAndAttachItems();
+
+}
+
+void AHellPodBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	const float riseSpeed = 300.0f;
+
+	const float z = GetActorLocation().Z;
+	if (z < _targetHeight)
+	{
+		const float step = FMath::Min(riseSpeed * DeltaSeconds, _targetHeight - z);
+		SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, z + step));
+	}
+	else
+	{
+		SetActorTickEnabled(false);
+	}
 }
 
 void AHellPodBase::ApplyDamage(float damageAmount)

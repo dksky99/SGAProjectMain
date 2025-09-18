@@ -13,87 +13,189 @@ class SGAPROJECTMAIN_API ASentryTurret : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	ASentryTurret();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// 센트리가 한 방향으로 자동 사격을 시작합니다.
+	// 외부에서 강제로 타깃을 지정하고 싶을 때 사용
+	void SetTargetActor(AActor* target);
+
+	// 자동 사격 제어
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
 	void AIStartFire();
 
-	// 센트리가 자동 사격을 중단합니다.
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
 	void AIStopFire();
 
-	// 실제로 한 발을 발사합니다. (AIStartFire에 의해 Timer로 호출)
-	void Fire();
-
-	void SpawnBullet(const FVector& muzzleLocation, const FVector& direction);
-
-	// 외부에서 데미지를 받을 때 호출되는 오버라이드 함수
+	// 데미지 수신
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	void HandleOutOfAmmo();
+	// Perception이 참조할 시야 원점/방향을 머즐 기준으로 제공
+	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
-	// 머즐 플래시 이펙트를 재생합니다.
-	void PlayMuzzleFlash();
-
-	// 트레이서 이펙트를 재생합니다.
-	void PlayTracer(const FVector& EndPoint);
-
+	// 외부용 Getter 
+	FVector GetMuzzleLocation() const;
+	FVector GetMuzzleForward() const;
+	FTransform GetMeshTransform() const;
 
 protected:
-	// 터렛 
+	// 조준 각도 계산 → AnimBP 전달
+	void UpdateAimToTarget(float deltaSeconds);
+
+	// Perception 콜백
+	UFUNCTION()
+	void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+
+	// 타깃 유지/재선정
+	void UpdateTargetSelection();
+
+	// 조준 완료 + LOS 확인 → 발사/중지
+	void UpdateFireGate(float deltaSeconds);
+
+	// LOS 체크
+	bool HasLineOfFire(const FVector& from, const FVector& to) const;
+
+	// 발사 루틴
+	void Fire();
+	void SpawnBullet(const FVector& muzzleLocation, const FVector& direction);
+	void PlayMuzzleFlash();
+	void PlayTracer(const FVector& endPoint);
+	void HandleOutOfAmmo();
+
+	// 아이들 타이머 on/off 및 콜백
+	void EnsureIdleTimer();
+	void OnIdleAimTimer();
+
+	// 몽터주 제어
+	UFUNCTION()
+	void OnDeployMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void PlayDeployMontage(bool bForward);
+	bool IsDeployMontagePlaying() const;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	class UCapsuleComponent* _capsule;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	USkeletalMeshComponent* _mesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	USceneComponent* _muzzlePoint;
+
+	// 머즐 플래시용 ParticleSystemComponent을 미리 생성 -> Activate/Deactivate로 재생
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	class UParticleSystemComponent* _muzzleFlashComponent;
+
+	// 트레이서용 NiagaraComponent를 미리 생성 -> BeamEnd 파라미터 갱신 후 Activate
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	class UNiagaraComponent* _tracerComponent;
+
+	// Perception
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	class UAIPerceptionComponent* _perception;
+
+	UPROPERTY()
+	class UAISenseConfig_Sight* _sightConfig;
+
+protected:
 	// 발사할 탄환 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	TSubclassOf<class AGunBulletBase> _bulletClass;
 
-	// 탄환이 스폰될 머즐 포인트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	USceneComponent* _muzzlePoint;
+	// 애님 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	UAnimMontage* _deployMontage = nullptr;
 
-	// 최대 사정거리 (cm 단위)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _range = 10000.0f;
-
-	// 머즐 플래시용 ParticleSystemComponent을 미리 생성 → Activate/Deactivate로 재생
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	UParticleSystemComponent* _muzzleFlashComponent;
-
-	// 트레이서용 NiagaraComponent를 미리 생성 → BeamEnd 파라미터 갱신 후 Activate
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	class UNiagaraComponent* _tracerComponent;
-
-	// 자동 사격 간격 (초 단위)
+	// 자동 사격 간격 (초)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _fireInterval = 0.1f;
 
-	// 최대 탄약 수
+	// 최대 사정거리 (cm)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	int32 _maxAmmo;
+	float _range = 10000.0f;
 
-	// 현재 남은 탄약 수
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	int32 _curAmmo;
-
-	// 최대 체력
+	// 최대/현재 탄약
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _maxHp;
+	int32 _maxAmmo = 0;
 
-	// 현재 체력
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	float _curHp;
+	int32 _curAmmo = 0;
+
+	// 최대/현재 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _maxHp = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	float _curHp = 100.0f;
 
 	// 자동 사격 타이머 핸들
 	FTimerHandle _fireTimerHandle;
+
+	// 아이들 상태일 시 회전 타이머 핸들
+	FTimerHandle _idleAimTimerHandle;
+
+	// 현재 타깃
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	AActor* _currentTarget = nullptr;
+
+	// 아이들 상태일 시 회전 주기
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _idleScanInterval = 2.0f;
+
+protected:
+	// 조준 한계/보간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _aimYawLimitDeg = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _aimPitchUpDeg = 70.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _aimPitchDownDeg = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _aimInterpSpeed = 12.0f;
+
+	// 현재 조준 각도(디버그/AnimBP 확인용)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	float _aimYawDeg = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	float _aimPitchDeg = 0.0f;
+
+	// 발사 게이트 허용 오차(도)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _aimToleranceDeg = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _yawSpeedDegPerSec = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _pitchSpeedDegPerSec = 120.0f;
+
+	// LOS 체크 레이트 리밋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _losCheckInterval = 0.05f;
+
+protected:
+	// 발사 토글 캐시: 상태 변경시에만 Start/Stop 호출
+	bool _lastWantsFire = false;
+
+	float _losCooldown = 0.0f;
+	bool  _cachedHasLOS = false;
+
+	// 허용오차 코사인 캐시
+	float _cosAimTol = 1.0f;
+	float _cachedAimTolDeg = 0.0f;
+
+	// 아이들 상태일 시 회전 목표
+	FVector _idleAimPointWS = FVector::ZeroVector;
+
+	// 몽타주가 재생된적 있나
+	bool _hasPlayedDeployMontage = false;
+
 };

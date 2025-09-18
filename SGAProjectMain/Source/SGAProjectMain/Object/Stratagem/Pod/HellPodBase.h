@@ -19,6 +19,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float deltaSeconds) override;
+
 	// 체력 처리
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Health")
 	void ApplyDamage(float damageAmount);
@@ -62,6 +64,16 @@ protected:
 	// 본체 메시
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
 	USkeletalMeshComponent* _mesh;
+
+	// 메시 높이
+	float _meshHeight;
+
+	// 목표 높이
+	float _targetHeight;
+
+	// 높이 오차
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	float _riseStopToleranceZ;
 
 	// 체력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
