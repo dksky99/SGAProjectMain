@@ -8,9 +8,6 @@
 #include "../Object/Item/ItemBase.h"
 #include "GunBase.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FAmmoChanged, int, int);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FMagChanged, int, int);
-
 UCLASS()
 class SGAPROJECTMAIN_API AGunBase : public AItemBase
 {
@@ -33,8 +30,11 @@ public:
 	virtual void StartFire();
 	virtual void StopFire();
 
+protected:
+	virtual void Fire();
 	virtual void ExecuteShot(); // 히트스캔
 
+public:
 	virtual void StartAiming();
 	virtual void StopAiming();
 
@@ -44,8 +44,7 @@ public:
 	void AttachToHand();
 
 	virtual void Reload();
-	void FinishReload(class UAnimMontage* Montage, bool bInterrupted);
-	virtual void ChangeReloadStage(); // 장전 몽타주 끝날 때마다 호출
+	virtual void OnReloadSectionEnded(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
 
 	void RefillMag();
@@ -73,34 +72,31 @@ public:
 	const FGunData& GetGunData() { return _gunData; }
 	void SetGunData(const FGunData& gunData);
 
+	class UGunFireComponent* GetFireComponent() { return _fireComp; }
+	class UGunAmmoComponent* GetAmmoComponent() { return _ammoComp; }
+
 	EFireMode GetCurFireMode();
-	int32 GetCurAmmo() { return _isChamberLoaded ? _curAmmo + 1 : _curAmmo; }
+	int32 GetCurAmmo();
 	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
 	int32 GetCurScopeMode() { return _scopeMode; }
 	USkeletalMeshComponent* GetMesh() { return _gunMesh; }
 	class AHellDiver* GetOwnerCharacter() { return _owner; }
-
-
-
-	FAmmoChanged _ammoChanged;
-	
 		
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	FTransform GetMuzzleTrans();
 	FVector GetMuzzleLoc();
 	FRotator GetMuzzleRot();
-	FMagChanged _magChanged;
 
 	FTransform GetLeftHandleTrans();
 
 protected:
-	virtual void Fire();
-
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _gunMesh;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/GunComponent")
-	class UGunFireComponent* _fireComp;
+	class UGunFireComponent* _fireComp;		// 발사 관련 컴포넌트
+	UPROPERTY(VisibleAnywhere, Category = "Game/GunComponent")
+	class UGunAmmoComponent* _ammoComp;		// 탄약 관련 컴포넌트
 
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
@@ -114,9 +110,6 @@ protected:
 
 	bool _isActive = false;
 
-	int32 _curAmmo;
-	int32 _curMag;
-
 	FRotator _recoilToRecover = FRotator::ZeroRotator;
 	// 반동 정도 조절을 위한 수치 -> 테스트 필요
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Recoil", meta = (AllowPrivateAccess = "true"))
@@ -125,16 +118,6 @@ protected:
 	float _verticalRecoilDamp = 5.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Recoil", meta = (AllowPrivateAccess = "true"))
 	float _horizontalRecoilDamp = 3.f;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	EReloadStage _reloadStage = EReloadStage::None;
-	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
-	bool _isChamberLoaded = false; // 약실에 탄이 남았는지
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* _reloadMontage;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _fireMontage;

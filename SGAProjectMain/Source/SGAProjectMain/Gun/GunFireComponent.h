@@ -18,7 +18,7 @@ public:
 	// Sets default values for this component's properties
 	UGunFireComponent();
 
-	void SetFireModes(TArray<EFireMode> fireModes);
+	void SetFireModeData(TArray<EFireMode> fireModes);
 
 protected:
 	// Called when the game starts

@@ -26,6 +26,7 @@
 
 #include "../Gun/GunBase.h"
 #include "../Gun/ExplosiveGun.h"
+#include "../Gun/GunAmmoComponent.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
@@ -1647,14 +1648,14 @@ void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
 
 void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)
 {
-	prevGun->_ammoChanged.RemoveAll(_gunWidget);
-	prevGun->_magChanged.RemoveAll(_gunWidget);
+	prevGun->GetAmmoComponent()->_ammoChanged.RemoveAll(_gunWidget);
+	prevGun->GetAmmoComponent()->_spareChanged.RemoveAll(_gunWidget);
 }
 
 void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
 {
-	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+	newGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
@@ -1668,8 +1669,8 @@ void APlayerCharacter::InitWeapon()
 
 	if (_gunWidget)
 	{
-		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+		equippedGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		equippedGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
 		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
 		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
 		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
@@ -1704,11 +1705,11 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 	if (index == -1) return;
 
 	auto previousGun = _invenComponent->GetEquippedGun();
-	previousGun->_ammoChanged.RemoveAll(_gunWidget);
-	previousGun->_magChanged.RemoveAll(_gunWidget);
+	previousGun->GetAmmoComponent()->_ammoChanged.RemoveAll(_gunWidget);
+	previousGun->GetAmmoComponent()->_spareChanged.RemoveAll(_gunWidget);
 
-	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
+	newGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
 	Super::PickupGun(newGun);
 
 	if (_gunWidget)

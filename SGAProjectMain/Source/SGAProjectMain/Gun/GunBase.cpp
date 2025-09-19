@@ -9,12 +9,12 @@
 #include "Blueprint/UserWidget.h"
 
 #include "GunFireComponent.h"
+#include "GunAmmoComponent.h"
 
 #include "../CGameInstance.h"
 
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
-#include "../Character/CharacterAnimInstance.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -35,6 +35,7 @@ AGunBase::AGunBase()
 	RootComponent = _gunMesh;
 
 	_fireComp = CreateDefaultSubobject<UGunFireComponent>(TEXT("GunFireComponent"));
+	_ammoComp = CreateDefaultSubobject<UGunAmmoComponent>(TEXT("GunAmmoComponent"));
 
 
 	_interactionMark->SetupAttachment(RootComponent);
@@ -148,8 +149,6 @@ void AGunBase::BeginPlay()
 		_shellEjectEffect->Deactivate();
 	}
 
-	_curAmmo = _gunData._maxAmmo;
-	_curMag = _gunData._initialMag;
 	_tacticalLightMode = _gunData._lightModes[0];
 }
 
@@ -183,7 +182,7 @@ bool AGunBase::CanFire()
 		return false;
 	if (_owner->GetStateComponent()->IsReloading())
 		return false;
-	if (_curAmmo <= 0 && !_isChamberLoaded)
+	if (!_ammoComp->CanFire())
 		return false;
 	return true;
 }
@@ -201,19 +200,9 @@ void AGunBase::Fire()
 	
 	ApplyFireRecoil(); // 반동 계산
 
-	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
-	{
-		_curAmmo--; // 탄약 감소
-	}
-	else // 약실에만 남아있을 경우
-	{
-		_isChamberLoaded = false; // 약실 탄 비움
-	}
+	_ammoComp->ConsumeAmmo();
 
 	PlayFireEffect();
-	
-	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 }
 
 void AGunBase::StopFire()
@@ -324,15 +313,7 @@ void AGunBase::ActivateGun()
 		_laserImpact->SetVisibility(false);
 	}
 
-	if (_ammoChanged.IsBound())
-	{
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-	}
-
-	if (_magChanged.IsBound())
-	{
-		_magChanged.Broadcast(_curMag, _gunData._maxMag);
-	}
+	_ammoComp->BroadcastAmmoAndSpareChanged(); // TODO) 여기서 해주는 것이 맞는가?
 }
 
 void AGunBase::DeactivateGun()
@@ -341,7 +322,6 @@ void AGunBase::DeactivateGun()
 	StopAiming();
 
 	_isActive = false;
-	//SetActorHiddenInGame(true);
 
 	if (_tacticalLight && _owner)
 		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
@@ -372,169 +352,37 @@ void AGunBase::AttachToHand()
 				_gunMesh->SetEnableGravity(false);
 				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
+
 			DetachRootComponentFromParent();
 			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket"));
-
 		}
 	}
 }
 
 void AGunBase::Reload()
 {
-	if (_curAmmo == _gunData._maxAmmo)
+	if (!_ammoComp->CanReload())
 		return;
 
-	if (_curMag == 0)
-		return;
+	StopAiming();
+	StopFire();
 
-	_owner->GetStateComponent()->SetReloading(true);
-
-	if (!_reloadMontage) return;
-
-	if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(_owner->GetMesh()->GetAnimInstance()))
-	{
-		_owner->GetStateComponent()->StartReload();
-		animInstance->PlayAnimMontage(_reloadMontage);
-
-		// 재생 후 인스턴스 가져오기
-		if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_reloadMontage))
-		{
-			// 델리게이트 중복 방지
-			MontageInstance->OnMontageEnded.Unbind();
-
-			// 델리게이트 바인딩
-			MontageInstance->OnMontageEnded.BindUObject(this, &AGunBase::FinishReload);
-
-			UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_reloadMontage->GetName());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *_reloadMontage->GetName());
-		}
-
-		int32 sectionIndex = -1;
-		switch (_reloadStage)
-		{
-		case EReloadStage::None:	
-			if (_curMag <= 0) return;
-			sectionIndex = 0;
-			break;
-
-		case EReloadStage::RemoveMag:
-			sectionIndex = 1;
-			break;
-
-		case EReloadStage::InsertMag:
-			sectionIndex = 2;
-			break;
-
-		case EReloadStage::CloseBolt:
-			sectionIndex = 3;
-			break;
-
-		case EReloadStage::RoundsReload:
-			if (_curMag <= 0) return;
-			sectionIndex = 3;
-			break;
-
-		default:
-			return;
-		}
-
-		if (sectionIndex >= 0)
-		{
-			animInstance->JumpToSection(sectionIndex);
-		}
-
-		
-	}
+	_ammoComp->Reload();
 }
 
-void AGunBase::FinishReload(UAnimMontage* Montage, bool bInterrupted)
+void AGunBase::OnReloadSectionEnded()
 {
-	_owner->GetStateComponent()->FinishReload();
-}
-
-void AGunBase::ChangeReloadStage()
-{
-	switch (_reloadStage)
-	{
-	case EReloadStage::None:
-		_reloadStage = EReloadStage::RemoveMag;
-		if (_curAmmo > 0 || _isChamberLoaded) // 탄창이나 약실에 탄이 있을 경우
-			_isChamberLoaded = true; // 약실 채우기
-		_curAmmo = 0;
-		UE_LOG(LogTemp, Log, TEXT("None->RemoveMag"));
-		Reload();
-		break;
-
-	case EReloadStage::RemoveMag: // 탄창 제거 상태
-		_reloadStage = EReloadStage::InsertMag;
-		_curMag--;
-		Reload();
-		UE_LOG(LogTemp, Log, TEXT("RemoveMag->InsertMag"));
-		break;
-
-	case EReloadStage::InsertMag: // 탄창 삽입 상태
-		if (_isChamberLoaded) // 약실에 탄이 있을 경우 
-		{
-			_isChamberLoaded = true;
-			_curAmmo = _gunData._maxAmmo;
-			_owner->GetStateComponent()->SetReloading(false);
-			_reloadStage = EReloadStage::None;  // 전술 재장전 -> CloseBolt 생략
-			UE_LOG(LogTemp, Log, TEXT("InsertMag->None"));
-		}
-		else
-		{
-			_reloadStage = EReloadStage::CloseBolt; // 약실에 탄이 없을 경우 CloseBolt
-			Reload();
-			UE_LOG(LogTemp, Log, TEXT("InsertMag->CloseBolt"));
-		}
-		break;
-
-	case EReloadStage::CloseBolt:
-		_curAmmo = _gunData._maxAmmo;
-		_owner->GetStateComponent()->SetReloading(false);
-		_reloadStage = EReloadStage::None;
-		UE_LOG(LogTemp, Log, TEXT("CloseBolt->None"));
-		break;
-
-	case EReloadStage::RoundsReload:
-		_curAmmo++;
-		_curMag--;
-		_owner->GetStateComponent()->SetReloading(false);
-		Reload();
-		UE_LOG(LogTemp, Log, TEXT("RoundsReload"));
-		break;
-	}
-
-	if (_ammoChanged.IsBound())
-	{
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
-	}
-
-	if (_magChanged.IsBound())
-		_magChanged.Broadcast(_curMag, _gunData._maxMag);
+	_ammoComp->OnReloadSectionEnded();
 }
 
 void AGunBase::CancelReload()
 {
-	if (!_owner->GetStateComponent()->IsReloading())
-		return;
-
-	//StopAnimMontage();
-	_owner->GetStateComponent()->SetReloading(false);
+	_ammoComp->CancelReload();
 }
 
 void AGunBase::RefillMag()
 {
-	_curMag += _gunData._refillMagAmount;
-
-	if (_curMag > _gunData._maxMag)
-		_curMag = _gunData._maxMag;
-
-	if (_magChanged.IsBound())
-		_magChanged.Broadcast(_curMag, _gunData._maxMag);
+	_ammoComp->RefillSpare();
 }
 
 float AGunBase::CalculateDamage(float distance) // distance는 meter 단위
@@ -622,7 +470,7 @@ void AGunBase::ApplyFireRecoil()
 		playerController->AddPitchInput(-vertical * recoilMultiplier);
 		playerController->AddYawInput(horizontal * recoilMultiplier);
 
-		// 카메라 복구 용
+		// 카메라 복구용
 		_recoilToRecover.Pitch += vertical * recoilMultiplier;
 		_recoilToRecover.Yaw += horizontal * recoilMultiplier;
 	}
@@ -790,13 +638,18 @@ void AGunBase::PlayFireEffect()
 void AGunBase::SetGunData(const FGunData& gunData)
 {
 	_gunData = gunData;
-	_fireComp->SetFireModes(_gunData._fireModes);
-
+	_fireComp->SetFireModeData(_gunData._fireModes);
+	_ammoComp->SetAmmoData(gunData);
 }
 
 EFireMode AGunBase::GetCurFireMode()
 {
 	return _fireComp->GetCurFireMode();
+}
+
+int32 AGunBase::GetCurAmmo()
+{
+	return _ammoComp->GetCurAmmo();
 }
 
 FTransform AGunBase::GetMuzzleTrans()

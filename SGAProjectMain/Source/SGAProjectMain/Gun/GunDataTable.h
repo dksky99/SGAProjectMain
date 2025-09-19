@@ -45,13 +45,19 @@ enum class EFireMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EReloadType : uint8
+{
+	Magazine,
+	RoundsReload
+};
+
+UENUM(BlueprintType)
 enum class EReloadStage : uint8
 {
-	None,
+	Idle,
 	RemoveMag,
 	InsertMag,
-	CloseBolt,
-	RoundsReload // 한 발씩 장전
+	CloseBolt
 };
 
 UENUM(BlueprintType)
@@ -88,12 +94,6 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGunCategory _category; // 총의 종류
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _icon;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _previewImage;
-
 
 	// 데미지 요소
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -110,17 +110,21 @@ struct FGunData : public FTableRowBase
 	float _fireInterval = 60.0f / 640.0f;
 
 
-	// 탄약
+	// 재장전 요소
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _maxAmmo = 45;
+	EReloadType _reloadType;	// 재장전 방식
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool _needAmmoBag = false;	// 재장전할 때 가방이 필요한지
 
-	// 탄창
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _initialMag = 6;
+	int32 _maxAmmo = 45;		// 탄약
+							
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _maxMag = 8;
+	int32 _initialSpare = 6;	// 초기 탄창 혹은 여분의 탄약
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _refillMagAmount = 4;
+	int32 _maxSpare = 8;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _refillAmount = 4;
 
 	// 인체공학성
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -169,7 +173,13 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* _laserImpactFX;
 
-	// UI 설명
+	// UI
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _previewImage;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText _desc;
 };

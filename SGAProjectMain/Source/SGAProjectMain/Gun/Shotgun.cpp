@@ -8,11 +8,9 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../SGAProjectMain.h"
 
-void AShotgun::Fire()
+void AShotgun::ExecuteShot()
 {
 	FColor drawColor = FColor::Green;
-
-	ApplyFireRecoil();
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사
 	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
@@ -52,17 +50,4 @@ void AShotgun::Fire()
 		FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 		DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
 	}
-
-
-	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
-	{
-		_curAmmo--;
-	}
-	else // 약실에만 남아있을 경우
-	{
-		_isChamberLoaded = false;
-	}
-
-	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 }

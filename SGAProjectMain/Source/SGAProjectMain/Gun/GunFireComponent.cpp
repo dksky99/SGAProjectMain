@@ -17,7 +17,7 @@ UGunFireComponent::UGunFireComponent()
 	// ...
 }
 
-void UGunFireComponent::SetFireModes(TArray<EFireMode> fireModes)
+void UGunFireComponent::SetFireModeData(TArray<EFireMode> fireModes)
 {
 	_fireModes = fireModes;
 	_curFireMode = _fireModes[0];
@@ -29,7 +29,7 @@ void UGunFireComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	_gun = Cast<AGunBase>(GetOwner());
+	_gun = Cast<AGunBase>(GetOwner());  // TODO) Comp가 gun을 들고 있어야 하는가?
 	// ...
 	
 }

@@ -77,7 +77,7 @@ void UHellDiverAnimInstance::AnimNotify_Reload()
 	UE_LOG(LogTemp, Log, TEXT("ReloadNotify"));
 	if (AGunBase* gun = Cast<AGunBase>(_hellDiver->GetEquippedGun()))
 	{
-		gun->ChangeReloadStage();
+		gun->OnReloadSectionEnded();
 	}
 }
 
