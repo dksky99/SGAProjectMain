@@ -829,7 +829,7 @@ FTransform AHellDiver::GetMuzzleTransform() const
     return temp;
 }
 
-void AHellDiver::KnockDown()
+void AHellDiver::KnockDown(float time)
 {
     Super::KnockDown();
 
@@ -851,6 +851,7 @@ void AHellDiver::Dead()
 {
     Super::Dead();
 
+    UE_LOG(LogTemp, Display, TEXT("AHellDiver Dead CB : %s"), *this->GetName());
     _stateComponent->Dead();
 
     _invenComponent->DropGun(0);

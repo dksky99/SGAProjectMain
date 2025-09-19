@@ -75,6 +75,11 @@ public:
 	void DeactivateAllUnits();
 	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인.
 	TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* CheckExtraUnit();
+
+
+	int32 CheckActivateUnitCount();
+
+
 protected:
 	bool IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
@@ -94,6 +99,13 @@ protected:
 	ESquadState _squadState = ESquadState::Deactivate;
 
 	UPROPERTY()
-	TArray<class ACharacterBase*> _targets;
+	class ACharacterBase* _target;
 
+
+	UPROPERTY()
+	FVector _targetLoc;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	class ACPatrolPath* _patrolPath;
 };

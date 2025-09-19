@@ -3,7 +3,9 @@
 
 #include "EnemySquad.h"
 #include "Enemy.h"
+#include "PatrolComponent.h"
 #include "../../Controller/EnemyController.h"
+
 // Sets default values
 AEnemySquad::AEnemySquad()
 {
@@ -73,11 +75,10 @@ void AEnemySquad::SpawnAllUnits()
 	{
 		for (auto& pair : pairs.Value._units)
 		{
-			if (!IsActivatedUnit(&pair))
-			{
+			if (IsActivatedUnit(&pair))
+				continue;
+			if(pair.Key->IsReadyToSpawn())
 				SpawnUnit(&pair);
-
-			}
 		}
 	}
 
@@ -91,12 +92,13 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 	if (IsActivatedUnit(unit))
 		return false;
 	//위치 설정.
-	unit->Key->SetActorLocation(_spawnPoint->GetComponentLocation());
+	unit->Key->SetActorLocation(_spawnPoint->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
+	UE_LOG(LogTemp, Error, TEXT("SpawnPoint %f %f %f"), _spawnPoint->GetComponentLocation().X, _spawnPoint->GetComponentLocation().Y, _spawnPoint->GetComponentLocation().Z);
+	//UE_LOG(LogTemp, Error, TEXT("SpawnLoc %f %f %f"), unit->Key->GetActorLocation.X, unit->Key->GetActorLocation().Y, unit->Key->GetActorLocation().Z);
 	//컨트롤러 빙의
 	unit->Value->Possess(unit->Key);
 	//활성화
 
-	unit->Key->ResetUnit();
 	unit->Key->Spawn();
 
 
@@ -105,34 +107,93 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 
 void AEnemySquad::Command_Search()
 {
-	for (auto& pairs : _unitPool)
+	_squadState = ESquadState::Search;
+	for (auto& PoolPair : _unitPool)
 	{
-		for (auto& pair : pairs.Value._units)
+		for (auto& pair : PoolPair.Value._units)
 		{
 			if (IsActivatedUnit(&pair))
 			{
 
+				pair.Value->RecieveTargetLoc(_targetLoc);
 
 			}
+
+
+
 		}
 	}
 }
 
 void AEnemySquad::Command_Stationed()
 {
+	//만약 패트롤 패스가 있다면 패트롤패스를 제거,
+	_squadState = ESquadState::Stationed;
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
 
+				pair.Key->GetPatrol()->SetPatrolPath(nullptr);
+
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Patrol()
 {
+	//가진 패트롤 패스를 넘김.
+	if (_patrolPath == nullptr)
+		Command_Stationed();
+	_squadState = ESquadState::Patrol;
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+
+				pair.Key->GetPatrol()->SetPatrolPath(_patrolPath);
+
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Attack()
 {
+	//
+	_squadState = ESquadState::Attack;
+
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+
+				pair.Value->RecieveTarget(_target);
+
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Deactivate()
 {
+	_squadState = ESquadState::Deactivate;
 }
 
 TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
@@ -210,10 +271,33 @@ TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySqua
 	return nullptr;
 }
 
+int32 AEnemySquad::CheckActivateUnitCount()
+{
+	int32 count = 0;
+	for (auto& pairs : _unitPool)
+	{
+		for (auto& pair : pairs.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+				continue;
+
+			}
+			
+			count++;
+		}
+	}
+
+
+	return count;
+}
+
 bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
 {
+	//유닛의 폰이 컨트롤러가 없거나 컨트롤러가 폰이 없다면 그건 해제되어있는 상태. 
 	if (unit->Key->GetController() == nullptr || unit->Value->GetPawn() == nullptr)
 		return false;
+
 	return true;
 }
 

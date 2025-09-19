@@ -9,6 +9,7 @@
 #include "../../../Data/UnitAttackDataAsset.h"
 #include "NavigationSystem.h"
 
+#include "../../../Helper/AIActingHelperLibrary.h"
 AEnemy_Standard::AEnemy_Standard(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
@@ -16,8 +17,17 @@ AEnemy_Standard::AEnemy_Standard(const FObjectInitializer& ObjectInitializer) : 
 }
 
 
+bool AEnemy_Standard::CheckAbleTryNear(AActor* target)
+{
+	if (target == nullptr)
+		return false;
+	return true;
+}
+
 bool AEnemy_Standard::TryNear(AActor* target)
 {
+	if (CheckAbleTryNear(target) == false)
+		return false;
 	if (AttackMelee())
 		return true;
 

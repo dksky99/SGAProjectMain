@@ -443,9 +443,6 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 
 
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + charForward * 500.f, FColor::Yellow, false, 0.1f, 0, 2.0f);
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + controlForward * 500.f, FColor::Green, false, 0.1f, 0, 2.0f);
-
 
 	//두 선의 내적으로 일치하는정도를 확인.1일수록 일치 -1이면 반대 0이면 수직
 	float dot = FVector::DotProduct(charForward, controlForward);
