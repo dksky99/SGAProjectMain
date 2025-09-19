@@ -168,6 +168,10 @@ struct FGunData : public FTableRowBase
 	class UNiagaraSystem* _laserFX;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UNiagaraSystem* _laserImpactFX;
+
+	// UI Ό³Έν
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText _desc;
 };
 
 UCLASS()

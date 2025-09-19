@@ -34,12 +34,14 @@ void UStratagemComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
 	if (!GI) return;
 
 	TArray<int32> stratagemIDs = preDeployState->GetStratagemIDs();
-	if (stratagemIDs.Num() < 1) // state에 세팅이 안 되어있을 경우 기본값 사용
+	TArray<int32> defaultIDs = { -1, -1, -1, -1 }; // 임시
+	if (stratagemIDs == defaultIDs) // state에 세팅이 안 되어있을 경우 기본값 사용
 		return;
 
 	StratagemSlots.Empty(); // 되어있을 경우 기본값 삭제
 	for (int32 id : stratagemIDs)
 	{
+		if (id < 0) continue;
 		FStratagemSlot stratagemSlot = GI->GetStratagemSlotFromTable(id);
 		StratagemSlots.Add(stratagemSlot);
 	}

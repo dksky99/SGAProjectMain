@@ -9,15 +9,23 @@
 #include "../../UI/PreDeployment/PreDeployHubWidget.h"
 #include "../../Character/PlayerCharacter.h"
 #include "../../CGameInstance.h"
+#include "../../UI/PreviewStage.h"
 
 void UPreDeploymentFlow::Initialize(APlayerCharacter* player)
 {
 	_player = player;
+
+    _previewStage = Cast<APreviewStage>(UGameplayStatics::GetActorOfClass(this, APreviewStage::StaticClass()));
 }
 
 void UPreDeploymentFlow::EnterFlow()
 {
     if (!_player) return;
+
+    if (_previewStage)
+    {
+		_previewStage->SetPreviewStageFromCharacter(_player);
+    }
 
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
     if (!GI) return;

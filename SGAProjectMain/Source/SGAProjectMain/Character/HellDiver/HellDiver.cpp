@@ -450,7 +450,9 @@ void AHellDiver::Proning()
 
 void AHellDiver::InitWeapon()
 {
-    EquipGun(0);
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (GI->GetGamePhase() == EGamePhase::InMission)
+        EquipGun(0);
 }
 
 void AHellDiver::EquipGun(int32 index)

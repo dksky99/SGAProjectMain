@@ -10,7 +10,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSectionPicked, int32, UPreDeployEntryBase*);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntrySpawned, UPreDeployEntryBase*);
 
 UCLASS()
 class SGAPROJECTMAIN_API UPreDeployCategorySection : public UUserWidget
@@ -20,9 +20,7 @@ class SGAPROJECTMAIN_API UPreDeployCategorySection : public UUserWidget
 public:
 	void InitializeSection(FText title, const TArray<int32> ids);
 
-	void HandlePicked(int32 itemID); // 엔트리에서 전달받은 아이디
-
-	FOnSectionPicked _onSectionPickedEvent;
+	FOnEntrySpawned _onEntrySpawnedEvent;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/UI")

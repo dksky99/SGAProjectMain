@@ -43,6 +43,18 @@ AGunBase::AGunBase()
 	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
 	_tacticalLight->SetupAttachment(RootComponent);
 	_tacticalLight->SetVisibility(false);
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> fireNS(TEXT("/Script/Niagara.NiagaraSystem'/Game/Graphics/Gun/Effect/NS_WeaponFire.NS_WeaponFire'"));
+	if (fireNS.Succeeded())
+	{
+		_fireNS = fireNS.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> shellEjectNS(TEXT("/Script/Niagara.NiagaraSystem'/Game/Graphics/Gun/Effect/NS_WeaponFire_ShellEject.NS_WeaponFire_ShellEject'"));
+	if (shellEjectNS.Succeeded())
+	{
+		_shellEjectNS = shellEjectNS.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -97,6 +109,36 @@ void AGunBase::BeginPlay()
 			EAttachLocation::KeepRelativeOffset,
 			true
 		);
+	}
+
+	if (_fireNS)
+	{
+		_fireEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			_fireNS,
+			_gunMesh,
+			TEXT("Muzzle"),
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			false
+		);
+		_fireEffect->SetAutoDestroy(false);
+		_fireEffect->Deactivate();
+	}
+
+	if (_shellEjectNS)
+	{
+		_shellEjectEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			_shellEjectNS,
+			_gunMesh,
+			TEXT("ShellEject"),
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			false
+		);
+		_shellEjectEffect->SetAutoDestroy(false);
+		_shellEjectEffect->Deactivate();
 	}
 
 	_curAmmo = _gunData._maxAmmo;
@@ -204,6 +246,8 @@ void AGunBase::Fire()
 	{
 		_isChamberLoaded = false; // ¾à½Ç Åº ºñ¿ò
 	}
+
+	PlayFireEffect();
 	
 	if (_ammoChanged.IsBound())
 		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
@@ -828,6 +872,19 @@ void AGunBase::UseTacticalLight(bool isAiming)
 void AGunBase::PickupItem(AHellDiver* player)
 {
 	player->PickupGun(this);
+}
+
+void AGunBase::PlayFireEffect()
+{
+	if (_fireEffect)
+	{
+		_fireEffect->Activate(true);
+	}
+
+	if (_shellEjectEffect)
+	{
+		_shellEjectEffect->Activate(true);
+	}
 }
 
 FTransform AGunBase::GetMuzzleTrans()

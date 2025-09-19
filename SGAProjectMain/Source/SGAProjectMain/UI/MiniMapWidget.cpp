@@ -49,8 +49,8 @@ void UMiniMapWidget::SetCursorText(FVector sceneCapturerToCursor, FVector player
     FVector2D mapTopLeft = canvasSize - mapSize - FVector2D(23.f, 37.f);
 
     // 텍스트 위치 오프셋
-    FVector2D posOffset = UV * mapSize; // 맵에서 커서 위치
-    FVector2D finalPos = mapTopLeft + posOffset + FVector2D(10.f, 10.f); // 맵의 좌상단으로부터 상대적인 위치만큼 + 커서보다 우하단
+    FVector2D cursorPos = mapTopLeft + UV * mapSize; // 맵에서 커서 위치 -> 맵의 좌상단으로부터 상대적인 위치
+	FVector2D finalPos = cursorPos + FVector2D(10.f, 10.f); // 커서보다 우하단
 
     // 위치 적용
     if (UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>(_cursorPosText->Slot))

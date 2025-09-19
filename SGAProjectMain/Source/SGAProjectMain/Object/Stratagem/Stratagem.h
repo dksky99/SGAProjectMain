@@ -35,6 +35,7 @@ public:
 	const FName GetStgName() const { return _name; }
 	class UTexture2D* GetStgIcon() const { return _icon; }
 	EStratagemType GetStratagemType() const { return _type; }
+	float GetDeployDelay() const { return _deployDelay; }
 
 
 protected:

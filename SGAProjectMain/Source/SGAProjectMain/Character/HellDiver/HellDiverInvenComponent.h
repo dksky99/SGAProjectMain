@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "../../Gun/GunBase.h"
+#include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/SampleResources.h"
 #include "HellDiverInvenComponent.generated.h"
 
@@ -44,6 +46,7 @@ public:
 	void PutBackSupportWeapon();
 	void BringWeapon(AGunBase* gun);
 	TArray<AGunBase*> GetAllGun() { return _gunSlot; } // 들고있는 총 목록 전달
+	AGunBase* GetGunInSlot(int32 index) { return _gunSlot[index]; } // 슬롯에 있는 총 전달
 	AGunBase* GetEquippedGun() { return _equippedGun; } // 현재 장착 중인 총 전달
 	ABackpack* GetBackpack() { return _backpack; }
 	FSampleBundle GetSampleBundle() { return _sampleBundle; }

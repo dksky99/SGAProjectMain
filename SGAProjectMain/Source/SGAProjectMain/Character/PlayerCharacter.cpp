@@ -819,7 +819,8 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 
 	case ECharacterState::Standing:
 		StartSprint();
-		_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
+		if (_staminaBarWidget)
+			_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
 		_pakourComponent->TriggerPakour();
@@ -1719,10 +1720,8 @@ void APlayerCharacter::HoldInvenKey()
 	if (!_invenWidgetClass) return;
 
 	_invenWidget = CreateWidget<UInventoryWheelWidget>(GetWorld(), _invenWidgetClass);
+	_invenWidget->InitializeWheel(_invenComponent);
 	_invenWidget->AddToViewport();
-
-	auto PC = Cast<APlayerController>(GetController());
-	PC->bShowMouseCursor = true;
 }
 
 void APlayerCharacter::ReleaseInvenKey()
@@ -1733,9 +1732,6 @@ void APlayerCharacter::ReleaseInvenKey()
 
 	_invenWidget->RemoveFromParent();
 	_invenWidget = nullptr;
-
-	auto PC = Cast<APlayerController>(GetController());
-	PC->bShowMouseCursor = false;
 
 	ExecuteInvenAction(curIndex);
 }
@@ -1779,7 +1775,8 @@ void APlayerCharacter::BeginStratagemInputMode(const FInputActionValue& value)
 		_stratagemInputBuffer.Empty();
 	}
 
-	_stratagemWidget->OpenWidget(true);
+	if (_stratagemWidget)
+		_stratagemWidget->OpenWidget(true);
 
 	SetTPSZoomView();
 }

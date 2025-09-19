@@ -16,24 +16,11 @@ void UPreDeployCategorySection::InitializeSection(FText title, const TArray<int3
 	{
 		UPreDeployEntryBase* entry = CreateWidget<UPreDeployEntryBase>(this, _entryClass); // 엔트리 위젯 생성
 		entry->InitializeEntry(id); // 총 ID로 초기화
-		entry->_onPickedEvent.AddUObject(this, &UPreDeployCategorySection::HandlePicked); // 선택 이벤트 바인딩
+		_onEntrySpawnedEvent.Broadcast(entry); // 엔트리 생성 이벤트 브로드캐스트 -> 패널에서 처리
+		//entry->_onPickedEvent.AddUObject(this, &UPreDeployCategorySection::HandlePicked); // 선택 이벤트 바인딩
 		_entryPanel->AddChildToUniformGrid(entry, idx / _entriesPerRow, idx % _entriesPerRow); // 섹션의 패널에 추가
 
 		_entries.Add(entry); // 내부 목록에도 추가
 		idx++;
 	}
-}
-
-void UPreDeployCategorySection::HandlePicked(int32 itemID)
-{
-	UPreDeployEntryBase* selected = nullptr;
-
-	for (auto* entry : _entries)
-	{
-		if (entry->GetItemID() == itemID)
-			selected = entry;
-	}
-
-	if (_onSectionPickedEvent.IsBound())
-		_onSectionPickedEvent.Broadcast(itemID, selected); // ID와 선택된 엔트리 전달
 }

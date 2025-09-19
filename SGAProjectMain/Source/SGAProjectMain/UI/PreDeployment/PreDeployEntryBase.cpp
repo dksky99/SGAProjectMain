@@ -17,7 +17,7 @@ void UPreDeployEntryBase::NativeOnInitialized()
 void UPreDeployEntryBase::HandlePick()
 {
 	if (_onPickedEvent.IsBound())
-		_onPickedEvent.Broadcast(_itemID); // 세션에 자신의 ID 전달
+		_onPickedEvent.Broadcast(this); // 자신을 직접 전달
 }
 
 void UPreDeployEntryBase::InitializeEntry(int32 id)

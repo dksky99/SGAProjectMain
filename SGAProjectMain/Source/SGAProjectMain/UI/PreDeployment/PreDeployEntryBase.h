@@ -10,7 +10,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryPicked, int32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryPicked, UPreDeployEntryBase*);
 
 UCLASS()
 class SGAPROJECTMAIN_API UPreDeployEntryBase : public UUserWidget

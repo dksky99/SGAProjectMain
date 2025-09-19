@@ -15,6 +15,8 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSelectChanged, int32);
+
 UCLASS()
 class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 {
@@ -23,9 +25,13 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 public:
 	virtual void InitializePanel(class UPreDeploymentState* state);
 
-	virtual void HandlePicked(int32 itemID, UPreDeployEntryBase* entry);
+	virtual void HandleEntryPicked(UPreDeployEntryBase* entry);
+
+	FOnSelectChanged _selectChangedEvent;
 	
 protected:
+	void OnEntrySpawned(UPreDeployEntryBase* entry);
+
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<class UPreDeployCategorySection> _categoryClass;
 
@@ -40,4 +46,17 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	EGunSlotType _panelSlotType = EGunSlotType::Primary;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _curSectionText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployDetailBase* _detailPanel;
+
+private:
+	UFUNCTION()
+	void HandleEquipRequest();
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* _equipBtn;
 };

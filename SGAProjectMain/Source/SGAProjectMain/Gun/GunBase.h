@@ -67,6 +67,8 @@ public:
 
 	virtual void PickupItem(AHellDiver* player) override;
 
+	virtual void PlayFireEffect();
+
 	void ResetCanFire() { _canFire = true; }
 
 	const FGunData& GetGunData() { return _gunData; }
@@ -158,7 +160,15 @@ protected:
 
 	UPROPERTY()
 	class UNiagaraComponent* _laserpointer;
-	
 	UPROPERTY()
 	class UNiagaraComponent* _laserImpact;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Gun")
+	class UNiagaraSystem* _fireNS;
+	UPROPERTY()
+	class UNiagaraComponent* _fireEffect;
+	UPROPERTY(EditAnywhere, Category = "Game/Gun")
+	class UNiagaraSystem* _shellEjectNS;
+	UPROPERTY()
+	class UNiagaraComponent* _shellEjectEffect;
 };
