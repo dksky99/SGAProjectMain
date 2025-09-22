@@ -40,6 +40,12 @@ public:
 
 	FTransform GetLeftHandPos();
 
+	
+
+	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void UnPossessed() override;
+
 	// Called every frame
 
 	UFUNCTION()

@@ -55,6 +55,7 @@ public:
 	virtual void SpawnAllUnits();
 	virtual bool SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
+	void UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 	// 이건 만들어놓고 어떻게 써야할지 모르겠다 놔두다 필요하면 쓰고 필요없으면 버리자
 	virtual void Command_Search();
 

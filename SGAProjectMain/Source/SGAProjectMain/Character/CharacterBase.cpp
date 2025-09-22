@@ -292,19 +292,15 @@ void ACharacterBase::RecoverFromKnockDown()
 void ACharacterBase::Dead()
 {
 	UE_LOG(LogTemp, Display, TEXT("Dead CB : %s"), *this->GetName());
-	//사망시 컨트롤러를 내려놓고 
-	AController* CurrentController = GetController();
-	if (CurrentController)
-	{
-		CurrentController->UnPossess();
-	}
 	//래그돌로 변하고 
+	//사망시 컨트롤러를 내려놓고 
+
+	_isReadyToSpawn = false;
 	CharacterToRagdoll();
+	UE_LOG(LogTemp, Display, TEXT("CharacterToRagdoll CB : %s"), *this->GetName());
 	
 
 
-	//60초뒤 레벨에서 래그돌이 사라지고소환가능상태가됨.
-	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromDead, 60.0f, false);
 
 
 }
@@ -317,6 +313,7 @@ void ACharacterBase::RecoverFromDead()
 	
 	//소환 가능 상태가 됨.
 	UnitDeactivate();
+
 	_isReadyToSpawn = true;
 
 }
@@ -375,6 +372,9 @@ void ACharacterBase::UnitDeactivate()
 void ACharacterBase::UnitActivate()
 {
 
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
 }
 
 

@@ -287,6 +287,16 @@ FTransform APlayerCharacter::GetLeftHandPos()
 	return FTransform();
 }
 
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+}
+
+void APlayerCharacter::UnPossessed()
+{
+	Super::UnPossessed();
+}
+
 FRotator APlayerCharacter::Focusing()
 {
 

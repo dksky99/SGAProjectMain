@@ -39,7 +39,7 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector& target)
     //일정 반경안의 랜덤한 지점을 가져오는 함수 여기서 가능한 위치가 없으면 false를 반환.
     if (naviSystem->GetRandomPointInNavigableRadius(pos, _callRadius, randLocation))
     {
-        target = pos;
+        target = randLocation;
 
         return true;
     }

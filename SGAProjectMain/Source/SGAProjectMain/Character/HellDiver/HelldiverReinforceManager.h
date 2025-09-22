@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Containers/Queue.h"
 #include "HelldiverReinforceManager.generated.h"
 
 UCLASS()
@@ -19,17 +20,34 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void InitSquad();
 public:	
 	// Called every frame
+
+	void ReinforceHelldiver(FVector callPoint);
+
+	void ReturnDeadController(AController* controller);
+
 
 
 protected:
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class APlayerCharacter> _hellDiverClass;
+
+	UPROPERTY()
+	TArray<class APlayerCharacter*> _hellDiverPool;
+
+
 	FTimerHandle _reinforceBudgetTimer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
 	float _addReinforceBudgetCoolTime = 120.f;
 
-	uint32 _remainReinforceBudget = 5;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
+	int _remainReinforceBudget = 5;
+	
+	TQueue<AController*> _controllerQ;
+	
 
 };

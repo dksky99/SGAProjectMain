@@ -101,9 +101,35 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 
 	unit->Key->Spawn();
 
+	UnitSpawnAct(unit);
+
 
 	return true;
 }
+
+void AEnemySquad::UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
+{
+	switch (_squadState)
+	{
+	case ESquadState::Stationed:
+	case ESquadState::Search:
+		unit->Value->RecieveTargetLoc(_targetLoc);
+		//소환 후 자신의 소환 위치 에서 일정 범위 내의 랜덤 위치로 이동.경계치를 5부여
+		break;
+	case ESquadState::Patrol:
+		//패트롤 패스를 부여.
+		break;
+	case ESquadState::Attack:
+		unit->Value->RecieveTarget(_target);
+		//타겟을 부여
+		break;
+	case ESquadState::Deactivate:
+	case ESquadState::MAX:
+	default:
+		break;
+	}
+}
+
 
 void AEnemySquad::Command_Search()
 {

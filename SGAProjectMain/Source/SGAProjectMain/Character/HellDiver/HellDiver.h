@@ -110,6 +110,8 @@ public:
 	virtual void KnockDown(float time=3.0f) override;
 	virtual void RecoverFromKnockDown() override;
 	virtual void Dead() override;
+	virtual void AfterDead();
+	virtual void RecoverFromDead() override;
 protected:
 
 	FTransform GetHandSocketTransform() const;

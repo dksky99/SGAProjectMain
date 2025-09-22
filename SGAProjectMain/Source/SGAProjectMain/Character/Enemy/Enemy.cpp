@@ -166,6 +166,13 @@ void AEnemy::Dead()
     Super::Dead();
 
 
+    AController* CurrentController = GetController();
+    if (CurrentController)
+    {
+        CurrentController->UnPossess();
+    }
+
+    GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromDead, 60.0f, false);
 }
 
 void AEnemy::SpawnGhost()
