@@ -23,6 +23,7 @@ public:
 
 
 	virtual bool CheckAbleTryNear(AActor* target) override;
+	virtual bool CheckAbleTryFar(AActor* target) override;
 
 	virtual bool TryNear(AActor* target)   override;
 	virtual bool TryMiddle(AActor* target) override;
@@ -30,13 +31,9 @@ public:
 
 
 	bool TryBurrow(AActor* target);
-	void BurrowIn(FVector target);
+	void BurrowIn();
 	void BurrowOut();
 
-	void ActivateClaw_R();
-	void DeactivateClaw_L();
-	void DeactivateClaw_R();
-	void ActivateClaw_L();
 
 
 protected:
@@ -48,7 +45,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _burrowIn_Animation;
 
-
+	FVector _burrowOutLoc;
+	FTimerHandle _burrowTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	float _burrowOutDelay = 2.0f;
 
 
 };
