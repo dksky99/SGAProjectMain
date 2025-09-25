@@ -10,7 +10,7 @@
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int, int);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSpareChanged, int, int);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( BlueprintType, Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UGunAmmoComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -54,7 +54,7 @@ public:
 
 protected:
 	UPROPERTY()
-	AGunBase* _gun;
+	class AGunBase* _gun;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Gun")
 	EReloadType _reloadType = EReloadType::Magazine;

@@ -10,6 +10,7 @@
 
 #include "GunFireComponent.h"
 #include "GunAmmoComponent.h"
+#include "GunDamageComponent.h"
 
 #include "../CGameInstance.h"
 
@@ -33,10 +34,6 @@ AGunBase::AGunBase()
 	_gunMesh->SetGenerateOverlapEvents(true);
 	_gunMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	RootComponent = _gunMesh;
-
-	_fireComp = CreateDefaultSubobject<UGunFireComponent>(TEXT("GunFireComponent"));
-	_ammoComp = CreateDefaultSubobject<UGunAmmoComponent>(TEXT("GunAmmoComponent"));
-
 
 	_interactionMark->SetupAttachment(RootComponent);
 
@@ -152,6 +149,16 @@ void AGunBase::BeginPlay()
 	_tacticalLightMode = _gunData._lightModes[0];
 }
 
+void AGunBase::SetGunComponent()
+{
+	_fireComp = NewObject<UGunFireComponent>(this, _gunData._fireComponentClass, TEXT("FireComponent"));
+	_fireComp->RegisterComponent();
+	_ammoComp = NewObject<UGunAmmoComponent>(this, _gunData._ammoComponentClass, TEXT("AmmoComponent"));
+	_ammoComp->RegisterComponent();
+	_damageComp = NewObject<UGunDamageComponent>(this, _gunData._damageComponentClass, TEXT("DamageComponent"));
+	_damageComp->RegisterComponent();
+}
+
 // Called every frame
 void AGunBase::Tick(float DeltaTime)
 {
@@ -196,7 +203,7 @@ void AGunBase::StartFire()
 
 void AGunBase::Fire()
 {
-	ExecuteShot(); // 라인트레이스
+	_damageComp->FireShot(GetMuzzleLoc(), GetMuzzleRot(), _owner->GetStateComponent()->IsAiming());
 	
 	ApplyFireRecoil(); // 반동 계산
 
@@ -208,41 +215,6 @@ void AGunBase::Fire()
 void AGunBase::StopFire()
 {
 	_fireComp->StopFire();
-}
-
-void AGunBase::ExecuteShot()
-{
-	FColor drawColor = FColor::Green; // 디버깅용
-
-	FHitResult hitResult = GetHitResult(ECC_GameDamage); // 데미지 충돌 채널
-
-	if (hitResult.bBlockingHit)
-	{
-		drawColor = FColor::Red;
-		float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
-		float finalDamage = CalculateDamage(distance / 100.f);
-
-		if (finalDamage < 0) return;
-
-		if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
-		{
-			//UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
-
-			const FVector shotDirection = (hitResult.TraceStart - hitResult.ImpactPoint).GetSafeNormal();
-			UGameplayStatics::ApplyPointDamage(
-				character,                             // 데미지를 받을 액터
-				finalDamage,                           // 적용할 데미지 값
-				shotDirection,                         // 데미지가 들어온 방향(단위 벡터)
-				hitResult,                             // 충돌에 대한 자세한 정보(FHitResult)
-				_owner->GetController(),               // 데미지를 일으킨 컨트롤러(Instigator)
-				this,                                  // 데미지를 발생시킨 액터(Damage Causer)
-				UDamageType::StaticClass()             // 사용할 데미지 타입 클래스
-			);
-		}
-	}
-
-	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
-	DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
 }
 
 void AGunBase::StartAiming()
@@ -384,57 +356,6 @@ void AGunBase::RefillMag()
 {
 	_ammoComp->RefillSpare();
 }
-
-float AGunBase::CalculateDamage(float distance) // distance는 meter 단위
-{
-	if (distance <= 25.f) // 25m까지
-	{
-		float alpha = distance / 25.0f;
-		float falloff = FMath::Lerp(0.0f, _gunData._falloff25, alpha);
-		return _gunData._baseDamage * (1.0f - falloff);
-	}
-	else if (distance <= 50.f) // 50m까지
-	{
-		float alpha = (distance - 25.0f) / 25.0f;
-		float falloff = FMath::Lerp(_gunData._falloff25, _gunData._falloff50, alpha);
-		return _gunData._baseDamage * (1.0f - falloff);
-	}
-	else if (distance <= 100.f) // 100m까지
-	{
-		float alpha = (distance - 50.0f) / 50.0f;
-		float falloff = FMath::Lerp(_gunData._falloff50, _gunData._falloff100, alpha);
-		return _gunData._baseDamage * (1.0f - falloff);
-	}
-	else
-	{
-		// 50~100m 구간의 감속 기울기
-		float perMeterFalloff = (_gunData._falloff100 - _gunData._falloff50) / 50.0f;
-
-		// 100m 이후부터는 50~100m 구간의 감속 기울기 사용
-		float extraFalloff = perMeterFalloff * ((distance - 100.f));
-		float finalFalloff = _gunData._falloff100 + extraFalloff;
-
-		return _gunData._baseDamage * (1.0f - finalFalloff);
-	}
-}
-
-//void AGunBase::TickRecoil(float DeltaTime)
-//{
-//	if (_owner->GetStateComponent()->IsFiring())
-//		return;
-//
-//	float recoilMultiplier = GetRecoilMultiplier();
-//
-//	static float RecoilTime = 0.f;
-//	RecoilTime += DeltaTime * 2.f * recoilMultiplier;
-//
-//	// 임시값
-//	float amplitudePitch = 0.12f;
-//	float amplitudeYaw = 0.04f;
-//
-//	_recoilOffset.Pitch += FMath::Sin(RecoilTime) * amplitudePitch * recoilMultiplier;
-//	_recoilOffset.Yaw += FMath::Cos(RecoilTime / 2) * amplitudeYaw * recoilMultiplier;
-//}
 
 void AGunBase::RecoverRecoil(float DeltaTime)
 {
@@ -638,8 +559,10 @@ void AGunBase::PlayFireEffect()
 void AGunBase::SetGunData(const FGunData& gunData)
 {
 	_gunData = gunData;
+	SetGunComponent();
 	_fireComp->SetFireModeData(_gunData._fireModes);
 	_ammoComp->SetAmmoData(gunData);
+	_damageComp->SetDamageData(gunData);
 }
 
 EFireMode AGunBase::GetCurFireMode()

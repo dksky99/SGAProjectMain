@@ -8,7 +8,7 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../SGAProjectMain.h"
 
-void AShotgun::ExecuteShot()
+void AShotgun::FireShot()
 {
 	FColor drawColor = FColor::Green;
 
@@ -38,12 +38,12 @@ void AShotgun::ExecuteShot()
 		{
 			drawColor = FColor::Red;
 			float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
-			float finalDamage = CalculateDamage(distance / 100);
+			//float finalDamage = CalculateDamage(distance / 100);
 
 			if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 			{
 				//UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
-				UGameplayStatics::ApplyPointDamage(hitResult.GetActor(), finalDamage, pelletDirection, hitResult, _owner->GetController(), this, UDamageType::StaticClass());
+				//UGameplayStatics::ApplyPointDamage(hitResult.GetActor(), finalDamage, pelletDirection, hitResult, _owner->GetController(), this, UDamageType::StaticClass());
 			}
 		}
 

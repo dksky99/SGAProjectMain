@@ -21,6 +21,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void SetGunComponent();
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -32,7 +34,6 @@ public:
 
 protected:
 	virtual void Fire();
-	virtual void ExecuteShot(); // 히트스캔
 
 public:
 	virtual void StartAiming();
@@ -49,9 +50,6 @@ public:
 
 	void RefillMag();
 
-	float CalculateDamage(float distance); // 거리에 따른 데미지 감소
-
-	//void TickRecoil(float DeltaTime);
 	void RecoverRecoil(float DeltaTime); // 반동 복구
 	void ApplyFireRecoil(); // 사격에 따른 반동
 	float GetRecoilMultiplier(); // 상태에 따른 반동 정도
@@ -74,6 +72,7 @@ public:
 
 	class UGunFireComponent* GetFireComponent() { return _fireComp; }
 	class UGunAmmoComponent* GetAmmoComponent() { return _ammoComp; }
+	class UGunDamageComponent* GetDamageComponent() { return _damageComp; }
 
 	EFireMode GetCurFireMode();
 	int32 GetCurAmmo();
@@ -93,11 +92,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _gunMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Game/GunComponent")
+	UPROPERTY()
 	class UGunFireComponent* _fireComp;		// 발사 관련 컴포넌트
-	UPROPERTY(VisibleAnywhere, Category = "Game/GunComponent")
+	UPROPERTY()
 	class UGunAmmoComponent* _ammoComp;		// 탄약 관련 컴포넌트
-
+	UPROPERTY()
+	class UGunDamageComponent* _damageComp;	// 데미지 관련 컴포넌트
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class AHellDiver* _owner;

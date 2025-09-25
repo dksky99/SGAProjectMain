@@ -78,6 +78,21 @@ enum class EPenetrateTrait : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FShotgunData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _pelletCount = 1;
+
+	// 펠렛 분산 정도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _horizontalSpread = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _verticalSpread = 0.f;
+};
+
+USTRUCT(BlueprintType)
 struct FGunData : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -97,6 +112,9 @@ struct FGunData : public FTableRowBase
 
 	// 데미지 요소
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UGunDamageComponent> _damageComponentClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f; // 기본 데미지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -105,12 +123,22 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 관통력
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FShotgunData _shotgunData;		// 샷건에 필요한 데이터
+
+	// 총알
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class AGunBulletBase> _projectileClass;
+
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _fireInterval = 60.0f / 640.0f;
 
 
 	// 재장전 요소
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UGunAmmoComponent> _ammoComponentClass;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EReloadType _reloadType;	// 재장전 방식
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -150,7 +178,9 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff100 = 0.133f;
 
-
+	// 발사 모드 관련 요소
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UGunFireComponent> _fireComponentClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<EFireMode> _fireModes = { EFireMode::FireAuto };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
