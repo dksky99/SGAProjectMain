@@ -32,7 +32,7 @@ public:
 	//소환가능한지 확인. 이떄 소환가능한 포인트를반환. 
 	bool CheckAbleToCall(FVector origin,FVector& recieve);
 
-	bool CallReinforcement(FVector targetLoc, AActor* target);
+	bool CallReinforcement(FVector targetLoc, AActor* target=nullptr);
 	//병력을 하나씩 소환하고 일정쿨타임후에 다시 소환. 더이상 풀에 남아있는 소환가능한 유닛이 없을떄까지 진행.
 	void CallUnit();
 

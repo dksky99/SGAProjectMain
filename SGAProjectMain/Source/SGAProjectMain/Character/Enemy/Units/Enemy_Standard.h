@@ -55,5 +55,5 @@ protected:
 
 	AActor* _enemyTarget=nullptr;
 
-	bool _hasReinforceAuthority=false;
+	bool _hasReinforceAuthority=true;
 };

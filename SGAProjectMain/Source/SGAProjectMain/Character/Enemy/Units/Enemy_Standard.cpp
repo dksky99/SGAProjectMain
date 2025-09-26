@@ -92,6 +92,8 @@ bool AEnemy_Standard::TryCalling(AActor* target)
 		_reservedFunction.Unbind();
 	_reservedFunction.BindUObject(this, &AEnemy_Standard::CallingReinforce);
 	const float Duration = anim->PlayAnimMontage(_callReinforce_Animation);
+	_hasReinforceAuthority = false;
+	return true;
 }
 
 void AEnemy_Standard::CallingReinforce()
