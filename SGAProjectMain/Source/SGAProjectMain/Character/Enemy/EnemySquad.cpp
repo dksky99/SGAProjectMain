@@ -4,6 +4,7 @@
 #include "EnemySquad.h"
 #include "Enemy.h"
 #include "PatrolComponent.h"
+#include "NavigationSystem.h"
 #include "../../Controller/EnemyController.h"
 
 // Sets default values
@@ -101,7 +102,7 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 
 	unit->Key->Spawn();
 
-	UnitSpawnAct(unit);
+//	UnitSpawnAct(unit);
 
 
 	return true;
@@ -161,8 +162,7 @@ void AEnemySquad::Command_Stationed()
 		{
 			if (IsActivatedUnit(&pair))
 			{
-
-				pair.Key->GetPatrol()->SetPatrolPath(nullptr);
+				pair.Value->RecieveTargetLoc(_targetLoc);
 
 			}
 
@@ -325,5 +325,32 @@ bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<cl
 		return false;
 
 	return true;
+}
+
+FVector AEnemySquad::MakeRandomLocation()
+{
+	FVector pos = _targetLoc;
+
+	//NavMesh 찾기 : 이 지점을 기준으로 특정범위내에 소환가능위치가 있는지 확인. 
+	auto naviSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	if (naviSystem->IsValidLowLevel() == false)
+		return _targetLoc;
+
+
+
+	//반환받을 랜덤한 위치.
+	FNavLocation randLocation;
+	//일정 반경안의 랜덤한 지점을 가져오는 함수 여기서 가능한 위치가 없으면 false를 반환.
+	if (naviSystem->GetRandomPointInNavigableRadius(pos, _targetLocRadius, randLocation))
+	{
+
+
+		return randLocation;
+	}
+
+
+
+	return _targetLoc;
 }
 

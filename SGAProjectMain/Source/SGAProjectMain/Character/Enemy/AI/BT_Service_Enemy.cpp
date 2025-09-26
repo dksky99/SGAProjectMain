@@ -42,7 +42,8 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 		behavior->ChangeUnitType(EUnitState::InBattle); //РќХѕСп
 		return;
 	}
-	
+
+	behavior->SetTargetActor(nullptr);
 	float threashold = behavior->GetAlertThreshold();
 	behavior->ChangeAlertThreshold(threashold);
 	if (threashold >= 5.0f)

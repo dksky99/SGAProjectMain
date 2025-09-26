@@ -32,7 +32,7 @@ public:
 	//소환가능한지 확인. 이떄 소환가능한 포인트를반환. 
 	bool CheckAbleToCall(FVector origin,FVector& recieve);
 
-	bool CallReinforcement(FVector target);
+	bool CallReinforcement(FVector targetLoc, AActor* target);
 	//병력을 하나씩 소환하고 일정쿨타임후에 다시 소환. 더이상 풀에 남아있는 소환가능한 유닛이 없을떄까지 진행.
 	void CallUnit();
 
@@ -55,6 +55,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
 	float _coolDown=300.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	float _searchLocRadius = 500.0f;
 	bool _isReadyToCall = true;
 
 	//증원을 부를떄 이 크기의 범위 내에서 랜덤한위치에 유닛이 소환됨.

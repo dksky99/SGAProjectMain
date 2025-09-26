@@ -84,6 +84,7 @@ public:
 protected:
 	bool IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
+	FVector MakeRandomLocation();
 protected:
 
 	UPROPERTY()
@@ -100,9 +101,11 @@ protected:
 	ESquadState _squadState = ESquadState::Deactivate;
 
 	UPROPERTY()
-	class ACharacterBase* _target;
+	class AActor* _target;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game/Squad", meta = (AllowPrivateAccess = "true"))
+	float _targetLocRadius=200.f;
 	UPROPERTY()
 	FVector _targetLoc;
 

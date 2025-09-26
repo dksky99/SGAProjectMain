@@ -5,6 +5,7 @@
 
 #include "../Enemy.h"
 #include "NavigationSystem.h"
+#include "../../../Controller/EnemyController.h"
 
 void AReinforcementSquad::Init()
 {
@@ -50,7 +51,7 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector& target)
     return false;
 }
 
-bool AReinforcementSquad::CallReinforcement(FVector target)
+bool AReinforcementSquad::CallReinforcement(FVector targetLoc, AActor* target)
 {
 
     UE_LOG(LogTemp, Display, TEXT("CallReinforce"));
@@ -65,9 +66,9 @@ bool AReinforcementSquad::CallReinforcement(FVector target)
     _isReadyToCall = false;
     _squadState = ESquadState::Search;
 
-    SetTargetLoc(target);
-    SetActorLocation(target);
-
+    SetTargetLoc(targetLoc);
+    SetActorLocation(targetLoc);
+    _target = target;
     CallUnit();
 
     return true;
@@ -86,6 +87,9 @@ void AReinforcementSquad::CallUnit()
     }
     _spawnPoint->SetWorldLocation(GetCallPoint(GetActorLocation()));
     SpawnUnit(extra);
+
+    extra->Value->RecieveTargetLoc(MakeRandomLocation());
+    extra->Value->RecieveTarget(_target);
 
 
     float nextCall = FMath::FRandRange(_callingDelay_Min, _callingDelay_Max);

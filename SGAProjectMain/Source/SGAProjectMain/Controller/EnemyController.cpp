@@ -385,7 +385,8 @@ AActor* AEnemyController::GetCurTargetActor()
 {
     if (CheckTargetRefresh())
     {
-        RefreshTargets();
+        //RefreshTargets();
+        _curTarget = nullptr;
     }
     return _curTarget;
 }
@@ -409,6 +410,8 @@ bool AEnemyController::CheckTargetRefresh()
     if (targetable == nullptr)
         return true;
     if (targetable->IsTargetable() == false)
+        return true;
+    if (_curTarget->IsHidden())
         return true;
     return false;
 }

@@ -29,12 +29,16 @@ public:
 
 protected:
 
+protected:
+
 	FTimerHandle _GenerateTimer;
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
 	float _generateCoolDown = 5.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	float _stationRadius = 1000.f;
 	bool _isGeneratable = true;
 
 	bool _isActivating = true;

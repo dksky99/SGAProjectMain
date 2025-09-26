@@ -28,7 +28,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//여분의 스쿼드를 증원받은곳에 호출
-	class AReinforcementSquad* GetExtraCallableSquad(FVector callPoint);
+	class AReinforcementSquad* GetExtraCallableSquad(FVector callPoint,AActor* target=nullptr);
 
 protected:
 

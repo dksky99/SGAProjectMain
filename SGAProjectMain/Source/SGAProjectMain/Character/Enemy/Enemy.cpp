@@ -82,6 +82,7 @@ void AEnemy::RaiseAlert()
     AEnemyController* temp = Cast<AEnemyController>(GetController());
     if (temp == nullptr)
         return;
+    
 
 
     FVector Center = GetActorLocation();   // 자신 위치

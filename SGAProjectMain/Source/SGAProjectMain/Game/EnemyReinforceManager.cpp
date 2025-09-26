@@ -45,9 +45,10 @@ void AEnemyReinforceManager::Tick(float DeltaTime)
 
 }
 
-AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint)
+AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint,AActor* target)
 {
 	UE_LOG(LogTemp, Display, TEXT("CallReinforcement : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
+	
 	for (auto& squad : _squadPool)
 	{
 		//호출받은곳에 증원요청가능지역이있는지 확인, 반환.

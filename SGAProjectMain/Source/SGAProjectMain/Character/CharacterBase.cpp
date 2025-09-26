@@ -546,28 +546,6 @@ bool ACharacterBase::AttackMelee()
 	
 
 	const float Duration = anim->PlayAnimMontage(_meleeAttackDatas[randomIndex]->Motion);
-	//animInstance->Montage_Play(selectedMontage);
-	if (Duration <= 0.0f)
-	{
-
-		return false;
-	}
-
-
-	//// 재생 후 인스턴스 가져오기
-	//if (FAnimMontageInstance* MontageInstance = anim->GetActiveInstanceForMontage(_meleeAttackDatas[randomIndex]->Motion))
-	//{
-	//	// 델리게이트 중복 방지
-	//	MontageInstance->OnMontageEnded.Unbind();
-	//
-	//	// 델리게이트 바인딩
-	//	MontageInstance->OnMontageEnded.BindUObject(this, &ACharacterBase::MeleeEnd);
-	//
-	//
-	//
-	//
-	//
-	//}
 
 	_curAttackData = _meleeAttackDatas[randomIndex];
 	SetMeleeColisions(_meleeAttackDatas[randomIndex]);

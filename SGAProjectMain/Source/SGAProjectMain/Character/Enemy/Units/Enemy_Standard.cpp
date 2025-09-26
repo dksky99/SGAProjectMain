@@ -10,6 +10,8 @@
 #include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "../../../Helper/AIActingHelperLibrary.h"
+#include "../../../MainGameMode.h"
+#include "../../../Game/EnemyReinforceManager.h"
 AEnemy_Standard::AEnemy_Standard(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
@@ -20,6 +22,15 @@ AEnemy_Standard::AEnemy_Standard(const FObjectInitializer& ObjectInitializer) : 
 bool AEnemy_Standard::CheckAbleTryNear(AActor* target)
 {
 	if (target == nullptr)
+		return false;
+	return true;
+}
+
+bool AEnemy_Standard::CheckAbleTryMiddle(AActor* target)
+{
+	if (target == nullptr)
+		return false;
+	if (_hasReinforceAuthority == false)
 		return false;
 	return true;
 }
@@ -44,6 +55,11 @@ bool AEnemy_Standard::TryNear(AActor* target)
 
 bool AEnemy_Standard::TryMiddle(AActor* target)
 {
+	if (CheckAbleTryMiddle(target) == false)
+		return false;
+	if (TryCalling(target))
+		return true;
+
 	return false;
 }
 
@@ -55,6 +71,47 @@ bool AEnemy_Standard::TryFar(AActor* target)
 		return true;
 
 	return false;
+}
+
+bool AEnemy_Standard::TryCalling(AActor* target)
+{
+	if (target == nullptr)
+		return false;
+	if (_hasReinforceAuthority == false)
+		return false;
+
+	UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+	if (_callReinforce_Animation == nullptr)
+		return false;
+	if (anim == nullptr)
+		return false;
+
+	if (_stateComp->ActionBegin() == false)
+		return false;
+	if (_reservedFunction.IsBound())
+		_reservedFunction.Unbind();
+	_reservedFunction.BindUObject(this, &AEnemy_Standard::CallingReinforce);
+	const float Duration = anim->PlayAnimMontage(_callReinforce_Animation);
+}
+
+void AEnemy_Standard::CallingReinforce()
+{
+
+	UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+	if (!World) return;
+
+	AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!GM)return;
+	if (!GM->GetEnemyReinforceManager()) return;
+
+	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+	if (!PC) return;
+
+	ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
+	if (!MyChar)return;
+
+
+	GM->GetEnemyReinforceManager()->GetExtraCallableSquad(MyChar->GetActorLocation());
 }
 
 
@@ -118,6 +175,7 @@ void  AEnemy_Standard::BurrowIn()
 
 void AEnemy_Standard::BurrowOut()
 {
+
 		UE_LOG(LogTemp, Display, TEXT("Burrow Out"));
 	SetActorLocation(_burrowOutLoc);
 
