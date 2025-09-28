@@ -65,6 +65,9 @@ class SGAPROJECTMAIN_API AGunBulletBase : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AGunBulletBase();
+	
+
+	FBulletData GetBulletData() { return _bulletData; }
 
 protected:
 	// Called when the game starts or when spawned

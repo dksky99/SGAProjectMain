@@ -5,6 +5,7 @@
 
 #include "../Enemy.h"
 #include "NavigationSystem.h"
+#include "../../../Controller/EnemyController.h"
 
 void AReinforcementSquad::Init()
 {
@@ -14,18 +15,19 @@ void AReinforcementSquad::Init()
 
 }
 
-bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector target = FVector(0,0,0))
+bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector& target)
 {
+    // 호출가능상태인지 확인
     if (_isReadyToCall == false)
         return false;
-
+    //이미 어떤식으로든 활성화된 상태인지
     if (_squadState != ESquadState::Deactivate)
         return false;
 
 
     FVector pos = origin;
 
-    //NavMesh 찾기
+    //NavMesh 찾기 : 이 지점을 기준으로 특정범위내에 소환가능위치가 있는지 확인. 
     auto naviSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
 
     if (naviSystem->IsValidLowLevel() == false)
@@ -35,14 +37,11 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector target = FVect
 
     //반환받을 랜덤한 위치.
     FNavLocation randLocation;
-    //일정 반경안의 랜덤한 지점을 가져오는 함수
+    //일정 반경안의 랜덤한 지점을 가져오는 함수 여기서 가능한 위치가 없으면 false를 반환.
     if (naviSystem->GetRandomPointInNavigableRadius(pos, _callRadius, randLocation))
     {
-        _squadState = ESquadState::Search;
-        SetTargetLoc(target);
-        SetActorLocation(origin);
+        target = randLocation;
 
-        CallReinforcement();
         return true;
     }
 
@@ -52,25 +51,50 @@ bool AReinforcementSquad::CheckAbleToCall(FVector origin, FVector target = FVect
     return false;
 }
 
-void AReinforcementSquad::CallReinforcement()
+bool AReinforcementSquad::CallReinforcement(FVector targetLoc, AActor* target)
 {
 
     UE_LOG(LogTemp, Display, TEXT("CallReinforce"));
+    //
+    //남아있는 유닛이 있는지 확인.
+
     auto extra = CheckExtraUnit();
-    if (extra==nullptr)
+    if (extra == nullptr)
     {
+        return false;
+    }
+    _isReadyToCall = false;
+    _squadState = ESquadState::Search;
+
+    SetTargetLoc(targetLoc);
+    SetActorLocation(targetLoc);
+    _target = target;
+    CallUnit();
+
+    return true;
+
+}
+
+void AReinforcementSquad::CallUnit()
+{
+
+    auto extra = CheckExtraUnit();
+    if (extra == nullptr)
+    {
+        //여러차례의 딜레이 재귀 호출 후 이 스쿼드의 모든 병력이 소환되었을 경우. 증원 스쿼드는 
         GetWorld()->GetTimerManager().SetTimer(_callUnitTimer, this, &AReinforcementSquad::ReadyToCall, _coolDown, false);
         return;
     }
-    _spawnPoint->SetWorldLocation( GetCallPoint(GetActorLocation()));
-    UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
+    _spawnPoint->SetWorldLocation(GetCallPoint(GetActorLocation()));
     SpawnUnit(extra);
-    //Todo: extra-> 생성 이후 목표 위치를 세팅해줘야함
+
+    extra->Value->RecieveTargetLoc(MakeRandomLocation());
+    extra->Value->RecieveTarget(_target);
+
+
     float nextCall = FMath::FRandRange(_callingDelay_Min, _callingDelay_Max);
 
-    GetWorld()->GetTimerManager().SetTimer(_callUnitTimer, this, &AReinforcementSquad::CallReinforcement, nextCall, false);
-
-
+    GetWorld()->GetTimerManager().SetTimer(_callUnitTimer, this, &AReinforcementSquad::CallUnit, nextCall, false);
 }
 
 bool AReinforcementSquad::SetTargetLoc(FVector target)

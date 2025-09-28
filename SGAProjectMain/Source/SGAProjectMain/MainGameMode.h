@@ -26,7 +26,7 @@ public:
 	void OnBattleEnd();
 
 	class AEnemyReinforceManager* GetEnemyReinforceManager() { return _enemyReinforceManager; }
-	
+	class AHelldiverReinforceManager* GetHelldiverReinforceManager() { return _helldiverReinforceManager; }
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	TSubclassOf<class AEscapePlane> _escapePlaneClass;
@@ -43,7 +43,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;
 
+	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
+	TSubclassOf<class AHelldiverReinforceManager> _helldiverReinforceManagerClass;
+
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AEnemyReinforceManager* _enemyReinforceManager;
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AHelldiverReinforceManager* _helldiverReinforceManager;
 
 };

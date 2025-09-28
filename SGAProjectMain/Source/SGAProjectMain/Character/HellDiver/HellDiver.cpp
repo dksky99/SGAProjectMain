@@ -10,7 +10,9 @@
 #include "HellDiverStatComponent.h"
 #include "HellDiverInvenComponent.h"
 #include "HellDiverAnimInstance.h"
+#include "HelldiverReinforceManager.h"
 #include "PakourComponent.h"
+
 
 #include "MotionWarpingComponent.h"
 #include <Kismet/GameplayStaticsTypes.h>
@@ -31,6 +33,8 @@
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/ReloadBackpack.h"
 #include "../../Object/Item/SampleResources.h"
+
+#include "../../MainGameMode.h"
 
 AHellDiver::AHellDiver(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UHellDiverStatComponent>(StatComponentName))
@@ -845,7 +849,7 @@ FTransform AHellDiver::GetMuzzleTransform() const
     return temp;
 }
 
-void AHellDiver::KnockDown()
+void AHellDiver::KnockDown(float time)
 {
     Super::KnockDown();
 
@@ -865,8 +869,11 @@ void AHellDiver::RecoverFromKnockDown()
 
 void AHellDiver::Dead()
 {
+
+    //래그돌로 변하고 
     Super::Dead();
 
+    UE_LOG(LogTemp, Display, TEXT("AHellDiver Dead CB : %s"), *this->GetName());
     _stateComponent->Dead();
 
     _invenComponent->DropGun(0);
@@ -875,6 +882,44 @@ void AHellDiver::Dead()
 
     _invenComponent->DropBackpack();
     _invenComponent->DropSample();
+
+
+    if (GetController())
+    {
+
+        AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+        if (!GM)return;
+        if (!GM->GetHelldiverReinforceManager()) return;
+        AController* temp = GetController();
+        GetController()->UnPossess();
+        GM->GetHelldiverReinforceManager()->ReturnDeadController(temp);
+
+    }
+
+    GetWorld()->GetTimerManager().SetTimer(_knockDownTimerHandle, this, &AHellDiver::AfterDead, 5.0f, false);
+}
+
+void AHellDiver::AfterDead()
+{
+    UE_LOG(LogTemp, Display, TEXT("AHellDiver AfterDead CB : %s"), *this->GetName());
+    
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (!GM)return;
+    if (!GM->GetHelldiverReinforceManager()) return;
+    GM->GetHelldiverReinforceManager()->ReinforceHelldiver(GetActorLocation());
+      
+
+
+    //60초뒤 레벨에서 래그돌이 사라지고소환가능상태가됨.
+    GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &AHellDiver::RecoverFromDead, 60.0f, false);
+
+}
+
+void AHellDiver::RecoverFromDead()
+{
+    Super::RecoverFromDead();
+    _stateComponent->SetLifeState(ELifeState::Alive);
+    _isReadyToSpawn = true;
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

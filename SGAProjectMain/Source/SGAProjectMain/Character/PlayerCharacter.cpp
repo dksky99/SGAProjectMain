@@ -54,6 +54,8 @@
 
 #include "../Controller/MainPlayerController.h"
 #include "../Controller/CameraContainActor.h"
+#include "Perception/AIPerceptionSystem.h"
+
 
 #include "StimPackComponent.h"
 
@@ -196,6 +198,10 @@ void APlayerCharacter::BeginPlay()
 	if (_missionWidget)
 		_missionWidget->AddToViewport();
 
+
+	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
+
+
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 
@@ -286,6 +292,20 @@ FTransform APlayerCharacter::GetLeftHandPos()
 {
 
 	return FTransform();
+}
+
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	UAIPerceptionSystem::GetCurrent(GetWorld())->RegisterSource(*this);
+}
+
+void APlayerCharacter::UnPossessed()
+{
+	Super::UnPossessed();
+
+	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
 }
 
 FRotator APlayerCharacter::Focusing()

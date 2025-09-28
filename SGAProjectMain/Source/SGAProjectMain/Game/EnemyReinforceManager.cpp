@@ -45,15 +45,23 @@ void AEnemyReinforceManager::Tick(float DeltaTime)
 
 }
 
-AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint)
+AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint,AActor* target)
 {
 	UE_LOG(LogTemp, Display, TEXT("CallReinforcement : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
+	
 	for (auto& squad : _squadPool)
 	{
-		if(squad->CheckAbleToCall(callPoint,callPoint))
+		//호출받은곳에 증원요청가능지역이있는지 확인, 반환.
+		FVector recivePoint;
+		if(squad->CheckAbleToCall(callPoint,recivePoint))
 		{
 			UE_LOG(LogTemp, Display, TEXT("Call Success"));
-			return squad;
+			//호출하고 반환. 소환시도했는데 true면 이대로 끝 아니라면 continue로 다른 스쿼드 확인.
+			if(squad->CallReinforcement(recivePoint))
+				return squad;
+
+			continue;
+
 		}
 	}
 
