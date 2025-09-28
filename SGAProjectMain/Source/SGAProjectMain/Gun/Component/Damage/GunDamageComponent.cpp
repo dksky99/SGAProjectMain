@@ -2,7 +2,7 @@
 
 
 #include "GunDamageComponent.h"
-#include "GunBase.h"
+#include "../../GunBase.h"
 
 // Sets default values for this component's properties
 UGunDamageComponent::UGunDamageComponent()

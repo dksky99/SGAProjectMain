@@ -4,9 +4,9 @@
 #include "HitscanDamageComponent.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "../SGAProjectMain.h"
-#include "../Character/CharacterBase.h"
-#include "../Gun/GunBase.h"
+#include "../../../SGAProjectMain.h"
+#include "../../../Character/CharacterBase.h"
+#include "../../GunBase.h"
 
 void UHitscanDamageComponent::DoFireShot(FVector fireLocation, FVector fireDirection)
 {

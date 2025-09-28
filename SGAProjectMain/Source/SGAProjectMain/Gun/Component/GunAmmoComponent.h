@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "GunDataTable.h"
+#include "../GunDataTable.h"
 #include "GunAmmoComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int, int);

@@ -26,7 +26,7 @@
 
 #include "../Gun/GunBase.h"
 #include "../Gun/ExplosiveGun.h"
-#include "../Gun/GunAmmoComponent.h"
+#include "../Gun/Component/GunAmmoComponent.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"

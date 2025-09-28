@@ -2,8 +2,8 @@
 
 
 #include "ProjectileDamageComponent.h"
-#include "GunBase.h"
-#include "GunBulletBase.h"
+#include "../../GunBase.h"
+#include "../../GunBulletBase.h"
 
 void UProjectileDamageComponent::SetDamageData(const FGunData& gunData)
 {

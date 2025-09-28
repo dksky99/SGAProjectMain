@@ -8,13 +8,13 @@
 #include "../UI/ImpactMarker.h"
 #include "Blueprint/UserWidget.h"
 
-#include "GunFireComponent.h"
-#include "GunAmmoComponent.h"
-#include "GunDamageComponent.h"
-#include "GunEffectComponent.h"
-#include "GunAttachmentComponent.h"
-#include "GunTacticalLightComponent.h"
-#include "GunScopeComponent.h"
+#include "Component/GunFireComponent.h"
+#include "Component/GunAmmoComponent.h"
+#include "Component/GunEffectComponent.h"
+#include "Component/Damage/GunDamageComponent.h"
+#include "Component/Attachment/GunAttachmentComponent.h"
+#include "Component/Attachment/GunTacticalLightComponent.h"
+#include "Component/Attachment/GunScopeComponent.h"
 
 #include "../CGameInstance.h"
 

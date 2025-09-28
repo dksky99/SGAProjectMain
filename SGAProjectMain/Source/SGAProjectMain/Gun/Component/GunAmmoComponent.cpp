@@ -3,9 +3,9 @@
 
 #include "GunAmmoComponent.h"
 
-#include "GunBase.h"
+#include "../GunBase.h"
 
-#include "../Character/CharacterAnimInstance.h"
+#include "../../Character/CharacterAnimInstance.h"
 
 // Sets default values for this component's properties
 UGunAmmoComponent::UGunAmmoComponent()

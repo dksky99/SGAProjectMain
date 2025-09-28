@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GunAttachmentComponent.h"
-#include "GunDataTable.h"
+#include "../../GunDataTable.h"
 #include "GunTacticalLightComponent.generated.h"
 
 /**

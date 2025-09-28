@@ -3,7 +3,7 @@
 
 #include "GunFireComponent.h"
 
-#include "GunBase.h"
+#include "../GunBase.h"
 
 
 
