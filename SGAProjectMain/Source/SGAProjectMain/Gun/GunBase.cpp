@@ -11,6 +11,10 @@
 #include "GunFireComponent.h"
 #include "GunAmmoComponent.h"
 #include "GunDamageComponent.h"
+#include "GunEffectComponent.h"
+#include "GunAttachmentComponent.h"
+#include "GunTacticalLightComponent.h"
+#include "GunScopeComponent.h"
 
 #include "../CGameInstance.h"
 
@@ -19,7 +23,6 @@
 
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Components/SpotLightComponent.h"
 
 #include "../SGAProjectMain.h"
 
@@ -42,22 +45,6 @@ AGunBase::AGunBase()
 		_mesh->DestroyComponent();
 		_mesh->SetHiddenInGame(true);
 	}
-
-	_tacticalLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("SpotLight"));
-	_tacticalLight->SetupAttachment(RootComponent);
-	_tacticalLight->SetVisibility(false);
-
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> fireNS(TEXT("/Script/Niagara.NiagaraSystem'/Game/Graphics/Gun/Effect/NS_WeaponFire.NS_WeaponFire'"));
-	if (fireNS.Succeeded())
-	{
-		_fireNS = fireNS.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> shellEjectNS(TEXT("/Script/Niagara.NiagaraSystem'/Game/Graphics/Gun/Effect/NS_WeaponFire_ShellEject.NS_WeaponFire_ShellEject'"));
-	if (shellEjectNS.Succeeded())
-	{
-		_shellEjectNS = shellEjectNS.Object;
-	}
 }
 
 // Called when the game starts or when spawned
@@ -71,8 +58,6 @@ void AGunBase::BeginPlay()
 		const auto data = gameInstance->GetGunDataFromTable(_gunID);
 		SetGunData(data);
 	}
-
-	_fireComp->_fireEvent.AddUObject(this, &AGunBase::Fire);
 
 	_interactableInfo._interactionText = _gunData._name;
 	_interactableInfo._type = EInteractableIconType::Gun;
@@ -89,74 +74,31 @@ void AGunBase::BeginPlay()
 			_crosshair->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
-
-	if (_gunData._laserFX)
-	{
-		_laserpointer = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_gunData._laserFX,
-			_gunMesh,
-			NAME_None,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::KeepRelativeOffset,
-			true
-		);
-	}
-
-	if (_gunData._laserImpactFX)
-	{
-		_laserImpact = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_gunData._laserImpactFX,
-			_gunMesh,
-			NAME_None,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::KeepRelativeOffset,
-			true
-		);
-	}
-
-	if (_fireNS)
-	{
-		_fireEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_fireNS,
-			_gunMesh,
-			TEXT("Muzzle"),
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget,
-			false
-		);
-		_fireEffect->SetAutoDestroy(false);
-		_fireEffect->Deactivate();
-	}
-
-	if (_shellEjectNS)
-	{
-		_shellEjectEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			_shellEjectNS,
-			_gunMesh,
-			TEXT("ShellEject"),
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget,
-			false
-		);
-		_shellEjectEffect->SetAutoDestroy(false);
-		_shellEjectEffect->Deactivate();
-	}
-
-	_tacticalLightMode = _gunData._lightModes[0];
 }
 
 void AGunBase::SetGunComponent()
 {
 	_fireComp = NewObject<UGunFireComponent>(this, _gunData._fireComponentClass, TEXT("FireComponent"));
 	_fireComp->RegisterComponent();
+	_fireComp->_fireEvent.AddUObject(this, &AGunBase::Fire);
 	_ammoComp = NewObject<UGunAmmoComponent>(this, _gunData._ammoComponentClass, TEXT("AmmoComponent"));
 	_ammoComp->RegisterComponent();
 	_damageComp = NewObject<UGunDamageComponent>(this, _gunData._damageComponentClass, TEXT("DamageComponent"));
 	_damageComp->RegisterComponent();
+	_effectComp = NewObject<UGunEffectComponent>(this, UGunEffectComponent::StaticClass(), TEXT("EffectComponent"));
+	_effectComp->RegisterComponent();
+
+	for (auto attachCompClass : _gunData._attachmentComponentClasses)
+	{
+		auto attachComp = NewObject<UGunAttachmentComponent>(this, attachCompClass);
+		attachComp->RegisterComponent();
+		_attachmentComps.AddUnique(attachComp);
+	}
+
+	if (auto* lightComp = FindComponentByClass<UGunTacticalLightComponent>())
+		_lightComp = lightComp;
+	if (auto* scopeComp = FindComponentByClass<UGunScopeComponent>())
+		_scopeComp = scopeComp;
 }
 
 // Called every frame
@@ -174,8 +116,8 @@ void AGunBase::Tick(float DeltaTime)
 	FHitResult hitResult = GetHitResult(ECC_Visibility); // 가시성 충돌 채널 (UI용)
 	FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 
-	if (_laserpointer)
-		UseLaserPoint(hitPoint);
+	for (auto attachComp : _attachmentComps)
+		attachComp->UpdateAttachment(_gunMesh, hitPoint);
 
 	if (!IsValid(_marker))
 		_marker = GetWorld()->SpawnActor<AImpactMarker>(_gunData._impactMarkerClass, hitPoint, FRotator::ZeroRotator);
@@ -209,7 +151,7 @@ void AGunBase::Fire()
 
 	_ammoComp->ConsumeAmmo();
 
-	PlayFireEffect();
+	_effectComp->PlayFireEffect();
 }
 
 void AGunBase::StopFire()
@@ -229,14 +171,8 @@ void AGunBase::StartAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Visible);
 
-	if (_laserpointer && _laserImpact)
-	{
-		_laserpointer->SetVisibility(true);
-		_laserImpact->SetVisibility(true);
-	}
-
-	if (_tacticalLight)
-		UseTacticalLight(true);
+	for (auto attachComp : _attachmentComps)
+		attachComp->OnAimChanged(true);
 }
 
 void AGunBase::StopAiming()
@@ -249,14 +185,8 @@ void AGunBase::StopAiming()
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
 
-	if (_laserpointer && _laserImpact)
-	{
-		_laserpointer->SetVisibility(false);
-		_laserImpact->SetVisibility(false);
-	}
-
-	if (_tacticalLight)
-		UseTacticalLight(false);
+	for (auto attachComp : _attachmentComps)
+		attachComp->OnAimChanged(false);
 }
 
 void AGunBase::InitializeGun()
@@ -279,11 +209,8 @@ void AGunBase::ActivateGun()
 
 	_recoilToRecover = FRotator::ZeroRotator;
 
-	if (_laserpointer && _laserImpact)
-	{
-		_laserpointer->SetVisibility(false);
-		_laserImpact->SetVisibility(false);
-	}
+	for (auto attachComp : _attachmentComps)
+		attachComp->ActivateAttachment(true);
 
 	_ammoComp->BroadcastAmmoAndSpareChanged(); // TODO) 여기서 해주는 것이 맞는가?
 }
@@ -295,20 +222,13 @@ void AGunBase::DeactivateGun()
 
 	_isActive = false;
 
-	if (_tacticalLight && _owner)
-		UseTacticalLight(_owner->GetStateComponent()->IsAiming());
-
 	if (_marker)
 		_marker->SetActorHiddenInGame(true);
-
 	if (_crosshair)
 		_crosshair->SetVisibility(ESlateVisibility::Hidden);
 
-	if (_laserpointer && _laserImpact)
-	{
-		_laserpointer->SetVisibility(false);
-		_laserImpact->SetVisibility(false);
-	}
+	for (auto attachComp : _attachmentComps)
+		attachComp->ActivateAttachment(false);
 }
 
 void AGunBase::AttachToHand()
@@ -473,87 +393,33 @@ void AGunBase::ChangeFireMode()
 
 void AGunBase::ChangeTacticalLightMode()
 {
-	if (!_tacticalLight) return;
+	if (!_lightComp) return;
 
-	if (_gunData._lightModes.Num() <= 1)
-		return;
-
-	_lightIndex = (_lightIndex + 1) % _gunData._lightModes.Num();
-	_tacticalLightMode = _gunData._lightModes[_lightIndex];
-
-	UseTacticalLight(_owner->GetStateComponent()->IsAiming());
+	_lightComp->ChangeTacticalLightMode(_owner->GetStateComponent()->IsAiming());
 }
 
 void AGunBase::ChangeScopeMode()
 {
-	if (_gunData._scopeModes.Num() <= 1)
-		return;
+	if (!_scopeComp) return;
 
-	_scopeIndex = (_scopeIndex + 1) % _gunData._scopeModes.Num();
-	_scopeMode = _gunData._scopeModes[_scopeIndex];
+	_scopeComp->ChangeScopeMode();
 }
 
-void AGunBase::UseLaserPoint(FVector hitPoint)
+FGunModes AGunBase::GetGunModes()
 {
-	FVector start;
-
-	if (_gunMesh && _gunMesh->DoesSocketExist(TEXT("LaserPoint")))
-	{
-		start = _gunMesh->GetSocketLocation(TEXT("LaserPoint"));
-	}
-	else
-	{
-		start = GetActorLocation();
-	}
-
-	FVector end = hitPoint;
-
-	if (_laserpointer)
-	{
-		_laserpointer->SetVectorParameter("Beam Start", start);
-		_laserpointer->SetVectorParameter("Beam End", end);
-	}
-
-	if (_laserImpact)
-		_laserImpact->SetWorldLocation(end);
-}
-
-void AGunBase::UseTacticalLight(bool isAiming)
-{
-	if (!_tacticalLight) return;
-
-	switch (_tacticalLightMode)
-	{
-	case ETacticalLightMode::LightOn:
-		_tacticalLight->SetVisibility(true);
-		break;
-
-	case ETacticalLightMode::LightOff:
-		_tacticalLight->SetVisibility(false);
-		break;
-
-	case ETacticalLightMode::LightAuto:
-		_tacticalLight->SetVisibility(isAiming);
-		break;
-	}
+	FGunModes gunModes;
+	if (_fireComp)
+		gunModes._fireModes = _fireComp->GetFireModes();
+	if (_lightComp)
+		gunModes._lightModes = _lightComp->GetLightModes();
+	if (_scopeComp)
+		gunModes._scopeModes = _scopeComp->GetScopeModes();
+	return gunModes;
 }
 
 void AGunBase::PickupItem(AHellDiver* player)
 {
 	player->PickupGun(this);
-}
-
-void AGunBase::PlayFireEffect()
-{
-	if (_fireEffect)
-	{
-		_fireEffect->Activate(true);
-	}
-
-	if (_shellEjectEffect)
-	{
-		_shellEjectEffect->Activate(true);
-	}
 }
 
 void AGunBase::SetGunData(const FGunData& gunData)
@@ -563,6 +429,14 @@ void AGunBase::SetGunData(const FGunData& gunData)
 	_fireComp->SetFireModeData(_gunData._fireModes);
 	_ammoComp->SetAmmoData(gunData);
 	_damageComp->SetDamageData(gunData);
+	_effectComp->InitializeEffect(_gunMesh);
+	for (auto attachComp : _attachmentComps)
+		attachComp->InitializeAttachment(_gunMesh);
+}
+
+int32 AGunBase::GetCurAmmo()
+{
+	return _ammoComp->GetCurAmmo();
 }
 
 EFireMode AGunBase::GetCurFireMode()
@@ -570,9 +444,20 @@ EFireMode AGunBase::GetCurFireMode()
 	return _fireComp->GetCurFireMode();
 }
 
-int32 AGunBase::GetCurAmmo()
+ETacticalLightMode AGunBase::GetCurLightMode()
 {
-	return _ammoComp->GetCurAmmo();
+	if (_lightComp)
+		return _lightComp->GetCurLightMode();
+	else 
+		return ETacticalLightMode::LightOff;
+}
+
+int32 AGunBase::GetCurScopeMode()
+{
+	if (_scopeComp)
+		return _scopeComp->GetCurScopeMode();
+	else 
+		return 0;
 }
 
 FTransform AGunBase::GetMuzzleTrans()
@@ -597,6 +482,5 @@ FTransform AGunBase::GetLeftHandleTrans()
 	if(_gunMesh->DoesSocketExist(TEXT("LeftGrip")))
 		return _gunMesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
 	return _gunMesh->GetComponentTransform();
-		
 }
 

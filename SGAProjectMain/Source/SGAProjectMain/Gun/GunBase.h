@@ -8,6 +8,16 @@
 #include "../Object/Item/ItemBase.h"
 #include "GunBase.generated.h"
 
+USTRUCT(BlueprintType)
+struct FGunModes
+{
+	GENERATED_BODY()
+
+	UPROPERTY() TArray<EFireMode> _fireModes;
+	UPROPERTY() TArray<int32>   _scopeModes;
+	UPROPERTY() TArray<ETacticalLightMode> _lightModes;
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API AGunBase : public AItemBase
 {
@@ -59,13 +69,9 @@ public:
 	void ChangeFireMode();
 	void ChangeTacticalLightMode();
 	void ChangeScopeMode();
-
-	void UseLaserPoint(FVector hitPoint);
-	void UseTacticalLight(bool isAiming);
+	FGunModes GetGunModes();
 
 	virtual void PickupItem(AHellDiver* player) override;
-
-	virtual void PlayFireEffect();
 
 	const FGunData& GetGunData() { return _gunData; }
 	void SetGunData(const FGunData& gunData);
@@ -74,10 +80,10 @@ public:
 	class UGunAmmoComponent* GetAmmoComponent() { return _ammoComp; }
 	class UGunDamageComponent* GetDamageComponent() { return _damageComp; }
 
-	EFireMode GetCurFireMode();
 	int32 GetCurAmmo();
-	ETacticalLightMode GetCurLightMode() { return _tacticalLightMode; }
-	int32 GetCurScopeMode() { return _scopeMode; }
+	EFireMode GetCurFireMode();
+	ETacticalLightMode GetCurLightMode();
+	int32 GetCurScopeMode();
 	USkeletalMeshComponent* GetMesh() { return _gunMesh; }
 	class AHellDiver* GetOwnerCharacter() { return _owner; }
 		
@@ -98,6 +104,15 @@ protected:
 	class UGunAmmoComponent* _ammoComp;		// 탄약 관련 컴포넌트
 	UPROPERTY()
 	class UGunDamageComponent* _damageComp;	// 데미지 관련 컴포넌트
+	UPROPERTY()
+	class UGunEffectComponent* _effectComp;
+	UPROPERTY()
+	TArray<class UGunAttachmentComponent*> _attachmentComps;
+	UPROPERTY()
+	class UGunTacticalLightComponent* _lightComp;
+	UPROPERTY()
+	class UGunScopeComponent* _scopeComp;
+
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
 	class AHellDiver* _owner;
@@ -127,27 +142,12 @@ protected:
 	UPROPERTY()
 	UUserWidget* _crosshair;
 
-	UPROPERTY(VisibleAnywhere, Category = "Game/Gun")
-	class USpotLightComponent* _tacticalLight;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	ETacticalLightMode _tacticalLightMode = ETacticalLightMode::LightOff;
-	int32 _lightIndex = 0;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
+	//int32 _scopeMode;
+	//int32 _scopeIndex;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
-	int32 _scopeMode;
-	int32 _scopeIndex;
-
-	UPROPERTY()
-	class UNiagaraComponent* _laserpointer;
-	UPROPERTY()
-	class UNiagaraComponent* _laserImpact;
-
-	UPROPERTY(EditAnywhere, Category = "Game/Gun")
-	class UNiagaraSystem* _fireNS;
-	UPROPERTY()
-	class UNiagaraComponent* _fireEffect;
-	UPROPERTY(EditAnywhere, Category = "Game/Gun")
-	class UNiagaraSystem* _shellEjectNS;
-	UPROPERTY()
-	class UNiagaraComponent* _shellEjectEffect;
+	//UPROPERTY()
+	//class UNiagaraComponent* _laserEffect;
+	//UPROPERTY()
+	//class UNiagaraComponent* _laserImpactEffect;
 };

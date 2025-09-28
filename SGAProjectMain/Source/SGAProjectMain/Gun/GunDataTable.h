@@ -183,25 +183,20 @@ struct FGunData : public FTableRowBase
 	TSubclassOf<class UGunFireComponent> _fireComponentClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<EFireMode> _fireModes = { EFireMode::FireAuto };
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<ETacticalLightMode> _lightModes = { ETacticalLightMode::LightOff };
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int32> _scopeModes = {};
 
+	// 부착물
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<class UGunAttachmentComponent>> _attachmentComponentClasses;
 
 	// 클래스나 블루프린트 지정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AGunBase> _gunClass;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AImpactMarker> _impactMarkerClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> _crosshairClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UNiagaraSystem* _laserFX;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UNiagaraSystem* _laserImpactFX;
 
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

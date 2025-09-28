@@ -37,6 +37,7 @@ public:
 
 	void ChangeFireMode();
 	EFireMode GetCurFireMode() { return _curFireMode; }
+	TArray<EFireMode> GetFireModes() { return _fireModes; }
 
 protected:
 	void ResetBolt() { _canBoltFire = true; }
