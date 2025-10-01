@@ -13,7 +13,6 @@
 #include "Perception/AISense_Damage.h"
 #include "Perception/AIPerceptionTypes.h"  // FAIStimulus\
 
-#include "GenericTeamAgentInterface.h" // 이 헤더파일을 cpp 상단에 include 해야 합니다.
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "BehaviorTree/BlackboardData.h"
@@ -21,7 +20,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "../Character/Enemy/Enemy.h"
-#include "../Character/StatComponent.h"
 #include "../Character/Enemy/BehaviorControlComponent.h"
 
 #include "Algo/MinElement.h"
@@ -77,7 +75,6 @@ void AEnemyController::OnPossess(APawn* InPawn)
     if (pawnTemp)
     {
         _pawn = pawnTemp;
-        _behaviorControlComponent->Init();
         SetAlertStep(_pawn->GetUnitState());
     }
 
@@ -118,7 +115,6 @@ void AEnemyController::OnPossess(APawn* InPawn)
 void AEnemyController::OnUnPossess()
 {
     Super::OnUnPossess();
-    ResetController();
 }
 
 void AEnemyController::BeginPlay()
@@ -126,21 +122,6 @@ void AEnemyController::BeginPlay()
     Super::BeginPlay();
     _curTarget = nullptr;
 
-}
-
-void AEnemyController::ResetController()
-{
-
-    _isReadyToStack = true;
-     _targets.Empty();
-
-
-     _curTarget = nullptr;
-
-    _alertStep = EAIAlertStep::None;
-
-
-   _curLoudnessStack = 0.0f;
 }
 
 void AEnemyController::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
@@ -188,22 +169,20 @@ void AEnemyController::PerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 
 void AEnemyController::HandleSensedSight(AActor* Actor)
 {
-    if (CheckTargetable(Actor) == false)
+    if (Actor == nullptr)
         return;
-
     ITargetable* temp = Cast<ITargetable>(Actor);
     if (temp == nullptr)
         return;
 
     _curTarget = Actor;
-    UE_LOG(LogTemp, Display, TEXT("Hostile Target Acquired by Sight: %s"), *Actor->GetName());
    
+       // AddTargetActor(Actor);
+        UE_LOG(LogTemp, Display, TEXT("Find Target %s"), *Actor->GetName());
 }
+
 void AEnemyController::HandleSensedHearing(FVector directionHeared)
 {
-
-
-
     _lastSensedLoc = directionHeared;
     if (_isReadyToStack == false)
         return;
@@ -241,14 +220,11 @@ void AEnemyController::HandleSensedHearing(FVector directionHeared)
 void AEnemyController::HandleSensedDamage(AActor* Actor)
 {
 
-    if (CheckTargetable(Actor) == false)
-        return;
-
     ITargetable* temp = Cast<ITargetable>(Actor);
     if (temp == nullptr)
         return;
-
-    _curTarget = Actor;
+    UE_LOG(LogTemp, Display, TEXT("Damaged"));
+    AddTargetActor(Actor);
 
 }
 
@@ -381,16 +357,6 @@ void AEnemyController::ResetAlertStack()
     _curLoudnessStack = 0.0f;
 }
 
-AActor* AEnemyController::GetCurTargetActor()
-{
-    if (CheckTargetRefresh())
-    {
-        //RefreshTargets();
-        _curTarget = nullptr;
-    }
-    return _curTarget;
-}
-
 AActor* AEnemyController::GetNewTargetActor()
 {
     RefreshTargets();
@@ -404,76 +370,11 @@ AActor* AEnemyController::GetNewTargetActor()
     
 }
 
-bool AEnemyController::CheckTargetRefresh()
-{
-    ITargetable* targetable = Cast<ITargetable>(_curTarget);
-    if (targetable == nullptr)
-        return true;
-    if (targetable->IsTargetable() == false)
-        return true;
-    if (_curTarget->IsHidden())
-        return true;
-    return false;
-}
-
 void AEnemyController::RefreshTargets()
 {
-    if (_curTarget == nullptr)
-        return;
-    ITargetable* targetable = Cast<ITargetable>(_curTarget);
-    if (targetable == nullptr)
-    {
-        _curTarget = nullptr;
-        return;
-    }
-    if (targetable->IsTargetable() == false)
-    {
-        _curTarget = nullptr;
-        return;
+    _targets.RemoveAll([](AActor* target)
+        {
 
-    }
-
-}
-
-void AEnemyController::RecieveTarget(AActor* target)
-{
-    auto temp = Cast<ITargetable>(target);
-    if (temp)
-    {
-
-        _curTarget = target;
-    }
-}
-
-void AEnemyController::RecieveTargetLoc(FVector targetLoc)
-{
-    _curLoudnessStack = 6.0f;
-    _lastSensedLoc = targetLoc;
-}
-
-bool AEnemyController::CheckTargetable(AActor* target)
-{
-
-    if (target == nullptr || target == GetPawn()) // 자기 자신은 제외
-        return false;
-    IGenericTeamAgentInterface* TargetTeamAgent = Cast<IGenericTeamAgentInterface>(target);
-    if (TargetTeamAgent == nullptr) // 팀 구분이 없는 대상은 무시
-        return false;
-    // GetTeamAttitudeTowards 함수로 나와 상대방의 관계를 확인합니다.
-    ETeamAttitude::Type Attitude = GetTeamAttitudeTowards(*target);
-    // 관계가 '적대적(Hostile)'일 경우에만 타겟으로 설정합니다.
-    if (Attitude != ETeamAttitude::Hostile)
-        return false;
-    //타겟어블 계승한 클래스가아니면 false
-    ITargetable* targetable = Cast<ITargetable>(target);
-    if (targetable == nullptr)
-        return false;
-    //타겟어블은 타겟팅이 될수있는상태인지를 추상함수를 갖음. 그 조건에 안맞으면 false
-    if (targetable->IsTargetable() == false)
-        return false;
-    //아군 AI유닛이 없는 이상황엔 Enemy를 계승하면 전부 같은 편 타겟에서 제외
-    AEnemy* enemy = Cast<AEnemy>(target);
-    if (enemy)
-        return false;
-    return true;
+            return (target == nullptr || target->IsHidden()||IsValid(target)==false);
+        });
 }

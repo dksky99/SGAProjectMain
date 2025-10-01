@@ -29,7 +29,6 @@ public:
 	// Sets default values for this component's properties
 	UBehaviorControlComponent();
 
-	void Init();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -77,8 +76,6 @@ public:
 
 
 
-	bool GetIsAbleToAct();	// 플레이어 가져오기 = 표적 가져오기
-	void SetIsAbleToAct(bool condition);
 
 
 	void SetBlackBoard(class UBlackboardComponent* InBlackboard) { blackboard = InBlackboard; }
@@ -105,9 +102,6 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FName alertThresholdKey = "AlertThreshold";
-
-	UPROPERTY(EditAnywhere)
-	FName IsAbleToActKey = "IsAbleToAct";
 
 protected:
 

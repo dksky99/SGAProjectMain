@@ -24,17 +24,12 @@ void UBehaviorControlComponent::BeginPlay()
 
 	// ...
 
-	Init();
+	_ownerController = Cast<AEnemyController>(GetOwner());
+	_ownerPawn = Cast<AEnemy>(_ownerController->GetPawn());
+	blackboard = _ownerController->GetBlackboardComponent();
 	
 }
 
-void UBehaviorControlComponent::Init()
-{
-	_ownerController = Cast<AEnemyController>(GetOwner());
-	_ownerPawn = Cast<AEnemy>(_ownerController->GetPawn());
-
-
-}
 
 // Called every frame
 void UBehaviorControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -53,10 +48,8 @@ void UBehaviorControlComponent::ChangeUnitType(EUnitState InType)
 {
 
 	EUnitState type = GetCurUnitType(); // 행동전환시 추가 이벤트가 있는 경우 대비
-	if (type == InType)
-		return;
 	_ownerPawn->SetUnitState(InType);
-	_ownerController->GetBlackboardComponent()->SetValueAsEnum(_unitStateKey, (uint8)InType); // 블랙보드에 키와 값 넣기
+	blackboard->SetValueAsEnum(_unitStateKey, (uint8)InType); // 블랙보드에 키와 값 넣기
 }
 
 bool UBehaviorControlComponent::CheckBattleType(EBattleState InType)
@@ -67,49 +60,39 @@ bool UBehaviorControlComponent::CheckBattleType(EBattleState InType)
 void UBehaviorControlComponent::ChangeBattleType(EBattleState InType)
 {
 	EBattleState type = GetCurBattleType(); // 행동전환시 추가 이벤트가 있는 경우 대비
-	_ownerController->GetBlackboardComponent()->SetValueAsEnum(_battleStateKey, (uint8)InType); // 블랙보드에 키와 값 넣기
+	blackboard->SetValueAsEnum(_battleStateKey, (uint8)InType); // 블랙보드에 키와 값 넣기
 }
 
 EUnitState UBehaviorControlComponent::GetCurUnitType()
 {
-	return (EUnitState)_ownerController->GetBlackboardComponent()->GetValueAsEnum(_unitStateKey);
+	return (EUnitState)blackboard->GetValueAsEnum(_unitStateKey);
 }
 
 EBattleState UBehaviorControlComponent::GetCurBattleType()
 {
-	return (EBattleState)_ownerController->GetBlackboardComponent()->GetValueAsEnum(_battleStateKey);
+	return (EBattleState)blackboard->GetValueAsEnum(_battleStateKey);
 }
 
 
 void UBehaviorControlComponent::ChangeDistanceValue(float InValue)
 {
-	_ownerController->GetBlackboardComponent()->SetValueAsFloat(distanceKey, InValue);
+	blackboard->SetValueAsFloat(distanceKey, InValue);
 }
 
 float UBehaviorControlComponent::GetDistance()
 {
-	return _ownerController->GetBlackboardComponent()->GetValueAsFloat(distanceKey);
+	return blackboard->GetValueAsFloat(distanceKey);
 
 }
 
 void UBehaviorControlComponent::ChangeAlertThreshold(float InValue)
 {
-	_ownerController->GetBlackboardComponent()->SetValueAsFloat(alertThresholdKey, InValue);
+	blackboard->SetValueAsFloat(alertThresholdKey, InValue);
 }
 
 float UBehaviorControlComponent::GetAlertThreshold()
 {
 	return _ownerController->GetAlertStack();
-}
-
-bool UBehaviorControlComponent::GetIsAbleToAct()
-{
-	return _ownerController->GetBlackboardComponent()->GetValueAsBool(IsAbleToActKey);
-}
-
-void UBehaviorControlComponent::SetIsAbleToAct(bool condition)
-{
-	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsAbleToActKey,condition);
 }
 
 
@@ -120,11 +103,9 @@ AActor* UBehaviorControlComponent::GetTargetActor()
 
 void UBehaviorControlComponent::SetTargetActor(AActor* target)
 {
-	if (target == nullptr)
-		return;
 	ITargetable* temp = Cast<ITargetable>(target);
 	if(temp)
-		_ownerController->GetBlackboardComponent()->SetValueAsObject(targetKey, target);
+	blackboard->SetValueAsObject(targetKey, target);
 }
 
 FVector UBehaviorControlComponent::GetTargetLoc()
@@ -135,5 +116,5 @@ FVector UBehaviorControlComponent::GetTargetLoc()
 
 void UBehaviorControlComponent::SetTargetLoc(FVector loc)
 {
-	_ownerController->GetBlackboardComponent()->SetValueAsVector(targetLocKey, loc);
+	blackboard->SetValueAsVector(targetLocKey, loc);
 }

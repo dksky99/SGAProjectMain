@@ -50,10 +50,12 @@ public:
 	// 시야감각 측에서 적을 찾아서 배틀상태로 변환.
 	virtual void FoundTarget(class ACharacterBase* target);
 
-	//주변의 아군들에게 강한 경보상태로 만들고 다 같이 자신이 발견한 적의 위치를 알림.
+	//주변의 아군들에게 강한 경보상태로 만들고 다 같이 자신이 
 	virtual void RaiseAlert();
-	//경보를 받아들임. 받으면 바로 강한 경계. 받은 위치로 이동.
-	virtual void RecieveAlert(AActor* target);
+
+	virtual void Spawn();
+	bool IsReadyToSpawn();
+	void ReadyToSpawn();
 
 	bool AddToSquad(class AEnemySquad* temp);
 
@@ -76,12 +78,6 @@ public:
 	virtual bool TryMiddle(AActor* target) { return false; }
 	virtual bool TryFar(AActor* target) { return false; }
 
-	virtual bool CheckAbleTryNear(AActor* target) { return false; }
-	virtual bool CheckAbleTryMiddle(AActor* target) { return false; }
-	virtual bool CheckAbleTryFar(AActor* target) { return false; }
-
-	float GetNearRange() { return _nearRange; }
-	float GetMiddleRange() { return _middleRange; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -91,19 +87,32 @@ protected:
 	class UPatrolComponent* _patrolComponent;
 
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* _warCryMontage;
+	class UAnimMontage* _spawnMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _reinforcementMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _deadMontage;
+
+private:
+
+	FTimerHandle _respawnTimer;
+
+	bool _isReadyToSpawn = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	float _respawnCoolDown;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _nearRange=150.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _middleRange = 1000.f;
 
 
-	UPROPERTY()
+
+	TArray<class ACharacterBase*> _targets;
+
 	EUnitState _unitState=EUnitState::Stay;
-
 	UPROPERTY()
 	TWeakObjectPtr<class AEnemySquad> _squad;
 

@@ -55,7 +55,6 @@ public:
 	virtual void SpawnAllUnits();
 	virtual bool SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
-	void UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 	// 이건 만들어놓고 어떻게 써야할지 모르겠다 놔두다 필요하면 쓰고 필요없으면 버리자
 	virtual void Command_Search();
 
@@ -76,15 +75,9 @@ public:
 	void DeactivateAllUnits();
 	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인.
 	TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* CheckExtraUnit();
-
-
-	int32 CheckActivateUnitCount();
-
-
 protected:
 	bool IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit);
 
-	FVector MakeRandomLocation();
 protected:
 
 	UPROPERTY()
@@ -101,15 +94,6 @@ protected:
 	ESquadState _squadState = ESquadState::Deactivate;
 
 	UPROPERTY()
-	class AActor* _target;
+	TArray<class ACharacterBase*> _targets;
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game/Squad", meta = (AllowPrivateAccess = "true"))
-	float _targetLocRadius=200.f;
-	UPROPERTY()
-	FVector _targetLoc;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
-	class ACPatrolPath* _patrolPath;
 };

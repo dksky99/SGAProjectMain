@@ -15,10 +15,10 @@ struct FReloadBackpackData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _maxSpare = 5;
+	int32 _maxBullet = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _refillSpareAmount = 4;
+	int32 _refillBulletAmount = 4;
 };
 
 UCLASS()
@@ -29,13 +29,11 @@ class SGAPROJECTMAIN_API AReloadBackpack : public ABackpack
 	virtual void BeginPlay() override;
 
 public:
-	void ConsumeSpare(int32 amount);
-
-	int32 GetCurSpareCount() { return _curSpare; }
+	int32 GetCurBulletCount() { return _curBullet; }
 	
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
 	FReloadBackpackData _reloadBackpackData;
 
-	int32 _curSpare = 5;
+	int32 _curBullet = 5;
 };

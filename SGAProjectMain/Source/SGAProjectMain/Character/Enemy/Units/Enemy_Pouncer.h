@@ -20,27 +20,30 @@ public:
 
 
 
-
-	virtual bool CheckAbleTryNear(AActor* target) override;
-	virtual bool CheckAbleTryMiddle(AActor* target) override;
 	virtual bool TryNear(AActor* target)   override;
 	virtual bool TryMiddle(AActor* target) override;
 	virtual bool TryFar(AActor* target)    override;
 
 
 
-	bool JumpAttack(AActor* target);
-	bool JumpAttack(FVector target);
+	bool Jump(AActor* target);
+	bool Jump(FVector target);
 
 	bool CalculateLaunchDirection(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity);
 
 	bool CalculateLaunchDirectionWithTime(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity, float& OutFlightTime);
 protected:
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AttackCollision", meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* _claw_L;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AttackCollision", meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* _claw_R;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	class UUnitAttackDataAsset* _jumpAttackData;
+	class UAnimMontage* _jump_Animation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Jump", meta = (AllowPrivateAccess = "true"))
 	float _jumpPower=1000.f;

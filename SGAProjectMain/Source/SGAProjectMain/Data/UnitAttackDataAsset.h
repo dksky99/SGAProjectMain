@@ -25,13 +25,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FName> ActiveColliders;
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Interval;
-
-
-
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bCanMove;
 

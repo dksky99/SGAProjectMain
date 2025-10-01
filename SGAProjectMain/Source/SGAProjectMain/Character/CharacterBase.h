@@ -20,7 +20,7 @@ enum class ETeamID : uint8
 	Enemy = 1 UMETA(DisplayName = "Far"),
 	MAX
 };
-DECLARE_DELEGATE(FReservedFunctionDelegate);
+
 UCLASS()
 class SGAPROJECTMAIN_API ACharacterBase : public ACharacter, public ITargetable, public IGenericTeamAgentInterface
 {
@@ -63,28 +63,21 @@ public:
 	bool _isTurnLeft = false;
 	bool _isTurnRight = false;
 
+	void KnockDown(float time);
 
 	void KnockDownRecovery();
 
 	//virtual float TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser) override;
 	//고스트 액터를 뽑으니 도저히 자연스럽지 못하다 포즈 복사도 제대로안되고있고 액터생성부분도 부자연스럽다
-	//그냥 메시를 래그돌로 드랍하고 사망후 1분동안 캐릭터를 완전히 무력화해놓고 1분뒤 슬그머니 레벨에서 지운 후 복구해서 써먹는 것으로 가자
-	//캐릭터의 순환은 스폰-> 사망->래그돌->래그돌에서 회복,풀로 복귀->상태 복구 후 스폰
+	//그냥 메시를 드랍하고 사망후 1분동안 캐릭터를 완전히 무력화해놓고 1분뒤 슬그머니 레벨에서 지운 후 복구해서 써먹는 것으로 가자
 	void CharacterToRagdoll();
-	virtual void KnockDown(float time=3.f);
+	virtual void KnockDown();
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
-	virtual void RecoverFromDead();
 
-	virtual void UnitDeactivate();
-	virtual void UnitActivate();
+	void UnitDeactivate();
+
 	virtual FVector GetTargetLoc() { return FVector(); }
-
-
-	virtual void Spawn();
-	void SpawnProcessFinish();
-	bool IsReadyToSpawn();
-	void ReadyToSpawn();
 
 	virtual void SpawnGhost();
 
@@ -118,9 +111,9 @@ public:
 		bool bFromSweep, const FHitResult& SweepResult);
 	//랜덤으로 가지고있는 공격 데이터중하나를 골라서 호출
 	virtual bool AttackMelee();
-	virtual void ActionEnd();
+
 	//공격이 실시되기전 공격데이터에서 이 공격에 사용하는 콜리더들을 리스트에 추가
-	virtual void SetMeleeColisions(class UUnitAttackDataAsset* data);
+	virtual void SetMeleeColisions(int index);
 	//공격모션이 끝난 후 사용했던 콜리더들을 리스트에서 해제
 	virtual void ReleaseMeleeColision();
 	//리스트에 있는 콜리더들 활성화, 비활성화
@@ -129,42 +122,24 @@ public:
 
 
 
-	//한번의 OnOff로 한 액터가 여러번의 타격을 방지.
 	bool CheckHitted(AActor* target);
 	void AddHitted(AActor* target);
 	void ClearHitted();
 
-	class UUnitAttackDataAsset* GetCurAttackData() { return _curAttackData; }
-	
 
-public:
-	FReservedFunctionDelegate _reservedFunction;
-	
 protected:
-	//=================================
-	//근접 공격 관련
-	//=================================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Melee", meta = (AllowPrivateAccess = "true"))
 	TMap< FName, UShapeComponent*> _meleeColliders;
 	UPROPERTY()
 	TArray<class UShapeComponent*> _activateColliders;
 
-
-	UPROPERTY()
-	class AGunBulletBase* _activateProjectile=nullptr;
-
-	UPROPERTY()
-	class UUnitAttackDataAsset* _curAttackData=nullptr;
-
-	UPROPERTY()
-	TArray<class AActor*> _hitted;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	TArray<class UUnitAttackDataAsset*> _meleeAttackDatas;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Melee", meta = (AllowPrivateAccess = "true"))
+	float _meleeDamage = 10.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stat")
 	class UStatComponent* _statComponent;
+
+
 
 	static const FName StatComponentName;
 
@@ -192,24 +167,12 @@ protected:
 	FGenericTeamId TeamId;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* _spawnMontage;
+	UPROPERTY()
+	TArray<class AActor*> _hitted;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* _reinforcementMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
-	class UAnimMontage* _deadMontage;
-
-	FTimerHandle _respawnTimer;
-
-	bool _isReadyToSpawn = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
-	float _respawnCoolDown;
-
-
-
+	TArray<class UUnitAttackDataAsset*> _meleeAttackDatas;
 
 
 

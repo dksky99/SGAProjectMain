@@ -7,7 +7,6 @@
 #include "CGameInstance.h"
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
-#include "Character/HellDiver/HelldiverReinforceManager.h"
 #include "Object/Map/EscapePlane.h"
 #include "Object/Map/DropPlaneBeacon.h"
 #include "Object/Map/TerminalConsole.h"
@@ -25,9 +24,6 @@ void AMainGameMode::BeginPlay()
 
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
-
-    if (_helldiverReinforceManagerClass)
-        _helldiverReinforceManager = GetWorld()->SpawnActor<AHelldiverReinforceManager>(_helldiverReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
     _planeBeacon = Cast<ADropPlaneBeacon>(UGameplayStatics::GetActorOfClass(this, ADropPlaneBeacon::StaticClass()));
 }

@@ -23,7 +23,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	UFUNCTION()
-	float PlayAnimMontage(UAnimMontage* animMontage,float playRate=1.0f);
+	void PlayAnimMontage(UAnimMontage* animMontage,float playRate=1.0f);
 
 
 	void JumpToSection(int32 sectionIndex);

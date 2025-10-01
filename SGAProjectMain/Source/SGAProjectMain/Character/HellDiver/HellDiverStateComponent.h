@@ -98,7 +98,7 @@ public:
 
 	bool IsRolling() { return _isRolling; }
 	bool IsReloading() { return _isReloading; }
-	//void SetReloading(bool isReloading) { _isReloading = isReloading; } // 대신 StartReload(), FinishReload() 이용
+	void SetReloading(bool isReloading) { _isReloading = isReloading; }
 	bool IsFiring() { return _isFiring; }
 	void SetFiring(bool isFiring) { _isFiring = isFiring; }
 	bool IsAiming() { return _isAiming; }

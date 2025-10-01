@@ -47,8 +47,6 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void ResetController();
-
 	UFUNCTION()
 	void OnTargetDetected(AActor* Actor, FAIStimulus Stimulus);
 
@@ -73,22 +71,15 @@ public:
 	void ResetAlertStack();
 
 	float GetAlertStack() { return _curLoudnessStack; }
-	class AActor* GetCurTargetActor();
+	class AActor* GetCurTargetActor() { return _curTarget; }
 	//블랙보드에 타겟을 갱신할 목적. 지금 적용된타겟보다 더 가까운 위치에 타겟이될수있는 오브젝트가 있다면 그 오브젝트로 바뀌게될 예정.
 	class AActor* GetNewTargetActor();
-	bool CheckTargetRefresh();
 	void RefreshTargets();
 	
-	void RecieveTarget(AActor* target);
-	void RecieveTargetLoc(FVector targetLoc);
-
-
 	FVector GetTargetLoc() { return _lastSensedLoc; }
 
 	class UBehaviorControlComponent* GetBehaviorControl() { return _behaviorControlComponent; }
-protected:
-	//타겟이 가능한지 확인한다. 타겟어블을 계승해야하고 Enemy가 아니어야하고 죽어있거나 파괴되어있지 않아야함.
-	bool CheckTargetable(AActor* target);
+
 public:
 
 	
@@ -106,7 +97,7 @@ protected:
 	//스택이 너무빠른시간내에 다 차오르지 않게하기위해
 	UPROPERTY()
 	FTimerHandle _alertStackTimer;
-	float _alertStackTime = 0.5f;
+	float _alertStackTime = 1.0f;
 	bool _isReadyToStack = true;
 	//얕은경계와 강한경계때 15초이상 소리를 듣지 못하면 경계치를 리셋
 	UPROPERTY()

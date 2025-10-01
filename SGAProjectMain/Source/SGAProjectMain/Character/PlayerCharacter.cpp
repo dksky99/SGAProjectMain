@@ -26,7 +26,6 @@
 
 #include "../Gun/GunBase.h"
 #include "../Gun/ExplosiveGun.h"
-#include "../Gun/Component/GunAmmoComponent.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
 #include "../UI/GunSettingWidget.h"
@@ -54,8 +53,6 @@
 
 #include "../Controller/MainPlayerController.h"
 #include "../Controller/CameraContainActor.h"
-#include "Perception/AIPerceptionSystem.h"
-
 
 #include "StimPackComponent.h"
 
@@ -198,10 +195,6 @@ void APlayerCharacter::BeginPlay()
 	if (_missionWidget)
 		_missionWidget->AddToViewport();
 
-
-	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
-
-
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 
@@ -292,20 +285,6 @@ FTransform APlayerCharacter::GetLeftHandPos()
 {
 
 	return FTransform();
-}
-
-void APlayerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	UAIPerceptionSystem::GetCurrent(GetWorld())->RegisterSource(*this);
-}
-
-void APlayerCharacter::UnPossessed()
-{
-	Super::UnPossessed();
-
-	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
 }
 
 FRotator APlayerCharacter::Focusing()
@@ -1668,14 +1647,14 @@ void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
 
 void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)
 {
-	prevGun->GetAmmoComponent()->_ammoChanged.RemoveAll(_gunWidget);
-	prevGun->GetAmmoComponent()->_spareChanged.RemoveAll(_gunWidget);
+	prevGun->_ammoChanged.RemoveAll(_gunWidget);
+	prevGun->_magChanged.RemoveAll(_gunWidget);
 }
 
 void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
 {
-	newGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-	newGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
+	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
@@ -1689,8 +1668,8 @@ void APlayerCharacter::InitWeapon()
 
 	if (_gunWidget)
 	{
-		equippedGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-		equippedGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
+		equippedGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+		equippedGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 		_statComponent->_coreHpChanged.AddUObject(_gunWidget, &UGunWidget::SetHp);
 		_stimPackComponent->_stimPackChanged.AddUObject(_gunWidget, &UGunWidget::SetStimPack);
 		_grenadeChanged.AddUObject(_gunWidget, &UGunWidget::SetGrenade);
@@ -1726,11 +1705,11 @@ void APlayerCharacter::PickupGun(AGunBase* newGun)
 	if (index == -1) return;
 
 	auto previousGun = _invenComponent->GetEquippedGun();
-	previousGun->GetAmmoComponent()->_ammoChanged.RemoveAll(_gunWidget);
-	previousGun->GetAmmoComponent()->_spareChanged.RemoveAll(_gunWidget);
+	previousGun->_ammoChanged.RemoveAll(_gunWidget);
+	previousGun->_magChanged.RemoveAll(_gunWidget);
 
-	newGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
-	newGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
+	newGun->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
+	newGun->_magChanged.AddUObject(_gunWidget, &UGunWidget::SetMag);
 	Super::PickupGun(newGun);
 
 	if (_gunWidget)

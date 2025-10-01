@@ -45,19 +45,13 @@ enum class EFireMode : uint8
 };
 
 UENUM(BlueprintType)
-enum class EReloadType : uint8
-{
-	Magazine,
-	RoundsReload
-};
-
-UENUM(BlueprintType)
 enum class EReloadStage : uint8
 {
-	Idle,
+	None,
 	RemoveMag,
 	InsertMag,
-	CloseBolt
+	CloseBolt,
+	RoundsReload // 한 발씩 장전
 };
 
 UENUM(BlueprintType)
@@ -78,21 +72,6 @@ enum class EPenetrateTrait : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FShotgunData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _pelletCount = 1;
-
-	// 펠렛 분산 정도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _horizontalSpread = 0.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _verticalSpread = 0.f;
-};
-
-USTRUCT(BlueprintType)
 struct FGunData : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -109,11 +88,14 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGunCategory _category; // 총의 종류
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UTexture2D* _previewImage;
+
 
 	// 데미지 요소
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UGunDamageComponent> _damageComponentClass;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _baseDamage = 80.0f; // 기본 데미지
 
@@ -123,36 +105,22 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPenetrateTrait _penetrateTrait = EPenetrateTrait::Light; // 관통력
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FShotgunData _shotgunData;		// 샷건에 필요한 데이터
-
-	// 총알
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AGunBulletBase> _projectileClass;
-
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _fireInterval = 60.0f / 640.0f;
 
 
-	// 재장전 요소
+	// 탄약
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UGunAmmoComponent> _ammoComponentClass;
+	int32 _maxAmmo = 45;
 
+	// 탄창
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EReloadType _reloadType;	// 재장전 방식
+	int32 _initialMag = 6;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool _needAmmoBag = false;	// 재장전할 때 가방이 필요한지
-
+	int32 _maxMag = 8;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _maxAmmo = 45;		// 탄약
-							
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _initialSpare = 6;	// 초기 탄창 혹은 여분의 탄약
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _maxSpare = 8;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _refillAmount = 4;
+	int32 _refillMagAmount = 4;
 
 	// 인체공학성
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -178,33 +146,30 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloff100 = 0.133f;
 
-	// 발사 모드 관련 요소
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UGunFireComponent> _fireComponentClass;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<EFireMode> _fireModes = { EFireMode::FireAuto };
-
-	// 부착물
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<class UGunAttachmentComponent>> _attachmentComponentClasses;
+	TArray<ETacticalLightMode> _lightModes = { ETacticalLightMode::LightOff };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> _scopeModes = {};
+
 
 	// 클래스나 블루프린트 지정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AGunBase> _gunClass;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AImpactMarker> _impactMarkerClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> _crosshairClass;
 
-	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _icon;
-
+	class UNiagaraSystem* _laserFX;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _previewImage;
+	class UNiagaraSystem* _laserImpactFX;
 
+	// UI 설명
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText _desc;
 };

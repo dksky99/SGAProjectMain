@@ -40,12 +40,10 @@ public:
 
 	FTransform GetLeftHandPos();
 
-	
+protected:
+	// Called when the game starts or when spawned
 
-	virtual void PossessedBy(AController* NewController) override;
-
-	virtual void UnPossessed() override;
-
+public:
 	// Called every frame
 
 	UFUNCTION()
