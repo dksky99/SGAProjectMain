@@ -3,29 +3,62 @@
 
 #include "Enemy_Pouncer.h"
 
-#include "Components/CapsuleComponent.h"
-#include "../../CharacterStateComponent.h"
+#include "../../../Controller/EnemyController.h"
+#include "../../../Helper/AIActingHelperLibrary.h"
+#include "../../../Gun/GunBulletBase.h"
+#include "Animation/AnimInstance.h"             // UAnimInstance, Montage_Play(), GetActiveInstanceForMontage()
+#include "Animation/AnimMontage.h"              // UAnimMontage
+
 #include "../../CharacterAnimInstance.h"
+#include "../../CharacterStateComponent.h"
 #include "../../../Data/UnitAttackDataAsset.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "NavigationSystem.h"
+
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 AEnemy_Pouncer::AEnemy_Pouncer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	_claw_L = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Claw_L"));
-	_claw_R = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Claw_R"));
 
-	_claw_L->SetupAttachment(GetMesh());
-	_claw_R->SetupAttachment(GetMesh());
+}
 
+bool AEnemy_Pouncer::CheckAbleTryNear(AActor* target)
+{
+    if (target == nullptr)
+        return false;
+    return true;
+}
+
+bool AEnemy_Pouncer::CheckAbleTryMiddle(AActor* target)
+{
+    if (target == nullptr)
+        return false;
+
+    if (UAIActingHelperLibrary::IsFacingTarget(GetActorForwardVector(), GetActorLocation(), target->GetActorLocation()))
+        return true;
+    return false;
 }
 
 bool AEnemy_Pouncer::TryNear(AActor* target)
 {
+    if (CheckAbleTryNear(target) == false)
+        return false;
+    if (AttackMelee())
+        return true;
+
+
     return false;
 }
 
 bool AEnemy_Pouncer::TryMiddle(AActor* target)
 {
+
+    if (CheckAbleTryMiddle(target) == false)
+        return false;
+    if(JumpAttack(target))
+       return true;
     return false;
 }
 
@@ -35,50 +68,60 @@ bool AEnemy_Pouncer::TryFar(AActor* target)
 }
 
 
-bool AEnemy_Pouncer::Jump(AActor* target)
+bool AEnemy_Pouncer::JumpAttack(AActor* target)
 {
-    FVector start = GetActorLocation();
-    FVector targetLoc = target->GetActorLocation();
-    float speed = _jumpPower;
+    if (target == nullptr)
+        return false;
+    FVector targetLoc;
 
-    FVector calculatedVelocity;
-    float flightTime;
+    FVector muzzleLocation = GetActorLocation();
+    targetLoc = target->GetActorLocation();
 
-    if (CalculateLaunchDirectionWithTime(start, targetLoc, speed, calculatedVelocity, flightTime))
-    {
-        UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+    FVector direction;
+    bool check = UAIActingHelperLibrary::CalculateLaunchDirection(
+        direction,
+        muzzleLocation,
+        targetLoc,
+        _jumpPower
+    );
 
-        if (anim == nullptr)
-            return false;
-        if (_stateComp->ActionBegin() == false)
-            return false;
-        if (_jump_Animation == nullptr)
-            return false;
-        if (flightTime <= 0.0f)
-            flightTime = 1.0f;
-        float originalAnimLength = _jump_Animation->GetPlayLength(); // 원래 애니메이션 길이
-        float playRate = originalAnimLength / flightTime;
-        anim->PlayAnimMontage(_jump_Animation,playRate);
-
-        LaunchCharacter(calculatedVelocity, true, true);
-        return true;
-
-
-    }
-    else
+    if (check == false)
     {
         return false;
     }
 
+    UE_LOG(LogTemp, Display, TEXT("JumpDirection: %f %f %f"), direction.X, direction.Y, direction.Z);
+    DrawDebugLine(GetWorld(), muzzleLocation, muzzleLocation + direction * 500.f, FColor::Yellow, false,1.f, 0, 2.0f);
+
+
+    UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+
+
+    if (_jumpAttackData->Motion == nullptr)
+        return false;
+    if (anim == nullptr)
+        return false;
+    if (_stateComp->ActionBegin() == false)
+        return false;
+
+    _curAttackData = _jumpAttackData;
+    SetMeleeColisions(_jumpAttackData);
+
+    GetCharacterMovement()->StopMovementImmediately();
+    LaunchCharacter(direction * _jumpPower, true, true);
+    const float Duration = anim->PlayAnimMontage(_jumpAttackData->Motion);
+
+    return true;
 
 
 
 }
 
-bool AEnemy_Pouncer::Jump(FVector target)
+bool AEnemy_Pouncer::JumpAttack(FVector target)
 {
     FVector start = GetActorLocation();
     FVector targetLoc = target;
+
     float speed = _jumpPower;
 
     FVector calculatedVelocity;
@@ -92,13 +135,17 @@ bool AEnemy_Pouncer::Jump(FVector target)
             return false;
         if (_stateComp->ActionBegin() == false)
             return false;
-        if (_jump_Animation == nullptr)
+        if (_jumpAttackData == nullptr)
             return false;
-        if (flightTime <= 0.0f)
-            flightTime = 1.0f;
-        float originalAnimLength = _jump_Animation->GetPlayLength(); // 원래 애니메이션 길이
-        float playRate = originalAnimLength / flightTime;
-        anim->PlayAnimMontage(_jump_Animation, playRate);
+        if (_jumpAttackData->Motion)
+        {
+            if (flightTime <= 0.0f)
+                flightTime = 1.0f;
+            float originalAnimLength = _jumpAttackData->Motion->GetPlayLength(); // 원래 애니메이션 길이
+            float playRate = originalAnimLength / flightTime;
+            anim->PlayAnimMontage(_jumpAttackData->Motion, playRate);
+
+        }
 
         LaunchCharacter(calculatedVelocity, true, true);
         return true;
@@ -111,6 +158,7 @@ bool AEnemy_Pouncer::Jump(FVector target)
     }
 
 }
+
 
 bool AEnemy_Pouncer::CalculateLaunchDirection(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity)
 {

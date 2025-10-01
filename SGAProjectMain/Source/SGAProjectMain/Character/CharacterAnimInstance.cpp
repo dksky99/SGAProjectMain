@@ -58,12 +58,13 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
-void UCharacterAnimInstance::PlayAnimMontage(UAnimMontage* animMontage, float playRate)
+float  UCharacterAnimInstance::PlayAnimMontage(UAnimMontage* animMontage, float playRate )
 {
 	if (!Montage_IsPlaying(animMontage))
 	{
-		Montage_Play(animMontage,playRate);
+		return Montage_Play(animMontage,playRate);
 	}
+	return 0.0f;
 }
 
 

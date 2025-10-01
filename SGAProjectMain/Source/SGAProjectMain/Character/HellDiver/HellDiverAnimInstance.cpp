@@ -77,7 +77,7 @@ void UHellDiverAnimInstance::AnimNotify_Reload()
 	UE_LOG(LogTemp, Log, TEXT("ReloadNotify"));
 	if (AGunBase* gun = Cast<AGunBase>(_hellDiver->GetEquippedGun()))
 	{
-		gun->ChangeReloadStage();
+		gun->OnReloadSectionEnded();
 	}
 }
 
@@ -442,9 +442,6 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	charForward = FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 
-
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + charForward * 500.f, FColor::Yellow, false, 0.1f, 0, 2.0f);
-	DrawDebugLine(GetWorld(), gunTrans.GetLocation(), gunTrans.GetLocation() + controlForward * 500.f, FColor::Green, false, 0.1f, 0, 2.0f);
 
 
 	//두 선의 내적으로 일치하는정도를 확인.1일수록 일치 -1이면 반대 0이면 수직
