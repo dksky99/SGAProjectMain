@@ -549,26 +549,40 @@ void AHellDiver::StopAiming()
 
 void AHellDiver::Reload()
 {
+    if (_stateComponent->IsReloading()) return;
+
     auto equippedGun = _invenComponent->GetEquippedGun();
 
-    if (auto projectileGun = Cast<AExplosiveGun>(equippedGun)) // 폭발성 총일 경우
-    {
-        auto backpack = _invenComponent->GetBackpack(); // 가방이 없으면 리턴
-        if (!backpack) return;
+    //if (auto projectileGun = Cast<AExplosiveGun>(equippedGun)) // 폭발성 총일 경우
+    //{
+    //    auto backpack = _invenComponent->GetBackpack(); // 가방이 없으면 리턴
+    //    if (!backpack) return;
 
-        auto reloadBackpack = Cast<AReloadBackpack>(backpack); // 가방이 있어도
-        if (!reloadBackpack) return;                            // 장전용이 아니면 리턴
-        if (reloadBackpack->GetCurBulletCount() <= 0) return;   // 혹은 가방에 총알이 없으면 리턴
-    }
+    //    auto reloadBackpack = Cast<AReloadBackpack>(backpack); // 가방이 있어도
+    //    if (!reloadBackpack) return;                            // 장전용이 아니면 리턴
+    //    if (reloadBackpack->GetCurBulletCount() <= 0) return;   // 혹은 가방에 총알이 없으면 리턴
+    //}
 
-    equippedGun->StopAiming();
-    equippedGun->StopFire();
     equippedGun->Reload();
+}
+
+bool AHellDiver::CanReloadUsingBackpack()
+{
+    if (auto reloadBackpack = Cast<AReloadBackpack>(_invenComponent->GetBackpack()))
+        return reloadBackpack->GetCurSpareCount() > 0;
+
+    return false;
 }
 
 void AHellDiver::EquipBackpack(ABackpack* backpack)
 {
     _invenComponent->EquipBackpack(backpack);
+}
+
+void AHellDiver::UseBackpack(int32 amount)
+{
+    if (auto reloadBackpack = Cast<AReloadBackpack>(_invenComponent->GetBackpack()))
+        reloadBackpack->ConsumeSpare(amount);
 }
 
 void AHellDiver::AddSample(FSampleBundle sample)
@@ -578,12 +592,12 @@ void AHellDiver::AddSample(FSampleBundle sample)
 
 void AHellDiver::RefillAllItem()
 {
-    RefillMag();
+    RefillSpare();
     RefillGrenade();
     RefillStimPack();
 }
 
-void AHellDiver::RefillMag()
+void AHellDiver::RefillSpare()
 {
     auto gunSlot = _invenComponent->GetAllGun();
 

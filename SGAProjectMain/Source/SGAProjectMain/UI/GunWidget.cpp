@@ -16,14 +16,18 @@ void UGunWidget::SetAmmo(int32 curAmmo, int32 maxAmmo)
 	_curAmmoPB->SetPercent(ratio);
 }
 
-void UGunWidget::SetMag(int32 curMag, int32 maxMag)
+void UGunWidget::SetSpare(int32 curSpare, int32 maxSpare)
 {
-	FString text = FString::Printf(TEXT("%d/%d"), curMag, maxMag);
+	FString text = FString::Printf(TEXT("%d/%d"), curSpare, maxSpare);
+	_xSpare->SetVisibility(ESlateVisibility::Visible);
 
-	if (maxMag == 0) // ÅºÃ¢ÀÌ ¾ø´Â ÃÑÀÇ °æ¿ì ¹ÌÇ¥½Ã
+	if (maxSpare == 0) // ÅºÃ¢ÀÌ »ç½Ç»ó ¾ø´Â ÃÑÀÇ °æ¿ì ¹ÌÇ¥½Ã
+	{
 		text = FString::Printf(TEXT(""));
+		_xSpare->SetVisibility(ESlateVisibility::Collapsed);
+	}
 
-	_magCount->SetText(FText::FromString(text));
+	_spareCount->SetText(FText::FromString(text));
 	UE_LOG(LogTemp, Log, TEXT("SetMag"));
 }
 

@@ -8,40 +8,9 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../SGAProjectMain.h"
 
-void AShotgun::Fire()
+void AShotgun::FireShot()
 {
 	FColor drawColor = FColor::Green;
-
-	// 탄창, 약실 모두 비었음
-	if (_curAmmo <= 0 && !_isChamberLoaded)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Mag Empty"));
-		StopFire();
-		return;
-	}
-
-	auto camera = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
-	if (!camera) return;
-
-	if (_fireMode == EFireMode::FireBoltAction)
-	{
-		if (!_canFire) return;
-
-		_canFire = false;
-		GetWorldTimerManager().SetTimer(_boltActionTimer, this, &AGunBase::ResetCanFire, _gunData._fireInterval, false);
-	}
-
-	if (_fireMode == EFireMode::FireBurst)
-	{
-		if (_burstCount <= 0)
-		{
-			StopFire();
-			return;
-		}
-		_burstCount--;
-	}
-
-	ApplyFireRecoil();
 
 	// 총구 위치에서 총구가 향하는 방향으로 발사
 	FVector muzzleLocation = _gunMesh->GetSocketLocation(TEXT("Muzzle"));
@@ -69,29 +38,16 @@ void AShotgun::Fire()
 		{
 			drawColor = FColor::Red;
 			float distance = FVector::Dist(hitResult.TraceStart, hitResult.ImpactPoint);
-			float finalDamage = CalculateDamage(distance / 100);
+			//float finalDamage = CalculateDamage(distance / 100);
 
 			if (ACharacterBase* character = Cast<ACharacterBase>(hitResult.GetActor()))
 			{
 				//UGameplayStatics::ApplyDamage(character, finalDamage, _owner->GetController(), this, nullptr);
-				UGameplayStatics::ApplyPointDamage(hitResult.GetActor(), finalDamage, pelletDirection, hitResult, _owner->GetController(), this, UDamageType::StaticClass());
+				//UGameplayStatics::ApplyPointDamage(hitResult.GetActor(), finalDamage, pelletDirection, hitResult, _owner->GetController(), this, UDamageType::StaticClass());
 			}
 		}
 
 		FVector hitPoint = hitResult.bBlockingHit ? hitResult.ImpactPoint : hitResult.TraceEnd;
 		DrawDebugLine(GetWorld(), hitResult.TraceStart, hitPoint, drawColor, false, 1.0f);
 	}
-
-
-	if (_curAmmo > 0) // 탄창에 탄약이 남아있을 경우
-	{
-		_curAmmo--;
-	}
-	else // 약실에만 남아있을 경우
-	{
-		_isChamberLoaded = false;
-	}
-
-	if (_ammoChanged.IsBound())
-		_ammoChanged.Broadcast(_curAmmo, _gunData._maxAmmo);
 }

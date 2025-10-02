@@ -14,7 +14,7 @@
 void UGunSettingWidget::InitializeWidget(AGunBase* gun)
 {
     UpdateGunInfo(gun->GetGunData(), gun->GetCurAmmo());
-    SetSlots(gun->GetGunData());
+    SetSlots(gun->GetGunModes());
 
     UpdateFireModePanel(gun->GetCurFireMode());
     UpdateLightModePanel(gun->GetCurLightMode());
@@ -33,12 +33,12 @@ void UGunSettingWidget::UpdateGunInfo(const FGunData& gunData, int32 curAmmo)
     _gunIcon->SetBrushFromTexture(gunData._icon);
 }
 
-void UGunSettingWidget::SetSlots(const FGunData& gunData)
+void UGunSettingWidget::SetSlots(const FGunModes& gunModes)
 {
     // 1. FireMode (오른쪽)
-    if (gunData._fireModes.Num() > 1)
+    if (gunModes._fireModes.Num() > 1)
     {
-        for (EFireMode fireMode : gunData._fireModes)
+        for (EFireMode fireMode : gunModes._fireModes)
         {
             if (fireEnum)
             {
@@ -53,12 +53,12 @@ void UGunSettingWidget::SetSlots(const FGunData& gunData)
     }
 
     // 2. Range (위쪽)
-    int32 i = gunData._scopeModes.Num() - 1;
+    int32 i = gunModes._scopeModes.Num() - 1;
     if (i > 1)
     {
         while (i >= 0)
         {
-            int32 scope = gunData._scopeModes[i];
+            int32 scope = gunModes._scopeModes[i];
             FName key = FName(*FString::FromInt(scope));
             UGunSettingSlotDataAsset* asset = FindSlotAsset(key);
             if (asset)
@@ -70,9 +70,9 @@ void UGunSettingWidget::SetSlots(const FGunData& gunData)
     }
 
     // 3. Flashlight (아래쪽)
-    if (gunData._lightModes.Num() > 1)
+    if (gunModes._lightModes.Num() > 1)
     {
-        for (ETacticalLightMode lightMode : gunData._lightModes)
+        for (ETacticalLightMode lightMode : gunModes._lightModes)
         {
             if (lightEnum)
             {

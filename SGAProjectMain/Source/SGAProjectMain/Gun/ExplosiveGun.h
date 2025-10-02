@@ -14,6 +14,6 @@ class SGAPROJECTMAIN_API AExplosiveGun : public AProjectileGun
 {
 	GENERATED_BODY()
 
-	virtual void Reload() override;
-	virtual void ChangeReloadStage() override;
+	//virtual void Reload() override;
+	//virtual void ChangeReloadStage() override;
 };

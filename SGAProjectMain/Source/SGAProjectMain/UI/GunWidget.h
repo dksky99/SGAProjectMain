@@ -16,7 +16,7 @@ class SGAPROJECTMAIN_API UGunWidget : public UUserWidget
 	
 public:
 	void SetAmmo(int32 curAmmo, int32 maxAmmo);
-	void SetMag(int32 curMag, int32 maxMag);
+	void SetSpare(int32 curSpare, int32 maxSpare);
 	void SetHp(float ratio);
 	void SetGrenade(int32 curGrenade, int32 maxGrenade);
 	void SetStimPack(int32 curInjector, int32 maxInjector);
@@ -33,7 +33,9 @@ private:
 	class UTextBlock* _grenadeCount;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* _magCount;
+	class UTextBlock* _spareCount;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _xSpare;	// spare 숫자 앞에 붙는 작은 "x"
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* _stimPackCount;
