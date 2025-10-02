@@ -467,12 +467,11 @@ void AHellDiver::EquipGun(int32 index)
 
 void AHellDiver::PickupGun(AGunBase* gun)
 {
-    int32 index = gun->GetGunSlotIndex();
+    int32 index = _invenComponent->SetGun(gun);
     if (index == -1) return;
 
     gun->SetOwner(this);
     gun->InitializeGun();
-    _invenComponent->SetGun(gun); // 안벤토리 슬롯 관리
     _invenComponent->EquipGun(index);
     _stateComponent->SetWeaponState(EWeaponType::Gun);
 }

@@ -40,9 +40,9 @@ protected:
 
 	// -------------------------------------------------------
 private:
-	// 아이템이 사라지기 직전 신호를 받을 콜백(AItemBase::_onPreDespawn 바인딩 대상)
+	// SupplyBox가 플레이어에게 습득되었을 때 콜백
 	UFUNCTION()
-	void OnItemPreDespawned(class AItemBase* item);
+	void OnSupplyTaken(AActor* byActor);
 
 	// 내부 소멸 처리(몽타주가 없거나 종료 시점에 호출)
 	void DestroySelf();
