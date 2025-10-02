@@ -18,6 +18,7 @@
 #include "SentryAnimInstance.h"
 
 #include "DrawDebugHelpers.h"
+#include "../../../SGAProjectMain.h"
 
 ASentryTurret::ASentryTurret()
 {
@@ -41,13 +42,15 @@ ASentryTurret::ASentryTurret()
 	_sightConfig->LoseSightRadius = 3500.0f;
 	_sightConfig->PeripheralVisionAngleDegrees = 180.0f;
 	_sightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	_sightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-	_sightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	_sightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+	_sightConfig->DetectionByAffiliation.bDetectNeutrals = false;
 	_perception->ConfigureSense(*_sightConfig);
 	_perception->SetDominantSense(_sightConfig->GetSenseImplementation());
 
 	_curAmmo = 0;
 	_curHp = _maxHp;
+
+	SetGenericTeamId(FGenericTeamId((int32)ETeamID::HellDiver));
 }
 
 void ASentryTurret::BeginPlay()
@@ -144,7 +147,7 @@ void ASentryTurret::UpdateTargetSelection()
 	if (!_perception) return;
 
 	// 기존 타깃이 계속 보이면 유지
-	if (IsValid(_currentTarget))
+	if (IsValid(_currentTarget) && IsEnemyActor(_currentTarget))
 	{
 		FActorPerceptionBlueprintInfo info;
 		if (_perception->GetActorsPerception(_currentTarget, info))
@@ -170,6 +173,8 @@ void ASentryTurret::UpdateTargetSelection()
 	for (AActor* actor : perceived)
 	{
 		if (!IsValid(actor)) continue;
+		if (!IsEnemyActor(actor)) continue; // 적만 통과
+
 		const float d2 = FVector::DistSquared(actor->GetActorLocation(), from);
 		if (d2 < bestD2) { bestD2 = d2; best = actor; }
 	}
@@ -492,6 +497,42 @@ void ASentryTurret::PlayCasingFX()
 // 스폰/디스폰
 // -------------------------------
 
+bool ASentryTurret::IsEnemyActor(const AActor* Other) const
+{
+	if (!Other || Other == this)
+		return false;
+
+	// 센트리/상대 모두 Team 인터페이스로 판단
+	const FGenericTeamId myId = GetGenericTeamId();
+
+	FGenericTeamId otherId = FGenericTeamId::NoTeam;
+	if (const IGenericTeamAgentInterface* teamAgent = Cast<IGenericTeamAgentInterface>(Other))
+	{
+		otherId = teamAgent->GetGenericTeamId();
+	}
+	else
+	{
+		// 컨트롤러/소유자 쪽에서 팀을 들고 있을 수도 있음 → 컨트롤러 우선 확인
+		if (const APawn* pawn = Cast<APawn>(Other))
+		{
+			if (const AController* ctrl = pawn->GetController())
+			{
+				if (const IGenericTeamAgentInterface* ctrlTeam = Cast<IGenericTeamAgentInterface>(ctrl))
+				{
+					otherId = ctrlTeam->GetGenericTeamId();
+				}
+			}
+		}
+	}
+
+	// 규약: 동일 TeamId → Friendly, 서로 다르고 NoTeam이 아니면 → Hostile, 아니면 Neutral
+	if (otherId == FGenericTeamId::NoTeam)
+	{
+		return false; // Neutral
+	}
+	return myId != otherId; // 다르면 적대
+}
+
 void ASentryTurret::StartSpawn()
 {
 	const float kDepthCm = _mesh->GetSkeletalMeshAsset()->GetBounds().BoxExtent.Z * 2.0f;
@@ -722,3 +763,4 @@ FTransform ASentryTurret::GetMeshTransform() const
 {
 	return _mesh ? _mesh->GetComponentTransform() : GetActorTransform();
 }
+

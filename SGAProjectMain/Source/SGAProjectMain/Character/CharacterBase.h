@@ -8,18 +8,13 @@
 
 #include "Perception/AIPerceptionTypes.h"	//감각 구분 제어, 감각 자극 관리
 #include "GenericTeamAgentInterface.h"
+
+#include "../SGAProjectMain.h"
 #include "CharacterBase.generated.h"
 
 
 
 
-UENUM(BlueprintType)
-enum class ETeamID : uint8
-{
-	HellDiver =0 UMETA(DisplayName = "HellDiver"),				
-	Enemy = 1 UMETA(DisplayName = "Far"),
-	MAX
-};
 
 UCLASS()
 class SGAPROJECTMAIN_API ACharacterBase : public ACharacter, public ITargetable, public IGenericTeamAgentInterface

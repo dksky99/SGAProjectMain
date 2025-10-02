@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GenericTeamAgentInterface.h"
 #include "SentryTurret.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API ASentryTurret : public AActor
+class SGAPROJECTMAIN_API ASentryTurret : public AActor, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -85,6 +86,13 @@ protected:
 	void EnsureIdleTimer();
 	void OnIdleAimTimer();
 
+	// 팀 인터페이스 오버라이드
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override { _teamId = NewTeamId; }
+	virtual FGenericTeamId GetGenericTeamId() const override { return _teamId; }
+
+	// 적 판정(상대가 팀 인터페이스를 구현하면 TeamId 비교, 아니면 Neutral 취급)
+	bool IsEnemyActor(const AActor* Other) const;
+
 	// 스폰/디스폰
 	void StartSpawn();
 	void StartDescent();
@@ -130,6 +138,9 @@ protected:
 	// =========================================================
 	// 변수 묶음: 타겟팅/조준(스펙)
 	// =========================================================
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	AActor* _currentTarget = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _yawSpeedDegPerSec = 360.0f;		// Yaw 회전속도(도/초)
 
@@ -170,6 +181,14 @@ protected:
 	class UAISenseConfig_Sight* _sightConfig = nullptr;
 
 	// =========================================================
+	// 변수 묶음: 아이들 스캔
+	// =========================================================
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _idleScanInterval = 2.0f;
+
+	FVector _idleAimPointWS = FVector::ZeroVector;
+
+	// =========================================================
 	// 변수 묶음: 이펙트
 	// =========================================================
 	
@@ -204,13 +223,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	int32 _casingPoolIndex = 0;
 
-	// =========================================================
-	// 변수 묶음: 아이들 스캔
-	// =========================================================
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _idleScanInterval = 2.0f;
-
-	FVector _idleAimPointWS = FVector::ZeroVector;
 
 	// =========================================================
 	// 변수 묶음: 스폰/디스폰
@@ -228,10 +240,15 @@ protected:
 	bool _isTransitionalAlign = false;  // 총구 정렬 단계
 
 	// =========================================================
+	// 변수 묶음: 팀/소속
+	// =========================================================
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	uint8 _teamId = 1;
+
+	// =========================================================
 	// 변수 묶음: 런타임 캐시/타이머/기타
 	// =========================================================
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	AActor* _currentTarget = nullptr;
+	
 
 	FTimerHandle _fireTimerHandle;
 	FTimerHandle _idleAimTimerHandle;
@@ -246,4 +263,5 @@ protected:
 
 	float _cosAimTol = 1.0f;
 	float _cachedAimTolDeg = 0.0f;
+
 };
