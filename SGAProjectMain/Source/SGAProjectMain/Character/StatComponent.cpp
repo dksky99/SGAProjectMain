@@ -2,6 +2,8 @@
 
 
 #include "StatComponent.h"
+#include "CharacterStateComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "CharacterBase.h"
 
 // Sets default values for this component's properties
@@ -59,6 +61,20 @@ bool UStatComponent::IsDead()
 	return false;
 }
 
+float UStatComponent::GetCurStateSpeed()
+{
+	
+	return GetDefaultSpeed();
+}
+
+void UStatComponent::ChangeSpeed(float speed)
+{
+	float temp = FMath::Max(speed, 0.f);
+	if (_owner->GetStateComponent()->IsSlow())
+		temp *= 0.75f;
+	_owner->GetCharacterMovement()->MaxWalkSpeed = temp;
+}
+
 void UStatComponent::HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
 {
 	EBodyPart Part = EBodyPart::Core;
@@ -114,6 +130,11 @@ void UStatComponent::StartRegen()
 	// 오른다리 복구
 	_rightLegHP = _rightLegMaxHP;
 	OnPartRestored.Broadcast(EBodyPart::RightLeg);
+}
+
+void UStatComponent::ReceiveDirectDamage(float Damage)
+{
+	ProcessDamage(EBodyPart::Core, Damage);
 }
 
 void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)

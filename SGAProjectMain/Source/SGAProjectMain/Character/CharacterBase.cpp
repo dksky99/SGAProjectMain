@@ -507,7 +507,8 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 	if (OtherActor && OtherActor != this)
 	{
-		CheckHitted(OtherActor);
+		if (CheckHitted(OtherActor))
+			return;
 
 		float finalDamage = _curAttackData->Attack;
 
@@ -560,6 +561,18 @@ void ACharacterBase::ActionEnd()
 
 	if (_reservedFunction.IsBound())
 		_reservedFunction.Unbind();
+
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		if (AnimInstance->GetCurrentActiveMontage() != nullptr)
+		{
+			AnimInstance->Montage_Stop(0.25f);
+
+		}
+	}
+
 }
 
 
@@ -616,4 +629,43 @@ void ACharacterBase::ClearHitted()
 {
 	_hitted.Empty();
 }
+
+void ACharacterBase::TakeHitted(FVector hitPoint, float hitPower)
+{
+	//피격시 충격이 저항력보다 크면 경직, 헬다이버는 충격량이2배이상이면 넉다운 적은 피격방향에따라 다른 애니메이션 혹은 단순히 몽타주 캔슬만.
+	if (_statComponent->GetImpactResistance() < hitPower)
+		return;
+
+	PlayHitReaction();
+
+
+
+
+}
+
+void ACharacterBase::PlayHitReaction(float time)
+{
+	//행동을 강제 종료,
+	ActionEnd();
+	_stateComp->ActionBegin();
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		if (_hitReactionMontage) // 피격 몽타주 애셋. 에셋과 별개로 히트 리커버리는 일정.
+		{
+			AnimInstance->Montage_Play(_hitReactionMontage);
+		}
+
+	}
+	
+	GetWorld()->GetTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::HitRecovery,time, false);
+	
+}
+
+void ACharacterBase::HitRecovery()
+{
+	ActionEnd();
+	//
+}
+
 

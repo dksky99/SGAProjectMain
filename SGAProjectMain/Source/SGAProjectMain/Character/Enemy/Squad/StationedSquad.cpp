@@ -18,6 +18,17 @@ void AStationedSquad::BeginPlay()
 
 }
 
+void AStationedSquad::RecieveDamage(float damage, float armorPen)
+{
+	//방어력이 더 높으면 무시
+	if (_defense > armorPen)
+		return;
+	_curDurability = FMath::Clamp(_curDurability - damage, 0, _curDurability);
+	//내구가 다하면 붕괴.
+	if (_curDurability <= 0)
+		DestroyFactory();
+}
+
 void AStationedSquad::CallRemainUnit()
 {
 	UE_LOG(LogTemp, Display, TEXT("TryAddUnit"));
@@ -41,6 +52,8 @@ void AStationedSquad::CallRemainUnit()
 
 void AStationedSquad::ActivateFactory()
 {
+
+	_curDurability = _maxDurability;
 
 	UE_LOG(LogTemp, Display, TEXT("StartSpawn"));
 	GetWorld()->GetTimerManager().SetTimer(_GenerateTimer, this, &AStationedSquad::CallRemainUnit, _generateCoolDown, false);

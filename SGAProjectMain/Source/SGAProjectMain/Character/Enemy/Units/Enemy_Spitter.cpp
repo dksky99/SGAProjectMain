@@ -11,11 +11,12 @@
 #include "../../CharacterAnimInstance.h"
 #include "../../CharacterStateComponent.h"
 #include "../../../Data/UnitAttackDataAsset.h"
-
+#include "../../../Object/Explosive/ExplosionComponent.h"
 
 AEnemy_Spitter::AEnemy_Spitter(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer)
 {
 
+    _explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));
 }
 
 void AEnemy_Spitter::BeginPlay()
@@ -69,6 +70,17 @@ bool AEnemy_Spitter::TryFar(AActor* target)
     return false;
 }
 
+void AEnemy_Spitter::AcidbagDestroyed()
+{
+    _explosionComponent->Explode();
+    
+}
+
+void AEnemy_Spitter::HeadDestroyed()
+{
+    //즉사
+}
+
 bool AEnemy_Spitter::Spit(AActor* target)
 {
     if (target == nullptr)
@@ -76,7 +88,7 @@ bool AEnemy_Spitter::Spit(AActor* target)
     FVector targetLoc;
 
     FVector muzzleLocation = GetMesh()->GetSocketLocation(TEXT("attach_acid_spray"))+GetActorForwardVector()*10.f;
-    targetLoc = target->GetActorLocation();
+    targetLoc = target->GetActorLocation()+FVector::UpVector*55.f;
     float projectileSpeed=3500.f;  //투사체의 속도를 고려하여 사격해야함. 그런데 인스턴스가 필요. 
     FVector direction;
     bool check = UAIActingHelperLibrary::CalculateLaunchDirection(

@@ -29,7 +29,9 @@ public:
 	virtual bool TryMiddle(AActor* target) override;
 	virtual bool TryFar(AActor* target)    override;
 
+	virtual void AcidbagDestroyed();
 
+	virtual void HeadDestroyed();
 	//스피터 계열의 토사 공격은 지속되는 광선같은느낌이아니라 연발의 오차가 있는 다연장 투사공격이였다. 투사체를 일정시간마다 조금식 오차를 갖고 뱉어내는것이면 충분할듯. 
 	//스핏은 스킬을 시전하는 트리거이고
 	bool Spit(AActor* target);
@@ -41,6 +43,9 @@ public:
 	bool CalculateLaunchDirectionWithTime(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity, float& OutFlightTime);
 protected:
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Attack", meta = (AllowPrivateAccess = "true"))
+	class UExplosionComponent* _explosionComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Attack", meta = (AllowPrivateAccess = "true"))
 	class UUnitAttackDataAsset* _spitAttack_Animation;

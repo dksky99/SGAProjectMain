@@ -22,7 +22,8 @@ public:
 	AStationedSquad();
 
 	virtual void BeginPlay() override;
-
+	UFUNCTION()
+	void RecieveDamage(float damage,float armorPen);
 	void CallRemainUnit();
 	void ActivateFactory();
 	void DestroyFactory();
@@ -43,11 +44,18 @@ protected:
 
 	bool _isActivating = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	int _defense = 0.f;//나중엔 관통력이 이 미만이면 피해를 피해가 안들어옴
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
+	int _maxDurability = 1.f;
+	int _curDurability = 1.f;
+
 
 
 	//고정된 생산지는 전부 파괴가 가능하다. 이떄 이 박스컴포넌트가 파괴의 트리거가 될예정. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
-	class UBoxComponent* _destroyPoint;
+	class UShapeComponent* _destroyPoint=nullptr;
 
 
 };

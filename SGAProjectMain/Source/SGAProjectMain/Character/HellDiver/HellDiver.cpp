@@ -424,7 +424,7 @@ void AHellDiver::Standing()
     auto statComponent = GetStatComponent();
 
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetDefaultSpeed();
+    _statComp->ChangeSpeed(statComponent->GetDefaultSpeed());
 }
 
 void AHellDiver::Sprinting()
@@ -432,7 +432,7 @@ void AHellDiver::Sprinting()
     auto statComponent = GetStatComponent();
 
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetSprintSpeed();
+    _statComp->ChangeSpeed(statComponent->GetSprintSpeed());
 }
 
 void AHellDiver::Crouching()
@@ -440,7 +440,7 @@ void AHellDiver::Crouching()
     auto statComponent = GetStatComponent();
 
     SetCollisionState(_stateComponent->GetCharacterState());
-    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetCrouchSpeed();
+    _statComp->ChangeSpeed(statComponent->GetCrouchSpeed());
 }
 
 void AHellDiver::Proning()
@@ -449,7 +449,7 @@ void AHellDiver::Proning()
 
     SetCollisionState(_stateComponent->GetCharacterState());
 
-    GetCharacterMovement()->MaxWalkSpeed = statComponent->GetProneSpeed();
+    _statComp->ChangeSpeed(statComponent->GetProneSpeed());
 }
 
 void AHellDiver::InitWeapon()
