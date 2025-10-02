@@ -195,7 +195,7 @@ void AGunBase::InitializeGun()
 	{
 		SetOwner(owner);
 		_owner = owner;
-		AttachToHand();
+		//AttachToHand();
 		UE_LOG(LogTemp, Log, TEXT("Initialize Gun"));
 	}
 
@@ -420,6 +420,20 @@ FGunModes AGunBase::GetGunModes()
 void AGunBase::PickupItem(AHellDiver* player)
 {
 	player->PickupGun(this);
+
+	Super::PickupItem(_owner);
+}
+
+int32 AGunBase::GetGunSlotIndex()
+{
+	if (_gunData._slotType == EGunSlotType::Primary)
+		return 0;
+	else if (_gunData._slotType == EGunSlotType::Secondary)
+		return 1;
+	else if (_gunData._slotType == EGunSlotType::Support)
+		return 2;
+	else
+		return -1; // 유효하지 않음
 }
 
 void AGunBase::SetGunData(const FGunData& gunData)
