@@ -10,15 +10,17 @@ class SGAPROJECTMAIN_API USentryAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
-	void SetLookAtYawTargetWS(const FVector& v) { _lookAtTargetYawWS = v; }
-	void SetPitchDeg(float v) { _aimPitchDeg = v; }
+	// 센트리에서 최종 Z각을 그대로 넣어줍니다.
+	void SetBoneAngles(float rotatorZDeg, float gunHousingZDeg)
+	{
+		_rotatorZ = rotatorZDeg;
+		_gunHousingZ = gunHousingZDeg;
+	}
 
-public:
-	// LookAt용 월드 좌표 타깃(야오/피치)
+	// 애님 블루프린트에서 읽어가는 값
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	FVector _lookAtTargetYawWS = FVector::ZeroVector;
+	float _rotatorZ = 0.0f;
 
-	// Transform용 좌표
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	float _aimPitchDeg = 0.0f;
+	float _gunHousingZ = 0.0f;
 };

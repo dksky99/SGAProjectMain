@@ -1,4 +1,4 @@
-// SentryTurret.cpp
+ï»¿// SentryTurret.cpp
 
 #include "SentryTurret.h"
 
@@ -23,7 +23,7 @@ ASentryTurret::ASentryTurret()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// ÄÄÆ÷³ÍÆ®
+	// ì»´í¬ë„ŒíŠ¸
 	_capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
 	_capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetRootComponent(_capsule);
@@ -32,15 +32,7 @@ ASentryTurret::ASentryTurret()
 	_mesh->SetupAttachment(_capsule);
 
 	_muzzlePoint = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzlePoint"));
-	// ¾îÅÂÄ¡´Â BeginPlay¿¡¼­ ¼ÒÄÏ ½º³À
-
-	_muzzleFlashComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
-	_muzzleFlashComponent->SetupAttachment(_mesh, TEXT("muzzleSocket"));
-	_muzzleFlashComponent->bAutoActivate = false;
-
-	_tracerComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Tracer"));
-	_tracerComponent->SetupAttachment(_mesh, TEXT("muzzleSocket"));
-	_tracerComponent->bAutoActivate = false;
+	// ì–´íƒœì¹˜ëŠ” BeginPlayì—ì„œ ì†Œì¼“ ìŠ¤ëƒ…
 
 	// Perception
 	_perception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
@@ -65,7 +57,7 @@ void ASentryTurret::BeginPlay()
 	_curAmmo = _maxAmmo;
 	_curHp = _maxHp;
 
-	// ¸ÓÁñ Æ÷ÀÎÆ®¸¦ ¼ÒÄÏ¿¡ ½º³À(À§Ä¡/È¸Àü ÀÏÄ¡)
+	// ë¨¸ì¦ í¬ì¸íŠ¸ë¥¼ ì†Œì¼“ì— ìŠ¤ëƒ…(ìœ„ì¹˜/íšŒì „ ì¼ì¹˜)
 	if (_muzzlePoint && _mesh)
 	{
 		_muzzlePoint->AttachToComponent(
@@ -75,7 +67,7 @@ void ASentryTurret::BeginPlay()
 		);
 	}
 
-	// Perception ÀÌº¥Æ®
+	// Perception ì´ë²¤íŠ¸
 	if (_perception)
 	{
 		_perception->OnPerceptionUpdated.AddDynamic(this, &ASentryTurret::OnPerceptionUpdated);
@@ -84,10 +76,14 @@ void ASentryTurret::BeginPlay()
 	_cachedAimTolDeg = _aimToleranceDeg;
 	_cosAimTol = FMath::Cos(FMath::DegreesToRadians(_cachedAimTolDeg));
 
-	// °£´Ü ½ºÆù
-	StartSpawnSimple();
+	_anim = Cast<USentryAnimInstance>(_mesh->GetAnimInstance());
 
-	// ¾ÆÀÌµé ½ºÄµ ½ÃÀÛ(ÃÊ±â Å¸±ê ¾øÀ½ °¡Á¤)
+	InitNiagaraEffects();
+
+	// ìŠ¤í°
+	StartSpawn();
+
+	// ì•„ì´ë“¤ ìŠ¤ìº” ì‹œì‘(ì´ˆê¸° íƒ€ê¹ƒ ì—†ìŒ ê°€ì •)
 	EnsureIdleTimer();
 }
 
@@ -95,13 +91,13 @@ void ASentryTurret::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateSpawnDescentSimple(DeltaTime);
+	UpdateSpawnDescent(DeltaTime);
 	UpdateAimToTarget(DeltaTime);
 	UpdateFireGate(DeltaTime);
 }
 
 // -------------------------------
-// ¿ÜºÎ È£Ãâ
+// ì™¸ë¶€ í˜¸ì¶œ
 // -------------------------------
 
 void ASentryTurret::SetTargetActor(AActor* target)
@@ -126,10 +122,16 @@ void ASentryTurret::AIStartFire()
 void ASentryTurret::AIStopFire()
 {
 	GetWorldTimerManager().ClearTimer(_fireTimerHandle);
+
+	for (UNiagaraComponent* muzzleNS : _muzzlePool)
+		muzzleNS->Deactivate();
+
+	for (UNiagaraComponent* casingNS : _casingPool)
+		casingNS->Deactivate();
 }
 
 // -------------------------------
-// ÀÎÁö/Å¸±ê ¼±Á¤
+// ì¸ì§€/íƒ€ê¹ƒ ì„ ì •
 // -------------------------------
 
 void ASentryTurret::OnPerceptionUpdated(const TArray<AActor*>& /*UpdatedActors*/)
@@ -141,7 +143,7 @@ void ASentryTurret::UpdateTargetSelection()
 {
 	if (!_perception) return;
 
-	// ±âÁ¸ Å¸±êÀÌ °è¼Ó º¸ÀÌ¸é À¯Áö
+	// ê¸°ì¡´ íƒ€ê¹ƒì´ ê³„ì† ë³´ì´ë©´ ìœ ì§€
 	if (IsValid(_currentTarget))
 	{
 		FActorPerceptionBlueprintInfo info;
@@ -157,7 +159,7 @@ void ASentryTurret::UpdateTargetSelection()
 		}
 	}
 
-	// »õ Å¸±ê: ¸ÓÁñ¿¡¼­ °¡Àå °¡±î¿î ÇöÀç º¸ÀÌ´Â ¾×ÅÍ
+	// ìƒˆ íƒ€ê¹ƒ: ë¨¸ì¦ì—ì„œ ê°€ì¥ ê°€ê¹Œìš´ í˜„ì¬ ë³´ì´ëŠ” ì•¡í„°
 	TArray<AActor*> perceived;
 	_perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), perceived);
 
@@ -177,102 +179,93 @@ void ASentryTurret::UpdateTargetSelection()
 }
 
 // -------------------------------
-// Á¶ÁØ(ÇÙ½É): µÎ Ãà ¼Óµµ Á¦ÇÑÀ» C++¿¡¼­ ÅëÇÕ
+// ì¡°ì¤€(í•µì‹¬): ë‘ ì¶• ì†ë„ ì œí•œì„ C++ì—ì„œ í†µí•©
 // -------------------------------
-
-void ASentryTurret::BuildSmoothedYawTargetAndPitch(const FVector& trueTargetWS, float deltaSeconds, FVector& outYawLookAtWS, float& outPitchDeg, float& outYawErrDeg)
+float ASentryTurret::CalcYaw_Sentry()
 {
-	// rotator(Yaw), gunhousing(Pitch)
-	const FTransform yawW = _mesh->GetSocketTransform(_boneName_Yaw, RTS_World);
-	const FTransform pitchW = _mesh->GetSocketTransform(_boneName_Pitch, RTS_World);
+	if (_currentTarget == nullptr)
+		return 0.0f;
+	FTransform root = _mesh->GetComponentTransform();
 
-	const FVector O = yawW.GetLocation();
-	const FVector G = pitchW.GetLocation();
 
-	// ¸®±× ±âÁØ Ãà(+X Àü¹æ °¡Á¤). +Y Àü¹æ ¸®±×ÀÌ¸é º¤ÅÍ¸¦ ¹Ù²Ù½Ê½Ã¿À.
-	const FVector F0 = yawW.TransformVectorNoScale(FVector(1.0f, 0.0f, 0.0f)).GetSafeNormal(); // Àü¹æ(+X)
-	const FVector R0 = yawW.TransformVectorNoScale(FVector(0.0f, 1.0f, 0.0f)).GetSafeNormal(); // ¿À¸¥ÂÊ(+Y)
-	const FVector U0 = yawW.TransformVectorNoScale(FVector(0.0f, 0.0f, 1.0f)).GetSafeNormal(); // ¾÷(+Z)
+	FTransform targetTransfrom = _currentTarget->GetTransform();
 
-	// 1) Yaw ¿ÀÂ÷(µµ) °è»ê(¼öÆò Åõ¿µ)
-	const FVector toWS = trueTargetWS - O;
-	const FVector toHorizWS = FVector::VectorPlaneProject(toWS, U0).GetSafeNormal();
+	FVector rootForward = root.GetUnitAxis(EAxis::X);
 
-	const float x = FVector::DotProduct(toHorizWS, F0);
-	const float y = FVector::DotProduct(toHorizWS, R0);
-	outYawErrDeg = FMath::RadiansToDegrees(FMath::Atan2(y, x));
+	FVector targetVector = targetTransfrom.GetLocation() - root.GetLocation();
+	targetVector.Normalize();
+	FRotator targetRotator = targetVector.Rotation();
 
-	// 2) Yaw ¼Óµµ Á¦ÇÑ ¡æ ´©Àû »óÅÂ ¾÷µ¥ÀÌÆ®
-	const float yawStep = FMath::Clamp(outYawErrDeg, -_yawSpeedDegPerSec * deltaSeconds, _yawSpeedDegPerSec * deltaSeconds);
-	_aimYawDeg = FMath::Clamp(FMath::UnwindDegrees(_aimYawDeg + yawStep), -_aimYawLimitDeg, _aimYawLimitDeg);
+	float yaw = FMath::FindDeltaAngleDegrees(rootForward.Rotation().Yaw, targetRotator.Yaw);
+	
+	return yaw;
+}
 
-	// 3) ´©Àû Yaw·Î ºÎµå·¯¿î ¼öÆò Àü¹æ »ı¼º ¡æ LookAt Å¸±ê(¼öÆò¸¸)
-	const float yawRad = FMath::DegreesToRadians(_aimYawDeg);
-	const FVector smoothFwd = (F0 * FMath::Cos(yawRad) + R0 * FMath::Sin(yawRad)).GetSafeNormal();
+float ASentryTurret::CalcPitch_Sentry()
+{
+	if (_currentTarget == nullptr)
+		return 0.0f;
+	const FVector HousingLocation = _mesh->GetSocketLocation(_boneName_Pitch);
+	const FVector TargetLocation = _currentTarget->GetActorLocation();
+	const FVector Direction = (TargetLocation - HousingLocation).GetSafeNormal();
+	//const FQuat RotationQuat = FQuat::MakeFromRotationVector(Direction).Rotator().Yaw;
+	return FQuat::FindBetweenNormals(GetActorForwardVector(), Direction).Rotator().Pitch;
+	//return Direction.ToOrientationRotator().Pitch;
+}
 
-	const float kLookDist = 3000.0f;
-	outYawLookAtWS = O + smoothFwd * kLookDist;
+void ASentryTurret::ApplyAimSpeedLimit(float deltaSeconds, float targetYawDeg, float targetPitchDeg)
+{
+	// í”„ë ˆì„ë‹¹ ìµœëŒ€ íšŒì „ëŸ‰(ë„)
+	const float maxYawStepDeg = _yawSpeedDegPerSec * deltaSeconds;
+	const float maxPitchStepDeg = _PitchSpeedDegPerSec * deltaSeconds;
 
-	// 4) Pitch ¸ñÇ¥°¢ °è»ê(ºÎ¸ğÀÇ ¼öÆò Àü¹æ smoothFwd ±âÁØ)
-	const FVector toT = trueTargetWS - G;
-	float alongFwd = FVector::DotProduct(toT, smoothFwd); // Àü¹æ ¼ººĞ
-	const float dz = FVector::DotProduct(toT, U0);       // ³ôÀÌ ¼ººĞ
-
-	// µÚ/Æ¯ÀÌÁ¡ ÆøÁÖ ¹æÁö
-	const float kMinAlong = 30.0f;
-	if (FMath::Abs(alongFwd) < kMinAlong)
+	// Yaw: 360ë„ íšŒì „ ê°€ëŠ¥(í•œê³„ ê°ë„ í´ë¨í”„ ì—†ìŒ). ìµœë‹¨ ê²½ë¡œë¡œ ì†ë„ ì œí•œ
 	{
-		alongFwd = (alongFwd >= 0.0f ? kMinAlong : -kMinAlong);
+		const float delta = FMath::FindDeltaAngleDegrees(_rotatorZ_CurrentDeg, targetYawDeg);
+		const float step = FMath::Clamp(delta, -maxYawStepDeg, maxYawStepDeg);
+		_rotatorZ_CurrentDeg = FMath::UnwindDegrees(_rotatorZ_CurrentDeg + step);
+		// YawëŠ” ë³„ë„ í´ë¨í”„ ì—†ìŒ
 	}
 
-	float desiredPitch = FMath::RadiansToDegrees(FMath::Atan2(dz, FMath::Abs(alongFwd)));
+	// Pitch: ìƒ(+)/í•˜(âˆ’) í•œê³„ë¡œ í´ë¨í”„
+	{
+		const float delta = FMath::FindDeltaAngleDegrees(_gunHousingZ_CurrentDeg, targetPitchDeg);
+		const float step = FMath::Clamp(delta, -maxPitchStepDeg, maxPitchStepDeg);
+		_gunHousingZ_CurrentDeg = FMath::UnwindDegrees(_gunHousingZ_CurrentDeg + step);
+		if (_isRaised && !_isSinking && !_isTransitionalAlign)
+			_gunHousingZ_CurrentDeg = FMath::Clamp(_gunHousingZ_CurrentDeg, -_aimPitchDownDeg, _aimPitchUpDeg);
+	}
+}
 
-	// (¿É¼Ç) Yaw °ÔÀÌÆ®: Yaw°¡ Å©°Ô ¾î±ß³ª ÀÖÀ¸¸é Pitch ¿µÇâ ³·Ãã
-	const float kYawGateDeg = 50.0f;
-	const float pitchScale = FMath::Clamp(1.0f - (FMath::Abs(outYawErrDeg) / kYawGateDeg), 0.0f, 1.0f);
-	desiredPitch *= pitchScale;
-
-	// 5) Pitch ¼Óµµ Á¦ÇÑ + ÇÑ°è
-	const float dPitch = FMath::FindDeltaAngleDegrees(_aimPitchDeg, desiredPitch);
-	const float stepPitch = FMath::Clamp(dPitch, -_pitchSpeedDegPerSec * deltaSeconds, _pitchSpeedDegPerSec * deltaSeconds);
-
-	_aimPitchDeg = FMath::Clamp(FMath::UnwindDegrees(_aimPitchDeg + stepPitch), -_aimPitchDownDeg, _aimPitchUpDeg);
-	outPitchDeg = _aimPitchDeg;
+bool ASentryTurret::IsAngleAligned(float currentDeg, float targetDeg, float toleranceDeg) const
+{
+	return FMath::Abs(FMath::FindDeltaAngleDegrees(currentDeg, targetDeg)) <= toleranceDeg;
 }
 
 void ASentryTurret::UpdateAimToTarget(float deltaSeconds)
 {
+	// íƒ€ê¹ƒ ì—†ìœ¼ë©´ ì•„ì´ë“¤ ë¡œì§ ìœ ì§€(ë˜ëŠ” 0.0fë¡œ ìˆ˜ë ´)
 	if (!_mesh || !_muzzlePoint) return;
 
-	// Å¸±ê °áÁ¤(¾øÀ¸¸é ¾ÆÀÌµé Æ÷ÀÎÆ®)
-	const FVector muzzleLoc = _muzzlePoint->GetComponentLocation();
-
-	const FVector trueTargetWS = IsValid(_currentTarget)
-		? _currentTarget->GetActorLocation()
-		: (_idleAimPointWS.IsNearlyZero() ? (muzzleLoc + _muzzlePoint->GetForwardVector() * 3000.0f) : _idleAimPointWS);
-
-	// C++ ÇÑ °÷¿¡¼­ µÎ Ãà ¼Óµµ Á¦ÇÑ ¡æ °á°ú Àü´Ş
-	FVector yawLookAtWS = FVector::ZeroVector;
-	float   outPitchDeg = 0.0f;
-	float   yawErrDeg = 0.0f;
-
-	BuildSmoothedYawTargetAndPitch(trueTargetWS, deltaSeconds, yawLookAtWS, outPitchDeg, yawErrDeg);
-
-	if (UAnimInstance* anim = _mesh->GetAnimInstance())
+	if (!IsValid(_currentTarget))
 	{
-		if (USentryAnimInstance* si = Cast<USentryAnimInstance>(anim))
-		{
-			// rotator: LookAt(Location) = yawLookAtWS (AnimBP¿¡¼­ Interp Off ±ÇÀå)
-			si->SetLookAtYawTargetWS(yawLookAtWS);
-
-			// gunhousing: Transform(Modify) Bone(º» ½ºÆäÀÌ½º, ÈùÁöÃà 1°³) = outPitchDeg
-			si->SetPitchDeg(outPitchDeg);
-		}
+		EnsureIdleTimer();
+		return;
 	}
+
+	// ëª©í‘œ ê°ë„ ê³„ì‚°(ì ˆëŒ€ê°’)
+	const float targetYawZDeg = CalcYaw_Sentry();
+	const float targetPitchZDeg = CalcPitch_Sentry();
+
+	// ì†ë„ ì œí•œì„ ì ìš©í•´ í˜„ì¬ê°ì„ ê°±ì‹ 
+	ApplyAimSpeedLimit(deltaSeconds, targetYawZDeg, targetPitchZDeg);
+
+	// ì• ë‹˜ ì¸ìŠ¤í„´ìŠ¤ ì „ë‹¬
+	_anim->SetBoneAngles(_rotatorZ_CurrentDeg, _gunHousingZ_CurrentDeg);
 }
 
 // -------------------------------
-// ¹ß»ç °ÔÀÌÆ®/LOS
+// ë°œì‚¬ ê²Œì´íŠ¸/LOS
 // -------------------------------
 
 void ASentryTurret::UpdateFireGate(float deltaSeconds)
@@ -283,7 +276,7 @@ void ASentryTurret::UpdateFireGate(float deltaSeconds)
 		return;
 	}
 
-	// Çã¿ë¿ÀÂ÷ ÄÚ»çÀÎ Ä³½Ã °»½Å
+	// í—ˆìš©ì˜¤ì°¨ ì½”ì‚¬ì¸ ìºì‹œ ê°±ì‹ 
 	if (!FMath::IsNearlyEqual(_cachedAimTolDeg, _aimToleranceDeg, KINDA_SMALL_NUMBER))
 	{
 		_cachedAimTolDeg = _aimToleranceDeg;
@@ -306,7 +299,7 @@ void ASentryTurret::UpdateFireGate(float deltaSeconds)
 		bAimed = (dot >= (_cosAimTol - KINDA_SMALL_NUMBER));
 	}
 
-	// LOS °»½Å(·¹ÀÌÆ® ¸®¹Ô)
+	// LOS ê°±ì‹ (ë ˆì´íŠ¸ ë¦¬ë°‹)
 	if (bAimed)
 	{
 		if (_losCooldown <= 0.0f)
@@ -340,12 +333,12 @@ bool ASentryTurret::HasLineOfFire(const FVector& from, const FVector& to) const
 
 	const bool bHit = GetWorld()->LineTraceSingleByChannel(hit, from, to, ECC_Visibility, params);
 
-	// ¸ÂÀº °Ô ¾ø°Å³ª, ¸ÂÀº °ÍÀÌ ÇöÀç Å¸±êÀÌ¸é Åë°ú
+	// ë§ì€ ê²Œ ì—†ê±°ë‚˜, ë§ì€ ê²ƒì´ í˜„ì¬ íƒ€ê¹ƒì´ë©´ í†µê³¼
 	return !bHit || (hit.GetActor() == _currentTarget);
 }
 
 // -------------------------------
-// ¹ß»ç/ÀÌÆåÆ®
+// ë°œì‚¬/ì´í™íŠ¸
 // -------------------------------
 
 void ASentryTurret::Fire()
@@ -359,8 +352,9 @@ void ASentryTurret::Fire()
 	const FVector muzzleLocation = _muzzlePoint->GetComponentLocation();
 	const FVector fireDirection = _muzzlePoint->GetForwardVector();
 
-	//SpawnBullet(muzzleLocation, fireDirection);
-	PlayMuzzleFlash();
+	SpawnBullet(muzzleLocation, fireDirection);
+	PlayMuzzleFX();
+	PlayCasingFX();
 
 	_curAmmo--;
 	if (_curAmmo <= 0)
@@ -393,86 +387,222 @@ void ASentryTurret::SpawnBullet(const FVector& muzzleLocation, const FVector& di
 	}
 }
 
-void ASentryTurret::PlayMuzzleFlash()
+void ASentryTurret::InitNiagaraEffects()
 {
-	if (_muzzleFlashComponent)
+	if (!_mesh)
+		return;
+
+	// ë¨¸ì¦ í’€ ì´ˆê¸°í™”
+	_muzzlePool.Empty();
+	if (_muzzleNS && _muzzlePoolSize > 0)
 	{
-		_muzzleFlashComponent->Deactivate();
-		_muzzleFlashComponent->Activate(true);
+		_muzzlePool.Reserve(_muzzlePoolSize);
+
+		for (int32 i = 0; i < _muzzlePoolSize; ++i)
+		{
+			UNiagaraComponent* c = NewObject<UNiagaraComponent>(this, TEXT("NSC_Muzzle_Pooled"));
+			if (!c) continue;
+
+			c->SetAsset(_muzzleNS);
+			c->bAutoActivate = false;
+
+			c->SetupAttachment(_muzzlePoint);
+			
+			c->RegisterComponent();
+			_muzzlePool.Add(c);
+		}
+
+		_muzzlePoolIndex = 0;
+	}
+
+	// íƒ„í”¼ í’€ ì´ˆê¸°í™”
+	_casingPool.Empty();
+	if (_casingNS && _casingPoolSize > 0)
+	{
+		_casingPool.Reserve(_casingPoolSize);
+
+		for (int32 i = 0; i < _casingPoolSize; ++i)
+		{
+			UNiagaraComponent* c = NewObject<UNiagaraComponent>(this, TEXT("NSC_Casing_Pooled"));
+			if (!c) continue;
+
+			c->SetAsset(_casingNS);
+			c->bAutoActivate = false;
+
+			c->SetupAttachment(_mesh);
+			c->AttachToComponent(
+				_mesh,
+				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				_casingSocketName
+			);
+
+			c->RegisterComponent();
+			_casingPool.Add(c);
+		}
+
+		_casingPoolIndex = 0;
 	}
 }
 
-void ASentryTurret::PlayTracer(const FVector& endPoint)
+void ASentryTurret::PlayMuzzleFX()
 {
-	if (_tracerComponent)
-	{
-		_tracerComponent->SetVectorParameter(TEXT("BeamEnd"), endPoint);
-		_tracerComponent->Deactivate();
-		_tracerComponent->Activate(true);
-	}
+	if (_muzzlePool.Num() == 0)
+		return;
+
+	UNiagaraComponent* c = _muzzlePool[_muzzlePoolIndex];
+	_muzzlePoolIndex = (_muzzlePoolIndex + 1) % _muzzlePool.Num();
+	if (!c) return;
+
+	// ìµœì‹  ìœ„ì¹˜ ìŠ¤ëƒ…(í¬ì¸íŠ¸/ì†Œì¼“ ì›€ì§ì„ ëŒ€ì‘)
+	c->AttachToComponent(
+		_muzzlePoint,
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale
+	);
+
+
+	// ì™„ì „ ì¬ì‹œì‘(ë™ì¼ í”„ë ˆì„ ë‹¤ì¤‘ í˜¸ì¶œ ëŒ€ë¹„)
+	c->DeactivateImmediate();
+	c->ReinitializeSystem();
+	c->Activate(true);
+}
+
+void ASentryTurret::PlayCasingFX()
+{
+	if (_casingPool.Num() == 0)
+		return;
+
+	UNiagaraComponent* c = _casingPool[_casingPoolIndex];
+	_casingPoolIndex = (_casingPoolIndex + 1) % _casingPool.Num();
+
+	if (!c) return;
+
+	// ì†Œì¼“ ì¬ìŠ¤ëƒ…(ë¬´ë¸Œë¨¼íŠ¸ ëŒ€ì‘)
+	c->AttachToComponent(
+		_mesh,
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		_casingSocketName
+	);
+
+	c->DeactivateImmediate();
+	c->ReinitializeSystem();
+	c->Activate(true);
 }
 
 // -------------------------------
-// ½ºÆù/µğ½ºÆù(°£´Ü)
+// ìŠ¤í°/ë””ìŠ¤í°
 // -------------------------------
 
-void ASentryTurret::StartSpawnSimple()
+void ASentryTurret::StartSpawn()
 {
-	const float kDepthCm = 120.0f;
-	const float kPitchSpawnDeg = 90.0f;
+	const float kDepthCm = _mesh->GetSkeletalMeshAsset()->GetBounds().BoxExtent.Z * 2.0f;
 
 	const FVector loc = GetActorLocation();
 	_spawnTargetZ = loc.Z;
+
 	_isRaised = false;
+	_isSinking = false;
+	_isTransitionalAlign = false;  // ìƒìŠ¹ ë™ì•ˆ ì •ë ¬ ë‹¨ê³„ ì•„ë‹˜
 
+	// ì§€ë©´ ì•„ë˜ì—ì„œ ì‹œì‘
 	SetActorLocation(FVector(loc.X, loc.Y, loc.Z - kDepthCm));
-	_aimPitchDeg = kPitchSpawnDeg;
+
+	// ì´êµ¬ëŠ” ì¦‰ì‹œ UpVectorë¡œ ìŠ¤ëƒ…(ìƒìŠ¹ ì¤‘ ê³„ì† ìœ ì§€)
+	_gunHousingZ_CurrentDeg = 90.0f;
+
+	// ì• ë‹˜ ì¸ìŠ¤í„´ìŠ¤ ì „ë‹¬
+	_anim->SetBoneAngles(_rotatorZ_CurrentDeg, _gunHousingZ_CurrentDeg);
 
 	_currentTarget = nullptr;
 	AIStopFire();
 	GetWorldTimerManager().ClearTimer(_idleAimTimerHandle);
 }
 
-void ASentryTurret::StartDescentSimple()
+void ASentryTurret::StartDescent()
 {
+	_isTransitionalAlign = true;
+
 	_currentTarget = nullptr;
 	AIStopFire();
 	GetWorldTimerManager().ClearTimer(_idleAimTimerHandle);
 }
 
-void ASentryTurret::UpdateSpawnDescentSimple(float deltaSeconds)
+void ASentryTurret::UpdateSpawnDescent(float deltaSeconds)
 {
-	const float kRiseSpeed = 300.0f;
-	const float kSinkSpeed = 300.0f;
-	const float kPitchLerpSpeed = 6.0f;
-	const float kPitchSpawnDeg = 90.0f;
-	const float kDepthCm = 120.0f;
+	const float kRiseSpeed = 300.0f;  // cm/s
+	const float kSinkSpeed = 300.0f;  // cm/s
+	const float kDepthCm = _mesh->GetSkeletalMeshAsset()->GetBounds().BoxExtent.Z * 2.0f;
 
 	FVector loc = GetActorLocation();
 
-	// »ó½Â Áß
-	if (!_isRaised)
+	// ìƒìŠ¹ ë‹¨ê³„: ìœ„ì¹˜ë§Œ ìƒìŠ¹, ì´êµ¬ëŠ” í•­ìƒ UpVector(90.0f)
+	if (!_isRaised && !_isSinking && !_isTransitionalAlign)
 	{
 		const float newZ = FMath::Min(loc.Z + kRiseSpeed * deltaSeconds, _spawnTargetZ);
 		SetActorLocation(FVector(loc.X, loc.Y, newZ));
-		_aimPitchDeg = FMath::FInterpTo(_aimPitchDeg, kPitchSpawnDeg, deltaSeconds, kPitchLerpSpeed);
 
 		if (FMath::IsNearlyEqual(newZ, _spawnTargetZ, 0.5f))
 		{
-			_isRaised = true;
+			// ìƒìŠ¹ ë â†’ ì „ë°© ì •ë ¬ ë‹¨ê³„ë¡œ ì§„ì…
+			_isTransitionalAlign = true;
+		}
+		return;
+	}
+
+	// ìƒìŠ¹ ì¢…ë£Œ ì§í›„ ì •ë ¬ ë‹¨ê³„: ì „ë°©(0.0f)ìœ¼ë¡œ "ì†ë„ ì œí•œ íšŒì „"ë§Œ ìˆ˜í–‰
+	if (_isTransitionalAlign && !_isRaised && !_isSinking)
+	{
+		const float desiredYawDeg = CalcYaw_Sentry();  // í•„ìš” ì‹œ 0.0f ê³ ì • ê°€ëŠ¥
+		const float desiredPitchDeg = 0.0f;            // ì „ë°©
+
+		ApplyAimSpeedLimit(deltaSeconds, desiredYawDeg, desiredPitchDeg);
+
+		// ì• ë‹˜ ì¸ìŠ¤í„´ìŠ¤ ì „ë‹¬
+		_anim->SetBoneAngles(_rotatorZ_CurrentDeg, _gunHousingZ_CurrentDeg);
+
+		if (IsAngleAligned(_gunHousingZ_CurrentDeg, 0.0f, 2.0f))
+		{
+			_isRaised = true;             // ì „íˆ¬ ì¤€ë¹„ ì™„ë£Œ
+			_isTransitionalAlign = false; // ì •ë ¬ ì¢…ë£Œ
 			EnsureIdleTimer();
 		}
 		return;
 	}
 
-	// ÇÏ°­ Á¶°Ç(Åº¾à ¼ÒÁø µî)
-	const bool wantsSink = _curAmmo <= 0;
-	if (wantsSink)
+	// ì „íˆ¬ ìƒíƒœ: ì—¬ê¸°ì„œëŠ” ìœ„ì¹˜/ì •ë ¬ì„ ê±´ë“œë¦¬ì§€ ì•ŠìŒ
+	if (_isRaised && !_isSinking && !_isTransitionalAlign)
 	{
-		_aimPitchDeg = FMath::FInterpTo(_aimPitchDeg, kPitchSpawnDeg, deltaSeconds, kPitchLerpSpeed);
+		// í•˜ê°• ì¡°ê±´(ì˜ˆ: íƒ„ì•½ ì†Œì§„) ê°ì§€ ì‹œ, ë¨¼ì € Up ì •ë ¬ ë‹¨ê³„ë¡œ ì§„ì…
+		const bool wantsSink = (_curAmmo <= 0);
+		if (wantsSink)
+		{
+			_isTransitionalAlign = true;  // Up ì •ë ¬ ì‹œì‘
+			// _isSinking ì€ ì •ë ¬ ì™„ë£Œ í›„ë¡œ ë¯¸ë£¹ë‹ˆë‹¤.
+		}
+		return;
+	}
 
-		const float groundZ = _spawnTargetZ;
-		const float sinkZ = groundZ - kDepthCm;
+	// í•˜ê°• ì „ ì •ë ¬ ë‹¨ê³„: UpVector(90.0f)ë¡œ "ì†ë„ ì œí•œ íšŒì „"ë§Œ ìˆ˜í–‰
+	if (_isTransitionalAlign && !_isSinking)
+	{
+		const float desiredYawDeg = CalcYaw_Sentry(); // í•„ìš” ì‹œ 0.0f
+		const float desiredPitchDeg = 90.0f;          // í•˜ëŠ˜
+
+		ApplyAimSpeedLimit(deltaSeconds, desiredYawDeg, desiredPitchDeg);
+
+		_anim->SetBoneAngles(_rotatorZ_CurrentDeg, _gunHousingZ_CurrentDeg);
+
+		if (IsAngleAligned(_gunHousingZ_CurrentDeg, 90.0f, 2.0f))
+		{
+			_isSinking = true;            // ì •ë ¬ ë â†’ ì‹¤ì œ í•˜ê°• ì‹œì‘
+			_isTransitionalAlign = false;
+		}
+		return;
+	}
+
+	// ì‹¤ì œ í•˜ê°•: ìœ„ì¹˜ë§Œ í•˜ê°•(ì´êµ¬ëŠ” ì´ë¯¸ UpVectorë¡œ ì •ë ¬ë¨)
+	if (_isSinking)
+	{
+		const float sinkZ = _spawnTargetZ - kDepthCm;
 		const float newZ = FMath::Max(loc.Z - kSinkSpeed * deltaSeconds, sinkZ);
 		SetActorLocation(FVector(loc.X, loc.Y, newZ));
 
@@ -480,11 +610,12 @@ void ASentryTurret::UpdateSpawnDescentSimple(float deltaSeconds)
 		{
 			Destroy();
 		}
+		return;
 	}
 }
 
 // -------------------------------
-/* ¾ÆÀÌµé ½ºÄµ */
+/* ì•„ì´ë“¤ ìŠ¤ìº” */
 // -------------------------------
 
 void ASentryTurret::EnsureIdleTimer()
@@ -499,7 +630,7 @@ void ASentryTurret::EnsureIdleTimer()
 
 	if (!tm.IsTimerActive(_idleAimTimerHandle))
 	{
-		OnIdleAimTimer(); // Áï½Ã 1È¸
+		OnIdleAimTimer(); // ì¦‰ì‹œ 1íšŒ
 		tm.SetTimer(
 			_idleAimTimerHandle,
 			this,
@@ -536,7 +667,7 @@ void ASentryTurret::OnIdleAimTimer()
 }
 
 // -------------------------------
-// HP/ÀÜÅº/±âÅ¸
+// HP/ì”íƒ„/ê¸°íƒ€
 // -------------------------------
 
 float ASentryTurret::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -556,11 +687,11 @@ void ASentryTurret::HandleOutOfAmmo()
 	AIStopFire();
 	_currentTarget = nullptr;
 	GetWorldTimerManager().ClearTimer(_idleAimTimerHandle);
-	StartDescentSimple();
+	StartDescent();
 }
 
 // -------------------------------
-// ½Ã¾ß Á¦°ø / Getter
+// ì‹œì•¼ ì œê³µ / Getter
 // -------------------------------
 
 void ASentryTurret::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
