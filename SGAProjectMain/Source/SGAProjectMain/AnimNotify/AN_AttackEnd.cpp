@@ -21,8 +21,5 @@ void UAN_AttackEnd::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 
     if (unit == nullptr) return;
 
-    if (unit->_reservedFunction.IsBound())
-        unit->_reservedFunction.Unbind();
-    unit->ReleaseMeleeColision();
-    unit->GetStateComponent()->ActionEnd();
+    unit->ActionEnd();
 }

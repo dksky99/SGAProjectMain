@@ -131,6 +131,11 @@ public:
 	void AddHitted(AActor* target);
 	void ClearHitted();
 
+	virtual void TakeHitted(FVector hitPoint,float hitPower=0.1);
+	void PlayHitReaction(float time = 0.5f);
+
+	void HitRecovery();
+
 	class UUnitAttackDataAsset* GetCurAttackData() { return _curAttackData; }
 	
 
@@ -197,6 +202,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _deadMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _hitReactionMontage;
 
 	FTimerHandle _respawnTimer;
 

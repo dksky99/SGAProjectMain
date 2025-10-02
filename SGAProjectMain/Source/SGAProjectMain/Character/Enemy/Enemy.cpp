@@ -249,6 +249,15 @@ void AEnemy::SetInBattle()
 
 }
 
+void AEnemy::SetBattleMode()
+{
+
+}
+
+void AEnemy::SetNormalMode()
+{
+}
+
 
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

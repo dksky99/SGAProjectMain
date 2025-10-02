@@ -73,9 +73,9 @@ public:
 
 	virtual void PickupItem(AHellDiver* player) override;
 
-	virtual void PlayFireEffect();
-
-	void ResetCanFire() { _canFire = true; }
+	//virtual void PlayFireEffect();
+	//
+	//void ResetCanFire() { _canFire = true; }
 
 	int32 GetGunSlotIndex();
 	const FGunData& GetGunData() { return _gunData; }

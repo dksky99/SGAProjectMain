@@ -50,4 +50,6 @@ protected:
 
 	float _maxStamina = 100.0f;
 	float _curStamina = 100.0f;
+
+
 };
