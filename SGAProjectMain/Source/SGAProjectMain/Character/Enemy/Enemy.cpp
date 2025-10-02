@@ -19,6 +19,13 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Damage.h"
 
+#include "Kismet/KismetSystemLibrary.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"      // GetWorld, Overlap 함수들
+#include "Engine/OverlapResult.h"
+
+#include "BehaviorControlComponent.h"
+
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
@@ -69,70 +76,110 @@ void AEnemy::FoundTarget(ACharacterBase* target)
 
 void AEnemy::RaiseAlert()
 {
+    
+    if (GetController() == nullptr)
+        return;
+    AEnemyController* temp = Cast<AEnemyController>(GetController());
+    if (temp == nullptr)
+        return;
+    
 
-}
 
-void AEnemy::Spawn()
-{
-    GetWorld()->GetTimerManager().SetTimer(_respawnTimer,this, &AEnemy::ReadyToSpawn,_respawnCoolDown,false );
-    _isReadyToSpawn = false;
-    //스폰몽타주가 있을시. 몽타주가 끝나고 컨트롤러 결합을할지 고민중
-    if (_spawnMontage)
+    FVector Center = GetActorLocation();   // 자신 위치
+    float Radius = 1000.f;                 // 탐색 반경
+    FCollisionShape Sphere = FCollisionShape::MakeSphere(Radius);
+
+    TArray<FOverlapResult> Overlaps;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this); // 자기 자신 제외
+
+    // Pawn 채널만 검사하는 예시
+    bool bHit = GetWorld()->OverlapMultiByChannel(
+        Overlaps,
+        Center,
+        FQuat::Identity,
+        ECC_Pawn,  // 원하는 채널
+        Sphere,
+        QueryParams
+    );
+
+    if (bHit)
     {
-        if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+        for (auto& overlap : Overlaps)
         {
-
-            animInstance->PlayAnimMontage(_spawnMontage);
-
-            // 재생 후 인스턴스 가져오기
-            if (FAnimMontageInstance* montageInstance = animInstance->GetActiveInstanceForMontage(_spawnMontage))
+            AEnemy* target = Cast<AEnemy>(overlap.GetActor());
+            if (target)
             {
-
+                target->RecieveAlert(temp->GetBehaviorControl()->GetTargetActor());
             }
+
         }
     }
-}
 
-bool AEnemy::IsReadyToSpawn()
-{
-    if (GetController())
-        return false;
-   
-    return _isReadyToSpawn;
-}
+    UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
-void AEnemy::ReadyToSpawn()
-{
-    _isReadyToSpawn = true;
-    if (GetWorld()->GetTimerManager().IsTimerActive(_respawnTimer))
+
+    if (_warCryMontage==nullptr)
+        return ;
+    if (anim == nullptr)
+        return ;
+    if (_stateComp->ActionBegin() == false)
+        return ;
+
+
+
+    const float Duration = anim->PlayAnimMontage(_warCryMontage);
+    if (Duration <= 0.0f)
     {
-        GetWorld()->GetTimerManager().ClearTimer(_respawnTimer);
+
+        return ;
     }
+
+
+    
+
+
+}
+
+void AEnemy::RecieveAlert(AActor* target)
+{
+    if (GetController() == nullptr)
+        return;
+    AEnemyController* temp = Cast<AEnemyController>(GetController());
+    if (temp == nullptr)
+        return;
+    temp->RecieveTargetLoc(target->GetActorLocation());
+
 }
 
 bool AEnemy::AddToSquad(AEnemySquad* squad)
 {
-    if(squad ==nullptr)
+    if (squad == nullptr)
         return false;
     _squad = squad;
-    if(_squad==nullptr)
+    if (_squad == nullptr)
         return false;
     return true;
 }
-
 
 void AEnemy::Dead()
 {
     Super::Dead();
 
 
+    AController* CurrentController = GetController();
+    if (CurrentController)
+    {
+        CurrentController->UnPossess();
+    }
+
+    GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromDead, 60.0f, false);
 }
 
 void AEnemy::SpawnGhost()
 {
     Super::SpawnGhost();
 
-    UnitDeactivate();
 
 }
 
@@ -197,6 +244,9 @@ void AEnemy::SetInBattle()
 {
     _unitState = EUnitState::InBattle;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
+
+    RaiseAlert();
+
 }
 
 

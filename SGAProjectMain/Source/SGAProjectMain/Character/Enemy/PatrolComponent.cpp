@@ -81,6 +81,15 @@ void UPatrolComponent::UpdateNextIndex()
 
 }
 
+void UPatrolComponent::SetPatrolPath(ACPatrolPath* path)
+{
+	if (path == nullptr)
+	{
+
+	}
+	_path = path;
+}
+
 
 // Called when the game starts
 void UPatrolComponent::BeginPlay()

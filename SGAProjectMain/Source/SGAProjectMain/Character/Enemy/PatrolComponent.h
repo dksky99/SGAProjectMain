@@ -21,6 +21,7 @@ public:
 
 	void UpdateNextIndex(); //distance를 사용할 경우, 곡선의 형태를 직접 따서 벡터+타임라인으로 쓰는 경우가 많아서
 
+	void SetPatrolPath(class ACPatrolPath* path);
 
 
 protected:

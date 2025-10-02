@@ -16,7 +16,7 @@ class SGAPROJECTMAIN_API AProjectileGun : public AGunBase
 
 protected:
 	virtual void Fire() override;
-	virtual void ExecuteShot() override;
+	virtual void FireShot();
 	
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TSubclassOf<class AGunBulletBase> _projectileClass;
