@@ -3,6 +3,8 @@
 
 #include "ItemBase.h"
 
+#include "../../Gun/GunBase.h"
+
 // Sets default values
 AItemBase::AItemBase()
 {
@@ -31,6 +33,9 @@ void AItemBase::PickupItem(AHellDiver* player)
 	{
 		_onPreDespawn.Broadcast(this);
 	}
+
+	if (AGunBase* gun = Cast<AGunBase>(this))
+		return;
 
 	Destroy();
 }

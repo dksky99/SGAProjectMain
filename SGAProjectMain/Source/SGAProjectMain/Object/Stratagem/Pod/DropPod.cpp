@@ -14,7 +14,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/DamageEvents.h"
 
-#include "../../SGAProjectMain.h"
+#include "HellPodBase.h"
+#include "../../../SGAProjectMain.h"
 
 // Sets default values
 ADropPod::ADropPod()
@@ -175,9 +176,48 @@ void ADropPod::SpawnInternalActor(const FVector& SpawnLocation)
 	FActorSpawnParameters spawnParams;
 	spawnParams.Owner = this;
 	spawnParams.Instigator = GetInstigator();
-	// 스폰 시 충돌이 있어도 가능하면 위치 조정 후 무조건 스폰하도록 설정
-	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+	// 헬포드면: 높이만큼 아래에서 스폰 준비
+	if (_dropPodToSpawn->IsChildOf(AHellPodBase::StaticClass()))
+	{
+		float hellHeight = 0.0f;
+		if (const AActor* cdo = _dropPodToSpawn->GetDefaultObject<AActor>())
+		{
+			if (const UPrimitiveComponent* primOnCDO = cdo->FindComponentByClass<UPrimitiveComponent>())
+			{
+				hellHeight = primOnCDO->Bounds.BoxExtent.Z * 2.0f;
+			}
+		}
+		if (hellHeight <= 0.0f)
+			hellHeight = 200.0f;  // 안전값
+
+		// 아래로 내린 시작 위치 계산
+		const FVector startBelow = SpawnLocation - FVector::UpVector * hellHeight;
+
+		// 콜리전 끄고 아래에서 스폰
+		AActor* spawned = GetWorld()->SpawnActorDeferred<AActor>(
+			_dropPodToSpawn,
+			FTransform(GetActorRotation(), startBelow),
+			this,
+			nullptr,
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+		);
+
+		if (!spawned)
+			return;
+
+		if (UPrimitiveComponent* rootPrim = Cast<UPrimitiveComponent>(spawned->GetRootComponent()))
+		{
+			rootPrim->SetCollisionEnabled(ECollisionEnabled::NoCollision);  // 바닥과 충돌 방지
+		}
+
+		UGameplayStatics::FinishSpawningActor(spawned, spawned->GetActorTransform());
+
+		return; 
+	}
+
+	// 헬포드가 아니면 원래 위치에 바로 스폰
 	GetWorld()->SpawnActor<AActor>(_dropPodToSpawn, SpawnLocation, GetActorRotation(), spawnParams);
 }
 
