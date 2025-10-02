@@ -7,5 +7,10 @@ void AReloadBackpack::BeginPlay()
 {
 	Super::BeginPlay();
 
-	_curBullet = _reloadBackpackData._maxBullet;
+	_curSpare = _reloadBackpackData._maxSpare;
+}
+
+void AReloadBackpack::ConsumeSpare(int32 amount)
+{
+	_curSpare -= amount;
 }

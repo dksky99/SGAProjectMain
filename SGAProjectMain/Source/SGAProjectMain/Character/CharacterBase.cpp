@@ -21,6 +21,11 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Damage.h"
 
+
+#include "MotionWarpingComponent.h"
+#include "Animation/AnimInstance.h"             // UAnimInstance, Montage_Play(), GetActiveInstanceForMontage()
+#include "Animation/AnimMontage.h"              // UAnimMontage
+
 #include "../Data/UnitAttackDataAsset.h"
 
 #include "../Object/Corpse.h"
@@ -142,26 +147,6 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 
 }
 
-void ACharacterBase::KnockDown(float time)
-{
-	// 이동 멈추기
-	GetCharacterMovement()->DisableMovement();
-
-	// 캡슐과 메시 분리 충돌 처리
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-
-	// 물리 시뮬레이션 시작
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetMesh()->WakeAllRigidBodies();
-	GetMesh()->bBlendPhysics = true;
-
-	// 일정 시간 후 복구
-	GetWorld()->GetTimerManager().SetTimer(
-		_knockDownTimerHandle, this, &ACharacterBase::KnockDownRecovery, time, false
-	);
-}
 
 void ACharacterBase::KnockDownRecovery()
 {
@@ -196,6 +181,7 @@ void ACharacterBase::KnockDownRecovery()
 void ACharacterBase::CharacterToRagdoll()
 {
 
+	UE_LOG(LogTemp, Display, TEXT("CharacterToRagdoll CB : %s"),*this->GetName());
 
 
 	UCharacterMovementComponent* movementComponent = GetCharacterMovement();
@@ -211,7 +197,7 @@ void ACharacterBase::CharacterToRagdoll()
 	{
 		tempMesh->SetSimulatePhysics(true);
 		tempMesh->SetAllBodiesSimulatePhysics(true);
-		tempMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+		tempMesh->SetCollisionProfileName(TEXT("pawn"));
 
 		UPhysicsAsset* tempPhysicsAsset = tempMesh->GetPhysicsAsset();
 		if (tempPhysicsAsset)
@@ -248,12 +234,12 @@ void ACharacterBase::CharacterToRagdoll()
 
 }
 
-void ACharacterBase::KnockDown()
+void ACharacterBase::KnockDown(float time)
 {
 	CharacterToRagdoll();
 
 	// 3초 후 회복 함수 호출
-	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromKnockDown, 3.0f, false);
+	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromKnockDown, time, false);
 
 
 }
@@ -305,18 +291,30 @@ void ACharacterBase::RecoverFromKnockDown()
 
 void ACharacterBase::Dead()
 {
+	UE_LOG(LogTemp, Display, TEXT("Dead CB : %s"), *this->GetName());
+	//래그돌로 변하고 
+	//사망시 컨트롤러를 내려놓고 
 
-	AController* CurrentController = GetController();
-	if (CurrentController)
-	{
-		CurrentController->UnPossess();
-	}
+	_isReadyToSpawn = false;
 	CharacterToRagdoll();
-	//SpawnGhost();
+	UE_LOG(LogTemp, Display, TEXT("CharacterToRagdoll CB : %s"), *this->GetName());
+	
 
 
-	GetWorldTimerManager().SetTimer(_knockDownTimerHandle, this, &ACharacterBase::RecoverFromKnockDown, 60.0f, false);
 
+
+}
+
+void ACharacterBase::RecoverFromDead()
+{
+	//우선 래그돌상태에서 회복하고
+	RecoverFromKnockDown();
+
+	
+	//소환 가능 상태가 됨.
+	UnitDeactivate();
+
+	_isReadyToSpawn = true;
 
 }
 
@@ -348,11 +346,11 @@ void ACharacterBase::ResetUnit()
 {
 	_statComponent->Reset();
 	_stateComp->Reset();
-	RecoverFromKnockDown();
+	//RecoverFromKnockDown();
 
-	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
+	SetActorHiddenInGame(false);
 }
 
 void ACharacterBase::UnitDeactivate()
@@ -371,6 +369,67 @@ void ACharacterBase::UnitDeactivate()
 	SetActorLocation(FVector::ZeroVector);
 
 }
+void ACharacterBase::UnitActivate()
+{
+
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
+}
+
+
+
+bool ACharacterBase::IsReadyToSpawn()
+{
+	if (GetController())
+		return false;
+
+	return _isReadyToSpawn;
+}
+
+void ACharacterBase::ReadyToSpawn()
+{
+	_isReadyToSpawn = true;
+	if (GetWorld()->GetTimerManager().IsTimerActive(_respawnTimer))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(_respawnTimer);
+	}
+}
+
+void ACharacterBase::Spawn()
+{
+	_isReadyToSpawn = false;
+	ResetUnit();
+	//스폰몽타주가 있을시. 몽타주가 끝나고 컨트롤러 결합을할지 고민중
+	if (_spawnMontage)
+	{
+		if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
+		{
+			_stateComp->ActionBegin();
+			animInstance->PlayAnimMontage(_spawnMontage);
+			_reservedFunction.BindUObject(this, &ACharacterBase::SpawnProcessFinish);
+			// 재생 후 인스턴스 가져오기
+			if (FAnimMontageInstance* montageInstance = animInstance->GetActiveInstanceForMontage(_spawnMontage))
+			{
+
+			}
+		}
+		else
+		{
+			SpawnProcessFinish();
+		}
+	}
+	else
+			SpawnProcessFinish();
+}
+
+void ACharacterBase::SpawnProcessFinish()
+{
+
+}
+
+
+
 UStatComponent* ACharacterBase::GetStatComponent()
 {
 	return _statComponent;
@@ -450,7 +509,7 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 	{
 		CheckHitted(OtherActor);
 
-		float finalDamage = _meleeDamage;// 속도에 비례하는 최종 데미지
+		float finalDamage = _curAttackData->Attack;
 
 		FVector shotDirection = SweepResult.ImpactNormal; // 데미지 방향
 
@@ -464,13 +523,11 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 			UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
 		);
 
-		UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
 
 		AddHitted(OtherActor);
 
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Melee Hit!"));
 }
 
 bool ACharacterBase::AttackMelee()
@@ -486,16 +543,29 @@ bool ACharacterBase::AttackMelee()
 		return false;
 	int32 randomIndex = FMath::RandRange(0, _meleeAttackDatas.Num() - 1);
 
-	anim->PlayAnimMontage(_meleeAttackDatas[randomIndex]->Motion);
-	_meleeDamage = _meleeAttackDatas[randomIndex]->Attack;
-	SetMeleeColisions(randomIndex);
+	
+
+	const float Duration = anim->PlayAnimMontage(_meleeAttackDatas[randomIndex]->Motion);
+
+	_curAttackData = _meleeAttackDatas[randomIndex];
+	SetMeleeColisions(_meleeAttackDatas[randomIndex]);
 	return true;
 }
 
-
-void ACharacterBase::SetMeleeColisions(int index)
+void ACharacterBase::ActionEnd()
 {
-	for (FName colName : _meleeAttackDatas[index]->ActiveColliders)
+	ReleaseMeleeColision();
+
+	GetStateComponent()->ActionEnd();
+
+	if (_reservedFunction.IsBound())
+		_reservedFunction.Unbind();
+}
+
+
+void ACharacterBase::SetMeleeColisions(class UUnitAttackDataAsset* data)
+{
+	for (FName colName : data->ActiveColliders)
 	{
 		if (_meleeColliders.Contains(colName))
 		{

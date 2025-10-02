@@ -20,21 +20,21 @@ public:
 	AEnemy_Standard(const FObjectInitializer& ObjectInitializer);
 
 
+	
 
+	virtual bool CheckAbleTryNear(AActor* target) override;
+	virtual bool CheckAbleTryMiddle(AActor* target) override;
+	virtual bool CheckAbleTryFar(AActor* target) override;
 
 	virtual bool TryNear(AActor* target)   override;
 	virtual bool TryMiddle(AActor* target) override;
 	virtual bool TryFar(AActor* target)    override;
-
-
+	bool TryCalling(AActor* target);
+	void CallingReinforce();
 	bool TryBurrow(AActor* target);
-	void BurrowIn(FVector target);
+	void BurrowIn();
 	void BurrowOut();
 
-	void ActivateClaw_R();
-	void DeactivateClaw_L();
-	void DeactivateClaw_R();
-	void ActivateClaw_L();
 
 
 protected:
@@ -46,7 +46,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _burrowIn_Animation;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _callReinforce_Animation;
+	FVector _burrowOutLoc;
+	FTimerHandle _burrowTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	float _burrowOutDelay = 2.0f;
 
+	AActor* _enemyTarget=nullptr;
 
-
+	bool _hasReinforceAuthority=true;
 };

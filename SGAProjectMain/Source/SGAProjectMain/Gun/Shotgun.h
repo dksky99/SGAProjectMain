@@ -14,7 +14,8 @@ class SGAPROJECTMAIN_API AShotgun : public AGunBase
 {
 	GENERATED_BODY()
 	
-	virtual void Fire() override;
+protected:
+	virtual void FireShot();
 
 private:
 	// ÇÑ ¹ø¿¡ ¹ß»çµÇ´Â Æç·¿ ¼ö

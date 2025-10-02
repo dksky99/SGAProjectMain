@@ -3,7 +3,10 @@
 
 #include "EnemySquad.h"
 #include "Enemy.h"
+#include "PatrolComponent.h"
+#include "NavigationSystem.h"
 #include "../../Controller/EnemyController.h"
+
 // Sets default values
 AEnemySquad::AEnemySquad()
 {
@@ -73,11 +76,10 @@ void AEnemySquad::SpawnAllUnits()
 	{
 		for (auto& pair : pairs.Value._units)
 		{
-			if (!IsActivatedUnit(&pair))
-			{
+			if (IsActivatedUnit(&pair))
+				continue;
+			if(pair.Key->IsReadyToSpawn())
 				SpawnUnit(&pair);
-
-			}
 		}
 	}
 
@@ -91,48 +93,133 @@ bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AE
 	if (IsActivatedUnit(unit))
 		return false;
 	//위치 설정.
-	unit->Key->SetActorLocation(_spawnPoint->GetComponentLocation());
+	unit->Key->SetActorLocation(_spawnPoint->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
+	UE_LOG(LogTemp, Error, TEXT("SpawnPoint %f %f %f"), _spawnPoint->GetComponentLocation().X, _spawnPoint->GetComponentLocation().Y, _spawnPoint->GetComponentLocation().Z);
+	//UE_LOG(LogTemp, Error, TEXT("SpawnLoc %f %f %f"), unit->Key->GetActorLocation.X, unit->Key->GetActorLocation().Y, unit->Key->GetActorLocation().Z);
 	//컨트롤러 빙의
 	unit->Value->Possess(unit->Key);
 	//활성화
 
-	unit->Key->ResetUnit();
 	unit->Key->Spawn();
+
+//	UnitSpawnAct(unit);
 
 
 	return true;
 }
 
+void AEnemySquad::UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
+{
+	switch (_squadState)
+	{
+	case ESquadState::Stationed:
+	case ESquadState::Search:
+		unit->Value->RecieveTargetLoc(_targetLoc);
+		//소환 후 자신의 소환 위치 에서 일정 범위 내의 랜덤 위치로 이동.경계치를 5부여
+		break;
+	case ESquadState::Patrol:
+		//패트롤 패스를 부여.
+		break;
+	case ESquadState::Attack:
+		unit->Value->RecieveTarget(_target);
+		//타겟을 부여
+		break;
+	case ESquadState::Deactivate:
+	case ESquadState::MAX:
+	default:
+		break;
+	}
+}
+
+
 void AEnemySquad::Command_Search()
 {
-	for (auto& pairs : _unitPool)
+	_squadState = ESquadState::Search;
+	for (auto& PoolPair : _unitPool)
 	{
-		for (auto& pair : pairs.Value._units)
+		for (auto& pair : PoolPair.Value._units)
 		{
 			if (IsActivatedUnit(&pair))
 			{
 
+				pair.Value->RecieveTargetLoc(_targetLoc);
 
 			}
+
+
+
 		}
 	}
 }
 
 void AEnemySquad::Command_Stationed()
 {
+	//만약 패트롤 패스가 있다면 패트롤패스를 제거,
+	_squadState = ESquadState::Stationed;
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+				pair.Value->RecieveTargetLoc(_targetLoc);
 
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Patrol()
 {
+	//가진 패트롤 패스를 넘김.
+	if (_patrolPath == nullptr)
+		Command_Stationed();
+	_squadState = ESquadState::Patrol;
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+
+				pair.Key->GetPatrol()->SetPatrolPath(_patrolPath);
+
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Attack()
 {
+	//
+	_squadState = ESquadState::Attack;
+
+	for (auto& PoolPair : _unitPool)
+	{
+		for (auto& pair : PoolPair.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+
+				pair.Value->RecieveTarget(_target);
+
+			}
+
+
+
+		}
+	}
 }
 
 void AEnemySquad::Command_Deactivate()
 {
+	_squadState = ESquadState::Deactivate;
 }
 
 TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
@@ -210,10 +297,60 @@ TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySqua
 	return nullptr;
 }
 
+int32 AEnemySquad::CheckActivateUnitCount()
+{
+	int32 count = 0;
+	for (auto& pairs : _unitPool)
+	{
+		for (auto& pair : pairs.Value._units)
+		{
+			if (IsActivatedUnit(&pair))
+			{
+				continue;
+
+			}
+			
+			count++;
+		}
+	}
+
+
+	return count;
+}
+
 bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
 {
+	//유닛의 폰이 컨트롤러가 없거나 컨트롤러가 폰이 없다면 그건 해제되어있는 상태. 
 	if (unit->Key->GetController() == nullptr || unit->Value->GetPawn() == nullptr)
 		return false;
+
 	return true;
+}
+
+FVector AEnemySquad::MakeRandomLocation()
+{
+	FVector pos = _targetLoc;
+
+	//NavMesh 찾기 : 이 지점을 기준으로 특정범위내에 소환가능위치가 있는지 확인. 
+	auto naviSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	if (naviSystem->IsValidLowLevel() == false)
+		return _targetLoc;
+
+
+
+	//반환받을 랜덤한 위치.
+	FNavLocation randLocation;
+	//일정 반경안의 랜덤한 지점을 가져오는 함수 여기서 가능한 위치가 없으면 false를 반환.
+	if (naviSystem->GetRandomPointInNavigableRadius(pos, _targetLocRadius, randLocation))
+	{
+
+
+		return randLocation;
+	}
+
+
+
+	return _targetLoc;
 }
 
