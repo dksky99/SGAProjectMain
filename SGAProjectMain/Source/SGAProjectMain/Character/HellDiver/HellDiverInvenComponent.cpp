@@ -73,7 +73,7 @@ void UHellDiverInvenComponent::SpawnGun(TSubclassOf<class AGunBase> gunClass)
 	SetGun(gun);
 }
 
-int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)
+void UHellDiverInvenComponent::SetGun(AGunBase* gun)
 {
 	int32 index = -1;
 
@@ -84,7 +84,7 @@ int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)
 	else if (gun->GetGunData()._slotType == EGunSlotType::Support)
 		index = 2;
 	else
-		return -1;
+		return;
 
 	if (_gunSlot[index] != nullptr) // 슬롯에 이미 총이 존재한다면
 	{
@@ -93,7 +93,6 @@ int32 UHellDiverInvenComponent::SetGun(AGunBase* gun)
 
 	_gunSlot[index] = gun;
 	PutBackWeapon(gun);
-	return index;
 }
 
 void UHellDiverInvenComponent::EquipGun(int32 index)
@@ -127,6 +126,8 @@ void UHellDiverInvenComponent::DropGun(int32 index)
 	gun->SetActorHiddenInGame(false);
 	FVector dropLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 10.0f;
 	gun->SetActorLocation(dropLocation, false, nullptr, ETeleportType::TeleportPhysics);
+	
+	_gunSlot[index] = nullptr;
 }
 
 bool UHellDiverInvenComponent::CanSwitchGun(int32 index)

@@ -50,7 +50,8 @@ public:
 	bool IsDead();
 
 	float GetDefaultSpeed() { return _defaultSpeed; }
-
+	virtual float GetCurStateSpeed();
+	void ChangeSpeed(float speed);
 	// 포인트 데미지(부위별) 핸들러
 	UFUNCTION()
 	void HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation,
@@ -70,7 +71,11 @@ public:
 	float GetLeftLegHP()  const { return _leftLegHP; }
 	float GetRightLegHP() const { return _rightLegHP; }
 
+	float GetImpactResistance() const { return _impactResistance; }
+
 	void ChangeHeadHP(float Damage);
+
+	void ReceiveDirectDamage(float Damage);
 
 	// 사망 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
@@ -92,7 +97,7 @@ public:
 	// 부위 복구 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnPartRestored OnPartRestored;
-
+	
 private:
 	// 실제 HP 차감 및 이벤트 브로드캐스트
 	void ProcessDamage(EBodyPart Part, float Damage);
@@ -151,4 +156,8 @@ protected:
 	// 오른다리 현재 체력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
 	float _rightLegHP;
+		
+	//경직 저항.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
+	float _impactResistance = 1.0f;
 };

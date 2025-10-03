@@ -72,6 +72,10 @@ public:
 	void SetStrong_Alert();
 	void SetInBattle();
 
+	//캐릭터가 전투 시와 평상시의 이동의 설정양식이 달라진다.
+	void SetBattleMode();
+	void SetNormalMode();
+
 	virtual bool TryNear(AActor* target) { return false; }
 	virtual bool TryMiddle(AActor* target) { return false; }
 	virtual bool TryFar(AActor* target) { return false; }

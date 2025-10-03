@@ -8,19 +8,16 @@
 
 #include "Perception/AIPerceptionTypes.h"	//감각 구분 제어, 감각 자극 관리
 #include "GenericTeamAgentInterface.h"
+
+#include "../SGAProjectMain.h"
 #include "CharacterBase.generated.h"
 
 
 
 
-UENUM(BlueprintType)
-enum class ETeamID : uint8
-{
-	HellDiver =0 UMETA(DisplayName = "HellDiver"),				
-	Enemy = 1 UMETA(DisplayName = "Far"),
-	MAX
-};
+
 DECLARE_DELEGATE(FReservedFunctionDelegate);
+
 UCLASS()
 class SGAPROJECTMAIN_API ACharacterBase : public ACharacter, public ITargetable, public IGenericTeamAgentInterface
 {
@@ -134,6 +131,11 @@ public:
 	void AddHitted(AActor* target);
 	void ClearHitted();
 
+	virtual void TakeHitted(FVector hitPoint,float hitPower=0.1);
+	void PlayHitReaction(float time = 0.5f);
+
+	void HitRecovery();
+
 	class UUnitAttackDataAsset* GetCurAttackData() { return _curAttackData; }
 	
 
@@ -200,6 +202,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _deadMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _hitReactionMontage;
 
 	FTimerHandle _respawnTimer;
 
