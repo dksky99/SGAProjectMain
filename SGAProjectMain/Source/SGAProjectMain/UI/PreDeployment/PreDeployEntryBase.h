@@ -19,10 +19,10 @@ class SGAPROJECTMAIN_API UPreDeployEntryBase : public UUserWidget
 
 	virtual void NativeOnInitialized() override;
 
+public:
 	UFUNCTION()
 	virtual void HandlePick();
 
-public:
 	FOnEntryPicked _onPickedEvent;
 	
 	virtual void InitializeEntry(int32 id);

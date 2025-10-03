@@ -22,6 +22,9 @@ public:
 
 	FOnEntrySpawned _onEntrySpawnedEvent;
 
+	TArray<UPreDeployEntryBase*> GetEntries() { return _entries; }
+	int32 GetEntryNumPerRow() { return _entryRowWidth; }
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<class UPreDeployEntryBase> _entryClass;
@@ -36,5 +39,5 @@ protected:
 	TArray<UPreDeployEntryBase*> _entries;
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	int32 _entriesPerRow = 2;
+	int32 _entryRowWidth = 2;
 };

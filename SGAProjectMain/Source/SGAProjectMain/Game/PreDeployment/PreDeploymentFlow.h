@@ -32,6 +32,11 @@ private:
 	UPROPERTY()
 	class UPreDeployHubWidget* _hubWidget;
 
+	UPROPERTY(EditAnywhere, Category = "Game/IMC")
+	class UInputMappingContext* _gameIMC;
+	UPROPERTY(EditAnywhere, Category = "Game/IMC")
+	class UInputMappingContext* _preDeployWidgetIMC;
+
 	UPROPERTY()
 	class APlayerCharacter* _player;
 

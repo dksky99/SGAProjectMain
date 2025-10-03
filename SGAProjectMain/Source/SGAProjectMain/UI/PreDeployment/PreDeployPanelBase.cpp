@@ -2,8 +2,10 @@
 
 
 #include "PreDeployPanelBase.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"  
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
 #include "../../Gun/GunDataTable.h"
 #include "PreDeployCategorySection.h"
 #include "PreDeployDetailBase.h"
@@ -25,6 +27,8 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
         }
     }
 
+    _sectionPanel->ClearChildren();
+
     // 그룹화된 총들로 카테고리 섹션 설정
     for (auto& group : groupedGuns)
     {
@@ -32,19 +36,9 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
 		section->_onEntrySpawnedEvent.AddUObject(this, &UPreDeployPanelBase::OnEntrySpawned); // 섹션의 엔트리 생성 이벤트 바인딩
         FText title = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)group.Key);
 		section->InitializeSection(title, group.Value);
-		//section->_onSectionPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked); // 섹션의 선택 이벤트 바인딩
-        //section->SetTitleText(title); // 섹션 이름 설정
-
-        //for (const int32 id : group.Value) // 각 그룹 내의 총들에 대해
-        //{
-        //    USelectableEntryBase* entry = CreateWidget<USelectableEntryBase>(this, _entryClass); // 엔트리 위젯 생성
-        //    entry->InitializeEntry(id); // 총 ID로 초기화
-        //    entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked); // 선택 이벤트 바인딩
-        //    section->_panel->AddChild(entry); // 섹션의 패널에 추가
-        //    _entries.Add(entry); // 내부 목록에도 추가
-        //}
 
         _sectionPanel->AddChild(section); // 메인 패널에 섹션 추가
+        _sections.Add(section);
     }
 
     _state = state;
@@ -62,17 +56,6 @@ void UPreDeployPanelBase::InitializePanel(UPreDeploymentState* state)
     FText sectionText = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)gunData._category);
     _curSectionText->SetText(sectionText);
 }
-
- //   const int32 Count = _panel->GetChildrenCount();
- //   for (int32 i = 0; i < Count; ++i) {
- //       if (USelectableEntryBase* entry = Cast<USelectableEntryBase>(_panel->GetChildAt(i)))
- //       {
- //           _entries.Add(entry);
- //           entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandlePicked);
- //           entry->InitializeEntry(entry->GetItemID()); // 임시
- //       }
- //   }
-
 
 void UPreDeployPanelBase::HandleEntryPicked(UPreDeployEntryBase* entry)
 {
@@ -92,6 +75,77 @@ void UPreDeployPanelBase::HandleEntryPicked(UPreDeployEntryBase* entry)
 		_detailPanel->SetDetail(entry->GetItemID()); // 상세 패널 업데이트
 }
 
+void UPreDeployPanelBase::MoveLeft()
+{
+    int32 colNum = GetColumnNumInRow(_curSectionIndex, _curRow);
+    if (colNum <= 1) return;
+
+    int32 newCol = (_curCol - 1 + colNum) % colNum;
+    SelectEntry(_curSectionIndex, _curRow, newCol);
+}
+
+void UPreDeployPanelBase::MoveRight()
+{
+    int32 colNum = GetColumnNumInRow(_curSectionIndex, _curRow); // 해당 행에 몇 열까지 존재하는지
+    if (colNum <= 1) return;
+
+    int32 newCol = (_curCol + 1) % colNum;
+    SelectEntry(_curSectionIndex, _curRow, newCol);
+}
+
+void UPreDeployPanelBase::MoveUp()
+{
+    if (_curRow > 0) // 같은 섹션 내에서 위쪽 행으로
+    {
+        int32 newRow = _curRow - 1;
+        int32 colNum = GetColumnNumInRow(_curSectionIndex, newRow);
+        if (colNum <= 0) return;
+
+        int32 newCol = FMath::Min(_curCol, colNum - 1);
+        SelectEntry(_curSectionIndex, newRow, newCol);
+        return;
+    }
+
+    // 첫 행이었을 경우 이전 섹션의 마지막 행으로
+    int32 newSecIndex = _curSectionIndex - 1;
+    if (newSecIndex < 0)
+        newSecIndex = _sections.Num() - 1;
+
+    int32 lastRow = GetRowNumInSection(newSecIndex) - 1;
+    int32 colNum = GetColumnNumInRow(newSecIndex, lastRow);
+    if (colNum <= 0) return;
+
+    int32 newCol = FMath::Min(_curCol, colNum - 1);
+    SelectEntry(newSecIndex, lastRow, newCol);
+}
+
+void UPreDeployPanelBase::MoveDown()
+{
+    int32 lastRow = GetRowNumInSection(_curSectionIndex) - 1;
+    if (_curRow + 1 <= lastRow) // 같은 섹션 내에서 아래쪽 행으로
+    {
+        int32 newRow = _curRow + 1;
+        int32 colNum = GetColumnNumInRow(_curSectionIndex, newRow);
+        if (colNum <= 0) return;
+
+        int32 newCol = FMath::Min(_curCol, colNum - 1);
+        SelectEntry(_curSectionIndex, newRow, newCol);
+        return;
+    }
+
+    // 마지막 행이었을 경우 다음 섹션의 첫 행으로
+    int32 newSecIndex = _curSectionIndex + 1;
+    if (newSecIndex >= _sections.Num())
+        newSecIndex = 0;
+
+    int32 newRow = 0;
+    int32 colNum = GetColumnNumInRow(newSecIndex, newRow);
+    if (colNum <= 0) return;
+
+    int32 newCol = FMath::Min(_curCol, colNum - 1);
+    SelectEntry(newSecIndex, newRow, newCol);
+}
+
 void UPreDeployPanelBase::OnEntrySpawned(UPreDeployEntryBase* entry)
 {
 	entry->_onPickedEvent.AddUObject(this, &UPreDeployPanelBase::HandleEntryPicked);
@@ -107,4 +161,59 @@ void UPreDeployPanelBase::HandleEquipRequest()
 
     if (_selectChangedEvent.IsBound())
         _selectChangedEvent.Broadcast(itemID); // 패널에서 처리
+}
+
+int32 UPreDeployPanelBase::GetColumnNumInRow(int32 sec, int32 row)
+{
+    auto curSection = _sections[sec];
+    int32 entryNum = curSection->GetEntryNumPerRow();
+    int32 lastEntryIndex = curSection->GetEntries().Num() - 1;
+
+    if (!curSection || entryNum <= 0 || lastEntryIndex < 0)
+        return 0;
+
+    // 쉽게 생각하기 위한 예시
+    // 0 1 2 -> row 0
+    // 3 4 5
+    // 6 7
+
+    if (row < lastEntryIndex / entryNum && row >= 0) // 마지막 행 직전 행까지는
+        return entryNum; // 해당 row는 꽉 차있음
+    else if (row == lastEntryIndex / entryNum) // 마지막 행의 경우
+        return lastEntryIndex % entryNum + 1;
+    else // 존재하지 않는 행일 경우
+        return 0;
+}
+
+int32 UPreDeployPanelBase::GetRowNumInSection(int32 sec)
+{
+    auto curSection = _sections[sec];
+    int32 entryNum = curSection->GetEntryNumPerRow();
+
+    return (curSection->GetEntries().Num() + entryNum - 1) / entryNum;
+}
+
+void UPreDeployPanelBase::SelectEntry(int32 sectionIndex, int32 row, int32 col)
+{
+    int32 entryNum = _sections[sectionIndex]->GetEntryNumPerRow(); // 한 행에 몇 열 들어갈 수 있는지
+    if (entryNum <= 0) return;
+
+    int32 entryIndex = row * entryNum + col;
+
+    auto entry = _sections[sectionIndex]->GetEntries()[entryIndex];
+    entry->HandlePick();
+
+    if (auto scrollBox = Cast<UScrollBox>(_sectionPanel))
+    {
+        scrollBox->ScrollWidgetIntoView(
+            entry,
+            true,
+            EDescendantScrollDestination::IntoView,
+            0.15f
+        );
+    }
+
+    _curSectionIndex = sectionIndex;
+    _curRow = row;
+    _curCol = col;
 }
