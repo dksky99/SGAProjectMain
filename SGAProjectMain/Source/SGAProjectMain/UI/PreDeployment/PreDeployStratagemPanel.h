@@ -19,7 +19,7 @@ class SGAPROJECTMAIN_API UPreDeployStratagemPanel : public UPreDeployPanelBase
 public:
 	void InitializePanel(class UPreDeploymentState* state) override;
 
-	void HandleEntryPicked(UPreDeployEntryBase* entry) override;
+	void HandleEntrySelected(UPreDeployEntryBase* entry) override;
 	void HandleSlotPicked(UPreDeployEntryBase* slot, int32 slotIndex);
 
 	FOnPanelOpened _panelOpenedEvent;
@@ -30,7 +30,10 @@ public:
 	void ClosePanel();
 
 protected:
+	FText GetSectionText(UPreDeployEntryBase* entry) override;
+
 	void SelectSlot(int32 slotIndex);
+	void HideWidget(bool isHidden);
 	int32 FindEmptySlotIndex();
 
 	UPROPERTY(meta = (BindWidget))
@@ -38,9 +41,13 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UBorder* _backgroundBorder;
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _ZKey;
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _CKey;
 
 	UPROPERTY()
-	TArray<UPreDeployEntryBase*> _selectedStgEntries; // 선택된 스트라타젬 엔트리
+	TArray<UPreDeployEntryBase*> _equippedStgEntries; // 선택된 스트라타젬 엔트리
 
 	int32 _curSlotIndex = -1;
 

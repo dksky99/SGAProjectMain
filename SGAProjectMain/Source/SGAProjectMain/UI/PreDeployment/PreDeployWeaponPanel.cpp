@@ -27,51 +27,61 @@ void UPreDeployWeaponPanel::InitializePanel(UPreDeploymentState* state)
 
     _sectionPanel->ClearChildren();
 
+    int32 sectionIndex = 0;
+
     // 그룹화된 총들로 카테고리 섹션 설정
     for (auto& group : groupedGuns)
     {
         UPreDeployCategorySection* section = CreateWidget<UPreDeployCategorySection>(this, _categoryClass);
         section->_onEntrySpawnedEvent.AddUObject(this, &UPreDeployWeaponPanel::OnEntrySpawned); // 섹션의 엔트리 생성 이벤트 바인딩
         FText title = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)group.Key);
-        section->InitializeSection(title, group.Value);
+        section->InitializeSection(title, group.Value, sectionIndex);
 
         _sectionPanel->AddChild(section); // 메인 패널에 섹션 추가
         _sections.Add(section);
+
+        sectionIndex++;
     }
 
     _equipBtn->OnClicked.AddDynamic(this, &UPreDeployWeaponPanel::HandleEquipRequest);
 
-    int32 gunID = -1;
-    if (_panelSlotType == EGunSlotType::Primary)
-        gunID = state->GetPrimaryGunID();
-    else if (_panelSlotType == EGunSlotType::Secondary)
-        gunID = state->GetSecondaryGunID();
-
-    _detailPanel->SetDetail(gunID);
-    FGunData gunData = GI->GetGunDataFromTable(gunID);
-    FText sectionText = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)gunData._category);
-    _curSectionText->SetText(sectionText);
+    HandleEntrySelected(_curSelectedEntry);
+    HandleEquipRequest();
 }
 
-void UPreDeployWeaponPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
+FText UPreDeployWeaponPanel::GetSectionText(UPreDeployEntryBase* entry)
 {
-    Super::HandleEntryPicked(entry);
-
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
     FGunData gunData = GI->GetGunDataFromTable(entry->GetItemID());
     FText sectionText = StaticEnum<EGunCategory>()->GetDisplayNameTextByValue((int64)gunData._category);
-    if (_curSectionText)
-        _curSectionText->SetText(sectionText); // 현재 섹션 텍스트 업데이트
 
-    if (_detailPanel)
-        _detailPanel->SetDetail(entry->GetItemID()); // 상세 패널 업데이트
+    return sectionText;
+}
+
+void UPreDeployWeaponPanel::FocusEntry(UPreDeployEntryBase* entry)
+{
+    Super::FocusEntry(entry);
 
     FLinearColor color = (entry == _lastEquippedEntry) ? FLinearColor::Green : FLinearColor::Yellow;
-    
+
     if (_equipBorder)
         _equipBorder->SetBrushColor(color);
     if (_equipText)
         _equipText->SetColorAndOpacity(color);
+}
+
+void UPreDeployWeaponPanel::OnEntrySpawned(UPreDeployEntryBase* entry)
+{
+    Super::OnEntrySpawned(entry);
+
+    int32 gunID = -1;
+    if (_panelSlotType == EGunSlotType::Primary)
+        gunID = _state->GetPrimaryGunID();
+    else if (_panelSlotType == EGunSlotType::Secondary)
+        gunID = _state->GetSecondaryGunID();
+
+    if (entry->GetItemID() == gunID)
+        _curSelectedEntry = entry;
 }
 
 void UPreDeployWeaponPanel::HandleEquipRequest()

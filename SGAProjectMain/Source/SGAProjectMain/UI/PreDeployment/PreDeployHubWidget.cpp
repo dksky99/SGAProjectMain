@@ -30,7 +30,10 @@ void UPreDeployHubWidget::NativeOnInitialized()
 	if (auto* EIC = Cast<UEnhancedInputComponent>(GetOwningPlayer()->InputComponent))
 	{
 		EIC->BindAction(_navigateAction, ETriggerEvent::Started, this, &UPreDeployHubWidget::OnNavigate);
+		EIC->BindAction(_jumpToSectionAction, ETriggerEvent::Started, this, &UPreDeployHubWidget::OnJumpToSection);
 		EIC->BindAction(_escAction, ETriggerEvent::Started, this, &UPreDeployHubWidget::OnESC);
+		EIC->BindAction(_readyAction, ETriggerEvent::Started, this, &UPreDeployHubWidget::HandleLaunchRequest);
+		EIC->BindAction(_switchPageAction, ETriggerEvent::Started, this, &UPreDeployHubWidget::OnSwitchPage);
 	}
 }
 
@@ -124,4 +127,19 @@ void UPreDeployHubWidget::OnNavigate(const FInputActionValue& value)
 	else if (dir.X < 0) _curPanel->MoveLeft();
 	else if (dir.Y > 0) _curPanel->MoveUp();
 	else if (dir.Y < 0) _curPanel->MoveDown();
+}
+
+void UPreDeployHubWidget::OnJumpToSection(const FInputActionValue& value)
+{
+	float dir = value.Get<float>();
+	if (dir < 0) _curPanel->JumpToPrevSection();
+	else _curPanel->JumpToNextSection();
+}
+
+void UPreDeployHubWidget::OnSwitchPage()
+{
+	if (_pageSwitcher->GetActiveWidgetIndex() == 0) // 公扁 其捞瘤老 版快
+		SwitchToStratagemPage();
+	else if (_pageSwitcher->GetActiveWidgetIndex() == 1)
+		SwitchToEquipPage();
 }

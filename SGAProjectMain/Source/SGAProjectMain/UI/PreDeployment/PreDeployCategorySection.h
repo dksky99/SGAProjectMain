@@ -18,7 +18,7 @@ class SGAPROJECTMAIN_API UPreDeployCategorySection : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void InitializeSection(FText title, const TArray<int32> ids);
+	void InitializeSection(FText title, const TArray<int32> ids, int32 sectionIndex);
 
 	FOnEntrySpawned _onEntrySpawnedEvent;
 

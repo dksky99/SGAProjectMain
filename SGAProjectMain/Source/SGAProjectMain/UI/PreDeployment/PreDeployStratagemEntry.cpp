@@ -27,7 +27,7 @@ void UPreDeployStratagemEntry::SetEquipped(bool isEquipped)
 {
 	if (isEquipped)
 	{
-		_itemImage->SetRenderOpacity(0.8f);
+		_itemImage->SetRenderOpacity(0.5f);
 		_border->SetBrushColor(FLinearColor::Gray);
 	}
 	else

@@ -17,10 +17,12 @@ class SGAPROJECTMAIN_API UPreDeployWeaponPanel : public UPreDeployPanelBase
 
 public:
 	void InitializePanel(UPreDeploymentState* state) override;
-	
-	void HandleEntryPicked(UPreDeployEntryBase* entry) override;
 
 protected:
+	FText GetSectionText(UPreDeployEntryBase* entry) override;
+	void FocusEntry(UPreDeployEntryBase* entry) override;
+	void OnEntrySpawned(UPreDeployEntryBase* entry) override;
+
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	EGunSlotType _panelSlotType = EGunSlotType::Primary;
 

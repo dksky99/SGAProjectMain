@@ -27,17 +27,22 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 public:
 	virtual void InitializePanel(UPreDeploymentState* state);
 
-	virtual void HandleEntryPicked(UPreDeployEntryBase* entry);
+	virtual void HandleEntrySelected(UPreDeployEntryBase* entry);
 
 	FOnSelectChanged _selectChangedEvent;
 
-	virtual void MoveLeft();
-	virtual	void MoveRight();
-	virtual void MoveUp();
-	virtual void MoveDown();
+	void MoveLeft();
+	void MoveRight();
+	void MoveUp();
+	void MoveDown();
+
+	void JumpToPrevSection();
+	void JumpToNextSection();
 	
 protected:
-	void OnEntrySpawned(UPreDeployEntryBase* entry);
+	virtual FText GetSectionText(UPreDeployEntryBase* entry) { return FText(); }
+	virtual void FocusEntry(UPreDeployEntryBase* entry);
+	virtual void OnEntrySpawned(UPreDeployEntryBase* entry);
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<UPreDeployCategorySection> _categoryClass;
@@ -67,6 +72,7 @@ protected:
 private:
 	int32 GetColumnNumInRow(int32 sec, int32 row);
 	int32 GetRowNumInSection(int32 sec);
+	void SelectSectionJumpTargetEntry(int32 sec);
 
 	void SelectEntry(int32 sec, int32 row, int32 col);
 };

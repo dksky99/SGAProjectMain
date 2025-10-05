@@ -66,14 +66,17 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* _launchBtn;
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* _escBtn;	// 버튼으로 임시 구현
-
 	// EIC 액션
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
 	class UInputAction* _navigateAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
+	class UInputAction* _jumpToSectionAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
 	class UInputAction* _escAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
+	class UInputAction* _readyAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
+	class UInputAction* _switchPageAction;
 
 	UPROPERTY()
 	class UPreDeployPanelBase* _curPanel;
@@ -83,4 +86,10 @@ protected:
 
 	UFUNCTION()
 	void OnNavigate(const FInputActionValue& value);
+
+	UFUNCTION()
+	void OnJumpToSection(const FInputActionValue& value);
+
+	UFUNCTION()
+	void OnSwitchPage();
 };
