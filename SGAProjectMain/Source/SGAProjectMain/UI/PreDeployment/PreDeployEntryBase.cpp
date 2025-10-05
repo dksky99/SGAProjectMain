@@ -30,6 +30,14 @@ void UPreDeployEntryBase::InitializeEntry(int32 id)
 		_itemImage->SetBrushFromTexture(image);
 }
 
+void UPreDeployEntryBase::SetEquipped(bool isEquipped)
+{
+	if (isEquipped)
+		_equipMark->SetVisibility(ESlateVisibility::Visible);
+	else
+		_equipMark->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void UPreDeployEntryBase::SetSelected(bool isSelected)
 {
 	FLinearColor color = isSelected ? FLinearColor::Yellow : FLinearColor::White;

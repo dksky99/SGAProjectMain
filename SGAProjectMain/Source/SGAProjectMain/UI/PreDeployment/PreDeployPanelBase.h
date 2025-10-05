@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
 #include "Components/PanelWidget.h"
 #include "PreDeployEntryBase.h"
 #include "PreDeployCategorySection.h"
 #include "../../Game/PreDeployment/PreDeploymentState.h"
-#include "../../Gun/GunDataTable.h"
 #include "../../CGameInstance.h"
 #include "PreDeployPanelBase.generated.h"
 
@@ -40,9 +42,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<UPreDeployCategorySection> _categoryClass;
 
-	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	EGunSlotType _panelSlotType = EGunSlotType::Primary;
-
 	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _sectionPanel;
 	UPROPERTY(meta = (BindWidget))
@@ -57,21 +56,17 @@ protected:
 	TArray<UPreDeployCategorySection*> _sections;
 
 	UPROPERTY()
-	UPreDeployEntryBase* _curSelectedEntry;
+	UPreDeployEntryBase* _curSelectedEntry; // 현재 선택한 엔트리(디테일 표시)
+	UPROPERTY()
+	UPreDeployEntryBase* _lastEquippedEntry; // 현재 장착된 엔트리 중 마지막으로 장착된 엔트리
 
 	int32 _curSectionIndex = 0;
 	int32 _curRow = 0;
 	int32 _curCol = 0;
 
 private:
-	UFUNCTION()
-	void HandleEquipRequest();
-
 	int32 GetColumnNumInRow(int32 sec, int32 row);
 	int32 GetRowNumInSection(int32 sec);
 
 	void SelectEntry(int32 sec, int32 row, int32 col);
-
-	UPROPERTY(meta = (BindWidget))
-	class UButton* _equipBtn;
 };

@@ -4,6 +4,7 @@
 #include "PreDeployStratagemEntry.h"
 
 #include "Components/Image.h"
+#include "Components/Border.h"
 #include "../../Object/Stratagem/Stratagem.h"
 
 void UPreDeployStratagemEntry::InitializeEntry(int32 id)
@@ -19,5 +20,19 @@ void UPreDeployStratagemEntry::InitializeEntry(int32 id)
 		UTexture2D* image = stg->GetStgIcon();
 		if (image)
 			_itemImage->SetBrushFromTexture(image);
+	}
+}
+
+void UPreDeployStratagemEntry::SetEquipped(bool isEquipped)
+{
+	if (isEquipped)
+	{
+		_itemImage->SetRenderOpacity(0.8f);
+		_border->SetBrushColor(FLinearColor::Gray);
+	}
+	else
+	{
+		_itemImage->SetRenderOpacity(1.f);
+		_border->SetBrushColor(FLinearColor::White);
 	}
 }

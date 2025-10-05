@@ -82,17 +82,17 @@ void UPreDeployHubWidget::SwitchToStratagemPage()
 
 void UPreDeployHubWidget::OpenStratagemPanel(bool isOpened)
 {
-	if (isOpened)
+	if (isOpened) // 열리는 중이라면
 	{
 		_equipBtn->SetVisibility(ESlateVisibility::Hidden);
 		_launchBtn->SetVisibility(ESlateVisibility::Hidden);
-		_curPanel = nullptr;
+		_curPanel = _stratagemPanel;
 	}
 	else
 	{
 		_equipBtn->SetVisibility(ESlateVisibility::Visible);
 		_launchBtn->SetVisibility(ESlateVisibility::Visible);
-		_curPanel = _stratagemPanel;
+		_curPanel = nullptr;
 	}
 }
 

@@ -11,6 +11,8 @@
 
 void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
 {
+    Super::InitializePanel(state);
+
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
     UDataTable* stgTable = GI->GetStratagemTable();
 
@@ -37,6 +39,7 @@ void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
         //section->_onSectionPickedEvent.AddUObject(this, &UPreDeployStratagemPanel::HandlePicked); // 섹션의 선택 이벤트 바인딩
 
         _sectionPanel->AddChild(section); // 메인 패널에 섹션 추가
+        _sections.Add(section);
     }
 
     // 스트라타젬 슬롯 설정
@@ -54,7 +57,6 @@ void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
         }
     }
 
-    _state = state;
 	_detailPanel->SetVisibility(ESlateVisibility::Hidden); // 상세 패널 숨김
 	_backgroundBorder->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -67,8 +69,11 @@ void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
     if (stgIDs.Contains(stgID))
 		return; // 이미 선택된 스트라타젬이면 무시
 
+    Super::HandleEntryPicked(entry);
+    entry->SetEquipped(true);
+
     if (_curSlotIndex == -1)
-		_curSlotIndex = FindEmptySlotIndex(); // 임시
+		_curSlotIndex = FindEmptySlotIndex();
 
     if (stgIDs[_curSlotIndex] != -1) // 현재 슬롯에 이미 스트라타젬이 선택되어 있으면
     {
@@ -77,10 +82,12 @@ void UPreDeployStratagemPanel::HandleEntryPicked(UPreDeployEntryBase* entry)
         {
             if (selectedEntry->GetItemID() == prevID)
             {
-                selectedEntry->SetSelected(false); // 이전에 선택된 스트라타젬 엔트리 선택 해제
-				_selectedStgEntries.Remove(selectedEntry); // 선택된 엔트리 목록에서 제거
-                break;
+                //selectedEntry->SetSelected(false); 
+                selectedEntry->SetEquipped(false);
+                _selectedStgEntries.Remove(selectedEntry); // 선택된 엔트리 목록에서 제거
             }
+            else
+                selectedEntry->SetEquipped(true);
 		}
     }
 

@@ -26,6 +26,7 @@ public:
 	FOnEntryPicked _onPickedEvent;
 	
 	virtual void InitializeEntry(int32 id);
+	virtual void SetEquipped(bool isEquipped);
 	void SetSelected(bool isSelected);
 	void SetItemID(int32 id) { _itemID = id; }
 
@@ -40,6 +41,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _itemImage;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _equipMark;
 
 	UPROPERTY(EditAnywhere)
 	int32 _itemID;

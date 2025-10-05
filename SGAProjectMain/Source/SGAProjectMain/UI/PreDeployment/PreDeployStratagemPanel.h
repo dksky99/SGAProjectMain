@@ -17,9 +17,9 @@ class SGAPROJECTMAIN_API UPreDeployStratagemPanel : public UPreDeployPanelBase
 	GENERATED_BODY()
 	
 public:
-	virtual void InitializePanel(class UPreDeploymentState* state) override;
+	void InitializePanel(class UPreDeploymentState* state) override;
 
-	virtual void HandleEntryPicked(UPreDeployEntryBase* entry) override;
+	void HandleEntryPicked(UPreDeployEntryBase* entry) override;
 	void HandleSlotPicked(UPreDeployEntryBase* slot, int32 slotIndex);
 
 	FOnPanelOpened _panelOpenedEvent;
