@@ -14,36 +14,43 @@ APlanetOperationSite::APlanetOperationSite()
 	_regionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("RegionDecal"));
 	RootComponent = _regionDecal;
 
-    IconA = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconA"));
-    IconB = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconB"));
-    IconC = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconC"));
+	_mainIcon = CreateDefaultSubobject<UChildActorComponent>(TEXT("MainIcon"));
+    _iconA = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconA"));
+    _iconB = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconB"));
+    _iconC = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconC"));
     
     static ConstructorHelpers::FClassFinder<APlanetObjectiveIcon> iconBP(TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Object/Map/GalacticPlanet/BP_PlanetObjIcon.BP_PlanetObjIcon_C'"));
     if (iconBP.Succeeded())
     {
-        IconA->SetChildActorClass(iconBP.Class);
-		IconB->SetChildActorClass(iconBP.Class);
-		IconC->SetChildActorClass(iconBP.Class);
+		_mainIcon->SetChildActorClass(iconBP.Class);
+        _iconA->SetChildActorClass(iconBP.Class);
+		_iconB->SetChildActorClass(iconBP.Class);
+		_iconC->SetChildActorClass(iconBP.Class);
     }
    
-    IconA->SetupAttachment(RootComponent);
-    IconB->SetupAttachment(RootComponent);
-    IconC->SetupAttachment(RootComponent);
+	_mainIcon->SetupAttachment(RootComponent);
+    _iconA->SetupAttachment(RootComponent);
+    _iconB->SetupAttachment(RootComponent);
+    _iconC->SetupAttachment(RootComponent);
 }
 
 void APlanetOperationSite::OnConstruction(const FTransform& Xform)
 {
 	Super::OnConstruction(Xform);
 
-    if (IconA) IconA->SetVisibility(bUseA, true);
-    if (IconB) IconB->SetVisibility(bUseB, true);
-    if (IconC) IconC->SetVisibility(bUseC, true);
+    if (_iconA) _iconA->SetVisibility(bUseA, true);
+    if (_iconB) _iconB->SetVisibility(bUseB, true);
+    if (_iconC) _iconC->SetVisibility(bUseC, true);
 }
 
 // Called when the game starts or when spawned
 void APlanetOperationSite::BeginPlay()
 {
 	Super::BeginPlay();
+
+    _iconA->SetVisibility(false);
+    _iconB->SetVisibility(false);
+    _iconC->SetVisibility(false);
 	
 }
 

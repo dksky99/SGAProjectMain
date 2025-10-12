@@ -32,11 +32,14 @@ protected:
 	TArray<UChildActorComponent*> _objectiveIcons;
 
 	UPROPERTY(VisibleAnywhere, Category = "Icons")
-	UChildActorComponent* IconA;
+	UChildActorComponent* _mainIcon;
+
 	UPROPERTY(VisibleAnywhere, Category = "Icons")
-	UChildActorComponent* IconB;
+	UChildActorComponent* _iconA;
 	UPROPERTY(VisibleAnywhere, Category = "Icons")
-	UChildActorComponent* IconC;
+	UChildActorComponent* _iconB;
+	UPROPERTY(VisibleAnywhere, Category = "Icons")
+	UChildActorComponent* _iconC;
 
 	UPROPERTY(EditAnywhere, Category = "Icons") bool bUseA = true;
 	UPROPERTY(EditAnywhere, Category = "Icons") bool bUseB = false;
