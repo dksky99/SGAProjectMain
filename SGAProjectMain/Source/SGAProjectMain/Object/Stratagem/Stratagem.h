@@ -12,9 +12,9 @@
 UENUM(BlueprintType)
 enum class EStratagemType : uint8
 {
-	Offensive,
-	Defensive,
-	Supply
+	Offensive	UMETA(DisplayName = "Offensive"),
+	Defensive	UMETA(DisplayName = "Defensive"),
+	Supply		UMETA(DisplayName = "Supply")
 };
 
 UCLASS()
@@ -34,7 +34,7 @@ public:
 
 	const FName GetStgName() const { return _name; }
 	class UTexture2D* GetStgIcon() const { return _icon; }
-	EStratagemType GetStratagemType() const { return _type; }
+	EStratagemType GetStgType() const { return _type; }
 	float GetDeployDelay() const { return _deployDelay; }
 
 

@@ -18,9 +18,12 @@ class SGAPROJECTMAIN_API UPreDeployCategorySection : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void InitializeSection(FText title, const TArray<int32> ids);
+	void InitializeSection(FText title, const TArray<int32> ids, int32 sectionIndex);
 
 	FOnEntrySpawned _onEntrySpawnedEvent;
+
+	TArray<UPreDeployEntryBase*> GetEntries() { return _entries; }
+	int32 GetEntryNumPerRow() { return _entryRowWidth; }
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
@@ -36,5 +39,5 @@ protected:
 	TArray<UPreDeployEntryBase*> _entries;
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	int32 _entriesPerRow = 2;
+	int32 _entryRowWidth = 2;
 };

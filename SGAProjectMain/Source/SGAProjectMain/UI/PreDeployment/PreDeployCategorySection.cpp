@@ -6,7 +6,7 @@
 #include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
 
-void UPreDeployCategorySection::InitializeSection(FText title, const TArray<int32> ids)
+void UPreDeployCategorySection::InitializeSection(FText title, const TArray<int32> ids, int32 sectionIndex)
 {
 	_entryPanel->ClearChildren();
 	_titleText->SetText(title);
@@ -18,8 +18,8 @@ void UPreDeployCategorySection::InitializeSection(FText title, const TArray<int3
 		entry->InitializeEntry(id); // 총 ID로 초기화
 		_onEntrySpawnedEvent.Broadcast(entry); // 엔트리 생성 이벤트 브로드캐스트 -> 패널에서 처리
 		//entry->_onPickedEvent.AddUObject(this, &UPreDeployCategorySection::HandlePicked); // 선택 이벤트 바인딩
-		_entryPanel->AddChildToUniformGrid(entry, idx / _entriesPerRow, idx % _entriesPerRow); // 섹션의 패널에 추가
-
+		_entryPanel->AddChildToUniformGrid(entry, idx / _entryRowWidth, idx % _entryRowWidth); // 섹션의 패널에 추가
+		entry->SetEntryIndex(sectionIndex, idx / _entryRowWidth, idx % _entryRowWidth);
 		_entries.Add(entry); // 내부 목록에도 추가
 		idx++;
 	}

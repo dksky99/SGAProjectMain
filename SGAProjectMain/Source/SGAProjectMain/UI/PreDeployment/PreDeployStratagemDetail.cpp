@@ -19,7 +19,7 @@ void UPreDeployStratagemDetail::SetDetail(int32 id)
 
 	_nameText->SetText(FText::FromName(stg->GetStgName()));
 
-	FString sectionText = StaticEnum<EStratagemType>()->GetNameStringByValue((int64)stg->GetStratagemType());
+	FString sectionText = StaticEnum<EStratagemType>()->GetNameStringByValue((int64)stg->GetStgType());
 	sectionText += TEXT(" Stratagem Permit");
 	_sectionText->SetText(FText::FromString(sectionText));
 

@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
 #include "Components/PanelWidget.h"
 #include "PreDeployEntryBase.h"
 #include "PreDeployCategorySection.h"
 #include "../../Game/PreDeployment/PreDeploymentState.h"
-#include "../../Gun/GunDataTable.h"
 #include "../../CGameInstance.h"
 #include "PreDeployPanelBase.generated.h"
 
@@ -23,40 +25,54 @@ class SGAPROJECTMAIN_API UPreDeployPanelBase : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void InitializePanel(class UPreDeploymentState* state);
+	virtual void InitializePanel(UPreDeploymentState* state);
 
-	virtual void HandleEntryPicked(UPreDeployEntryBase* entry);
+	virtual void HandleEntrySelected(UPreDeployEntryBase* entry);
 
 	FOnSelectChanged _selectChangedEvent;
+
+	void MoveLeft();
+	void MoveRight();
+	void MoveUp();
+	void MoveDown();
+
+	void JumpToPrevSection();
+	void JumpToNextSection();
 	
 protected:
-	void OnEntrySpawned(UPreDeployEntryBase* entry);
+	virtual FText GetSectionText(UPreDeployEntryBase* entry) { return FText(); }
+	virtual void FocusEntry(UPreDeployEntryBase* entry);
+	virtual void OnEntrySpawned(UPreDeployEntryBase* entry);
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	TSubclassOf<class UPreDeployCategorySection> _categoryClass;
+	TSubclassOf<UPreDeployCategorySection> _categoryClass;
 
 	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _sectionPanel;
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployDetailBase* _detailPanel;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _curSectionText;
 
 	UPROPERTY()
 	class UPreDeploymentState* _state;
 
 	UPROPERTY()
-	UPreDeployEntryBase* _curSelectedEntry;
+	TArray<UPreDeployCategorySection*> _sections;
 
-	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	EGunSlotType _panelSlotType = EGunSlotType::Primary;
+	UPROPERTY()
+	UPreDeployEntryBase* _curSelectedEntry; // 현재 선택한 엔트리(디테일 표시)
+	UPROPERTY()
+	UPreDeployEntryBase* _lastEquippedEntry; // 현재 장착된 엔트리 중 마지막으로 장착된 엔트리
 
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* _curSectionText;
-
-	UPROPERTY(meta = (BindWidget))
-	class UPreDeployDetailBase* _detailPanel;
+	int32 _curSectionIndex = 0;
+	int32 _curRow = 0;
+	int32 _curCol = 0;
 
 private:
-	UFUNCTION()
-	void HandleEquipRequest();
+	int32 GetColumnNumInRow(int32 sec, int32 row);
+	int32 GetRowNumInSection(int32 sec);
+	void SelectSectionJumpTargetEntry(int32 sec);
 
-	UPROPERTY(meta = (BindWidget))
-	class UButton* _equipBtn;
+	void SelectEntry(int32 sec, int32 row, int32 col);
 };

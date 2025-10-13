@@ -22,7 +22,7 @@ void APreDeploymentHellpod::Interact(AHellDiver* hellDiver)
 
 	if (!_preDeployFlow)
 	{
-		_preDeployFlow = NewObject<UPreDeploymentFlow>(this);
+		_preDeployFlow = NewObject<UPreDeploymentFlow>(this, _preDeployFlowClass);
 	}
 
 	auto player = Cast<APlayerCharacter>(hellDiver);
