@@ -15,10 +15,14 @@ class SGAPROJECTMAIN_API UPlanetGlobeWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetOperation(class APlanetOperationSite* site, bool _visibility);
+	void ShowOperation(bool visibility, class APlanetOperationSite* site = nullptr);
+	void ShowObjection(bool visibility, class APlanetObjectiveIcon* icon = nullptr);
 
 protected:
+	UPROPERTY(meta = (BindWidget))
+	class UWidgetSwitcher* _widgetSwitcher;
 	UPROPERTY(meta=(BindWidget))
-	class UVerticalBox* _operationBox;
-	
+	class UBorder* _operationBox;
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* _objectiveBox;
 };

@@ -107,7 +107,7 @@ void ATerminalConsole::ActivateTerminalConsole()
 	UCapsuleComponent* Cap = _player->GetCapsuleComponent();
 	const float HalfH = Cap->GetScaledCapsuleHalfHeight();
 
-	// 1) ¾ÞÄ¿ À§¡æ¾Æ·¡·Î ·¹ÀÌ ½÷¼­ ¹Ù´Ú Ã£±â
+	// ¾ÞÄ¿ À§¡æ¾Æ·¡·Î ·¹ÀÌ ½÷¼­ ¹Ù´Ú Ã£±â
 	const FVector Anchor = _playerAnchor->GetComponentLocation();
 	const FVector Start = Anchor + FVector(0, 0, 200.f);
 	const FVector End = Anchor - FVector(0, 0, 5000.f);

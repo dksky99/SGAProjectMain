@@ -43,6 +43,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	void InitializeOperations();
+	void SetPlayerInputComponent();
 
 public:
 	// Called every frame
@@ -53,13 +54,18 @@ public:
 	void StartInteracting();
 	void StopInteracting();
 
+protected:
 	UFUNCTION()
 	void OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void OnIconOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
+	class UInputAction* _selectAction;
 
-protected:
+	UFUNCTION()
+	void OnSelect(const FInputActionValue& value);
+
 	void EnterFocus(class APlanetOperationSite* Icon);
 
 	void TickBrowseMode(float DeltaTime);

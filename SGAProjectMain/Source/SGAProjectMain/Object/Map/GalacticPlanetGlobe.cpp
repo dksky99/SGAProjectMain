@@ -4,6 +4,7 @@
 #include "GalacticPlanetGlobe.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "../../UI/PlanetGlobeWidget.h"
 #include "PlanetOperationSite.h"
 #include "PlanetSelectRing.h"
@@ -23,18 +24,18 @@ void AGalacticPlanetGlobe::BeginPlay()
     InitializeOperations();
 	
 	_playerController = GetWorld()->GetFirstPlayerController();
+    SetPlayerInputComponent();
 
     if (_ringClass)
     {
         FActorSpawnParameters params;
         params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         _ring = GetWorld()->SpawnActor<APlanetSelectRing>(_ringClass, FVector::ZeroVector, FRotator::ZeroRotator, params);
+        _ring->GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconInRange);
+        _ring->GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconOutOfRange);
     }
-
-	_ring->GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconInRange);
-	_ring->GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconOutOfRange);
-
-    if(_globeWidgetClass)
+	
+    if (_globeWidgetClass)
 		_globeWidget = CreateWidget<UPlanetGlobeWidget>(GetWorld(), _globeWidgetClass);
 }
 
@@ -64,9 +65,17 @@ void AGalacticPlanetGlobe::InitializeOperations()
             FRotator lookRotation = (-localPos).Rotation();
             opSite->SetRelativeRotation(lookRotation);
 			APlanetOperationSite* opSiteActor = Cast<APlanetOperationSite>(opSite->GetChildActor());
-			/*if (opSiteActor)
-				EnterFocus(opSiteActor);*/
         }
+    }
+}
+
+void AGalacticPlanetGlobe::SetPlayerInputComponent()
+{
+	if (!_playerController) return;
+	UInputComponent* playerInputComponent = _playerController->InputComponent;
+    if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(playerInputComponent))
+    {
+        EIC->BindAction(_selectAction, ETriggerEvent::Triggered, this, &AGalacticPlanetGlobe::OnSelect);
     }
 }
 
@@ -78,26 +87,19 @@ void AGalacticPlanetGlobe::Tick(float DeltaTime)
 	if (!_isInteracting) return;
 
     if (_mode == EPlanetGlobeMode::Browse)
-    {
         TickBrowseMode(DeltaTime);
-    }
+
     else if (_mode == EPlanetGlobeMode::Focus)
-    {
         TickFocusMode(DeltaTime);
-	}
 }
 
 void AGalacticPlanetGlobe::Interact(AHellDiver* player)
 {
 	_isInteracting = !_isInteracting;
     if (_isInteracting)
-    {
         StartInteracting();
-    }
     else
-    {
         StopInteracting();
-	}
 }
 
 void AGalacticPlanetGlobe::StartInteracting()
@@ -109,6 +111,8 @@ void AGalacticPlanetGlobe::StartInteracting()
         subsystem->RemoveMappingContext(_gameIMC);
         subsystem->AddMappingContext(_globeWidgetIMC, 10);
     }
+
+    HideMark();
 }
 
 void AGalacticPlanetGlobe::StopInteracting()
@@ -129,10 +133,18 @@ void AGalacticPlanetGlobe::OnIconInRange(UPrimitiveComponent* OverlappedComponen
 {
     if (auto icon = Cast<APlanetObjectiveIcon>(OtherActor))
     {
-        if (auto site = Cast<APlanetOperationSite>(icon->GetParentActor()))
-        {
-			_globeWidget->SetOperation(site, true);
-			_curSite = site;
+        if (_mode == EPlanetGlobeMode::Browse)
+        { // 아이콘이 속한 지점의 임무 표시
+            if (auto site = Cast<APlanetOperationSite>(icon->GetParentActor()))
+            {
+                _globeWidget->ShowOperation(true, site);
+                _curSite = site;
+            }
+        }
+
+        else
+        { // 아이콘에 해당하는 목표 표시
+            _globeWidget->ShowObjection(true, icon);
 			_curIcon = icon;
         }
 	}
@@ -142,12 +154,29 @@ void AGalacticPlanetGlobe::OnIconOutOfRange(UPrimitiveComponent* OverlappedCompo
 {
     if (auto icon = Cast<APlanetObjectiveIcon>(OtherActor))
     {
-        if (auto site = Cast<APlanetOperationSite>(icon->GetParentActor()))
+        _globeWidget->ShowObjection(false);
+		_curIcon = nullptr;
+
+        if (_mode == EPlanetGlobeMode::Browse)
         {
-            _globeWidget->SetOperation(site, false);
+            _globeWidget->ShowOperation(false);
             _curSite = nullptr;
-            _curIcon = nullptr;
         }
+	}
+}
+
+void AGalacticPlanetGlobe::OnSelect(const FInputActionValue& value)
+{
+    if (_mode == EPlanetGlobeMode::Browse)
+    {
+        if (_curSite)
+        {
+            EnterFocus(_curSite);
+        }
+    }
+    else if (_mode == EPlanetGlobeMode::Focus)
+    {
+        // 해당 임무 선택
 	}
 }
 
@@ -158,7 +187,7 @@ void AGalacticPlanetGlobe::EnterFocus(APlanetOperationSite* site)
     // 선택 지점을 화면 중앙으로 오게 글로브 목표 회전 계산
     FVector globeCenter = _mesh->GetComponentLocation();
     FVector normalVec = (_curSiteLoc - globeCenter).GetSafeNormal();
-    FQuat quat = FRotationMatrix::MakeFromX(-normalVec).ToQuat();
+    FQuat quat = FRotationMatrix::MakeFromX(normalVec).ToQuat();
     _targetGlobeRotation = quat;
 
     // 링 스크린 초기값 = 선택 지점의 투영
@@ -203,7 +232,8 @@ void AGalacticPlanetGlobe::TickFocusMode(float DeltaTime)
 {
     FVector2D delta;
     _playerController->GetInputMouseDelta(delta.X, delta.Y);
-    delta *= 50.f;
+    delta.X *= 50.f;
+    delta.Y *= -50.f;
 
     // 링 모션
     FVector2D anchor;

@@ -24,7 +24,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void ChangeToFocusedSite();
+
 protected:
+	void ShowObjectiveIcons(bool bShow);
+
 	UPROPERTY(VisibleAnywhere)
 	UDecalComponent* _regionDecal = nullptr;
 

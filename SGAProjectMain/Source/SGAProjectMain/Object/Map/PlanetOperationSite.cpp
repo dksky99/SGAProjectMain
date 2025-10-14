@@ -38,9 +38,7 @@ void APlanetOperationSite::OnConstruction(const FTransform& Xform)
 {
 	Super::OnConstruction(Xform);
 
-    if (_iconA) _iconA->SetVisibility(bUseA, true);
-    if (_iconB) _iconB->SetVisibility(bUseB, true);
-    if (_iconC) _iconC->SetVisibility(bUseC, true);
+    ShowObjectiveIcons(true);
 }
 
 // Called when the game starts or when spawned
@@ -59,5 +57,27 @@ void APlanetOperationSite::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void APlanetOperationSite::ChangeToFocusedSite()
+{
+	_mainIcon->SetVisibility(false);
+	ShowObjectiveIcons(true);
+}
+
+void APlanetOperationSite::ShowObjectiveIcons(bool bShow)
+{
+    if (bShow)
+    {
+        if (_iconA) _iconA->SetVisibility(bUseA);
+        if (_iconB) _iconB->SetVisibility(bUseB);
+        if (_iconC) _iconC->SetVisibility(bUseC);
+    }
+    else
+    {
+        if (_iconA) _iconA->SetVisibility(false);
+        if (_iconB) _iconB->SetVisibility(false);
+        if (_iconC) _iconC->SetVisibility(false);
+	}
 }
 
