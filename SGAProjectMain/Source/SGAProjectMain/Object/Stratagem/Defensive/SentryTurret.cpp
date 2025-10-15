@@ -25,12 +25,8 @@ ASentryTurret::ASentryTurret()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// 컴포넌트
-	_capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	_capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetRootComponent(_capsule);
-
 	_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
-	_mesh->SetupAttachment(_capsule);
+	SetRootComponent(_mesh);
 
 	_muzzlePoint = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzlePoint"));
 	// 어태치는 BeginPlay에서 소켓 스냅
@@ -249,9 +245,8 @@ bool ASentryTurret::IsAngleAligned(float currentDeg, float targetDeg, float tole
 
 void ASentryTurret::UpdateAimToTarget(float deltaSeconds)
 {
-	// 타깃 없으면 아이들 로직 유지(또는 0.0f로 수렴)
 	if (!_mesh || !_muzzlePoint) return;
-
+	if (!_isRaised || _isTransitionalAlign || _isSinking) return;
 	if (!IsValid(_currentTarget))
 	{
 		EnsureIdleTimer();
@@ -275,71 +270,61 @@ void ASentryTurret::UpdateAimToTarget(float deltaSeconds)
 
 void ASentryTurret::UpdateFireGate(float deltaSeconds)
 {
-	if (!_currentTarget || !IsValid(_currentTarget) || !_muzzlePoint)
+	// 탄이 없거나 머즐 포인트가 없으면 즉시 정지
+	if (_curAmmo <= 0 || !_muzzlePoint)
 	{
 		if (_lastWantsFire) { _lastWantsFire = false; AIStopFire(); }
 		return;
 	}
+	if (!_isRaised || _isTransitionalAlign || _isSinking) return;
 
-	// 허용오차 코사인 캐시 갱신
+	// 허용오차 코사인 캐시 갱신(회전/연출 참고용)
 	if (!FMath::IsNearlyEqual(_cachedAimTolDeg, _aimToleranceDeg, KINDA_SMALL_NUMBER))
 	{
 		_cachedAimTolDeg = _aimToleranceDeg;
 		_cosAimTol = FMath::Cos(FMath::DegreesToRadians(_cachedAimTolDeg));
 	}
 
-	const FVector muzzleLoc = _muzzlePoint->GetComponentLocation();
-	const FVector muzzleFwd = _muzzlePoint->GetForwardVector();
-	const FVector toVec = _currentTarget->GetActorLocation() - muzzleLoc;
+	// 조준각 계산은 계속 가능(회전/스프레드 등 연출용). 사격 게이트에는 사용하지 않음
+	if (IsValid(_currentTarget))
+	{
+		const FVector muzzleLoc = _muzzlePoint->GetComponentLocation();
+		const FVector muzzleFwd = _muzzlePoint->GetForwardVector();
+		const FVector toVec = _currentTarget->GetActorLocation() - muzzleLoc;
 
-	bool bAimed = false;
-	if (toVec.IsNearlyZero())
-	{
-		bAimed = true;
-	}
-	else
-	{
-		const FVector toDir = toVec.GetSafeNormal();
-		const float dot = FVector::DotProduct(muzzleFwd, toDir);
-		bAimed = (dot >= (_cosAimTol - KINDA_SMALL_NUMBER));
-	}
-
-	// LOS 갱신(레이트 리밋)
-	if (bAimed)
-	{
-		if (_losCooldown <= 0.0f)
+		if (!toVec.IsNearlyZero())
 		{
-			_cachedHasLOS = HasLineOfFire(muzzleLoc, _currentTarget->GetActorLocation());
-			_losCooldown = _losCheckInterval;
-		}
-		else
-		{
-			_losCooldown -= deltaSeconds;
+			const FVector toDir = toVec.GetSafeNormal();
+			const float   dot = FVector::DotProduct(muzzleFwd, toDir);
+			const bool    bAimed = (dot >= (_cosAimTol - KINDA_SMALL_NUMBER));
+			// bAimed는 필요 시 연출/스프레드에만 활용
 		}
 	}
-	else
+
+	// 현재 '인지된 적'이 1명이라도 있으면 계속 사격
+	bool hasAnyEnemy = false;
+	if (_perception)
 	{
-		_cachedHasLOS = false;
+		TArray<AActor*> perceived;
+		_perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), perceived);
+
+		for (AActor* actor : perceived)
+		{
+			if (IsValid(actor) && IsEnemyActor(actor))
+			{
+				hasAnyEnemy = true;
+				break;
+			}
+		}
 	}
 
-	const bool wantsFire = bAimed && _cachedHasLOS;
+	const bool wantsFire = hasAnyEnemy;
+
 	if (wantsFire != _lastWantsFire)
 	{
 		_lastWantsFire = wantsFire;
 		wantsFire ? AIStartFire() : AIStopFire();
 	}
-}
-
-bool ASentryTurret::HasLineOfFire(const FVector& from, const FVector& to) const
-{
-	FHitResult hit;
-	FCollisionQueryParams params(NAME_None, true, this);
-	params.AddIgnoredActor(this);
-
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(hit, from, to, ECC_Visibility, params);
-
-	// 맞은 게 없거나, 맞은 것이 현재 타깃이면 통과
-	return !bHit || (hit.GetActor() == _currentTarget);
 }
 
 // -------------------------------
@@ -717,7 +702,8 @@ float ASentryTurret::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 
 	if (_curHp <= 0.0f)
 	{
-		HandleOutOfAmmo();
+		//HandleOutOfAmmo();
+		Destroy();
 	}
 
 	return DamageAmount;

@@ -65,7 +65,6 @@ protected:
 	
 	// 발사 게이트/LOS
 	void UpdateFireGate(float deltaSeconds);
-	bool HasLineOfFire(const FVector& from, const FVector& to) const;
 
 	// 발사/이펙트
 	void Fire();
@@ -102,9 +101,6 @@ protected:
 	// =========================================================
 	// 변수 묶음: 컴포넌트
 	// =========================================================
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	class UCapsuleComponent* _capsule = nullptr;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	USkeletalMeshComponent* _mesh = nullptr;
 
@@ -186,16 +182,6 @@ protected:
 
 	UPROPERTY()
 	class UAISenseConfig_Sight* _sightConfig = nullptr;
-
-	// LOS 검사 주기(초) — 라인트레이스 스로틀링
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _losCheckInterval = 0.05f;
-
-	// 다음 LOS 검사까지 남은 시간(초)
-	float _losCooldown = 0.0f;
-
-	// 최근 LOS 결과(차폐 여부) 캐시
-	bool _cachedHasLOS = false;
 
 	// =========================================================
 	// 변수 묶음: 아이들 스캔
