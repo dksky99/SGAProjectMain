@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "../Object/Explosive/ExplosionComponent.h"
+#include "../SGAProjectMain.h"
 
 // Sets default values
 AGunBulletBase::AGunBulletBase()
@@ -82,6 +83,9 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
     {
         if (_hitComponents.Contains(OtherComp))
             return; // 같은 부위를 두 번 공격하지 않음
+
+        if (OtherComp->GetCollisionProfileName() != FName(TEXT("HitBox")))
+            return; // 히트박스 콜리전만 공격
 
         float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
         FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향

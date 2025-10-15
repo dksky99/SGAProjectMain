@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -22,10 +22,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// -------------------------------
-	// ¿ÜºÎ È£Ãâ ÇÔ¼ö(°£´Ü)
+	// ì™¸ë¶€ í˜¸ì¶œ í•¨ìˆ˜(ê°„ë‹¨)
 	// -------------------------------
 
-	// ¿ÜºÎ¿¡¼­ °­Á¦·Î Å¸±êÀ» ÁöÁ¤
+	// ì™¸ë¶€ì—ì„œ ê°•ì œë¡œ íƒ€ê¹ƒì„ ì§€ì •
 	void SetTargetActor(AActor* target);
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
@@ -34,77 +34,73 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
 	void AIStopFire();
 
-	// µ¥¹ÌÁö ¼ö½Å
+	// ë°ë¯¸ì§€ ìˆ˜ì‹ 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	// PerceptionÀÌ ÂüÁ¶ÇÒ ½Ã¾ß ¿øÁ¡/¹æÇâÀ» ¸ÓÁñ ±âÁØÀ¸·Î Á¦°ø
+	// Perceptionì´ ì°¸ì¡°í•  ì‹œì•¼ ì›ì /ë°©í–¥ì„ ë¨¸ì¦ ê¸°ì¤€ìœ¼ë¡œ ì œê³µ
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
-	// ¿ÜºÎ¿ë Getter
+	// ì™¸ë¶€ìš© Getter
 	FVector GetMuzzleLocation() const;
 	FVector GetMuzzleForward() const;
 	FTransform GetMeshTransform() const;
 
 protected:
 	// =========================================================
-	// ÇÔ¼ö ¹­À½: Å¸°ÙÆÃ/Á¶ÁØ/¹ß»ç/ÀÎÁö/¾ÆÀÌµé/½ºÆù-µğ½ºÆù
+	// í•¨ìˆ˜ ë¬¶ìŒ: íƒ€ê²ŸíŒ…/ì¡°ì¤€/ë°œì‚¬/ì¸ì§€/ì•„ì´ë“¤/ìŠ¤í°-ë””ìŠ¤í°
 	// =========================================================
 
-	// Å¸°ÙÆÃ/Á¶ÁØ(¸ŞÀÎ) - C++ ÇÑ °÷¿¡¼­ Yaw/Pitch ¼Óµµ Á¦ÇÑ
+	// íƒ€ê²ŸíŒ…/ì¡°ì¤€(ë©”ì¸) - C++ í•œ ê³³ì—ì„œ Yaw/Pitch ì†ë„ ì œí•œ
 	void UpdateAimToTarget(float deltaSeconds);
 
-	// °¢µµ °è»ê
+	// ê°ë„ ê³„ì‚°
 	float CalcYaw_Sentry();
 	float CalcPitch_Sentry();
 
-	// È¸Àü ¼Óµµ Á¦ÇÑ Àû¿ë(º¸°£) ÇÔ¼ö
+	// íšŒì „ ì†ë„ ì œí•œ ì ìš©(ë³´ê°„) í•¨ìˆ˜
 	void ApplyAimSpeedLimit(float deltaSeconds, float targetYawDeg, float targetPitchDeg);
 
-	// ÃÖ´Ü °¢µµ Â÷ ±â¹İ ÃÑ±¸ Á¤·Ä 
+	// ìµœë‹¨ ê°ë„ ì°¨ ê¸°ë°˜ ì´êµ¬ ì •ë ¬ 
 	bool IsAngleAligned(float currentDeg, float targetDeg, float toleranceDeg) const;
 	
-	// ¹ß»ç °ÔÀÌÆ®/LOS
+	// ë°œì‚¬ ê²Œì´íŠ¸/LOS
 	void UpdateFireGate(float deltaSeconds);
-	bool HasLineOfFire(const FVector& from, const FVector& to) const;
 
-	// ¹ß»ç/ÀÌÆåÆ®
+	// ë°œì‚¬/ì´í™íŠ¸
 	void Fire();
 	void SpawnBullet(const FVector& muzzleLocation, const FVector& direction);
 	void InitNiagaraEffects();
 	void PlayMuzzleFX();
 	void PlayCasingFX();
 
-	// ÀÜÅº ¼ÒÁø Ã³¸®
+	// ì”íƒ„ ì†Œì§„ ì²˜ë¦¬
 	void HandleOutOfAmmo();
 
-	// ÀÎÁö(Perception)
+	// ì¸ì§€(Perception)
 	UFUNCTION()
 	void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 	void UpdateTargetSelection();
 
-	// ¾ÆÀÌµé ½ºÄµ
+	// ì•„ì´ë“¤ ìŠ¤ìº”
 	void EnsureIdleTimer();
 	void OnIdleAimTimer();
 
-	// ÆÀ ÀÎÅÍÆäÀÌ½º ¿À¹ö¶óÀÌµå
+	// íŒ€ ì¸í„°í˜ì´ìŠ¤ ì˜¤ë²„ë¼ì´ë“œ
 	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamId) override { _teamId = NewTeamId; }
 	virtual FGenericTeamId GetGenericTeamId() const override { return _teamId; }
 
-	// Àû ÆÇÁ¤(»ó´ë°¡ ÆÀ ÀÎÅÍÆäÀÌ½º¸¦ ±¸ÇöÇÏ¸é TeamId ºñ±³, ¾Æ´Ï¸é Neutral Ãë±Ş)
+	// ì  íŒì •(ìƒëŒ€ê°€ íŒ€ ì¸í„°í˜ì´ìŠ¤ë¥¼ êµ¬í˜„í•˜ë©´ TeamId ë¹„êµ, ì•„ë‹ˆë©´ Neutral ì·¨ê¸‰)
 	bool IsEnemyActor(const AActor* Other) const;
 
-	// ½ºÆù/µğ½ºÆù
+	// ìŠ¤í°/ë””ìŠ¤í°
 	void StartSpawn();
 	void StartDescent();
 	void UpdateSpawnDescent(float deltaSeconds);
 
 protected:
 	// =========================================================
-	// º¯¼ö ¹­À½: ÄÄÆ÷³ÍÆ®
+	// ë³€ìˆ˜ ë¬¶ìŒ: ì»´í¬ë„ŒíŠ¸
 	// =========================================================
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	class UCapsuleComponent* _capsule = nullptr;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	USkeletalMeshComponent* _mesh = nullptr;
 
@@ -115,7 +111,7 @@ protected:
 	USentryAnimInstance* _anim = nullptr;
 
 	// =========================================================
-	// º¯¼ö ¹­À½: ½ºÆå/ÆÄ¶ó¹ÌÅÍ(»ç°İ/Ã¼·Â/»ç°Å¸®/Åº µî)
+	// ë³€ìˆ˜ ë¬¶ìŒ: ìŠ¤í™/íŒŒë¼ë¯¸í„°(ì‚¬ê²©/ì²´ë ¥/ì‚¬ê±°ë¦¬/íƒ„ ë“±)
 	// =========================================================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _fireInterval = 0.1f;
@@ -135,44 +131,51 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	TSubclassOf<class AGunBulletBase> _bulletClass;
 
+	FTimerHandle _fireTimerHandle;
+
+	bool  _lastWantsFire = false;
+
 	// =========================================================
-	// º¯¼ö ¹­À½: Å¸°ÙÆÃ/Á¶ÁØ(½ºÆå)
+	// ë³€ìˆ˜ ë¬¶ìŒ: íƒ€ê²ŸíŒ…/ì¡°ì¤€(ìŠ¤í™)
 	// =========================================================
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	AActor* _currentTarget = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _yawSpeedDegPerSec = 360.0f;		// Yaw È¸Àü¼Óµµ(µµ/ÃÊ)
+	float _yawSpeedDegPerSec = 360.0f;		// Yaw íšŒì „ì†ë„(ë„/ì´ˆ)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _PitchSpeedDegPerSec = 180.0f;	// Pitch È¸Àü¼Óµµ(µµ/ÃÊ)
+	float _PitchSpeedDegPerSec = 180.0f;	// Pitch íšŒì „ì†ë„(ë„/ì´ˆ)
 
-	// Pitch ÇÑ°è(»ó/ÇÏ)
+	// Pitch í•œê³„(ìƒ/í•˜)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _aimPitchUpDeg = 70.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _aimPitchDownDeg = 20.0f;
 
-	// ÇöÀç º» °¢µµ(ÇÁ·¹ÀÓ °£ »óÅÂ À¯Áö)
+	// í˜„ì¬ ë³¸ ê°ë„(í”„ë ˆì„ ê°„ ìƒíƒœ ìœ ì§€)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	float _rotatorZ_CurrentDeg = 0.0f;     // ¼öÆò È¸ÀüºÎ(Rotator)ÀÇ Z
+	float _rotatorZ_CurrentDeg = 0.0f;     // ìˆ˜í‰ íšŒì „ë¶€(Rotator)ì˜ Z
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	float _gunHousingZ_CurrentDeg = 0.0f;  // Æ÷½Å ÇÏ¿ìÂ¡(GunHousing)ÀÇ Z
+	float _gunHousingZ_CurrentDeg = 0.0f;  // í¬ì‹  í•˜ìš°ì§•(GunHousing)ì˜ Z
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _aimToleranceDeg = 2.0f; // ¹ß»ç °ÔÀÌÆ®¿¡ »ç¿ë
+	float _aimToleranceDeg = 2.0f; // ë°œì‚¬ ê²Œì´íŠ¸ì— ì‚¬ìš©
 
-	// Å¸°ÙÆÃ¿¡ »ç¿ëÇÒ º» ÀÌ¸§
+	// íƒ€ê²ŸíŒ…ì— ì‚¬ìš©í•  ë³¸ ì´ë¦„
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	FName _boneName_Yaw = TEXT("rotator");      // ¼öÆò(Yaw) ºÎ¸ğ
+	FName _boneName_Yaw = TEXT("rotator");      // ìˆ˜í‰(Yaw) ë¶€ëª¨
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	FName _boneName_Pitch = TEXT("gunhousing"); // ¼öÁ÷(Pitch) ÀÚ½Ä
+	FName _boneName_Pitch = TEXT("gunhousing"); // ìˆ˜ì§(Pitch) ìì‹
+
+	float _cosAimTol = 1.0f;
+	float _cachedAimTolDeg = 0.0f;
 
 	// =========================================================
-	// º¯¼ö ¹­À½: ÀÎÁö(Perception)
+	// ë³€ìˆ˜ ë¬¶ìŒ: ì¸ì§€(Perception)
 	// =========================================================
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	class UAIPerceptionComponent* _perception = nullptr;
@@ -181,29 +184,32 @@ protected:
 	class UAISenseConfig_Sight* _sightConfig = nullptr;
 
 	// =========================================================
-	// º¯¼ö ¹­À½: ¾ÆÀÌµé ½ºÄµ
+	// ë³€ìˆ˜ ë¬¶ìŒ: ì•„ì´ë“¤ ìŠ¤ìº”
 	// =========================================================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _idleScanInterval = 2.0f;
 
 	FVector _idleAimPointWS = FVector::ZeroVector;
 
+	
+	FTimerHandle _idleAimTimerHandle;
+
 	// =========================================================
-	// º¯¼ö ¹­À½: ÀÌÆåÆ®
+	// ë³€ìˆ˜ ë¬¶ìŒ: ì´í™íŠ¸
 	// =========================================================
 	
-	// ÀÌÆåÆ® ¿¡¼Â
+	// ì´í™íŠ¸ ì—ì…‹
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	class UNiagaraSystem* _muzzleNS = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	class UNiagaraSystem* _casingNS = nullptr;
 
-	// ¼ÒÄÏ ÀÌ¸§
+	// ì†Œì¼“ ì´ë¦„
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	FName _casingSocketName = "ejectSocket";  // ejector º»¿¡ ´Ü ¼ÒÄÏ ±ÇÀå
+	FName _casingSocketName = "ejectSocket";  // ejector ë³¸ì— ë‹¨ ì†Œì¼“ ê¶Œì¥
 
-	// ¸ÓÁñ Ç®
+	// ë¨¸ì¦ í’€
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	int32 _muzzlePoolSize = 8;
 
@@ -213,7 +219,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	int32 _muzzlePoolIndex = 0;
 
-	// ÅºÇÇ Ç®
+	// íƒ„í”¼ í’€
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	int32 _casingPoolSize = 12;
 
@@ -225,43 +231,24 @@ protected:
 
 
 	// =========================================================
-	// º¯¼ö ¹­À½: ½ºÆù/µğ½ºÆù
+	// ë³€ìˆ˜ ë¬¶ìŒ: ìŠ¤í°/ë””ìŠ¤í°
 	// =========================================================
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	float _spawnTargetZ = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	bool _isRaised = false;     // »ó½Â ¿Ï·á(ÀüÅõ °¡´É)
+	bool _isRaised = false;     // ìƒìŠ¹ ì™„ë£Œ(ì „íˆ¬ ê°€ëŠ¥)
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	bool _isSinking = false;    // ÇÏ°­(ÅğÀå) Áß
+	bool _isSinking = false;    // í•˜ê°•(í‡´ì¥) ì¤‘
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	bool _isTransitionalAlign = false;  // ÃÑ±¸ Á¤·Ä ´Ü°è
+	bool _isTransitionalAlign = false;  // ì´êµ¬ ì •ë ¬ ë‹¨ê³„
 
 	// =========================================================
-	// º¯¼ö ¹­À½: ÆÀ/¼Ò¼Ó
+	// ë³€ìˆ˜ ë¬¶ìŒ: íŒ€/ì†Œì†
 	// =========================================================
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	uint8 _teamId = 1;
-
-	// =========================================================
-	// º¯¼ö ¹­À½: ·±Å¸ÀÓ Ä³½Ã/Å¸ÀÌ¸Ó/±âÅ¸
-	// =========================================================
-	
-
-	FTimerHandle _fireTimerHandle;
-	FTimerHandle _idleAimTimerHandle;
-
-	bool  _lastWantsFire = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
-	float _losCheckInterval = 0.05f;
-
-	float _losCooldown = 0.0f;
-	bool  _cachedHasLOS = false;
-
-	float _cosAimTol = 1.0f;
-	float _cachedAimTolDeg = 0.0f;
 
 };
