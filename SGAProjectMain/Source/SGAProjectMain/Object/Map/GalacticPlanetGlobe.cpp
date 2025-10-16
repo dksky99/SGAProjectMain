@@ -33,6 +33,7 @@ void AGalacticPlanetGlobe::BeginPlay()
         _ring = GetWorld()->SpawnActor<APlanetSelectRing>(_ringClass, FVector::ZeroVector, FRotator::ZeroRotator, params);
         _ring->GetMesh()->OnComponentBeginOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconInRange);
         _ring->GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconOutOfRange);
+		_ring->SetActorHiddenInGame(true);
     }
 	
     if (_globeWidgetClass)
@@ -111,7 +112,7 @@ void AGalacticPlanetGlobe::StartInteracting()
         subsystem->RemoveMappingContext(_gameIMC);
         subsystem->AddMappingContext(_globeWidgetIMC, 10);
     }
-
+    _ring->SetActorHiddenInGame(false);
     HideMark();
 }
 
@@ -127,6 +128,7 @@ void AGalacticPlanetGlobe::StopInteracting()
         subsystem->RemoveMappingContext(_globeWidgetIMC);
         subsystem->AddMappingContext(_gameIMC, 10);
 	}
+    _ring->SetActorHiddenInGame(true);
 }
 
 void AGalacticPlanetGlobe::OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -180,21 +182,25 @@ void AGalacticPlanetGlobe::OnSelect(const FInputActionValue& value)
 	}
 }
 
+void AGalacticPlanetGlobe::OnBack(const FInputActionValue& value)
+{
+}
+
 void AGalacticPlanetGlobe::EnterFocus(APlanetOperationSite* site)
 {
-    _curSiteLoc = site->GetActorLocation(); // 또는 아이콘 기준 앵커
+    _curSiteLoc = site->GetActorLocation(); // 선택한 지점 위치
 
     // 선택 지점을 화면 중앙으로 오게 글로브 목표 회전 계산
     FVector globeCenter = _mesh->GetComponentLocation();
     FVector normalVec = (_curSiteLoc - globeCenter).GetSafeNormal();
     FQuat quat = FRotationMatrix::MakeFromX(normalVec).ToQuat();
-    _targetGlobeRotation = quat;
+    _baseGlobeRotation = quat;
 
-    // 링 스크린 초기값 = 선택 지점의 투영
+    // 링 스크린 위치 초기화 -> 선택 지점 위치
     _playerController->ProjectWorldLocationToScreen(_curSiteLoc, _ringScreenPos, true);
-    _ringVel = FVector2D::ZeroVector;
 
     _mode = EPlanetGlobeMode::Focus;
+    _globeWidget->ShowObjection(false);
 }
 
 void AGalacticPlanetGlobe::TickBrowseMode(float DeltaTime)
@@ -203,15 +209,20 @@ void AGalacticPlanetGlobe::TickBrowseMode(float DeltaTime)
     _playerController->GetInputMouseDelta(delta.X, delta.Y);
     delta *= 15.f;
 
-    RotateGlobe(delta.X, delta.Y);
+    float newPitch = FMath::Clamp(_curPitchDeg + -delta.Y, -70.f, 70.f);
+    float deltaPitch = newPitch - _curPitchDeg;
+    _curPitchDeg = newPitch;
+
+    FQuat newQuat = CalculateNewGlobeQuat(delta.X, deltaPitch, _mesh->GetComponentQuat());
+    _mesh->SetWorldRotation(newQuat);
 
     // 구 중심을 스크린 좌표로
-    FVector2D Screen;
-    _playerController->ProjectWorldLocationToScreen(_mesh->GetComponentLocation(), Screen, true);
+    FVector2D screen;
+    _playerController->ProjectWorldLocationToScreen(_mesh->GetComponentLocation(), screen, true);
 
-    // 스크린→월드 레이 만들기
+    // 스크린 -> 월드 레이 만들기
     FVector rayOrigin, rayDir;
-    _playerController->DeprojectScreenPositionToWorld(Screen.X, Screen.Y, rayOrigin, rayDir);
+    _playerController->DeprojectScreenPositionToWorld(screen.X, screen.Y, rayOrigin, rayDir);
 
     // 글로브만 맞는 채널로 라인트레이스
     FHitResult hit;
@@ -221,10 +232,10 @@ void AGalacticPlanetGlobe::TickBrowseMode(float DeltaTime)
     if (hit.bBlockingHit)
     {
         const FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
-        const FVector CamRight = _playerController->PlayerCameraManager->GetActorRightVector();
-        const FVector UpTangent = FVector::CrossProduct(CamRight, surfaceNormal).GetSafeNormal();
+        const FVector camRight = _playerController->PlayerCameraManager->GetActorRightVector();
+        const FVector upTangent = FVector::CrossProduct(camRight, surfaceNormal).GetSafeNormal();
 
-        _ring->PlaceOnSurface(hit.ImpactPoint, surfaceNormal, UpTangent);
+        _ring->PlaceOnSurface(hit.ImpactPoint, surfaceNormal, upTangent);
     }
 }
 
@@ -232,39 +243,26 @@ void AGalacticPlanetGlobe::TickFocusMode(float DeltaTime)
 {
     FVector2D delta;
     _playerController->GetInputMouseDelta(delta.X, delta.Y);
-    delta.X *= 50.f;
-    delta.Y *= -50.f;
+	delta.Y *= -1.f; // Y축 반전
 
     // 링 모션
     FVector2D anchor;
     _playerController->ProjectWorldLocationToScreen(_curSiteLoc, anchor, true);
 
-    float followFactor = 0.6f;
-    float springConstant = 12.f;
-    float damping = 8.f;
+    FVector2D target = anchor + delta * _ringSensitivity;
+    FVector distanceFromSite = _ring->GetActorLocation() - _curSiteLoc; // 현재 링과 현재 지역 간의 거리
+    const float distanceSquared = distanceFromSite.SizeSquared();
 
-    FVector2D target = anchor + delta * followFactor;
-    const FVector2D ringDelta = (target - _ringScreenPos);
-
-    _ringVel += ringDelta * springConstant * DeltaTime;
-    _ringVel -= _ringVel * damping * DeltaTime;
-    _ringScreenPos += _ringVel * DeltaTime;
-
-    // 글로브 모션
-    float _orbitSensitivity = 0.08f;
-    float yaw = ringDelta.X * _orbitSensitivity;
-    float pitch = ringDelta.Y * _orbitSensitivity;
-
-    const FQuat offset =
-        FQuat(FVector::UpVector, yaw) *
-        FQuat(FVector::RightVector, pitch);
-
-    FQuat targetQuat = offset * _targetGlobeRotation;
-
-    // 보간
     float slerp = 10.f * DeltaTime;
-    FQuat newRot = FQuat::Slerp(_mesh->GetComponentQuat(), targetQuat, slerp);
-    _mesh->SetWorldRotation(newRot);
+    if (distanceSquared > FMath::Square(_siteZoneRadius)) // 링이 지역에서부터 일정 거리를 벗어날 경우 복귀
+    {
+        _ringScreenPos = FMath::Lerp(_ringScreenPos, target, slerp);
+    }
+    else
+    {
+		_ringScreenPos = _ringScreenPos + delta * _ringSensitivity; // 일정 거리 내에서는 마우스 이동량만큼 이동
+    }
+	UE_LOG(LogTemp, Log, TEXT("distanceSquared: %f"), distanceSquared);
 
     // 링 월드 배치
     FVector rayOrigin, rayDir;
@@ -276,33 +274,33 @@ void AGalacticPlanetGlobe::TickFocusMode(float DeltaTime)
     {
         const FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
         const FVector camRight = _playerController->PlayerCameraManager->GetActorRightVector();
-        const FVector upTan = FVector::CrossProduct(camRight, surfaceNormal).GetSafeNormal();
-        _ring->PlaceOnSurface(hit.ImpactPoint, surfaceNormal, upTan);
+        const FVector upTangent = FVector::CrossProduct(camRight, surfaceNormal).GetSafeNormal();
+        _ring->PlaceOnSurface(hit.ImpactPoint, surfaceNormal, upTangent);
     }
+
+    // 글로브 모션
+    float deltaYaw = delta.X * _globeSensitivity;
+    float deltaPitch = delta.Y * _globeSensitivity;
+
+    FQuat targetQuat = CalculateNewGlobeQuat(deltaYaw, deltaPitch, _baseGlobeRotation);
+
+	FQuat newRot = FQuat::Slerp(_mesh->GetComponentQuat(), targetQuat, slerp); // 구면 선형 보간
+    _mesh->SetWorldRotation(newRot);
 }
 
-void AGalacticPlanetGlobe::RotateGlobe(float deltaX, float deltaY)
+FQuat AGalacticPlanetGlobe::CalculateNewGlobeQuat(float deltaYaw, float deltaPitch, FQuat baseQuat)
 {
-    FQuat quat = _mesh->GetComponentQuat();
+    auto cam = _playerController->PlayerCameraManager;
+    FVector viewRight = cam->GetActorRightVector().GetSafeNormal();
 
-    const APlayerCameraManager* Cam = _playerController->PlayerCameraManager;
-    FVector viewRight = Cam->GetActorRightVector().GetSafeNormal();
+    FQuat curQuat = _mesh->GetComponentQuat();
+    FQuat pitchOffset = FQuat(viewRight, FMath::DegreesToRadians(deltaPitch));
+    FVector localUp = (pitchOffset * curQuat).GetUpVector(); // Pitch가 적용된 후의 로컬 Up 벡터(자전축)를 구함
+    FQuat yawOffset = FQuat(localUp, FMath::DegreesToRadians(deltaYaw));
 
-    //FVector worldRight = FVector::RightVector; // 월드 기준 오른쪽 벡터
-
-    float newPitch = FMath::Clamp(_curPitchDeg + -deltaY, -70.f, 70.f);
-    float deltaPitch = newPitch - _curPitchDeg;
-    _curPitchDeg = newPitch;
-
-    FQuat pitchQuat = FQuat(viewRight, FMath::DegreesToRadians(deltaPitch));
-    quat = pitchQuat * quat; // Pitch 먼저 적용
-
-    FVector localUp = quat.GetUpVector(); // Pitch가 적용된 후의 로컬 Up 벡터(자전축)를 구함
-    FQuat yawQuat = FQuat(localUp, FMath::DegreesToRadians(deltaX));
-    quat = yawQuat * quat; // Yaw 적용
-
-    quat.Normalize();
-    _mesh->SetWorldRotation(quat);
+    FQuat newQuat = yawOffset * pitchOffset * baseQuat;
+    newQuat.Normalize();
+    return newQuat;
 }
 
 FVector AGalacticPlanetGlobe::CalculateGlobePosition(float latitude, float longitude, float globeRadius)

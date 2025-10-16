@@ -27,4 +27,3 @@ void APlanetObjectiveIcon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-

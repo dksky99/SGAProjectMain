@@ -62,16 +62,20 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
 	class UInputAction* _selectAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
+	class UInputAction* _backAction;
 
 	UFUNCTION()
 	void OnSelect(const FInputActionValue& value);
+	UFUNCTION()
+	void OnBack(const FInputActionValue& value);
 
 	void EnterFocus(class APlanetOperationSite* Icon);
 
 	void TickBrowseMode(float DeltaTime);
 	void TickFocusMode(float DeltaTime);
 
-	void RotateGlobe(float deltaX, float deltaY);
+	FQuat CalculateNewGlobeQuat(float deltaYaw, float deltaPitch, FQuat baseQuat);
 	FVector CalculateGlobePosition(float latitude, float longitude, float globeRadius);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -85,7 +89,13 @@ protected:
 	class UInputMappingContext* _globeWidgetIMC;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _globeRadius = 80.0f;
+	float _globeRadius = 80.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _siteZoneRadius = 30.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _ringSensitivity = 5.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _globeSensitivity = 5.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FOperationData> _operations;
@@ -108,8 +118,7 @@ protected:
 
 	FVector _curSiteLoc;		// 선택 지점(표면 포인트)
 	FVector2D _ringScreenPos;   // 링의 현재 스크린 좌표
-	FVector2D _ringVel;         // 링 스크린 속도
-	FQuat _targetGlobeRotation; // 글로브 목표 회전(선택 지점이 정면으로 오게)
+	FQuat _baseGlobeRotation;   // 글로브 기본 회전 상태 (선택 지점이 정면으로 오게)
 
 	UPROPERTY()
 	class APlanetOperationSite* _curSite;

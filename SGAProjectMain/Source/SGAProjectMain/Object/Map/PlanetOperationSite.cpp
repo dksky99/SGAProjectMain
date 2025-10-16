@@ -62,22 +62,32 @@ void APlanetOperationSite::Tick(float DeltaTime)
 void APlanetOperationSite::ChangeToFocusedSite()
 {
 	_mainIcon->SetVisibility(false);
+	// 메인아이콘 충돌 비활성화
 	ShowObjectiveIcons(true);
 }
 
 void APlanetOperationSite::ShowObjectiveIcons(bool bShow)
 {
-    if (bShow)
+    auto SetActive = [bShow](UChildActorComponent* iconComp, bool active)
     {
-        if (_iconA) _iconA->SetVisibility(bUseA);
-        if (_iconB) _iconB->SetVisibility(bUseB);
-        if (_iconC) _iconC->SetVisibility(bUseC);
-    }
-    else
-    {
-        if (_iconA) _iconA->SetVisibility(false);
-        if (_iconB) _iconB->SetVisibility(false);
-        if (_iconC) _iconC->SetVisibility(false);
-	}
+        if (auto icon = iconComp->GetChildActor())
+        {
+            if (bShow)
+            {
+                icon->SetActorHiddenInGame(!active);
+                icon->SetActorEnableCollision(active);
+            }
+            else
+            {
+                icon->SetActorHiddenInGame(true);
+				icon->SetActorEnableCollision(false);
+            }
+			
+        }
+	};
+
+    if (_iconA) _iconA->SetActive(bUseA);
+    if (_iconB) _iconB->SetActive(bUseB);
+    if (_iconC) _iconC->SetActive(bUseC);
 }
 
