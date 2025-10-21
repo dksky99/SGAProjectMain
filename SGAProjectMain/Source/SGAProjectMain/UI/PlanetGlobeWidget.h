@@ -15,8 +15,10 @@ class SGAPROJECTMAIN_API UPlanetGlobeWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	void EnterOperationMode();
+	void EnterMissionMode();
 	void ShowOperation(bool visibility, class APlanetOperationSite* site = nullptr);
-	void ShowObjection(bool visibility, class APlanetObjectiveIcon* icon = nullptr);
+	void ShowMission(bool visibility, class APlanetMissionIcon* icon = nullptr);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -24,5 +26,5 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	class UBorder* _operationBox;
 	UPROPERTY(meta = (BindWidget))
-	class UBorder* _objectiveBox;
+	class UBorder* _missionBox;
 };

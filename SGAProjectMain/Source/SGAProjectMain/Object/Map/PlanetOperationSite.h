@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PlanetObjectiveIcon.h"
+#include "PlanetMissionIcon.h"
 #include "PlanetOperationSite.generated.h"
 
 UCLASS()
@@ -24,31 +24,36 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void ChangeToFocusedSite();
+	void ChangeToFocusMode();
+
+	class UOperationDataAsset* GetOperationData() const { return _operationData; }
 
 protected:
-	void ShowObjectiveIcons(bool bShow);
+	void ShowMissionIcons(bool bShow);
+
+	UPROPERTY(EditAnywhere, Category = "Game/Data")
+	class UOperationDataAsset* _operationData = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
 	UDecalComponent* _regionDecal = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
-	TArray<UChildActorComponent*> _objectiveIcons;
-
-	UPROPERTY(VisibleAnywhere, Category = "Icons")
+	UPROPERTY(VisibleAnywhere, Category = "Game/Icons")
 	UChildActorComponent* _mainIcon;
 
-	UPROPERTY(VisibleAnywhere, Category = "Icons")
+	UPROPERTY(VisibleAnywhere)
+	TArray<UChildActorComponent*> _missionIcons;
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/Icons")
 	UChildActorComponent* _iconA;
-	UPROPERTY(VisibleAnywhere, Category = "Icons")
+	UPROPERTY(VisibleAnywhere, Category = "Game/Icons")
 	UChildActorComponent* _iconB;
-	UPROPERTY(VisibleAnywhere, Category = "Icons")
+	UPROPERTY(VisibleAnywhere, Category = "Game/Icons")
 	UChildActorComponent* _iconC;
 
-	UPROPERTY(EditAnywhere, Category = "Icons") bool bUseA = true;
-	UPROPERTY(EditAnywhere, Category = "Icons") bool bUseB = false;
-	UPROPERTY(EditAnywhere, Category = "Icons") bool bUseC = false;
+	UPROPERTY(EditAnywhere, Category = "Game/Icons") bool _bUseA = true;
+	UPROPERTY(EditAnywhere, Category = "Game/Icons") bool _bUseB = false;
+	UPROPERTY(EditAnywhere, Category = "Game/Icons") bool _bUseC = false;
 
-	UPROPERTY(EditAnyWhere, Category = "Game/Icon")
+	UPROPERTY(EditAnyWhere, Category = "Game/Icons")
 	int32 _iconCount = 3;
 };

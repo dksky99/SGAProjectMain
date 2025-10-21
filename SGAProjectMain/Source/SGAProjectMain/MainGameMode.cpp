@@ -13,6 +13,7 @@
 #include "Object/Map/TerminalConsole.h"
 #include "Game/EnemyReinforceManager.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
+#include "Data/MissionDataAsset.h"
 
 void AMainGameMode::BeginPlay()
 {
@@ -22,6 +23,10 @@ void AMainGameMode::BeginPlay()
     if (!GI) return;
 
     GI->SetGamePhase(EGamePhase::InMission);
+
+    auto mission = GI->GetPreDeployState()->GetCurMission();
+    if (mission)
+        _missionProgress._curMission = mission;
 
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
@@ -37,7 +42,26 @@ void AMainGameMode::StartPlay()
     Super::StartPlay();
 }
 
-void AMainGameMode::OnMissionEnd()
+void AMainGameMode::OnObjectiveCleared(FName objectiveID)
+{
+    // 메인 목표 클리어 시 탈출 가능
+    if (_missionProgress._curMission->GetMainObjectiveID() == objectiveID)
+    {
+        _missionProgress._isMainObjectiveCleared = true;
+        EnableExtraction();
+        return;
+	}
+    else
+    {
+        // 추가 목표 클리어 시 기록
+        if (_missionProgress._curMission->IsOptionalObjectiveIDValid(objectiveID))
+        {
+            _missionProgress._completedOptionalObjectives.Add(objectiveID);
+		}
+    }
+}
+
+void AMainGameMode::EnableExtraction()
 {
     if (_planeBeacon)
     {
@@ -60,10 +84,12 @@ void AMainGameMode::CallEscapePlane()
     AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, rotation);
 }
 
-void AMainGameMode::OnBattleEnd() // 게임이 끝났을 경우
+void AMainGameMode::EndBattle(bool isCleared) // 게임이 끝났을 경우
 {
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
+
+    GI->GetPreDeployState()->ApplyMissionResult(isCleared);
 
     APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     if (player)

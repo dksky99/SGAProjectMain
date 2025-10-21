@@ -4,6 +4,8 @@
 #include "PlanetOperationSite.h"
 
 #include "Components/DecalComponent.h"
+#include "../../Data/OperationDataAsset.h"
+#include "../../Data/MissionDataAsset.h"
 
 // Sets default values
 APlanetOperationSite::APlanetOperationSite()
@@ -19,7 +21,7 @@ APlanetOperationSite::APlanetOperationSite()
     _iconB = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconB"));
     _iconC = CreateDefaultSubobject<UChildActorComponent>(TEXT("IconC"));
     
-    static ConstructorHelpers::FClassFinder<APlanetObjectiveIcon> iconBP(TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Object/Map/GalacticPlanet/BP_PlanetObjIcon.BP_PlanetObjIcon_C'"));
+    static ConstructorHelpers::FClassFinder<APlanetMissionIcon> iconBP(TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Object/Map/GalacticPlanet/BP_PlanetMissionIcon.BP_PlanetMissionIcon_C'"));
     if (iconBP.Succeeded())
     {
 		_mainIcon->SetChildActorClass(iconBP.Class);
@@ -38,7 +40,7 @@ void APlanetOperationSite::OnConstruction(const FTransform& Xform)
 {
 	Super::OnConstruction(Xform);
 
-    ShowObjectiveIcons(true);
+    ShowMissionIcons(true);
 }
 
 // Called when the game starts or when spawned
@@ -46,10 +48,35 @@ void APlanetOperationSite::BeginPlay()
 {
 	Super::BeginPlay();
 
-    _iconA->SetVisibility(false);
-    _iconB->SetVisibility(false);
-    _iconC->SetVisibility(false);
-	
+    if (_operationData)
+    {
+		const auto missions = _operationData->GetMissions();
+        const int32 missionCount = missions.Num();
+
+        // 최대 3개 제한
+        _bUseA = missionCount >= 1;
+        _bUseB = missionCount >= 2;
+        _bUseC = missionCount >= 3;
+
+        auto InitIcon = [](UChildActorComponent* iconComp, UMissionDataAsset* missionData)
+            {
+                if (!iconComp) return;
+                if (APlanetMissionIcon* icon = Cast<APlanetMissionIcon>(iconComp->GetChildActor()))
+                {
+                    icon->SetMissionData(missionData);
+                }
+			};
+
+        // 미션 데이터 푸시
+        if (_bUseA && missions.IsValidIndex(0))
+            InitIcon(_iconA, missions[0]);
+        if (_bUseB && missions.IsValidIndex(1))
+            InitIcon(_iconB, missions[1]);
+        if (_bUseC && missions.IsValidIndex(2))
+            InitIcon(_iconC, missions[2]);
+    }
+
+    ShowMissionIcons(false);
 }
 
 // Called every frame
@@ -59,35 +86,35 @@ void APlanetOperationSite::Tick(float DeltaTime)
 
 }
 
-void APlanetOperationSite::ChangeToFocusedSite()
+void APlanetOperationSite::ChangeToFocusMode()
 {
+    // 메인아이콘 충돌 비활성화
+    if (auto icon = _mainIcon->GetChildActor())
+    {
+        icon->SetActorHiddenInGame(true);
+        icon->SetActorEnableCollision(false);
+	}
 	_mainIcon->SetVisibility(false);
-	// 메인아이콘 충돌 비활성화
-	ShowObjectiveIcons(true);
+	
+	ShowMissionIcons(true);
 }
 
-void APlanetOperationSite::ShowObjectiveIcons(bool bShow)
+void APlanetOperationSite::ShowMissionIcons(bool bShow)
 {
-    auto SetActive = [bShow](UChildActorComponent* iconComp, bool active)
-    {
-        if (auto icon = iconComp->GetChildActor())
+    auto SetVisible = [bShow](UChildActorComponent* iconComp, bool bUse)
         {
-            if (bShow)
+            if (!iconComp) return;
+            if (AActor* icon = iconComp->GetChildActor())
             {
-                icon->SetActorHiddenInGame(!active);
-                icon->SetActorEnableCollision(active);
+                bool visible = bShow && bUse;
+                icon->SetActorHiddenInGame(!visible);
+                icon->SetActorEnableCollision(visible);
+                iconComp->SetVisibility(visible, true);
             }
-            else
-            {
-                icon->SetActorHiddenInGame(true);
-				icon->SetActorEnableCollision(false);
-            }
-			
-        }
-	};
+        };
 
-    if (_iconA) _iconA->SetActive(bUseA);
-    if (_iconB) _iconB->SetActive(bUseB);
-    if (_iconC) _iconC->SetActive(bUseC);
+    SetVisible(_iconA, _bUseA);
+    SetVisible(_iconB, _bUseB);
+    SetVisible(_iconC, _bUseC);
 }
 

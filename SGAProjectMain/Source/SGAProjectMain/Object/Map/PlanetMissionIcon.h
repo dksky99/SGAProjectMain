@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PlanetObjectiveIcon.generated.h"
+#include "PlanetMissionIcon.generated.h"
 
 UCLASS()
-class SGAPROJECTMAIN_API APlanetObjectiveIcon : public AActor
+class SGAPROJECTMAIN_API APlanetMissionIcon : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	APlanetObjectiveIcon();
+	APlanetMissionIcon();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,8 +23,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void SetMissionData(class UMissionDataAsset* mission);
+	class UMissionDataAsset* GetMissionData() { return _missionData; }
+
 protected:
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* _mesh;
+
+	UPROPERTY(EditAnywhere)
+	class UMissionDataAsset* _missionData;
 
 };

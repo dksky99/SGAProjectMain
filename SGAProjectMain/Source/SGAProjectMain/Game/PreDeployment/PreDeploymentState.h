@@ -9,6 +9,17 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE(FOnMissionSelected);
+
+UENUM()
+enum class EMissionState : uint8
+{
+	None,
+	Available,
+	Cleared,
+	Failed
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API UPreDeploymentState : public UObject
 {
@@ -17,6 +28,7 @@ class SGAPROJECTMAIN_API UPreDeploymentState : public UObject
 public:
 	UPreDeploymentState();
 
+	// 총 관련 초기화
 	void SetGunID(int32 id);
 
 	void SetPrimaryGunID(int32 id) { _primaryGunID = id; }
@@ -25,18 +37,35 @@ public:
 	void SetSecondaryGunID(int32 id) { _secondaryGunID = id; }
 	int32 GetSecondaryGunID() { return _secondaryGunID; }
 
-	void SetSupportGunID(int32 id) { _supportGunID = id; }
-	int32 GetSupportGunID() { return _supportGunID; }
-
 	void SetStratagemID(int32 index, int32 id);
 	TArray<int32> GetStratagemIDs() { return _stratagemIDs; }
-	
+
+	// 작전 및 미션 관련 초기화 
+	void SetCurOperation(class UOperationDataAsset* op);
+	class UOperationDataAsset* GetCurOperation() const { return _curOperation; }
+
+	void SetCurMission(class UMissionDataAsset* mission);
+	class UMissionDataAsset* GetCurMission() const { return _curMission; }
+
+	FOnMissionSelected _missionSelectedEvent;
+
+	void ApplyMissionResult(bool isCleared);
+	void ClearOperation();
+
+	bool IsOperationCleared();
+	bool IsOperationFailed();
+
 private:
-	// 임시
 	int32 _primaryGunID = 1;
 	int32 _secondaryGunID = 101;
-	int32 _supportGunID = 201;
 
 	UPROPERTY()
 	TArray<int32> _stratagemIDs;
+
+	UPROPERTY()
+	class UOperationDataAsset* _curOperation;
+	UPROPERTY()
+	class UMissionDataAsset* _curMission;
+	UPROPERTY()
+	TMap<UMissionDataAsset*, EMissionState> _missions;
 };

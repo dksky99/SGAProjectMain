@@ -15,4 +15,9 @@ class SGAPROJECTMAIN_API ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 	void BeginPlay();
+
+	void OnMissionSelected();
+
+	UPROPERTY()
+	TArray<class APreDeploymentHellpod*> _hellpods;
 };

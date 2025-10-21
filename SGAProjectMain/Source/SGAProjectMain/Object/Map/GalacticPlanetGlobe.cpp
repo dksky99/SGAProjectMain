@@ -6,8 +6,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "../../UI/PlanetGlobeWidget.h"
+#include "../../CGameInstance.h"
+#include "../../Game/PreDeployment/PreDeploymentState.h"
 #include "PlanetOperationSite.h"
 #include "PlanetSelectRing.h"
+#include "PlanetMissionIcon.h"
+#include "../../Data/MissionDataAsset.h"
+#include "../../Data/OperationDataAsset.h"
 
 // Sets default values
 AGalacticPlanetGlobe::AGalacticPlanetGlobe()
@@ -133,7 +138,7 @@ void AGalacticPlanetGlobe::StopInteracting()
 
 void AGalacticPlanetGlobe::OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (auto icon = Cast<APlanetObjectiveIcon>(OtherActor))
+    if (auto icon = Cast<APlanetMissionIcon>(OtherActor))
     {
         if (_mode == EPlanetGlobeMode::Browse)
         { // 아이콘이 속한 지점의 임무 표시
@@ -146,7 +151,7 @@ void AGalacticPlanetGlobe::OnIconInRange(UPrimitiveComponent* OverlappedComponen
 
         else
         { // 아이콘에 해당하는 목표 표시
-            _globeWidget->ShowObjection(true, icon);
+            _globeWidget->ShowMission(true, icon);
 			_curIcon = icon;
         }
 	}
@@ -154,9 +159,9 @@ void AGalacticPlanetGlobe::OnIconInRange(UPrimitiveComponent* OverlappedComponen
 
 void AGalacticPlanetGlobe::OnIconOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
 {
-    if (auto icon = Cast<APlanetObjectiveIcon>(OtherActor))
+    if (auto icon = Cast<APlanetMissionIcon>(OtherActor))
     {
-        _globeWidget->ShowObjection(false);
+        _globeWidget->ShowMission(false);
 		_curIcon = nullptr;
 
         if (_mode == EPlanetGlobeMode::Browse)
@@ -171,24 +176,33 @@ void AGalacticPlanetGlobe::OnSelect(const FInputActionValue& value)
 {
     if (_mode == EPlanetGlobeMode::Browse)
     {
-        if (_curSite)
-        {
-            EnterFocus(_curSite);
-        }
+        EnterFocus();
     }
     else if (_mode == EPlanetGlobeMode::Focus)
     {
-        // 해당 임무 선택
+        SelectMission();
 	}
 }
 
 void AGalacticPlanetGlobe::OnBack(const FInputActionValue& value)
 {
+    if (_mode == EPlanetGlobeMode::Focus)
+    {
+        _mode = EPlanetGlobeMode::Browse;
+        _globeWidget->EnterMissionMode();
+	}
+    if (_mode == EPlanetGlobeMode::Browse)
+    {
+        StopInteracting();
+    }
 }
 
-void AGalacticPlanetGlobe::EnterFocus(APlanetOperationSite* site)
+void AGalacticPlanetGlobe::EnterFocus()
 {
-    _curSiteLoc = site->GetActorLocation(); // 선택한 지점 위치
+    if (!_curSite) return;
+
+    _curSite->ChangeToFocusMode();
+    _curSiteLoc = _curSite->GetActorLocation(); // 선택한 지점 위치
 
     // 선택 지점을 화면 중앙으로 오게 글로브 목표 회전 계산
     FVector globeCenter = _mesh->GetComponentLocation();
@@ -200,7 +214,20 @@ void AGalacticPlanetGlobe::EnterFocus(APlanetOperationSite* site)
     _playerController->ProjectWorldLocationToScreen(_curSiteLoc, _ringScreenPos, true);
 
     _mode = EPlanetGlobeMode::Focus;
-    _globeWidget->ShowObjection(false);
+	_globeWidget->EnterMissionMode();
+}
+
+void AGalacticPlanetGlobe::SelectMission()
+{
+	if (!_curIcon || !_curSite) return;
+
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (!GI) return;
+
+	GI->GetPreDeployState()->SetCurOperation(_curSite->GetOperationData());
+	GI->GetPreDeployState()->SetCurMission(_curIcon->GetMissionData());
+        
+    StopInteracting();
 }
 
 void AGalacticPlanetGlobe::TickBrowseMode(float DeltaTime)

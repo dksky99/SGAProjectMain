@@ -70,7 +70,8 @@ protected:
 	UFUNCTION()
 	void OnBack(const FInputActionValue& value);
 
-	void EnterFocus(class APlanetOperationSite* Icon);
+	void EnterFocus();
+	void SelectMission();
 
 	void TickBrowseMode(float DeltaTime);
 	void TickFocusMode(float DeltaTime);
@@ -121,7 +122,7 @@ protected:
 	FQuat _baseGlobeRotation;   // 글로브 기본 회전 상태 (선택 지점이 정면으로 오게)
 
 	UPROPERTY()
-	class APlanetOperationSite* _curSite;
+	class APlanetOperationSite* _curSite = nullptr;
 	UPROPERTY()
-	class APlanetObjectiveIcon* _curIcon;
+	class APlanetMissionIcon* _curIcon = nullptr;
 };

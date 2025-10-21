@@ -10,6 +10,20 @@
 /**
  * 
  */
+USTRUCT()
+struct FMissionProgress
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	class UMissionDataAsset* _curMission = nullptr;
+
+	bool _isMainObjectiveCleared = false;
+
+	UPROPERTY()
+	TSet<FName> _completedOptionalObjectives;
+};
+
 UCLASS()
 class SGAPROJECTMAIN_API AMainGameMode : public AGameModeBase
 {
@@ -21,13 +35,17 @@ public:
 
 	virtual void StartPlay() override;
 
-	void OnMissionEnd();
+	void OnObjectiveCleared(FName objectiveID);
+	void EnableExtraction();
 	void CallEscapePlane();
-	void OnBattleEnd();
+	void EndBattle(bool isCleared);
 
 	class AEnemyReinforceManager* GetEnemyReinforceManager() { return _enemyReinforceManager; }
 	class AHelldiverReinforceManager* GetHelldiverReinforceManager() { return _helldiverReinforceManager; }
 private:
+	UPROPERTY()
+	FMissionProgress _missionProgress;
+
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	TSubclassOf<class AEscapePlane> _escapePlaneClass;
 
@@ -50,5 +68,4 @@ private:
 	class AEnemyReinforceManager* _enemyReinforceManager;
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AHelldiverReinforceManager* _helldiverReinforceManager;
-
 };

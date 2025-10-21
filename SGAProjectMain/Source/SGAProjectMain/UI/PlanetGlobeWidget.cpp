@@ -5,10 +5,18 @@
 #include "Components/Border.h"
 #include "Components/WidgetSwitcher.h"
 
-void UPlanetGlobeWidget::ShowOperation(bool visibility, APlanetOperationSite* site)
+void UPlanetGlobeWidget::EnterOperationMode()
 {
 	_widgetSwitcher->SetActiveWidgetIndex(0);
+}
 
+void UPlanetGlobeWidget::EnterMissionMode()
+{
+	_widgetSwitcher->SetActiveWidgetIndex(1);
+}
+
+void UPlanetGlobeWidget::ShowOperation(bool visibility, APlanetOperationSite* site)
+{
 	if (!visibility)
 	{
 		if (_operationBox)
@@ -21,16 +29,14 @@ void UPlanetGlobeWidget::ShowOperation(bool visibility, APlanetOperationSite* si
 	_operationBox->SetVisibility(ESlateVisibility::Visible);
 }
 
-void UPlanetGlobeWidget::ShowObjection(bool visibility, APlanetObjectiveIcon* icon)
+void UPlanetGlobeWidget::ShowMission(bool visibility, APlanetMissionIcon* icon)
 {
-	_widgetSwitcher->SetActiveWidgetIndex(1);
-
 	if (!visibility)
 	{
-		if (_objectiveBox)
-			_objectiveBox->SetVisibility(ESlateVisibility::Collapsed);
+		if (_missionBox)
+			_missionBox->SetVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
 	if (!icon) return;
-	_objectiveBox->SetVisibility(ESlateVisibility::Visible);
+	_missionBox->SetVisibility(ESlateVisibility::Visible);
 }
