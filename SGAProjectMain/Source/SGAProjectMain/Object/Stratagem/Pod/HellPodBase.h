@@ -22,14 +22,13 @@ protected:
 	virtual void Tick(float deltaSeconds) override;
 
 	// 체력 처리
-	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Health")
-	void ApplyDamage(float damageAmount);
+	virtual float TakeDamage(float damageAmount, struct FDamageEvent const& damageEvent, class AController* eventInstigator, AActor* damageCauser) override;
 
 	// 아이템 스폰 + 소켓 부착(개수/소켓명은 가상함수로 해결)
 	void SpawnAndAttachItems();
 
 	// 개별 아이템 스폰 + 부착
-	AItemBase* SpawnAndAttachOne(const FName& socketName);
+	AItemBase* SpawnAndAttachOne(const FName& socketName, TSubclassOf<AItemBase> itemClass);
 
 	// 남은 아이템 전부 바닥으로 (Detach + 물리/충돌 활성화)
 	void DropAllItemsToGround();
@@ -92,6 +91,10 @@ protected:
 	// 스폰할 아이템 클래스(AItemBase 기반)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
 	TSubclassOf<AItemBase> _itemClass;
+
+	// 스폰할 아이템 클래스 2번 없으면 널
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	TSubclassOf<AItemBase> _ItemClass2 = nullptr;
 
 	// 부착된 아이템 목록
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")

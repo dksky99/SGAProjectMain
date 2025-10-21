@@ -49,7 +49,7 @@ protected:
 	class UProjectileMovementComponent* _projectile;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
-	float _damage = 100.f;
+	float _damage = 1000.f;
 
 	// 중복 실행 방지
 	bool _isAlreadySpawned = false;

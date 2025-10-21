@@ -60,15 +60,16 @@ void AHellPodBase::Tick(float DeltaSeconds)
 	}
 }
 
-void AHellPodBase::ApplyDamage(float damageAmount)
+float AHellPodBase::TakeDamage(float damageAmount, const FDamageEvent& damageEvent, AController* eventInstigator, AActor* damageCauser)
 {
-	if (damageAmount <= 0.0f) return;
+	if (damageAmount <= 0.0f) return 0.0f;
 
 	_currentHp = FMath::Max(0.0f, _currentHp - damageAmount);
 	if (_currentHp == 0.0f)
 	{
 		OnPodDestroyed();
 	}
+	return damageAmount;
 }
 
 void AHellPodBase::SpawnAndAttachItems()
@@ -83,7 +84,13 @@ void AHellPodBase::SpawnAndAttachItems()
 		const FName socketName = MakeSocketName(i);
 		if (!_mesh->DoesSocketExist(socketName)) continue;
 
-		AItemBase* item = SpawnAndAttachOne(socketName);
+		AItemBase* item;
+		
+		if (_ItemClass2 && i != 1)
+			item = SpawnAndAttachOne(socketName, _ItemClass2);
+		else
+			item = SpawnAndAttachOne(socketName, _itemClass);
+
 		if (!item) continue;
 
 		item->_onPreDespawn.AddDynamic(this, &AHellPodBase::OnItemPreDespawned);
@@ -94,7 +101,7 @@ void AHellPodBase::SpawnAndAttachItems()
 	_remainingItems = _items.Num();
 }
 
-AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName)
+AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName, TSubclassOf<AItemBase> itemClass)
 {
 	if (!_itemClass || !_mesh) return nullptr;
 
@@ -105,7 +112,7 @@ AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName)
 	params.Instigator = GetInstigator();
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	AItemBase* newItem = GetWorld()->SpawnActor<AItemBase>(_itemClass, spawnTf, params);
+	AItemBase* newItem = GetWorld()->SpawnActor<AItemBase>(itemClass, spawnTf, params);
 	if (!newItem) return nullptr;
 
 	newItem->AttachToComponent(_mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
@@ -135,6 +142,7 @@ void AHellPodBase::DropAllItemsToGround()
 			//prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		}
 	}
+
 }
 
 void AHellPodBase::PlayMontage(UAnimMontage* montage)
