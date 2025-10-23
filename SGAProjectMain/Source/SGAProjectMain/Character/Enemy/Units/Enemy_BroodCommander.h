@@ -28,4 +28,8 @@ public:
 	virtual bool TryFar(AActor* target)    override;
 
 	void CallWarrior();
+
+protected:
+
+
 };

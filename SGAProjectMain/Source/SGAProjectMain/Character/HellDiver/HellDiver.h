@@ -21,9 +21,6 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
-	//반환형 문제때문에 의도적으로 오버라이드를 활용하지 않았습니다. 같은 이름의 함수로 호출하지만 캐릭터베이스를 통해 호출하게된다면 캐릭터베이스에 한정된 기능만 사용하게 할 생각이라 
-	//캐릭터베이스 포인터에서 호출하면 기본 스탯컴포넌트나 스테이트 컴포넌트로 가져오고 헬다이버즈나 플레이어캐릭터에서 호출하면 헬다이버즈스탯이나 헬다이버즈 스테이트로 호출되기 될겁니다.
-	//정말 이렇게 해도 되는지 모르지만 일단 이렇게 해봤어요 나중에 강사님꼐 여쭤보고 무리해서 고쳐야한다면 고쳐보겠습니다. 
 	class UHellDiverStateComponent* GetStateComponent();
 	class UHellDiverStatComponent* GetStatComponent();
 	class UMotionWarpingComponent* GetMotionWarp() const;
@@ -39,6 +36,7 @@ public:
 	void UpdateThrowSpline();
 	class AThrowable* GetHeldThrowable() { return _heldThrowable; }
 
+	virtual bool AttackMelee() override;
 	// 각성제
 	void UseStimPack();
 
@@ -224,4 +222,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _stratagemInputMontage;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UUnitAttackDataAsset* _oneHandedMelee;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UUnitAttackDataAsset* _twoHandedMelee;
 };

@@ -7,6 +7,8 @@
 #include "Enemy_Charger.generated.h"
 
 /**
+ * 차징을 시작할때 콜리전과 데미지가 부여되고 충돌액터 리스트를 주기적으로 초기화해주든 어떻게든 해야할듯
+ * 차징이끝날떄 콜리전을 비활성화 
  * 
  */
 UCLASS()
@@ -32,5 +34,20 @@ public:
 	void FinishCharging();
 
 	void CancelCharging();
+
+protected:
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UUnitAttackDataAsset* _chargingAttackData;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _chargingFinishMontage;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _chargingCanceledMontage;
+
 
 };

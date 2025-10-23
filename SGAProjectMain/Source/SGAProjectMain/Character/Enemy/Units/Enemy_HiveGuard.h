@@ -32,6 +32,11 @@ public:
 	void EndGuard();
 
 
+protected:
 
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* _guardMontage;
 
 };

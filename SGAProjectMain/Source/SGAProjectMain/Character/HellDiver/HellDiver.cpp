@@ -25,6 +25,7 @@
 
 #include "../StimPackComponent.h"
 
+#include "../../Data/UnitAttackDataAsset.h"
 #include "../../Data/CollisionCameraDataAsset.h"
 #include "../../CGameInstance.h"
 
@@ -321,6 +322,42 @@ void AHellDiver::StopThrowPreview()
     {
         //_heldThrowable = nullptr;
     }
+}
+
+bool AHellDiver::AttackMelee()
+{
+    UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
+
+
+    if (_meleeAttackDatas.IsEmpty())
+        return false;
+    if (anim == nullptr)
+        return false;
+    if (_stateComp->ActionBegin() == false)
+        return false;
+
+
+    switch (_stateComponent->GetWeaponState())
+    {
+    case EWeaponType::Gun:
+
+        _curAttackData = _twoHandedMelee;
+        break;
+    case EWeaponType::None:
+    case EWeaponType::Grenade:
+    case EWeaponType::StratagemDevice:
+
+        _curAttackData = _oneHandedMelee;
+        break;
+    default:
+        break;
+    }
+
+
+    const float Duration = anim->PlayAnimMontage(_curAttackData->Motion);
+
+    SetMeleeColisions(_curAttackData);
+    return true;
 }
 
 void AHellDiver::UseStimPack()
