@@ -24,13 +24,7 @@ ADropPod::ADropPod()
 	PrimaryActorTick.bCanEverTick = true;
 
 	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	
-	// 충돌 설정: 캐릭터, 아이템 등은 무시, 바닥은 Block
-	_mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	_mesh->SetCollisionObjectType(ECC_WorldDynamic);
-
-	_mesh->SetCollisionResponseToAllChannels(ECR_Ignore);             // 일단 전부 무시
-	_mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap); // 바닥만 막기
+	_mesh->SetGenerateOverlapEvents(true);
 
 	RootComponent = _mesh;
 
@@ -39,6 +33,7 @@ ADropPod::ADropPod()
 	_projectile->InitialSpeed = 0.f;
 	_projectile->MaxSpeed = 10000.f;
 	_projectile->bRotationFollowsVelocity = false;
+	_projectile->UpdatedComponent = _mesh;
 }
 
 // Called when the game starts or when spawned
@@ -49,7 +44,6 @@ void ADropPod::BeginPlay()
 	if (_mesh)
 	{
 		_mesh->OnComponentBeginOverlap.AddDynamic(this, &ADropPod::OnBeginOverlap);
-		//_mesh->OnComponentHit.AddDynamic(this, &ADropPod::OnHit);
 
 		_mesh->SetNotifyRigidBodyCollision(true);
 
@@ -76,26 +70,48 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		//DestroySelf();
 	}
 
-	if (ACharacter* hitCharacter = Cast<ACharacter>(OtherActor))
+	if (OtherActor && OtherComp)
 	{
-		if (_damagedCharacters.Contains(hitCharacter))
-			return;
+		const bool bIsHitBoxProfile = (OtherComp->GetCollisionProfileName() == FName(TEXT("HitBox")));
 
-		_damagedCharacters.Add(hitCharacter);
+		if (bIsHitBoxProfile)
+		{
+			if (_damagedCharacters.Contains(OtherActor))
+				return;
+			_damagedCharacters.Add(OtherActor);
 
-		// 폭발(헬포드 충돌) 중심에서 명중 지점까지 방향 계산
-		const FVector shotDirection = (SweepResult.ImpactPoint - GetActorLocation()).GetSafeNormal();
+			// 임팩트 좌표 폴백(스윕이 아닐 때를 대비)
+			const FVector impact =
+				(bFromSweep && SweepResult.bBlockingHit)
+				? FVector(SweepResult.ImpactPoint)  
+				: FVector(OtherComp ? OtherComp->GetComponentLocation() : GetActorLocation());
 
-		// 스윕 결과에 담긴 FHitResult를 그대로 사용하여 포인트 데미지 호출
-		UGameplayStatics::ApplyPointDamage(
-			hitCharacter,                   // 데미지를 받을 액터
-			_damage,                        // 적용할 기본 데미지 값
-			shotDirection,                  // 데미지가 들어온 방향 벡터
-			SweepResult,                    // 충돌 정보(FHitResult, Impact 컴포넌트 포함)
-			GetInstigatorController(),      // 데미지를 유발한 컨트롤러
-			this,                           // 데미지 발생 주체 액터
-			UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
-		);
+			const FVector shotDirection = (impact - GetActorLocation()).GetSafeNormal();
+
+			FHitResult hitInfo;
+			if (bFromSweep && SweepResult.bBlockingHit)
+			{
+				hitInfo = SweepResult;
+			}
+			else
+			{
+				// 최소 유효 정보만 세팅
+				hitInfo.Component = OtherComp;
+				hitInfo.ImpactPoint = impact;
+				hitInfo.Location = impact;
+				hitInfo.bBlockingHit = false;
+			}
+
+			// 이후 사용
+			UGameplayStatics::ApplyPointDamage(
+				OtherActor,
+				_damage,
+				(impact - GetActorLocation()).GetSafeNormal(),
+				hitInfo,
+				GetInstigatorController(),
+				this,
+				UDamageType::StaticClass());
+		}
 	}
 }
 
@@ -126,41 +142,46 @@ void ADropPod::LaunchOverlappedActors(const FVector& hitPoint)
 			for (auto& result : overlaps)
 			{
 				AActor* overlappedActor = result.GetActor();
-				if (!overlappedActor)
-					continue;
+				if (!overlappedActor) continue;
 
 				UPrimitiveComponent* primComp = Cast<UPrimitiveComponent>(result.Component.Get());
-				if (!primComp)
+				if (!primComp) continue;
+
+				// 이미 처리한 액터는 스킵
+				if (ejectedActors.Contains(overlappedActor))
 					continue;
 
-				float mass = primComp->GetMass();
-				if (mass <= 1.f) mass = 1.f;
-
-				// ── 캐릭터 튕김 ──
+				// ── 캐릭터 처리: 히트박스 컴포넌트인지 확인 ──
 				if (ACharacter* character = Cast<ACharacter>(overlappedActor))
 				{
-					// 기존 질량역수 방식 속도
-					float rawVelocity = 800.f / mass;
-					// 최소 보장 속도
+					const bool bIsHitBoxProfile = (primComp->GetCollisionProfileName() == FName(TEXT("HitBox")));
+
+					// 히트박스가 아니면 캐릭터는 튕기지 않음
+					if (!(bIsHitBoxProfile)) continue;
+
+					// 중복 방지 마킹
+					ejectedActors.Add(overlappedActor);
+
+					// 기존 질량역수 방식 속도 + 최소 보장 속도
+					const float mass = FMath::Max(primComp->GetMass(), 1.0f);
+					float rawVelocity = 800.0f / mass;
 					float finalVelocityZ = FMath::Max(rawVelocity, minVelocity);
-					character->LaunchCharacter(FVector(0, 0, finalVelocityZ), true, true);
+
+					character->LaunchCharacter(FVector(0.0f, 0.0f, finalVelocityZ), true, true);
+					continue;
 				}
+
 				// ── 물리 오브젝트(아이템) 튕김 ──
-				else if (primComp->IsSimulatingPhysics())
+				if (primComp->IsSimulatingPhysics())
 				{
-					if (!ejectedActors.Contains(overlappedActor))
-					{
-						ejectedActors.Add(overlappedActor);
+					ejectedActors.Add(overlappedActor);
 
-						// 기존 질량 기반 임펄스
-						float rawImpulseZ = mass * 300.f;
-						// 최소 보장 임펄스 = m * minVelocity
-						float minImpulseZ = mass * minVelocity;
-						// 더 큰 값을 사용하여 최소 헬포드 높이 이상으로 튕김
-						float finalImpulseZ = FMath::Max(rawImpulseZ, minImpulseZ);
+					float mass = FMath::Max(primComp->GetMass(), 1.0f);
+					float rawImpulseZ = mass * 300.0f;
+					float minImpulseZ = mass * minVelocity;
+					float finalImpulseZ = FMath::Max(rawImpulseZ, minImpulseZ);
 
-						primComp->AddImpulse(FVector(0, 0, finalImpulseZ), NAME_None, true);
-					}
+					primComp->AddImpulse(FVector(0.0f, 0.0f, finalImpulseZ), NAME_None, true);
 				}
 			}
 			overlaps.Reset();

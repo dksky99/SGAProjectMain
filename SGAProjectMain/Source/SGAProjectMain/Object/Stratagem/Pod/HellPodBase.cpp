@@ -49,6 +49,8 @@ void AHellPodBase::Tick(float DeltaSeconds)
 	const float riseSpeed = 300.0f;
 
 	const float z = GetActorLocation().Z;
+	
+	// 지정 높이 도달
 	if (z < _targetHeight)
 	{
 		const float step = FMath::Min(riseSpeed * DeltaSeconds, _targetHeight - z);
@@ -60,15 +62,16 @@ void AHellPodBase::Tick(float DeltaSeconds)
 	}
 }
 
-void AHellPodBase::ApplyDamage(float damageAmount)
+float AHellPodBase::TakeDamage(float damageAmount, const FDamageEvent& damageEvent, AController* eventInstigator, AActor* damageCauser)
 {
-	if (damageAmount <= 0.0f) return;
+	if (damageAmount <= 0.0f) return 0.0f;
 
 	_currentHp = FMath::Max(0.0f, _currentHp - damageAmount);
 	if (_currentHp == 0.0f)
 	{
 		OnPodDestroyed();
 	}
+	return damageAmount;
 }
 
 void AHellPodBase::SpawnAndAttachItems()
@@ -83,7 +86,13 @@ void AHellPodBase::SpawnAndAttachItems()
 		const FName socketName = MakeSocketName(i);
 		if (!_mesh->DoesSocketExist(socketName)) continue;
 
-		AItemBase* item = SpawnAndAttachOne(socketName);
+		AItemBase* item;
+		
+		if (_ItemClass2 && i != 1)
+			item = SpawnAndAttachOne(socketName, _ItemClass2);
+		else
+			item = SpawnAndAttachOne(socketName, _itemClass);
+
 		if (!item) continue;
 
 		item->_onPreDespawn.AddDynamic(this, &AHellPodBase::OnItemPreDespawned);
@@ -94,7 +103,7 @@ void AHellPodBase::SpawnAndAttachItems()
 	_remainingItems = _items.Num();
 }
 
-AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName)
+AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName, TSubclassOf<AItemBase> itemClass)
 {
 	if (!_itemClass || !_mesh) return nullptr;
 
@@ -105,17 +114,12 @@ AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName)
 	params.Instigator = GetInstigator();
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	AItemBase* newItem = GetWorld()->SpawnActor<AItemBase>(_itemClass, spawnTf, params);
+	AItemBase* newItem = GetWorld()->SpawnActor<AItemBase>(itemClass, spawnTf, params);
 	if (!newItem) return nullptr;
 
-	newItem->AttachToComponent(_mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
+	ToggleItemPhysics(newItem);
 
-	// 스폰 직후에는 떨어지지 않게 기본 잠금
-	if (UPrimitiveComponent* prim = Cast<UPrimitiveComponent>(newItem->GetRootComponent()))
-	{
-		prim->SetSimulatePhysics(false);
-		//prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	newItem->AttachToComponent(_mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
 
 	return newItem;
 }
@@ -128,12 +132,43 @@ void AHellPodBase::DropAllItemsToGround()
 
 		item->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		if (UPrimitiveComponent* prim = Cast<UPrimitiveComponent>(item->GetRootComponent()))
+		ToggleItemPhysics(item);
+	}
+
+	_isPhysicsOn = true;
+
+}
+
+void AHellPodBase::ToggleItemPhysics(AActor* itemActor)
+{
+	if (!itemActor) return;
+
+	// 스태틱 메시
+	if (UStaticMeshComponent* sm = itemActor->FindComponentByClass<UStaticMeshComponent>())
+	{
+		if (_isPhysicsOn)
+			sm->SetSimulatePhysics(true);
+		else
+			sm->SetSimulatePhysics(false);
+		
+		sm->UpdateOverlaps();
+	}
+
+	// 스켈레탈 메시
+	if (USkeletalMeshComponent* sk = itemActor->FindComponentByClass<USkeletalMeshComponent>())
+	{
+		if (_isPhysicsOn)
 		{
-			prim->SetSimulatePhysics(true);
-			prim->SetEnableGravity(true);
-			//prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			sk->SetSimulatePhysics(true);
+			sk->SetAllBodiesSimulatePhysics(true);    // 본 단위까지 ON
 		}
+		else
+		{
+			sk->SetSimulatePhysics(false);
+			sk->SetAllBodiesSimulatePhysics(false);   // 본 단위까지 확실히 OFF
+		}
+		
+		sk->UpdateOverlaps();
 	}
 }
 

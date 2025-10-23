@@ -4,6 +4,7 @@
 #include "ItemBase.h"
 
 #include "../../Gun/GunBase.h"
+#include "Backpack.h"
 
 // Sets default values
 AItemBase::AItemBase()
@@ -35,6 +36,9 @@ void AItemBase::PickupItem(AHellDiver* player)
 	}
 
 	if (AGunBase* gun = Cast<AGunBase>(this))
+		return;
+
+	if (ABackpack* backPack = Cast<ABackpack>(this))
 		return;
 
 	Destroy();
