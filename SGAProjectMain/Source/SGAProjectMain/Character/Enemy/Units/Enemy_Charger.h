@@ -13,5 +13,24 @@ UCLASS()
 class SGAPROJECTMAIN_API AEnemy_Charger : public AEnemy
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	AEnemy_Charger(const FObjectInitializer& ObjectInitializer);
+
+
+
+
+	virtual bool CheckAbleTryNear(AActor* target) override;
+	virtual bool CheckAbleTryMiddle(AActor* target) override;
+	virtual bool TryNear(AActor* target)   override;
+	virtual bool TryMiddle(AActor* target) override;
+	virtual bool TryFar(AActor* target)    override;
+
+	void StartCharging();
+
+	void FinishCharging();
+
+	void CancelCharging();
+
 };

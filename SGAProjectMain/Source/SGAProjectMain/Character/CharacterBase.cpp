@@ -396,6 +396,12 @@ void ACharacterBase::ReadyToSpawn()
 	}
 }
 
+bool ACharacterBase::GetTargetLook(FVector& dir) const
+{
+	dir = GetMesh()->GetForwardVector();
+	return true;
+}
+
 void ACharacterBase::Spawn()
 {
 	_isReadyToSpawn = false;
@@ -667,5 +673,3 @@ void ACharacterBase::HitRecovery()
 	ActionEnd();
 	//
 }
-
-

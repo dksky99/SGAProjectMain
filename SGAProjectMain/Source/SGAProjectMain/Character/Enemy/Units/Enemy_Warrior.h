@@ -13,5 +13,17 @@ UCLASS()
 class SGAPROJECTMAIN_API AEnemy_Warrior : public AEnemy_Standard
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	AEnemy_Warrior(const FObjectInitializer& ObjectInitializer);
+
+
+
+
+	virtual bool CheckAbleTryNear(AActor* target) override;
+	virtual bool CheckAbleTryMiddle(AActor* target) override;
+	virtual bool TryNear(AActor* target)   override;
+	virtual bool TryMiddle(AActor* target) override;
+	virtual bool TryFar(AActor* target)    override;
 };
