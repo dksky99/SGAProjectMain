@@ -33,6 +33,9 @@ protected:
 	// 남은 아이템 전부 바닥으로 (Detach + 물리/충돌 활성화)
 	void DropAllItemsToGround();
 
+	// 아이템의 파직스 끄기/켜기
+	void ToggleItemPhysics(AActor* itemActor);
+
 	// 열린 상태/열림/닫힘 몽타주(필요한 것만 세팅)
 	void PlayMontage(UAnimMontage* montage);
 
@@ -99,6 +102,9 @@ protected:
 	// 부착된 아이템 목록
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
 	TArray<AItemBase*> _items;
+
+	// 파직스가 켜져있나
+	bool _isPhysicsOn = false;
 
 	// 소켓 네임
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")

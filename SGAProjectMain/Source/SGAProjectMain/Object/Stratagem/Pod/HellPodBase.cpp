@@ -49,6 +49,8 @@ void AHellPodBase::Tick(float DeltaSeconds)
 	const float riseSpeed = 300.0f;
 
 	const float z = GetActorLocation().Z;
+	
+	// 지정 높이 도달
 	if (z < _targetHeight)
 	{
 		const float step = FMath::Min(riseSpeed * DeltaSeconds, _targetHeight - z);
@@ -115,14 +117,9 @@ AItemBase* AHellPodBase::SpawnAndAttachOne(const FName& socketName, TSubclassOf<
 	AItemBase* newItem = GetWorld()->SpawnActor<AItemBase>(itemClass, spawnTf, params);
 	if (!newItem) return nullptr;
 
-	newItem->AttachToComponent(_mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
+	ToggleItemPhysics(newItem);
 
-	// 스폰 직후에는 떨어지지 않게 기본 잠금
-	if (UPrimitiveComponent* prim = Cast<UPrimitiveComponent>(newItem->GetRootComponent()))
-	{
-		prim->SetSimulatePhysics(false);
-		//prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	newItem->AttachToComponent(_mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socketName);
 
 	return newItem;
 }
@@ -135,14 +132,44 @@ void AHellPodBase::DropAllItemsToGround()
 
 		item->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		if (UPrimitiveComponent* prim = Cast<UPrimitiveComponent>(item->GetRootComponent()))
-		{
-			prim->SetSimulatePhysics(true);
-			prim->SetEnableGravity(true);
-			//prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		}
+		ToggleItemPhysics(item);
 	}
 
+	_isPhysicsOn = true;
+
+}
+
+void AHellPodBase::ToggleItemPhysics(AActor* itemActor)
+{
+	if (!itemActor) return;
+
+	// 스태틱 메시
+	if (UStaticMeshComponent* sm = itemActor->FindComponentByClass<UStaticMeshComponent>())
+	{
+		if (_isPhysicsOn)
+			sm->SetSimulatePhysics(true);
+		else
+			sm->SetSimulatePhysics(false);
+		
+		sm->UpdateOverlaps();
+	}
+
+	// 스켈레탈 메시
+	if (USkeletalMeshComponent* sk = itemActor->FindComponentByClass<USkeletalMeshComponent>())
+	{
+		if (_isPhysicsOn)
+		{
+			sk->SetSimulatePhysics(true);
+			sk->SetAllBodiesSimulatePhysics(true);    // 본 단위까지 ON
+		}
+		else
+		{
+			sk->SetSimulatePhysics(false);
+			sk->SetAllBodiesSimulatePhysics(false);   // 본 단위까지 확실히 OFF
+		}
+		
+		sk->UpdateOverlaps();
+	}
 }
 
 void AHellPodBase::PlayMontage(UAnimMontage* montage)
