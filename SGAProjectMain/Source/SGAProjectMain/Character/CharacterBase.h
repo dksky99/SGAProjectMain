@@ -78,6 +78,11 @@ public:
 	virtual FVector GetTargetLoc() { return FVector(); }
 
 
+	// ITargetable을(를) 통해 상속됨
+	virtual bool GetTargetLook(FVector& dir) const override;
+
+
+
 	virtual void Spawn();
 	void SpawnProcessFinish();
 	bool IsReadyToSpawn();

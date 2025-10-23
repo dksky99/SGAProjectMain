@@ -183,6 +183,60 @@ void AEnemy::SpawnGhost()
 
 }
 
+void AEnemy::SetCombatMovementMode(bool bEnable)
+{
+
+    UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (!MoveComp)
+    {
+        return;
+    }
+
+    if (bEnable)
+    {
+        MoveBattle();
+    }
+    else
+    {
+        MoveNormal();
+    }
+
+}
+
+void AEnemy::MoveNormal()
+{
+    UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (!MoveComp)
+    {
+        return;
+    }
+
+    // --- 평상시 모드 활성화 (이동 방향 주시) ---
+    // 1. 이동 방향으로 회전하는 기능을 다시 켭니다.
+    MoveComp->bOrientRotationToMovement = true;
+
+    // 2. 컨트롤러가 회전을 제어할 필요가 없으므로 끕니다.
+    MoveComp->bUseControllerDesiredRotation = false;
+}
+
+void AEnemy::MoveBattle()
+{
+
+    UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (!MoveComp)
+    {
+        return;
+    }
+
+    // --- 전투 모드 활성화 (타겟 주시) ---
+    // 1. 이동 방향으로 강제 회전하는 기능을 끕니다.
+    MoveComp->bOrientRotationToMovement = false;
+
+    // 2. 컨트롤러(AI)가 원하는 방향을 바라보도록 허용합니다.
+    MoveComp->bUseControllerDesiredRotation = true;
+    
+}
+
 void AEnemy::SetUnitState(EUnitState state)
 {
     if (_unitState == state)
@@ -215,9 +269,6 @@ void AEnemy::SetStay()
 {
     _unitState = EUnitState::Stay;
     GetCharacterMovement()->MaxWalkSpeed = 200.0f;
-   
-
-
 
 }
 

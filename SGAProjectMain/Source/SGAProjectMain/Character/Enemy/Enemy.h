@@ -61,6 +61,9 @@ public:
 	class UPatrolComponent* GetPatrol() { return _patrolComponent; }
 	virtual void Dead() override;
 	virtual void SpawnGhost() override;
+	void SetCombatMovementMode(bool bEnable);
+	void MoveNormal();
+	void MoveBattle();
 
 	
 
