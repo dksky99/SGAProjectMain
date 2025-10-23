@@ -107,6 +107,9 @@ public:
 	void TryRolling(const  FInputActionValue& value);
 
 	UFUNCTION()
+	void TryMelee(const  FInputActionValue& value);
+
+	UFUNCTION()
 	void SwitchWeapon1(const  FInputActionValue& value) { SwitchGun(0, value); }
 	UFUNCTION()
 	void SwitchWeapon2(const  FInputActionValue& value) { SwitchGun(1, value); }
@@ -247,6 +250,8 @@ protected:
 	class UInputAction* _interactAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _mapAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* _meleeAction;
 
 	TArray<FKey> _stratagemInputBuffer;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))

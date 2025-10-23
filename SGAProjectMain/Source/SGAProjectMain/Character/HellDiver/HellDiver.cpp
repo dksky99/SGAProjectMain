@@ -329,7 +329,7 @@ bool AHellDiver::AttackMelee()
     UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 
-    if (_meleeAttackDatas.IsEmpty())
+    if (_twoHandedMelee==nullptr|| _oneHandedMelee==nullptr)
         return false;
     if (anim == nullptr)
         return false;

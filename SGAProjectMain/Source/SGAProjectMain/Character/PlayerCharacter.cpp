@@ -258,6 +258,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_crouchAction, ETriggerEvent::Started, this, &APlayerCharacter::TryCrouch);
 		enhancedInputComponent->BindAction(_proneAction, ETriggerEvent::Started, this, &APlayerCharacter::TryProne);
 		enhancedInputComponent->BindAction(_rollingAction, ETriggerEvent::Started, this, &APlayerCharacter::TryRolling);
+		enhancedInputComponent->BindAction(_meleeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryMelee);
 		enhancedInputComponent->BindAction(_testingViewAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeControl);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Started, this, &APlayerCharacter::StartFiring);
 		enhancedInputComponent->BindAction(_mouseLButtonAction, ETriggerEvent::Triggered, this, &APlayerCharacter::WhileFiring);
@@ -1024,6 +1025,10 @@ void APlayerCharacter::TryRolling(const FInputActionValue& value)
 	default:
 		break;
 	}
+}
+void APlayerCharacter::TryMelee(const FInputActionValue& value)
+{
+	AttackMelee();
 }
 void APlayerCharacter::SetDefaultVIew()
 {
