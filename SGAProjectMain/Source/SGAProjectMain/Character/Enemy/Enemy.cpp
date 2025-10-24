@@ -26,6 +26,9 @@
 
 #include "BehaviorControlComponent.h"
 
+#include "NavigationInvokerComponent.h"
+
+
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
@@ -37,7 +40,15 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     _hpBarWidget->SetRelativeLocation(FVector(0, 0, 230.0f));
 
     _patrolComponent=CreateDefaultSubobject<UPatrolComponent>(TEXT("Patrol"));
+    _navInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+    //Tile Generation Radius(타일 생성 반경) : NavMesh를 생성할 플레이어 주변의 반경을 설정합니다. (예 : 5000 또는 10000 cm)
+    //
+    //    Tile Removal Radius
+    _navInvokerComponent->SetGenerationRadii(2500  ,4000);
     SetGenericTeamId(FGenericTeamId((int32)ETeamID::Enemy));
+
+    GetCharacterMovement()->bUseRVOAvoidance = true;
+    
 }
 
 void AEnemy::BeginPlay()

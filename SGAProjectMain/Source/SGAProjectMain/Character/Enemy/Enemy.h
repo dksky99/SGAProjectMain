@@ -97,6 +97,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Patrol", meta = (AllowPrivateAccess = "true"))
 	class UPatrolComponent* _patrolComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Nav", meta = (AllowPrivateAccess = "true"))
+	class UNavigationInvokerComponent* _navInvokerComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _warCryMontage;
