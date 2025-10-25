@@ -13,6 +13,7 @@
 #include "../../Character/PlayerCharacter.h"
 #include "../../UI/CommandWidget.h"
 #include "../../Game/Mission/TerminalTaskBase.h"
+#include "../../Helper/H_CharacterLoc.h"
 
 ATerminalConsole::ATerminalConsole()
 {
@@ -102,7 +103,7 @@ void ATerminalConsole::ActivateTerminalConsole()
 {
 	_player->BeginTerminalInputMode(this);
 	
-	SetPlayerLocation();
+	H_CharacterLoc::SetCharacterToGround(_player, _playerAnchor, GetWorld());
 	ChangeCameraView(true);
 	
 	// 현재 작업 시작
@@ -126,8 +127,6 @@ void ATerminalConsole::ResetTerminalConsole()
 
 void ATerminalConsole::SetPlayerLocation()
 {
-	FVector playerLoc = _playerAnchor->GetComponentLocation();
-
 	UCapsuleComponent* capsule = _player->GetCapsuleComponent();
 	float halfHeight = capsule->GetScaledCapsuleHalfHeight();
 

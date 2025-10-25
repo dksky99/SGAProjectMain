@@ -52,25 +52,9 @@ public:
 
 	virtual void Interact(class AHellDiver* player) override;
 
+protected:
 	void StartInteracting();
 	void StopInteracting();
-
-protected:
-	UFUNCTION()
-	void OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnIconOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
-	class UInputAction* _selectAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input")
-	class UInputAction* _backAction;
-
-	UFUNCTION()
-	void OnSelect(const FInputActionValue& value);
-	UFUNCTION()
-	void OnBack(const FInputActionValue& value);
-
 	void EnterFocus();
 	void SelectMission();
 	void SetCameraView(EPlanetGlobeMode mode);
@@ -80,13 +64,37 @@ protected:
 
 	FQuat CalculateNewGlobeQuat(float deltaYaw, float deltaPitch, FQuat baseQuat);
 	FVector CalculateGlobePosition(float latitude, float longitude, float globeRadius);
-
+	
 	UFUNCTION()
 	void OnTimelineUpdate(float value);
 	UFUNCTION()
 	void OnTimelineFinished();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UFUNCTION()
+	void OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnIconOutOfRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void OnSelect(const FInputActionValue& value);
+	UFUNCTION()
+	void OnBack(const FInputActionValue& value);
+
+protected:
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* _root = nullptr;
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* _globeRoot = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Camera")
+	class UChildActorComponent* _browseCamera;
+	UPROPERTY(EditAnywhere, Category = "Game/Camera")
+	class UChildActorComponent* _focusCamera;
+
+	UPROPERTY(EditAnywhere)
+	USceneComponent* _playerAnchor;
+
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<UUserWidget> _globeWidgetClass;
 	UPROPERTY()
 	class UPlanetGlobeWidget* _globeWidget;
@@ -95,6 +103,11 @@ protected:
 	class UInputMappingContext* _gameIMC;
 	UPROPERTY(EditAnywhere, Category = "Game/IMC")
 	class UInputMappingContext* _globeWidgetIMC;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Input")
+	class UInputAction* _selectAction;
+	UPROPERTY(EditAnywhere, Category = "Game/Input")
+	class UInputAction* _backAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _globeRadius = 80.f;
@@ -113,43 +126,32 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Timeline")
 	UCurveFloat* _timelineCurve;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	class UTimelineComponent* _timeline;
-
-	FQuat _startQuat, _targetQuat;
-	FVector _startLoc, _targetLoc;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class APlanetSelectRing> _ringClass;
 	UPROPERTY()
 	class APlanetSelectRing* _ring;
 
-	UPROPERTY(EditAnywhere, Category = "Game/Camera")
-	class UChildActorComponent* _browseCamera;
-	UPROPERTY(EditAnywhere, Category = "Game/Camera")
-	class UChildActorComponent* _focusCamera;
-
 	UPROPERTY()
 	APlayerController* _playerController;
 	UPROPERTY()
 	AActor* _playerViewTarget;
-
-	EPlanetGlobeMode _mode = EPlanetGlobeMode::Browse;
-	bool _isInteracting = false;
-
-	float _curPitchDeg = 0.f;
-
-	FVector _curSiteLoc;		// 선택 지점(표면 포인트)
-	FVector2D _ringScreenPos;   // 링의 현재 스크린 좌표
-	FQuat _baseGlobeRotation;   // 글로브 기본 회전 상태 (선택 지점이 정면으로 오게)
 
 	UPROPERTY()
 	class APlanetOperationSite* _curSite = nullptr;
 	UPROPERTY()
 	class APlanetMissionIcon* _curIcon = nullptr;
 
-	UPROPERTY(EditAnywhere)
-	class USceneComponent* _root = nullptr;
-	UPROPERTY(EditAnywhere)
-	class USceneComponent* _globeRoot = nullptr;
+	EPlanetGlobeMode _mode = EPlanetGlobeMode::Browse;
+	bool _isInteracting = false;
+
+	FQuat _startQuat, _targetQuat;
+	FVector _startLoc, _targetLoc;
+
+	float _curPitchDeg = 0.f;	// 현재 글로브 피치 각도
+	FVector2D _focusedSiteAnchor;	// 선택 지점을 앵커로 설정한 스크린 좌표
+	FVector2D _ringScreenPos;   // 링의 현재 스크린 좌표
+	FQuat _focusedGlobeRotation;   // 글로브 기본 회전 상태
 };
