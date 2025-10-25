@@ -7,11 +7,13 @@
 
 void UPlanetGlobeWidget::EnterOperationMode()
 {
+	ShowMission(false);
 	_widgetSwitcher->SetActiveWidgetIndex(0);
 }
 
 void UPlanetGlobeWidget::EnterMissionMode()
 {
+	ShowOperation(false);
 	_widgetSwitcher->SetActiveWidgetIndex(1);
 }
 

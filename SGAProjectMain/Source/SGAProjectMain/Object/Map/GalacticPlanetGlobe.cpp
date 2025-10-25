@@ -5,6 +5,8 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Camera/CameraActor.h"
+#include "Components/TimelineComponent.h"
 #include "../../UI/PlanetGlobeWidget.h"
 #include "../../CGameInstance.h"
 #include "../../Game/PreDeployment/PreDeploymentState.h"
@@ -17,9 +19,25 @@
 // Sets default values
 AGalacticPlanetGlobe::AGalacticPlanetGlobe()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-}
+	
+    _root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = _root;
+	_interactionMark->SetupAttachment(RootComponent);
+
+	_globeRoot = CreateDefaultSubobject<USceneComponent>(TEXT("GlobeRoot"));
+	_globeRoot->SetupAttachment(RootComponent);
+    _mesh->SetupAttachment(_globeRoot);
+
+	_browseCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("BrowseCamera"));
+	_browseCamera->SetupAttachment(RootComponent);
+    _browseCamera->SetChildActorClass(ACameraActor::StaticClass());
+	_focusCamera = CreateDefaultSubobject<UChildActorComponent>(TEXT("FocusCamera"));
+	_focusCamera->SetupAttachment(RootComponent);
+	_focusCamera->SetChildActorClass(ACameraActor::StaticClass());
+
+	_timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+ }
 
 // Called when the game starts or when spawned
 void AGalacticPlanetGlobe::BeginPlay()
@@ -40,6 +58,17 @@ void AGalacticPlanetGlobe::BeginPlay()
         _ring->GetMesh()->OnComponentEndOverlap.AddDynamic(this, &AGalacticPlanetGlobe::OnIconOutOfRange);
 		_ring->SetActorHiddenInGame(true);
     }
+
+    if (_timelineCurve)
+    {
+        FOnTimelineFloat timelineUpdate;
+        timelineUpdate.BindUFunction(this, FName("OnTimelineUpdate"));
+		_timeline->AddInterpFloat(_timelineCurve, timelineUpdate);
+
+        FOnTimelineEvent timelineFinished;
+		timelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
+		_timeline->SetTimelineFinishedFunc(timelineFinished);
+    }
 	
     if (_globeWidgetClass)
 		_globeWidget = CreateWidget<UPlanetGlobeWidget>(GetWorld(), _globeWidgetClass);
@@ -55,7 +84,7 @@ void AGalacticPlanetGlobe::InitializeOperations()
         UChildActorComponent* opSite = NewObject<UChildActorComponent>(this);
         if (opSite)
         {
-            opSite->SetupAttachment(RootComponent);
+            opSite->SetupAttachment(_mesh);
             opSite->SetChildActorClass(opData.OperationSiteClass);
             opSite->RegisterComponent();
             _operationSites.Add(opSite);
@@ -112,27 +141,31 @@ void AGalacticPlanetGlobe::StartInteracting()
 {
 	_isInteracting = true;
     _globeWidget->AddToViewport();
+
+	_playerViewTarget = _playerController->GetViewTarget();
+    SetCameraView(_mode);
     if (auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(_playerController->GetLocalPlayer()))
     { // IMC 교체
         subsystem->RemoveMappingContext(_gameIMC);
         subsystem->AddMappingContext(_globeWidgetIMC, 10);
     }
+
     _ring->SetActorHiddenInGame(false);
-    HideMark();
 }
 
 void AGalacticPlanetGlobe::StopInteracting()
 {
 	_isInteracting = false;
     _globeWidget->RemoveFromParent();
-    _mode = EPlanetGlobeMode::Browse;
-    _curSite = nullptr;
 	_curIcon = nullptr;
+
+	SetCameraView(EPlanetGlobeMode::None);
     if (auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(_playerController->GetLocalPlayer()))
     { // IMC 복구
         subsystem->RemoveMappingContext(_globeWidgetIMC);
         subsystem->AddMappingContext(_gameIMC, 10);
 	}
+
     _ring->SetActorHiddenInGame(true);
 }
 
@@ -189,6 +222,7 @@ void AGalacticPlanetGlobe::OnBack(const FInputActionValue& value)
     if (_mode == EPlanetGlobeMode::Focus)
     {
         _mode = EPlanetGlobeMode::Browse;
+		SetCameraView(_mode);
         _globeWidget->EnterMissionMode();
 	}
     if (_mode == EPlanetGlobeMode::Browse)
@@ -201,20 +235,45 @@ void AGalacticPlanetGlobe::EnterFocus()
 {
     if (!_curSite) return;
 
-    _curSite->ChangeToFocusMode();
-    _curSiteLoc = _curSite->GetActorLocation(); // 선택한 지점 위치
-
-    // 선택 지점을 화면 중앙으로 오게 글로브 목표 회전 계산
-    FVector globeCenter = _mesh->GetComponentLocation();
-    FVector normalVec = (_curSiteLoc - globeCenter).GetSafeNormal();
-    FQuat quat = FRotationMatrix::MakeFromX(normalVec).ToQuat();
-    _baseGlobeRotation = quat;
-
-    // 링 스크린 위치 초기화 -> 선택 지점 위치
-    _playerController->ProjectWorldLocationToScreen(_curSiteLoc, _ringScreenPos, true);
-
     _mode = EPlanetGlobeMode::Focus;
-	_globeWidget->EnterMissionMode();
+	SetCameraView(_mode);
+
+    _ring->GetMesh()->SetGenerateOverlapEvents(false);
+    _globeWidget->EnterMissionMode();
+
+    FVector siteLoc = _curSite->GetActorLocation(); // 선택한 지점 위치
+    FVector globeCenter = _mesh->GetComponentLocation();
+
+    // 현재 사이트 방향
+    FVector siteDir = (siteLoc - globeCenter).GetSafeNormal();
+
+    // 카메라에서부터 글로브만 맞는 채널로 라인트레이스
+    FVector rayOrigin = _focusCamera->GetComponentLocation() + FVector(0.f, 0.f, 50.f); // 글로브의 이후 움직임을 고려해 약간 위에서 시작
+	FVector rayDir = _focusCamera->GetChildActor()->GetActorForwardVector();
+    FHitResult hit;
+    GetWorld()->LineTraceSingleByChannel(hit, rayOrigin, rayOrigin + rayDir * 100000.f, ECC_GameTraceChannel4);
+
+	// 맞았으면 사이트가 보이도록 글로브 회전
+    if (hit.bBlockingHit)
+    {
+		FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
+        FQuat deltaQuat = FQuat::FindBetweenNormals(siteDir, surfaceNormal); // 사이트가 보이도록 회전하는 쿼터니언
+        _baseGlobeRotation = deltaQuat * _mesh->GetComponentQuat();
+        _targetQuat = deltaQuat * _globeRoot->GetComponentQuat(); // 메시 대신 루트 회전
+        DrawDebugLine(GetWorld(), globeCenter, globeCenter + siteDir * 200.f, FColor::Red, false, 15.f);
+        DrawDebugLine(GetWorld(), hit.ImpactPoint, hit.ImpactPoint + surfaceNormal * 200.f, FColor::Blue, false, 15.f);
+    }
+    else
+		_targetQuat = _globeRoot->GetComponentQuat();
+
+	_startQuat = _globeRoot->GetComponentQuat();
+	_startLoc = _globeRoot->GetComponentLocation();
+    _targetLoc = _startLoc + FVector(0.f, 0.f, -50.f);  // 약간 아래로
+
+    if (_timeline && _timelineCurve)
+    {
+        _timeline->PlayFromStart();
+	}
 }
 
 void AGalacticPlanetGlobe::SelectMission()
@@ -228,6 +287,21 @@ void AGalacticPlanetGlobe::SelectMission()
 	GI->GetPreDeployState()->SetCurMission(_curIcon->GetMissionData());
         
     StopInteracting();
+}
+
+void AGalacticPlanetGlobe::SetCameraView(EPlanetGlobeMode mode)
+{
+    AActor* cameraActor = nullptr;
+
+    if (mode == EPlanetGlobeMode::Browse)
+        cameraActor = Cast<ACameraActor>(_browseCamera->GetChildActor());
+    else if (mode == EPlanetGlobeMode::Focus)
+        cameraActor = Cast<ACameraActor>(_focusCamera->GetChildActor());
+    else
+		cameraActor = _playerViewTarget;
+
+    if (cameraActor)
+        _playerController->SetViewTargetWithBlend(cameraActor, 0.5f, VTBlend_Cubic);
 }
 
 void AGalacticPlanetGlobe::TickBrowseMode(float DeltaTime)
@@ -280,20 +354,20 @@ void AGalacticPlanetGlobe::TickFocusMode(float DeltaTime)
     FVector distanceFromSite = _ring->GetActorLocation() - _curSiteLoc; // 현재 링과 현재 지역 간의 거리
     const float distanceSquared = distanceFromSite.SizeSquared();
 
+    FVector2D newRingPos;
     float slerp = 10.f * DeltaTime;
     if (distanceSquared > FMath::Square(_siteZoneRadius)) // 링이 지역에서부터 일정 거리를 벗어날 경우 복귀
     {
-        _ringScreenPos = FMath::Lerp(_ringScreenPos, target, slerp);
+        newRingPos = FMath::Lerp(_ringScreenPos, target, slerp);
     }
     else
     {
-		_ringScreenPos = _ringScreenPos + delta * _ringSensitivity; // 일정 거리 내에서는 마우스 이동량만큼 이동
+        newRingPos = _ringScreenPos + delta * _ringSensitivity; // 일정 거리 내에서는 마우스 이동량만큼 이동
     }
-	UE_LOG(LogTemp, Log, TEXT("distanceSquared: %f"), distanceSquared);
 
     // 링 월드 배치
     FVector rayOrigin, rayDir;
-    _playerController->DeprojectScreenPositionToWorld(_ringScreenPos.X, _ringScreenPos.Y, rayOrigin, rayDir);
+    _playerController->DeprojectScreenPositionToWorld(newRingPos.X, newRingPos.Y, rayOrigin, rayDir);
 
     FHitResult hit;
     GetWorld()->LineTraceSingleByChannel(hit, rayOrigin, rayOrigin + rayDir * 100000.f, ECC_GameTraceChannel4);
@@ -303,6 +377,7 @@ void AGalacticPlanetGlobe::TickFocusMode(float DeltaTime)
         const FVector camRight = _playerController->PlayerCameraManager->GetActorRightVector();
         const FVector upTangent = FVector::CrossProduct(camRight, surfaceNormal).GetSafeNormal();
         _ring->PlaceOnSurface(hit.ImpactPoint, surfaceNormal, upTangent);
+		_ringScreenPos = newRingPos;    // 링이 글로브 위에 머무르는 범위 내에서 스크린 좌표 갱신
     }
 
     // 글로브 모션
@@ -339,3 +414,20 @@ FVector AGalacticPlanetGlobe::CalculateGlobePosition(float latitude, float longi
              globeRadius * FMath::Sin(lat) };
 }
 
+void AGalacticPlanetGlobe::OnTimelineUpdate(float value)
+{
+    FQuat newQuat = FQuat::Slerp(_startQuat, _targetQuat, value);
+    _globeRoot->SetWorldRotation(newQuat);
+    FVector newLoc = FMath::Lerp(_startLoc, _targetLoc, value);
+    _globeRoot->SetWorldLocation(newLoc);
+}
+
+void AGalacticPlanetGlobe::OnTimelineFinished()
+{
+    _curSite->ChangeToFocusMode();
+    // 링 스크린 위치 초기화 -> 선택 지점의 변경된 
+    // 위치 기준
+    _curSiteLoc = _curSite->GetActorLocation();
+    _playerController->ProjectWorldLocationToScreen(_curSiteLoc, _ringScreenPos, true);
+    _ring->GetMesh()->SetGenerateOverlapEvents(true);
+}

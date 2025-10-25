@@ -10,6 +10,7 @@
 UENUM(BlueprintType)
 enum class EPlanetGlobeMode : uint8
 {
+	None,
 	Browse,
 	Focus
 };
@@ -72,12 +73,18 @@ protected:
 
 	void EnterFocus();
 	void SelectMission();
+	void SetCameraView(EPlanetGlobeMode mode);
 
 	void TickBrowseMode(float DeltaTime);
 	void TickFocusMode(float DeltaTime);
 
 	FQuat CalculateNewGlobeQuat(float deltaYaw, float deltaPitch, FQuat baseQuat);
 	FVector CalculateGlobePosition(float latitude, float longitude, float globeRadius);
+
+	UFUNCTION()
+	void OnTimelineUpdate(float value);
+	UFUNCTION()
+	void OnTimelineFinished();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UUserWidget> _globeWidgetClass;
@@ -104,13 +111,28 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TArray<UChildActorComponent*> _operationSites;
 
+	UPROPERTY(EditAnywhere, Category = "Game/Timeline")
+	UCurveFloat* _timelineCurve;
+	UPROPERTY(EditAnywhere)
+	class UTimelineComponent* _timeline;
+
+	FQuat _startQuat, _targetQuat;
+	FVector _startLoc, _targetLoc;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class APlanetSelectRing> _ringClass;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	class APlanetSelectRing* _ring;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Camera")
+	class UChildActorComponent* _browseCamera;
+	UPROPERTY(EditAnywhere, Category = "Game/Camera")
+	class UChildActorComponent* _focusCamera;
 
 	UPROPERTY()
 	APlayerController* _playerController;
+	UPROPERTY()
+	AActor* _playerViewTarget;
 
 	EPlanetGlobeMode _mode = EPlanetGlobeMode::Browse;
 	bool _isInteracting = false;
@@ -125,4 +147,9 @@ protected:
 	class APlanetOperationSite* _curSite = nullptr;
 	UPROPERTY()
 	class APlanetMissionIcon* _curIcon = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* _root = nullptr;
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* _globeRoot = nullptr;
 };
