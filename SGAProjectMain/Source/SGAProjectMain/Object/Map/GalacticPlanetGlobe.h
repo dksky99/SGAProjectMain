@@ -56,6 +56,7 @@ protected:
 	void StartInteracting();
 	void StopInteracting();
 	void EnterFocus();
+	void ExitFocus();
 	void SelectMission();
 	void SetCameraView(EPlanetGlobeMode mode);
 
@@ -66,9 +67,11 @@ protected:
 	FVector CalculateGlobePosition(float latitude, float longitude, float globeRadius);
 	
 	UFUNCTION()
-	void OnTimelineUpdate(float value);
+	void OnFocusTimelineUpdate(float value);
 	UFUNCTION()
-	void OnTimelineFinished();
+	void OnExitTimelineUpdate(float value);
+	UFUNCTION()
+	void OnFocusTimelineFinished();
 
 	UFUNCTION()
 	void OnIconInRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -90,6 +93,9 @@ protected:
 	class UChildActorComponent* _browseCamera;
 	UPROPERTY(EditAnywhere, Category = "Game/Camera")
 	class UChildActorComponent* _focusCamera;
+
+	UPROPERTY(EditAnywhere)
+	class UStaticMeshComponent* _rotatingBand;
 
 	UPROPERTY(EditAnywhere)
 	USceneComponent* _playerAnchor;
@@ -127,7 +133,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Timeline")
 	UCurveFloat* _timelineCurve;
 	UPROPERTY()
-	class UTimelineComponent* _timeline;
+	class UTimelineComponent* _focusTimeline;
+	UPROPERTY()
+	class UTimelineComponent* _exitTimeline;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class APlanetSelectRing> _ringClass;
@@ -147,8 +155,9 @@ protected:
 	EPlanetGlobeMode _mode = EPlanetGlobeMode::Browse;
 	bool _isInteracting = false;
 
-	FQuat _startQuat, _targetQuat;
-	FVector _startLoc, _targetLoc;
+	FQuat _startGlobeQuat, _targetGlobeQuat;
+	FVector _startGlobeLoc, _targetGlobeLoc;
+	FVector _startBandLoc, _targetBandLoc;
 
 	float _curPitchDeg = 0.f;	// 현재 글로브 피치 각도
 	FVector2D _focusedSiteAnchor;	// 선택 지점을 앵커로 설정한 스크린 좌표

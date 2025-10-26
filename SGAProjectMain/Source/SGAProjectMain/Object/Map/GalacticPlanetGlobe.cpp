@@ -37,10 +37,14 @@ AGalacticPlanetGlobe::AGalacticPlanetGlobe()
 	_focusCamera->SetupAttachment(RootComponent);
 	_focusCamera->SetChildActorClass(ACameraActor::StaticClass());
 
-	_timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+	_focusTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+	_exitTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("ExitTimeline"));
 
 	_playerAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("PlayerAnchor"));
 	_playerAnchor->SetupAttachment(RootComponent);
+
+	_rotatingBand = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RotatingBand"));
+	_rotatingBand->SetupAttachment(RootComponent);
  }
 
 // Called when the game starts or when spawned
@@ -65,17 +69,27 @@ void AGalacticPlanetGlobe::BeginPlay()
 
     if (_timelineCurve)
     {
-        FOnTimelineFloat timelineUpdate;
-        timelineUpdate.BindUFunction(this, FName("OnTimelineUpdate"));
-		_timeline->AddInterpFloat(_timelineCurve, timelineUpdate);
+        FOnTimelineFloat focusTimelineUpdate;
+        focusTimelineUpdate.BindUFunction(this, FName("OnFocusTimelineUpdate"));
+		_focusTimeline->AddInterpFloat(_timelineCurve, focusTimelineUpdate);
+
+        FOnTimelineFloat exitTimelineUpdate;
+        exitTimelineUpdate.BindUFunction(this, FName("OnExitTimelineUpdate"));
+        _exitTimeline->AddInterpFloat(_timelineCurve, exitTimelineUpdate);
 
         FOnTimelineEvent timelineFinished;
-		timelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
-		_timeline->SetTimelineFinishedFunc(timelineFinished);
+		timelineFinished.BindUFunction(this, FName("OnFocusTimelineFinished"));
+		_focusTimeline->SetTimelineFinishedFunc(timelineFinished);
     }
 	
     if (_globeWidgetClass)
 		_globeWidget = CreateWidget<UPlanetGlobeWidget>(GetWorld(), _globeWidgetClass);
+
+    if (_rotatingBand)
+    {
+		_startBandLoc = _rotatingBand->GetRelativeLocation();
+		_targetBandLoc = _startBandLoc + FVector(0.f, 0.f, 200.f);
+    }
 }
 
 void AGalacticPlanetGlobe::InitializeOperations()
@@ -114,7 +128,8 @@ void AGalacticPlanetGlobe::SetPlayerInputComponent()
 	UInputComponent* playerInputComponent = _playerController->InputComponent;
     if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(playerInputComponent))
     {
-        EIC->BindAction(_selectAction, ETriggerEvent::Triggered, this, &AGalacticPlanetGlobe::OnSelect);
+        EIC->BindAction(_selectAction, ETriggerEvent::Started, this, &AGalacticPlanetGlobe::OnSelect);
+		EIC->BindAction(_backAction, ETriggerEvent::Started, this, &AGalacticPlanetGlobe::OnBack);
     }
 }
 
@@ -122,6 +137,14 @@ void AGalacticPlanetGlobe::SetPlayerInputComponent()
 void AGalacticPlanetGlobe::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// 글로브 상단 밴드 회전
+    if (_rotatingBand)
+    {
+        FRotator rot = _rotatingBand->GetRelativeRotation();
+        rot.Yaw += 20.f * DeltaTime;
+        _rotatingBand->SetRelativeRotation(rot);
+    }
 
 	if (!_isInteracting) return;
 
@@ -148,6 +171,7 @@ void AGalacticPlanetGlobe::StartInteracting()
 
 	_playerViewTarget = _playerController->GetViewTarget();
     SetCameraView(_mode);
+
     if (auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(_playerController->GetLocalPlayer()))
     { // IMC 교체
         subsystem->RemoveMappingContext(_gameIMC);
@@ -157,10 +181,31 @@ void AGalacticPlanetGlobe::StartInteracting()
     H_CharacterLoc::SetCharacterToGround(_playerController->GetCharacter(), _playerAnchor, GetWorld());
 
     _ring->SetActorHiddenInGame(false);
+
+    if (_mode == EPlanetGlobeMode::Focus)
+    {
+        if (_exitTimeline && _timelineCurve)
+            _exitTimeline->Reverse();
+		
+    }
 }
 
 void AGalacticPlanetGlobe::StopInteracting()
 {
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (!GI) return;
+
+    if (!_curSite || !_curIcon)
+    {
+        GI->GetPreDeployState()->SetCurOperation(nullptr);
+        GI->GetPreDeployState()->SetCurMission(nullptr);
+    }
+    else
+    {
+        GI->GetPreDeployState()->SetCurOperation(_curSite->GetOperationData());
+        GI->GetPreDeployState()->SetCurMission(_curIcon->GetMissionData());
+    }
+
 	_isInteracting = false;
     _globeWidget->RemoveFromParent();
 	_curIcon = nullptr;
@@ -207,18 +252,38 @@ void AGalacticPlanetGlobe::EnterFocus()
         FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
         FQuat deltaQuat = FQuat::FindBetweenNormals(siteDir, surfaceNormal); // 사이트가 보이도록 회전하는 쿼터니언
         _focusedGlobeRotation = deltaQuat * _mesh->GetComponentQuat();
-        _targetQuat = deltaQuat * _globeRoot->GetComponentQuat(); // 메시 대신 루트 회전
+        _targetGlobeQuat = deltaQuat * _globeRoot->GetComponentQuat(); // 메시 대신 루트 회전
     }
     else
-        _targetQuat = _globeRoot->GetComponentQuat();
+        _targetGlobeQuat = _globeRoot->GetComponentQuat();
 
-    _startQuat = _globeRoot->GetComponentQuat();
-    _startLoc = _globeRoot->GetComponentLocation();
-    _targetLoc = _startLoc + FVector(0.f, 0.f, -50.f);  // 약간 아래로
+    _startGlobeQuat = _globeRoot->GetComponentQuat();
+    _startGlobeLoc = _globeRoot->GetComponentLocation();
+    _targetGlobeLoc = _startGlobeLoc + FVector(0.f, 0.f, -50.f);  // 약간 아래로
 
-    if (_timeline && _timelineCurve)
+    if (_focusTimeline && _timelineCurve)
     {
-        _timeline->PlayFromStart();
+        _focusTimeline->PlayFromStart();
+    }
+}
+
+void AGalacticPlanetGlobe::ExitFocus()
+{
+    SetActorTickEnabled(false);
+
+    _curSite->ChangeToBrowseMode();
+	_curIcon = nullptr;
+
+    _ring->GetMesh()->SetGenerateOverlapEvents(false);
+    _ring->AttachToComponent(_mesh, FAttachmentTransformRules::KeepWorldTransform); // 링이 글로브에 잠시 붙은 채로 회전하도록
+    _globeWidget->EnterOperationMode();
+
+    _mode = EPlanetGlobeMode::Browse;
+    SetCameraView(_mode);
+
+    if (_focusTimeline && _timelineCurve)
+    {
+        _focusTimeline->Reverse();
     }
 }
 
@@ -226,11 +291,10 @@ void AGalacticPlanetGlobe::SelectMission()
 {
     if (!_curIcon || !_curSite) return;
 
-    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
-    if (!GI) return;
-
-    GI->GetPreDeployState()->SetCurOperation(_curSite->GetOperationData());
-    GI->GetPreDeployState()->SetCurMission(_curIcon->GetMissionData());
+    if (_exitTimeline && _timelineCurve)
+    {
+        _exitTimeline->PlayFromStart();
+    }
 
     StopInteracting();
 }
@@ -357,15 +421,31 @@ FVector AGalacticPlanetGlobe::CalculateGlobePosition(float latitude, float longi
              globeRadius * FMath::Sin(lat) };
 }
 
-void AGalacticPlanetGlobe::OnTimelineUpdate(float value)
+void AGalacticPlanetGlobe::OnFocusTimelineUpdate(float value)
 {
-    FQuat newQuat = FQuat::Slerp(_startQuat, _targetQuat, value);
+    FQuat newQuat = FQuat::Slerp(_startGlobeQuat, _targetGlobeQuat, value);
     _globeRoot->SetWorldRotation(newQuat);
-    FVector newLoc = FMath::Lerp(_startLoc, _targetLoc, value);
+    FVector newLoc = FMath::Lerp(_startGlobeLoc, _targetGlobeLoc, value);
     _globeRoot->SetWorldLocation(newLoc);
 }
 
-void AGalacticPlanetGlobe::OnTimelineFinished()
+void AGalacticPlanetGlobe::OnExitTimelineUpdate(float value)
+{
+    FQuat newGlobeQuat = FQuat::Slerp(_targetGlobeQuat, _startGlobeQuat, value);
+    _globeRoot->SetWorldRotation(newGlobeQuat);
+    FVector newGlobeLoc = FMath::Lerp(_targetGlobeLoc, _startGlobeLoc, value);
+	_globeRoot->SetWorldLocation(newGlobeLoc);
+
+    if (_rotatingBand)
+    {
+        FVector newBandLoc = FMath::Lerp(_startBandLoc, _targetBandLoc, value);
+        _rotatingBand->SetRelativeLocation(newBandLoc);
+		float newBandScale = FMath::Lerp(1.f, 1.2f, value);
+		_rotatingBand->SetRelativeScale3D(FVector(newBandScale));
+	}
+}
+
+void AGalacticPlanetGlobe::OnFocusTimelineFinished()
 {
     // 앵커 및 링 초기 위치 설정
     _playerController->ProjectWorldLocationToScreen(_curSite->GetActorLocation(), _focusedSiteAnchor, true);
@@ -429,13 +509,13 @@ void AGalacticPlanetGlobe::OnBack(const FInputActionValue& value)
 {
     if (_mode == EPlanetGlobeMode::Focus)
     {
-        _mode = EPlanetGlobeMode::Browse;
-        SetCameraView(_mode);
-        _globeWidget->EnterMissionMode();
+        ExitFocus();
+        return;
     }
     if (_mode == EPlanetGlobeMode::Browse)
     {
         StopInteracting();
+        return;
     }
 }
 

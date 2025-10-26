@@ -99,6 +99,19 @@ void APlanetOperationSite::ChangeToFocusMode()
 	ShowMissionIcons(true);
 }
 
+void APlanetOperationSite::ChangeToBrowseMode()
+{
+    // 메인아이콘 충돌 활성화
+    if (auto icon = _mainIcon->GetChildActor())
+    {
+        icon->SetActorHiddenInGame(false);
+        icon->SetActorEnableCollision(true);
+    }
+    _mainIcon->SetVisibility(true);
+    
+	ShowMissionIcons(false);
+}
+
 void APlanetOperationSite::ShowMissionIcons(bool bShow)
 {
     auto SetVisible = [bShow](UChildActorComponent* iconComp, bool bUse)

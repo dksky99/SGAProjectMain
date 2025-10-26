@@ -28,18 +28,27 @@ void UPreDeploymentState::SetStratagemID(int32 index, int32 id)
 void UPreDeploymentState::SetCurOperation(UOperationDataAsset* op)
 {
 	_curOperation = op;
-	auto missions = _curOperation->GetMissions();
-	for (auto mission : missions)
+
+	if (op)
 	{
-		_missions.Add(mission, EMissionState::Available);
+		auto missions = _curOperation->GetMissions();
+		for (auto mission : missions)
+		{
+			_missions.Add(mission, EMissionState::Available);
+		}
 	}
+	else
+		_missions.Empty();
 }
 
 void UPreDeploymentState::SetCurMission(UMissionDataAsset* mission)
 {
 	_curMission = mission;
+
+	bool hasMission = (_curMission != nullptr);
+
 	if (_missionSelectedEvent.IsBound())
-		_missionSelectedEvent.Broadcast();
+		_missionSelectedEvent.Broadcast(hasMission);
 }
 
 void UPreDeploymentState::ApplyMissionResult(bool isCleared)

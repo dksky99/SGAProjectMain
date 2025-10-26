@@ -46,11 +46,11 @@ void ALobbyGameMode::BeginPlay()
     }
 }
 
-void ALobbyGameMode::OnMissionSelected()
+void ALobbyGameMode::OnMissionSelected(bool hasMission)
 {
     for (auto hellpod : _hellpods)
     {
         // 미션이 선택되면 탑승 가능
-        hellpod->SetInteractable(true);
+        hellpod->SetInteractable(hasMission);
 	}
 }

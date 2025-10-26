@@ -9,7 +9,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE(FOnMissionSelected);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMissionSelected, bool);
 
 UENUM()
 enum class EMissionState : uint8

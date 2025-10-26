@@ -16,7 +16,7 @@ class SGAPROJECTMAIN_API ALobbyGameMode : public AGameModeBase
 	
 	void BeginPlay();
 
-	void OnMissionSelected();
+	void OnMissionSelected(bool hasMission);
 
 	UPROPERTY()
 	TArray<class APreDeploymentHellpod*> _hellpods;

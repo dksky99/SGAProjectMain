@@ -25,6 +25,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void ChangeToFocusMode();
+	void ChangeToBrowseMode();
 
 	class UOperationDataAsset* GetOperationData() const { return _operationData; }
 
