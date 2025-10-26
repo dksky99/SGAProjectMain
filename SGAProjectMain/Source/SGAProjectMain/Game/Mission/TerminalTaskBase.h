@@ -10,7 +10,7 @@
 /**
  * 
  */
-DECLARE_MULTICAST_DELEGATE(FTaskCompleted);
+DECLARE_MULTICAST_DELEGATE(FOnTaskCompleted);
 
 UCLASS(BlueprintType, Blueprintable)
 class SGAPROJECTMAIN_API UTerminalTaskBase : public UDataAsset
@@ -25,7 +25,7 @@ public:
 
 	virtual void ReceiveInput(FKey key);
 
-	FTaskCompleted _taskCompletedEvent;
+	FOnTaskCompleted _taskCompletedEvent;
 
 	TSubclassOf<UUserWidget> GetTerminalWidgetClass() const { return _terminalWidgetClass; }
 

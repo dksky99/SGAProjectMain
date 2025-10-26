@@ -78,7 +78,7 @@ void ABroadcastTower::OnCommandCompleted()
     AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
     if (GM)
     {
-        GM->OnMissionEnd();
+        GM->OnObjectiveCleared(_objectiveID);
     }
 }
 

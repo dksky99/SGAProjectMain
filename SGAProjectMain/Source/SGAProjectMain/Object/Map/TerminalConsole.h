@@ -34,6 +34,9 @@ public:
 protected:
 	void ActivateTerminalConsole();
 	void ResetTerminalConsole();
+
+	void SetPlayerLocation();
+	void ChangeCameraView(bool isInteracting);
 	
 	void OnTaskCompleted();
 
