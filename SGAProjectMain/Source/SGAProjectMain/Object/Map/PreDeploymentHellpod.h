@@ -19,6 +19,10 @@ public:
 
 	virtual void Interact(class AHellDiver* hellDiver);
 
+	void ShowDefaultMark() override;
+	void ShowKeyButtonMark() override;
+	void SetInteractable(bool isInteractable);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Mesh")
 	TObjectPtr<USkeletalMeshComponent> _hellpodMesh;
@@ -29,4 +33,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Flow")
 	TSubclassOf<UPreDeploymentFlow> _preDeployFlowClass;
+
+	bool _isInteractable = false;
 };

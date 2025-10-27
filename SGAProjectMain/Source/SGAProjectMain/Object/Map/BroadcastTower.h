@@ -34,4 +34,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UGeometryCollectionComponent> _geometryCollection;
+
+	UPROPERTY(EditAnywhere)
+	FName _objectiveID;
 };

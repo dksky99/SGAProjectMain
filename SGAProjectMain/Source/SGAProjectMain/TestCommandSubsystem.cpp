@@ -150,7 +150,7 @@ void UTestCommandSubsystem::OnMoveLobby()
     AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
     if (GM)
     {
-        GM->OnBattleEnd();
+        GM->EndBattle(true);
     }
 }
 

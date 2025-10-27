@@ -27,5 +27,5 @@ void UPlaneAnimInstance::AnimNotify_OpenHatch()
 void UPlaneAnimInstance::AnimNotify_Exit()
 {
 	AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
-	GM->OnBattleEnd();
+	GM->EndBattle(true);
 }

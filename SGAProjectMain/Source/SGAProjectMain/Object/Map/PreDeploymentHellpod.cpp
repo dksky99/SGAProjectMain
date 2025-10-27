@@ -17,8 +17,12 @@ APreDeploymentHellpod::APreDeploymentHellpod()
 
 void APreDeploymentHellpod::Interact(AHellDiver* hellDiver)
 {
+	if (!_isInteractable) return;
+
 	if (!hellDiver)
 		return;
+
+	_isInteractable = false;
 
 	if (!_preDeployFlow)
 	{
@@ -29,4 +33,21 @@ void APreDeploymentHellpod::Interact(AHellDiver* hellDiver)
 
 	_preDeployFlow->Initialize(player);
 	_preDeployFlow->EnterFlow();
+}
+
+void APreDeploymentHellpod::ShowDefaultMark()
+{
+	Super::ShowDefaultMark();
+	_interactionMark->SetVisibility(_isInteractable);
+}
+
+void APreDeploymentHellpod::ShowKeyButtonMark()
+{
+	Super::ShowKeyButtonMark();
+	_interactionMark->SetVisibility(_isInteractable);
+}
+
+void APreDeploymentHellpod::SetInteractable(bool isInteractable)
+{
+	_isInteractable = isInteractable;
 }
