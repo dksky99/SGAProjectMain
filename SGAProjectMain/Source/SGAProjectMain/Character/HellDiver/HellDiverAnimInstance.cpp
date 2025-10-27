@@ -257,8 +257,8 @@ void UHellDiverAnimInstance::GetAimOffset(float deltaTime)
 
 		float interpSpeed = 20.f;
 
-		_addYaw = FMath::Lerp(prevAddYaw, _addYaw, interpSpeed *deltaTime);
-		_addPitch = FMath::Lerp(prevAddPitch, _addPitch, interpSpeed * deltaTime);
+		_addYaw = FMath::FInterpTo(prevAddYaw, _addYaw, deltaTime,interpSpeed );
+		_addPitch = FMath::FInterpTo(prevAddPitch, _addPitch, deltaTime, interpSpeed);
 	}
 
 	// 4. 최종 값 계산 (이전과 동일)
