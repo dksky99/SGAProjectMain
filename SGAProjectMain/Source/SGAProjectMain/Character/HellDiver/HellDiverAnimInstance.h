@@ -139,7 +139,7 @@ protected:
 
 
 
-
+	float _prevActorYaw;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _addYaw=0.0f;

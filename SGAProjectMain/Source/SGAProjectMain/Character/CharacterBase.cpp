@@ -52,6 +52,8 @@ ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
 	_stimuliSourceComp->RegisterForSense(UAISense_Hearing::StaticClass());
 	_stimuliSourceComp->RegisterForSense(UAISense_Damage::StaticClass());
 	_stimuliSourceComp->RegisterWithPerceptionSystem();
+	
+	GetCharacterMovement()->MaxStepHeight = 45.f;
 }
 
 void ACharacterBase::PostInitializeComponents()

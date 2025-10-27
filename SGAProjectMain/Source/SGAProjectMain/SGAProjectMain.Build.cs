@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.IO;
 using UnrealBuildTool;
 
 public class SGAProjectMain : ModuleRules
@@ -9,5 +10,8 @@ public class SGAProjectMain : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "NavigationSystem", "AIModule", "AnimGraphRuntime", "GameplayTasks", "Niagara", "SlateCore", "MotionWarping", "GeometryCollectionEngine", "ChaosSolverEngine" });
+
+    
+
     }
 }

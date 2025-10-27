@@ -225,26 +225,45 @@ void UHellDiverAnimInstance::CheckEquipChange(uint8 index)
 
 }
 
+
+//캐릭터의 메시가 돌아가게되는 60도마다의 turnleft나 turnright때 이전 로테이션에서의 에임오프셋때문에 조준이 튄다. 즉 에임오프셋에 메시의 로테이션이 관여해야한다.
+//기존은 메시의 z와 y축을 기준으로 평면에 정면과 목표선을 투영해 각도를 판단했었다. 
+//0. 이전 yaw pitch를 구함
+//1. 우선 기본적인 에임오프셋을 구함.
+//2. 총구의 forward와 목표선의 필요한 추가적인 yaw와 pitch를 구함.(중요한건 이 값은 시간에따라 계속 변동될것이라는것.
+//3. 우선 이 둘을 합산하여 목표 값을 찾아본다. 그리고 이전 yaw pitch에서 lerp시킨다. 
+//3. 이전 yaw와 이전 로테이션의 변화도 가지고있어보자. 그리고 이전로테이션과 지금의 로테이션의 변화를 가산해야할 값에 추가해놓는것이다 그러면 자연스러운 로테이션변화가 가능할것같다.
+// 메시가 아닌 액터의 로테이션이다 
 void UHellDiverAnimInstance::GetAimOffset(float deltaTime)
 {
-
+	float actorYaw = _hellDiver->GetActorRotation().Yaw;
+	float yawChange = FMath::FindDeltaAngleDegrees( _prevActorYaw, actorYaw);
+	_prevActorYaw = actorYaw;
 
 	CalcYaw();
 	CalcPitch();
-	if (_weaponState != EWeaponType::Gun || _hellDiver->GetEquippedGun() == nullptr)
+
+	if (_weaponState != EWeaponType::Gun || _hellDiver->GetEquippedGun() == nullptr||_isActing||_isMoving&&!_isFocusing)
 	{
 		_addYaw = 0.f;
 		_addPitch = 0.f;
 	}
 	else
 	{
+		float prevAddYaw = _addYaw;
+		float prevAddPitch = _addPitch;
 		CalcAimYaw(deltaTime);
 		CalcAimPitch(deltaTime);
-	
-	}
-	_finalYaw = FMath::Clamp(_yaw + _addYaw,-90.f,90.f);
-	_finalPitch = FMath::Clamp(_pitch + _addPitch, -90.f, 90.f);
 
+		float interpSpeed = 20.f;
+
+		_addYaw = FMath::Lerp(prevAddYaw, _addYaw, interpSpeed *deltaTime);
+		_addPitch = FMath::Lerp(prevAddPitch, _addPitch, interpSpeed * deltaTime);
+	}
+
+	// 4. 최종 값 계산 (이전과 동일)
+	_finalYaw = FMath::Clamp(_yaw + _addYaw - yawChange, -100.f, 100.f);
+	_finalPitch = FMath::Clamp(_pitch + _addPitch, -130.f, 130.f);
 }
 
 void UHellDiverAnimInstance::CalcYaw()
@@ -252,69 +271,34 @@ void UHellDiverAnimInstance::CalcYaw()
 	if (!_hellDiver)
 	{
 		auto pawn = TryGetPawnOwner();
-		if (pawn)
-		{
-			_hellDiver = Cast<AHellDiver>(pawn);
-
-		}
+		if (pawn) _hellDiver = Cast<AHellDiver>(pawn);
 	}
-
-	if (!_hellDiver)
-	{
-		return;
-	}
+	if (!_hellDiver) return;
 
 	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
-	if (!mesh)
-	{
-		return;
-	}
-	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다.
-	FTransform spineTransform = mesh->GetSocketTransform(TEXT("root"), RTS_World);
+	if (!mesh) return;
 
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal(); // 캐릭터 상방
+	FTransform spineTransform = mesh->GetSocketTransform(TEXT("root"), RTS_World);
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-
-	//조준점과 가장 가깝고 영향이 큰 본. 
 	FTransform aimTransform = mesh->GetSocketTransform(TEXT("spine_03"), RTS_World);
-
-	
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
 
-	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = _targetPos - aimTransform.GetLocation();
-	//기준이 될 선.
-	FVector charForward = spineFwd;
-	controlForward = controlForward.GetSafeNormal();
-	charForward = charForward.GetSafeNormal();
+	FVector controlForward = (_targetPos - aimTransform.GetLocation()).GetSafeNormal();
+	FVector charForward = spineFwd.GetSafeNormal();
 
-	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
 	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
 
-	//DrawDebugLine(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation() + controlForward * 500.f, FColor::Red, false, 0.1f, 0, 2.0f);
-
-
 	float dot = FVector::DotProduct(charForward, controlForward);
-	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
-	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
-
+	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
-
-	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
 	float directionSign = FVector::DotProduct(crossProduct, spineUp);
-
-	// --- 3. 최종 부호 있는 각도 계산 ---
-	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
 	float signedAngle = angleInDegree * FMath::Sign(directionSign);
-
-
 	_yaw = signedAngle;
-	//UE_LOG(LogTemp, Display, TEXT("Yaw : %f "), _yaw);
-
 }
 
 void UHellDiverAnimInstance::CalcPitch()
@@ -322,156 +306,70 @@ void UHellDiverAnimInstance::CalcPitch()
 	if (!_hellDiver)
 	{
 		auto pawn = TryGetPawnOwner();
-		if (pawn)
-		{
-			_hellDiver = Cast<AHellDiver>(pawn);
-
-		}
+		if (pawn) _hellDiver = Cast<AHellDiver>(pawn);
 	}
-
-	if (!_hellDiver)
-	{
-		return;
-	}
+	if (!_hellDiver) return;
 
 	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
-	if (!mesh)
-	{
-		return;
-	}
+	if (!mesh) return;
 
-	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다.
 	FTransform spineTransform = mesh->GetSocketTransform(TEXT("root"), RTS_World);
-
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal(); // 캐릭터 상방
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	//조준점과 가장 가깝고 영향이 큰 본. 
 	FTransform aimTransform = mesh->GetSocketTransform(TEXT("spine_03"), RTS_World);
-	
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
-	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = _targetPos - aimTransform.GetLocation();
-	//기준이 될 선.
-	FVector charForward = spineFwd;
-	controlForward = controlForward.GetSafeNormal();
-	charForward = charForward.GetSafeNormal();
-	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
+
+	FVector controlForward = (_targetPos - aimTransform.GetLocation()).GetSafeNormal();
+	FVector charForward = spineFwd.GetSafeNormal();
+
 	charForward = FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 
-
-
-	//DrawDebugLine(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation() + controlForward * 500.f, FColor::Yellow, false, 0.1f, 0, 2.0f);
-
-	//두 선의 내적으로 일치하는정도를 확인.
 	float dot = FVector::DotProduct(charForward, controlForward);
-	//라디안으로 변환
-	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
-	//각도로 변환
-	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
-
-	//둘을 외적.
+	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
-
-	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다. 외적결과와의 내적이니 일치하거나 반대방향이거나 둘중하나가 나옴.
-
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
-
-	// --- 3. 최종 부호 있는 각도 계산 ---
-	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
 	float signedAngle = angleInDegree * FMath::Sign(directionSign);
-
 	_pitch = signedAngle;
-	//UE_LOG(LogTemp, Display, TEXT("pitch : %f "), _pitch);
-
-
 }
 
-
-
-
-	//총구의 방향에 정확히 맞추는건 총구가 yaw와 pitch값에따라 유동적이고 회전의 주체가 총이 아니다보니 바로구하는방식은 쉽지않다
-	// 맞을떄까지 값을 가중해가는 방법을 사용해보자
 void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 {
 	if (!_hellDiver)
 	{
 		auto pawn = TryGetPawnOwner();
-		if (pawn)
-		{
-			_hellDiver = Cast<AHellDiver>(pawn);
-
-		}
+		if (pawn) _hellDiver = Cast<AHellDiver>(pawn);
 	}
-
-	if (!_hellDiver)
-	{
-		return;
-	}
+	if (!_hellDiver) return;
 
 	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
-	if (!mesh)
-	{
-		return;
-	}
-	//총구의 트랜스폼
-	FTransform gunTrans=_curWeapon->GetMuzzleTrans();
+	if (!mesh) return;
 
-
-	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다. 지금은 루트의 축 또한 충분히 효과를 보여주기에 루트르 축으로둔다.
+	FTransform gunTrans = _curWeapon->GetMuzzleTrans();
 	FTransform spineTransform = mesh->GetSocketTransform(TEXT("root"), RTS_World);
 
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal(); // 캐릭터 상방
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
-	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-
-
-	//총구의 정면.
 	FVector charForward = gunTrans.GetRotation().Vector().GetSafeNormal();
-	// 조준해야할 방향.총구에서 목표의 위치를 향하게.
 	FVector controlForward = (_targetPos - gunTrans.GetLocation()).GetSafeNormal();
 
-
-
-
-	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
 	charForward = FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 
-
-
-	//두 선의 내적으로 일치하는정도를 확인.1일수록 일치 -1이면 반대 0이면 수직
 	float dot = FVector::DotProduct(charForward, controlForward);
-	//UE_LOG(LogTemp, Display, TEXT("pitchDot : %f "), dot);
-	//일치도가 일정이상 높아지면 굳이 값을 더할필요없다.
-	if (dot > 0.99999f)
-	{
-		return;
-	}
-	//라디안으로 변환
-	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
-	//Degree로 변환
-	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
+	if (dot > 0.99999f) return;
 
-	//외적을 통해 어느 방향으로 차이가 나는지 확인 
+	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
-
-	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
+	float signedAngle =  FMath::Sign(directionSign);
 
-	//UE_LOG(LogTemp, Display, TEXT("pitchDirection : %f "), directionSign);
-	// --- 3. 최종 부호 있는 각도 계산 ---
-	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
-	float signedAngle = 400.f * FMath::Sign(directionSign);
-
-
-	_addPitch += signedAngle * deltaTime * (1.1f - dot);
-	_addPitch = FMath::Clamp(_addPitch, -90.f, 90.f);
-	//UE_LOG(LogTemp, Display, TEXT("AddPitch : %f "), _addPitch);
+	_addPitch += signedAngle * 100.f * (1.15 - dot) * (1.15 - dot);
+	_addPitch = FMath::Clamp(_addPitch, -45.f, 45.f);
 }
 
 void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
@@ -479,70 +377,33 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 	if (!_hellDiver)
 	{
 		auto pawn = TryGetPawnOwner();
-		if (pawn)
-		{
-			_hellDiver = Cast<AHellDiver>(pawn);
-
-		}
+		if (pawn) _hellDiver = Cast<AHellDiver>(pawn);
 	}
-
-	if (!_hellDiver)
-	{
-		return;
-	}
+	if (!_hellDiver) return;
 
 	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
-	if (!mesh)
-	{
-		return;
-	}
+	if (!mesh) return;
+
 	FTransform gunTrans = _curWeapon->GetMuzzleTrans();
-
-
-	//메시의 방향을 명백히 해줄 척추의 윗쪽 축과 오른족 축을 기준으로 삼는다.
 	FTransform spineTransform = mesh->GetSocketTransform(TEXT("root"), RTS_World);
 
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal(); // 캐릭터 상방
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
-	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-
-
-	//본의 정면 벡터를 가져옴.
 	FVector charForward = gunTrans.GetRotation().Vector().GetSafeNormal();
-	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = _targetPos - gunTrans.GetLocation();
-	controlForward = controlForward.GetSafeNormal();
-	charForward = charForward.GetSafeNormal();
-	// 두 선을 기준이되는 축을 법선으로하는 평면에 투영.
+	FVector controlForward = (_targetPos - gunTrans.GetLocation()).GetSafeNormal();
+
 	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
 
-
-
 	float dot = FVector::DotProduct(charForward, controlForward);
+	if (dot > 0.99999f) return;
 
-	if (dot > 0.99999f)
-	{
-		return;
-	}
-	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
-	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
-
+	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
-
-	// 외적 결과 벡터와 평면의 법선(spineUp)을 내적하여 방향을 확인합니다.
 	float directionSign = FVector::DotProduct(crossProduct, spineUp);
+	float signedAngle =  FMath::Sign(directionSign);
 
-	// --- 3. 최종 부호 있는 각도 계산 ---
-	// DirectionSign이 양수이면 오른쪽(+), 음수이면 왼쪽(-)입니다.
-	float signedAngle = 400.f * FMath::Sign(directionSign);
-
-
-	_addYaw += signedAngle * deltaTime * (1.1f - dot);
-
-	_addYaw = FMath::Clamp(_addYaw, -90.f, 90.f);
-	//UE_LOG(LogTemp, Display, TEXT("AddYaw : %f "), _addYaw);
-
-
+	_addYaw += signedAngle * 100.f * (1.15 - dot) * (1.15 - dot);
+	_addYaw = FMath::Clamp(_addYaw, -45.f, 45.f);
 }

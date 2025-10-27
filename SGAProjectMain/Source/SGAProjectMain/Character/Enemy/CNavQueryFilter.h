@@ -13,5 +13,9 @@ UCLASS()
 class SGAPROJECTMAIN_API UCNavQueryFilter : public UNavigationQueryFilter
 {
 	GENERATED_BODY()
+
+
+public:
+	UCNavQueryFilter(const FObjectInitializer& ObjectInitializer);
 	
 };

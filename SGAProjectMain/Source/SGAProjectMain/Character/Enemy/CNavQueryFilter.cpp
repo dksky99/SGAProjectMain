@@ -2,4 +2,7 @@
 
 
 #include "CNavQueryFilter.h"
-
+#include "../../Object/Map/DestructableObject.h"
+UCNavQueryFilter::UCNavQueryFilter(const FObjectInitializer& ObjectInitializer)
+{
+}

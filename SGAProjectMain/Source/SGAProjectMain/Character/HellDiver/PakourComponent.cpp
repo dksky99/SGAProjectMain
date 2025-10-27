@@ -112,7 +112,10 @@ bool UPakourComponent::DetectWall(FVector& hitLocation, FRotator& normal)
 		{
 			hitLocation = hit.Location;
 			normal = hit.Normal.Rotation();
-			return true;
+			//일정기울기 미만일시 벽으로 안봄.
+			float dot=FVector::DotProduct(hit.Normal*-1.f, end - start);
+			if(dot>0.3f)
+				return true;
 		}
 	}
 	return false;
@@ -311,6 +314,11 @@ void UPakourComponent::TryPakour()
 		_firstTopHitResult.ImpactPoint,
 		_lastTopHitResult.ImpactPoint
 	);
+	//높이가 걸어서 올라갈정도라면 파쿠르를 시전하지않음.
+	if (_wallHeight < _ownerCharacter->GetCharacterMovement()->MaxStepHeight)
+	{
+		return;
+	}
 
 	if (WallThickness <= 30)
 	{
