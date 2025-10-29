@@ -244,7 +244,7 @@ void UHellDiverAnimInstance::GetAimOffset(float deltaTime)
 	CalcYaw();
 	CalcPitch();
 
-	if (_weaponState != EWeaponType::Gun || _hellDiver->GetEquippedGun() == nullptr||_isActing||_isMoving&&!_isFocusing)
+	if (_weaponState != EWeaponType::Gun || _hellDiver->GetEquippedGun() == nullptr||_isActing||_isMoving&&!_isFocusing||!(_isFiring||_isFocusing))
 	{
 		_addYaw = 0.f;
 		_addPitch = 0.f;
