@@ -4,7 +4,7 @@
 #include "HellDiverInvenComponent.h"
 
 #include "../../Gun/GunBase.h"
-#include "../../Gun/GunDataTable.h"
+#include "../../Data/GunDataTable.h"
 
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/SampleResources.h"

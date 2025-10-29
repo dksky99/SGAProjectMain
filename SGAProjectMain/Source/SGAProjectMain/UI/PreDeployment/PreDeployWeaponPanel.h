@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PreDeployPanelBase.h"
-#include "../../Gun/GunDataTable.h"
+#include "../../Data/GunDataTable.h"
 #include "PreDeployWeaponPanel.generated.h"
 
 /**

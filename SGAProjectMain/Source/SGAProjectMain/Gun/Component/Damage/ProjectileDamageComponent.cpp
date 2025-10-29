@@ -22,4 +22,5 @@ void UProjectileDamageComponent::DoFireShot(FVector fireLocation, FVector fireDi
 	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn; // 겹치면 움직여서, 아니면 억지로라도 생성
 
 	AGunBulletBase* projectile = GetWorld()->SpawnActor<AGunBulletBase>(_projectileClass, fireLocation, fireRotation, spawnParams);
+	// 데미지 계산은 총알 쪽에서 이루어진다
 }

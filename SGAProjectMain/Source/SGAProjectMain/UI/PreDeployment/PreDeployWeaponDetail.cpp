@@ -5,7 +5,7 @@
 
 #include "Components/ProgressBar.h"
 #include "Components/Image.h"
-#include "../../Gun/GunDataTable.h"
+#include "../../Data/GunDataTable.h"
 
 void UPreDeployWeaponDetail::SetDetail(int32 id)
 {

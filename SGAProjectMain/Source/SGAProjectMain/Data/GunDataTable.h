@@ -143,6 +143,8 @@ struct FGunData : public FTableRowBase
 	EReloadType _reloadType;	// 재장전 방식
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool _needAmmoBag = false;	// 재장전할 때 가방이 필요한지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool _isStationaryReload = false; // 재장전 시 정지해야 하는지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;		// 탄약

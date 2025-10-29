@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GunDataTable.h"
+#include "../Data/GunDataTable.h"
 #include "GunBulletBase.generated.h"
 
 UENUM(BlueprintType)
@@ -23,7 +23,7 @@ struct FBulletData : public FTableRowBase
 	EBulletType _type = EBulletType::Standard;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _initialSpeed = 3500.f; // 기본 데미지
+	float _initialSpeed = 3500.f; // 초기 속도
 
 	// 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -78,10 +78,12 @@ protected:
 
 	UFUNCTION()
 	void OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+	UFUNCTION()
+	void OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
 	void Explode();
 
-	float GetSpeedMultiplier(float distance); // 총알 감속 계산
+	float CalculateSpeedFalloffMultiplier(float distance); // 총알 감속 계산
 
 public:
 	void InitializeProjectile();
@@ -104,6 +106,7 @@ private:
 
 	float _baseSpeed;
 	float _moveDistance = 0.f;
+	FVector _prevLoc;
 
 	// 폭발 데미지 컴포넌트
 	UPROPERTY(EditAnywhere, Category = "Game/GunBullet/Explosion")

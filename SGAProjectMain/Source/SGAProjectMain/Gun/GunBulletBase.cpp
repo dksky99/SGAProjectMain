@@ -7,6 +7,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "../Data/GunDataTable.h"
 #include "../Object/Explosive/ExplosionComponent.h"
 #include "../SGAProjectMain.h"
 
@@ -40,6 +41,7 @@ void AGunBulletBase::BeginPlay()
 	Super::BeginPlay();
 
     _collisionComp->OnComponentBeginOverlap.AddDynamic(this, &AGunBulletBase::OnBulletOverlap);
+    _collisionComp->OnComponentHit.AddDynamic(this, &AGunBulletBase::OnBulletHit);
 
     if (GetOwner())
         _collisionComp->IgnoreActorWhenMoving(GetOwner(), true);
@@ -47,8 +49,6 @@ void AGunBulletBase::BeginPlay()
         _collisionComp->IgnoreActorWhenMoving(GetInstigator(), true);
 
     _baseSpeed = _bulletData._initialSpeed;
-
-
 }
 
 // Called every frame
@@ -56,22 +56,33 @@ void AGunBulletBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    _moveDistance += _projectileMovement->Velocity.Size() * DeltaTime;
-    float speedLoss = _bulletData._initialSpeed * GetSpeedMultiplier(_moveDistance); // 이동 거리 기반 감속된 속도
+    FVector curLoc = GetActorLocation();
+    _moveDistance += FVector::Dist(curLoc, _prevLoc);
+    _prevLoc = curLoc;
+    
+    // 기본 속도에서 감속량 적용   
+	float speedFalloffMultiplier = CalculateSpeedFalloffMultiplier(_moveDistance / 100.f);
+	float targetSpeed = _baseSpeed * speedFalloffMultiplier;
+	float curSpeed = _projectileMovement->Velocity.Size();
 
-    // 기본 속도에서 감속량만큼 빼기
-    float _curSpeed = _baseSpeed - speedLoss * DeltaTime;
-
-    if (_curSpeed <= 0.1f) // 예: 속도 10 이하라면 제거
+	if (curSpeed < 10.f)    // 속도가 거의 0에 도달했으면 파괴
     {
-        if (_bulletData._type == EBulletType::Standard)
-            Destroy();
+        if (_bulletData._type == EBulletType::Explosive && !_isExploded)
+        {
+            _isExploded = true;
+			Explode();
+        }
+
+        Destroy();
+        return;
     }
-    else
+    
+    if (curSpeed > targetSpeed)
     {
-        FVector newVelocity = _projectileMovement->Velocity.GetSafeNormal() * _curSpeed;
+        FVector newVelocity = _projectileMovement->Velocity.GetSafeNormal() * targetSpeed;
         _projectileMovement->Velocity = newVelocity;
-    }
+        _projectileMovement->MaxSpeed = targetSpeed;
+	}
 }
 
 void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -116,6 +127,21 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
     UE_LOG(LogTemp, Log, TEXT("Bullet Hit!"));
 }
 
+void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+    if (!OtherComp || _isExploded) return;
+
+    _projectileMovement->StopMovementImmediately();
+    
+    if (_bulletData._type == EBulletType::Explosive)
+    {
+        _isExploded = true;
+        Explode();
+    }
+
+    Destroy();
+}
+
 void AGunBulletBase::Explode()
 {
     _explosionComponent->Explode();
@@ -141,20 +167,37 @@ void AGunBulletBase::Explode()
     //DrawDebugSphere(GetWorld(), GetActorLocation(), _bulletData._outerRadius, 10, drawColor, false, 1.0f);
 }
 
-float AGunBulletBase::GetSpeedMultiplier(float distance)
+float AGunBulletBase::CalculateSpeedFalloffMultiplier(float distance)
 {
-    if (distance <= 2500.f) // 25m까지
-        return FMath::Lerp(0.0f, _bulletData._falloff25, distance / 25.0f);
-    else if (distance <= 5000.f) // 50m까지
-        return FMath::Lerp(_bulletData._falloff25, _bulletData._falloff50, (distance - 25.0f) / 25.0f);
-    else if (distance <= 10000.f) // 100m까지
-        return FMath::Lerp(_bulletData._falloff50, _bulletData._falloff100, (distance - 50.0f) / 50.0f);
+    float falloff = 0.0f;
+
+    if (distance <= 25.f) // 25m까지
+    {
+        float alpha = distance / 25.0f;
+        falloff = FMath::Lerp(0.0f, _bulletData._falloff25, alpha);
+    }
+    else if (distance <= 50.f) // 50m까지
+    {
+        float alpha = (distance - 25.0f) / 25.0f;
+        falloff = FMath::Lerp(_bulletData._falloff25, _bulletData._falloff50, alpha);
+    }
+    else if (distance <= 100.f) // 100m까지
+    {
+        float alpha = (distance - 50.0f) / 50.0f;
+        falloff = FMath::Lerp(_bulletData._falloff50, _bulletData._falloff100, alpha);
+    }
     else
     {
-        // 100m 이후부터는 50~100m 구간의 감속 기울기 사용
+        // 50~100m 구간의 감속 기울기
         float perMeterFalloff = (_bulletData._falloff100 - _bulletData._falloff50) / 50.0f;
-        return perMeterFalloff * (distance - 10000.f);
+
+        // 100m 이후부터는 50~100m 구간의 감속 기울기 사용
+        float extraFalloff = perMeterFalloff * ((distance - 100.f));
+        falloff = _bulletData._falloff100 + extraFalloff;
     }
+
+    falloff = FMath::Clamp(falloff, 0.f, 1.f);
+    return 1.0f - falloff;
 }
 
 void AGunBulletBase::InitializeProjectile()
