@@ -112,6 +112,17 @@ void UBehaviorControlComponent::SetIsAbleToAct(bool condition)
 	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsAbleToActKey,condition);
 }
 
+bool UBehaviorControlComponent::GetIsTargetLookAtMe()
+{
+	return _ownerController->GetBlackboardComponent()->GetValueAsBool(IsTargetLookAtMeKey);
+}
+
+void UBehaviorControlComponent::SetIsTargetLookAtMe(bool condition)
+{
+
+	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsTargetLookAtMeKey, condition);
+}
+
 
 AActor* UBehaviorControlComponent::GetTargetActor()
 {

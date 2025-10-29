@@ -13,24 +13,25 @@ UCLASS()
 class SGAPROJECTMAIN_API UBT_Task_SurroudingMove : public UBTTaskNode
 {
 	GENERATED_BODY()
+public:
+    UBT_Task_SurroudingMove();
+
+    virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+    virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+    virtual EBTNodeResult::Type AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 protected:
-    virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-    
-    virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-    /** 태스크가 중단되거나 완료될 때 호출되어 뒷정리를 합니다. */
-    virtual void OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult) override;
-
-public:
-    // AI가 타겟의 옆으로 얼마나 떨어져서 위치를 잡을지 결정합니다.
-    UPROPERTY(EditAnywhere, Category = "AI")
-    float FlankDistance = 800.0f;
-
-    // 이상적인 측면 위치 주변에서 실제 이동 가능한 지점을 찾을 반경입니다.
-    UPROPERTY(EditAnywhere, Category = "AI")
-    float SearchRadius = 500.0f;
-
-    // 타겟 정보를 담고 있는 블랙보드 키입니다.
+    /** 스트레이프할 대상(플레이어 등)을 가져올 블랙보드 키입니다. */
     UPROPERTY(EditAnywhere, Category = "Blackboard")
-    FBlackboardKeySelector TargetKey;
+    FBlackboardKeySelector TargetActorKey;
+
+
+    bool _strafeDirection;
+
+    /** 스트레이프를 지속할 시간입니다. */
+    UPROPERTY(EditAnywhere, Category = "Node")
+    float _angleTolerence;
+
+    /** 태스크 종료 시 캐릭터의 회전 설정을 원래대로 복원하기 위한 플래그 */
+    bool bOriginalOrientRotationToMovement;
 };

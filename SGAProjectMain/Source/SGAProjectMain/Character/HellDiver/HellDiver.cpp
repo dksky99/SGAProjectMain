@@ -489,6 +489,7 @@ void AHellDiver::Proning()
     _statComp->ChangeSpeed(statComponent->GetProneSpeed());
 }
 
+
 void AHellDiver::InitWeapon()
 {
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());

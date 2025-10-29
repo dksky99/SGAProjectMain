@@ -101,6 +101,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 
 	_aimOffset_.X = 0.0f;
 	_aimOffset_.Y = 0.0f;
+
+	_lastAimTargetFrame = -1; // 유효하지 않은 프레임 번호로 시작
+	_cachedAimTarget = FVector::ZeroVector;
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -1490,6 +1493,18 @@ void APlayerCharacter::UpdateCameraOcclusion()
 }
 FVector APlayerCharacter::GetCenterLoc()
 {
+
+	//UE_LOG(LogTemp, Error, TEXT("%d %d"), _lastAimTargetFrame, GFrameCounter);
+	// GFrameCounter는 현재 엔진의 프레임 번호입니다.
+	if (_lastAimTargetFrame == GFrameCounter)
+	{
+		// 1. 이번 프레임에 이미 계산했습니다. 캐시된 값을 반환합니다.
+		// UE_LOG(LogTemp, Warning, TEXT("Returning Cached Aim Target")); // (디버깅용)
+		return _cachedAimTarget;
+	}
+
+
+
 	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	FVector CameraLoc, CameraForward;
@@ -1567,10 +1582,22 @@ FVector APlayerCharacter::GetCenterLoc()
 	}
 
 	//UE_LOG(LogTemp, Display, TEXT("Center Loc: %f %f %f"), AimTarget.X, AimTarget.Y, AimTarget.Z);
+	_cachedAimTarget = AimTarget;
+	_lastAimTargetFrame = GFrameCounter;
 
+	// 4. 새로 계산된 값을 반환합니다.
+	return _cachedAimTarget;
 
-
-	return AimTarget;
+}
+bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir) 
+{
+	return Super::GetTargetLook(loc, dir);
+	//loc = GetActorLocation();
+	//const FVector temp = GetTargetLoc();
+	//dir = temp - loc;
+	//
+	//
+	//return true;
 }
 FVector APlayerCharacter::GetTargetLoc()
 {

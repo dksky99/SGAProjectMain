@@ -81,6 +81,9 @@ public:
 	void SetIsAbleToAct(bool condition);
 
 
+	bool GetIsTargetLookAtMe();	// 플레이어 가져오기 = 표적 가져오기
+	void SetIsTargetLookAtMe(bool condition);
+
 	void SetBlackBoard(class UBlackboardComponent* InBlackboard) { blackboard = InBlackboard; }
 
 
@@ -109,6 +112,8 @@ public:
 	UPROPERTY(EditAnywhere)
 	FName IsAbleToActKey = "IsAbleToAct";
 
+	UPROPERTY(EditAnywhere)
+	FName IsTargetLookAtMeKey = "IsTargetLookAtMe";
 protected:
 
 	class UBlackboardComponent* blackboard;

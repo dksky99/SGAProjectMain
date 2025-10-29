@@ -23,9 +23,11 @@ UENUM(BlueprintType)
 enum class EBattleState : uint8
 {
 	None UMETA(DisplayName = "None"),				//타겟이 없다.
-	Far UMETA(DisplayName = "Far"),					//매우 멀다. 타겟의 위치로 이동을 해야한다.
+	OutOfRange UMETA(DisplayName = "OutOfRange"),				// 타겟의 거리가 너무 멀어 근접을 시도만해야하는거리 Far거리보다 멀다..
+	Far UMETA(DisplayName = "Far"),					//매우 멀다. 타겟의 위치로 이동을 해야한다.Far거리보단 짧고 Middle거리보단 김. 하지만 특정 유닛은 별도의 행동이가능.ex) 바일 스퓨어의 포격. 
 	Middle UMETA(DisplayName = "Middle"),				//스킬 시전거리 내. 차저라면 돌격을 시전할것이고 헌터계열은 도약을 쓸것. 기술의 사용조건이 안됬다면 근접공격거리까지 가까이 가게될것. 
-	Near UMETA(DisplayName = "Near"),		//매우 근접. 기본공격이 닿는 지점.
+	Near UMETA(DisplayName = "Near"),		//근접. 다른 기술을 쓰느니 좀더 가까이가서 근접공격으로 패는게 나은 거리.
+	Melee UMETA(DisplayName = "Melee"),		//매우 근접. 근접공격이 닿는거리.
 	MAX
 };
 /**
@@ -52,6 +54,7 @@ public:
 
 	//주변의 아군들에게 강한 경보상태로 만들고 다 같이 자신이 발견한 적의 위치를 알림.
 	virtual void RaiseAlert();
+
 	//경보를 받아들임. 받으면 바로 강한 경계. 받은 위치로 이동.
 	virtual void RecieveAlert(AActor* target);
 
@@ -87,8 +90,10 @@ public:
 	virtual bool CheckAbleTryMiddle(AActor* target) { return false; }
 	virtual bool CheckAbleTryFar(AActor* target) { return false; }
 
+	float GetMeleeRange() { return _meleeRange; }
 	float GetNearRange() { return _nearRange; }
 	float GetMiddleRange() { return _middleRange; }
+	float GetFarRange() { return _farRange; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
@@ -105,9 +110,13 @@ protected:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _nearRange=150.f;
+	float _meleeRange=150.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _middleRange = 1000.f;
+	float _nearRange = 500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	float _middleRange = 1500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	float _farRange = 3000.f;
 
 
 	UPROPERTY()

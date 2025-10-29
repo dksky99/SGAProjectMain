@@ -190,6 +190,9 @@ public:
 	virtual FRotator Focusing_Legacy() ;
 	void UpdateCameraOcclusion();
 	FVector GetCenterLoc();
+
+	virtual bool GetTargetLook(FVector& loc, FVector& dir)  override;
+
 	virtual FVector GetTargetLoc() override;
 
 	void ViewTurnBack();
@@ -376,4 +379,11 @@ protected:
 	// 커맨드 콘솔
 	UPROPERTY()
 	ATerminalConsole* _curTerminal;
+
+
+	uint64 _lastAimTargetFrame = 0;
+
+	// 캐시된 조준점 위치
+	FVector _cachedAimTarget;
+
 };

@@ -26,5 +26,5 @@ public:
 	virtual bool IsTargetable() const = 0;
 	virtual FTransform GetTargetTransform() const = 0;
 
-	virtual bool GetTargetLook(FVector& dir) const = 0;
+	virtual bool GetTargetLook(FVector& loc,FVector& dir)  = 0;
 };

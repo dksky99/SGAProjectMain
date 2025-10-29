@@ -59,4 +59,14 @@ public:
         float YawAngleTolerance = 10.0f                 // * @param YawAngleTolerance - 좌우(Yaw) 조준의 허용 각도 (Degree 단위) 입니다.
     );
 
+
+    UFUNCTION(BlueprintPure, Category = "AI|Aiming", meta = (DefaultToSelf = "Character"))
+    static bool IsTargetFacingMe(       // return 상대의 시선혹은 정면벡터가 자신과 얼마나 일치하는지 확인. 
+        const FVector& OwnerLoc,        // OwnerLoc.  
+        const FVector& TargetLoc ,      // TargetLoc  :대상의 시선의 시작점. 머리일수 있고 총구일수 있고 그냥 캐릭터의 루트 컴포넌트의 위치일 수 있다.
+        const FVector& TargetLook,      // TargetLook  :대상의 시선 방향.
+        float& OutputAngle,
+        float AngleTolerance = 15.0f     // 대상의 시선의 중심에서 얼마만큼 벗어나있어야 보고있지 않는것으로 치는지
+        );
+
 };

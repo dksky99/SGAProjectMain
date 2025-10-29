@@ -398,9 +398,10 @@ void ACharacterBase::ReadyToSpawn()
 	}
 }
 
-bool ACharacterBase::GetTargetLook(FVector& dir) const
+bool ACharacterBase::GetTargetLook(FVector& loc,FVector& dir) 
 {
-	dir = GetMesh()->GetForwardVector();
+	loc = GetActorLocation();
+	dir = GetActorForwardVector();
 	return true;
 }
 

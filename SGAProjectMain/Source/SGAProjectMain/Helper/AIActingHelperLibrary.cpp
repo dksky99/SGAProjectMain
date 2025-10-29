@@ -140,3 +140,18 @@ EAimStatus UAIActingHelperLibrary::CheckAimAndSuggestCorrection(const AActor* Ch
         return EAimStatus::NeedsPitchCorrection;
     }
 }
+
+bool UAIActingHelperLibrary::IsTargetFacingMe(const FVector& OwnerLoc, const FVector& TargetLoc, const FVector& TargetLook,  float& OutputAngle, float AngleTolerance)
+{
+    FVector temp = OwnerLoc - TargetLoc;
+
+    float dot = FVector::DotProduct(temp.GetSafeNormal(), TargetLook.GetSafeNormal());
+
+    OutputAngle = FMath::RadiansToDegrees(FMath::Acos(dot));
+
+    if (AngleTolerance < OutputAngle)
+        return false;
+
+    return true;
+}
+

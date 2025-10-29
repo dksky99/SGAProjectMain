@@ -47,6 +47,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
 			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
 			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
+			_isAiming= _hellDiver->GetStateComponent()->IsAiming();
 			
 			_muzzleTrans = _hellDiver->GetMuzzleTransform();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();

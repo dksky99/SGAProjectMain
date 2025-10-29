@@ -128,6 +128,8 @@ protected:
 	float _rotateSpeed = 350;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	bool _isAiming = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFocusing = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _isFiring = false;
