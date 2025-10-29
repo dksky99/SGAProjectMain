@@ -25,11 +25,11 @@ AGunBulletBase::AGunBulletBase()
 
     // 이동 컴포넌트
     _projectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
-    _projectileMovement->InitialSpeed = _bulletData._initialSpeed;
-    _projectileMovement->MaxSpeed = _bulletData._initialSpeed;
+    _projectileMovement->InitialSpeed = _projectileData._initialSpeed * 100.f;
+    _projectileMovement->MaxSpeed = _projectileData._initialSpeed * 100.f;
     _projectileMovement->bRotationFollowsVelocity = true;
     _projectileMovement->SetUpdatedComponent(_collisionComp);
-    //_projectileMovement->ProjectileGravityScale = 0.f;
+    _projectileMovement->ProjectileGravityScale = _projectileData._gravityScale * 0.01f;
 
     // 폭발 컴포넌트
     _explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));
@@ -48,7 +48,8 @@ void AGunBulletBase::BeginPlay()
     if (GetInstigator())
         _collisionComp->IgnoreActorWhenMoving(GetInstigator(), true);
 
-    _baseSpeed = _bulletData._initialSpeed;
+    _prevLoc = GetActorLocation();
+    _baseSpeed = _projectileMovement->InitialSpeed;
 }
 
 // Called every frame
@@ -64,10 +65,11 @@ void AGunBulletBase::Tick(float DeltaTime)
 	float speedFalloffMultiplier = CalculateSpeedFalloffMultiplier(_moveDistance / 100.f);
 	float targetSpeed = _baseSpeed * speedFalloffMultiplier;
 	float curSpeed = _projectileMovement->Velocity.Size();
+    UE_LOG(LogTemp, Log, TEXT("CurSpeed: %f"), curSpeed);
 
 	if (curSpeed < 10.f)    // 속도가 거의 0에 도달했으면 파괴
     {
-        if (_bulletData._type == EBulletType::Explosive && !_isExploded)
+        if (_projectileData._type == EGunProjectileType::Explosive && !_isExploded)
         {
             _isExploded = true;
 			Explode();
@@ -77,12 +79,9 @@ void AGunBulletBase::Tick(float DeltaTime)
         return;
     }
     
-    if (curSpeed > targetSpeed)
-    {
-        FVector newVelocity = _projectileMovement->Velocity.GetSafeNormal() * targetSpeed;
-        _projectileMovement->Velocity = newVelocity;
-        _projectileMovement->MaxSpeed = targetSpeed;
-	}
+    FVector newVelocity = _projectileMovement->Velocity.GetSafeNormal() * targetSpeed;
+    _projectileMovement->Velocity = newVelocity;
+    _projectileMovement->MaxSpeed = targetSpeed;
 }
 
 void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -98,7 +97,7 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         if (OtherComp->GetCollisionProfileName() != FName(TEXT("HitBox")))
             return; // 히트박스 콜리전만 공격
 
-        float finalDamage = _bulletData._baseDamage * (_projectileMovement->Velocity.Size() / _bulletData._initialSpeed); // 속도에 비례하는 최종 데미지
+        float finalDamage = _projectileData._baseDamage * (_projectileMovement->Velocity.Size() / _baseSpeed); // 속도에 비례하는 최종 데미지
         FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
 
         UGameplayStatics::ApplyPointDamage(
@@ -114,9 +113,12 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
 
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
-        _baseSpeed *= 0.75f;
 
-        if (_bulletData._type == EBulletType::Explosive)
+        FVector newVelocity = _projectileMovement->Velocity * (1.f - _projectileData._falloffPenetration);
+        _projectileMovement->Velocity = newVelocity;
+        _projectileMovement->MaxSpeed = newVelocity.Size();
+
+        if (_projectileData._type == EGunProjectileType::Explosive)
         {
             _isExploded = true;
             Explode();
@@ -133,7 +135,7 @@ void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 
     _projectileMovement->StopMovementImmediately();
     
-    if (_bulletData._type == EBulletType::Explosive)
+    if (_projectileData._type == EGunProjectileType::Explosive)
     {
         _isExploded = true;
         Explode();
@@ -174,34 +176,39 @@ float AGunBulletBase::CalculateSpeedFalloffMultiplier(float distance)
     if (distance <= 25.f) // 25m까지
     {
         float alpha = distance / 25.0f;
-        falloff = FMath::Lerp(0.0f, _bulletData._falloff25, alpha);
+        falloff = FMath::Lerp(0.0f, _projectileData._falloff25, alpha);
     }
     else if (distance <= 50.f) // 50m까지
     {
         float alpha = (distance - 25.0f) / 25.0f;
-        falloff = FMath::Lerp(_bulletData._falloff25, _bulletData._falloff50, alpha);
+        falloff = FMath::Lerp(_projectileData._falloff25, _projectileData._falloff50, alpha);
     }
     else if (distance <= 100.f) // 100m까지
     {
         float alpha = (distance - 50.0f) / 50.0f;
-        falloff = FMath::Lerp(_bulletData._falloff50, _bulletData._falloff100, alpha);
+        falloff = FMath::Lerp(_projectileData._falloff50, _projectileData._falloff100, alpha);
     }
     else
     {
         // 50~100m 구간의 감속 기울기
-        float perMeterFalloff = (_bulletData._falloff100 - _bulletData._falloff50) / 50.0f;
+        float perMeterFalloff = (_projectileData._falloff100 - _projectileData._falloff50) / 50.0f;
 
         // 100m 이후부터는 50~100m 구간의 감속 기울기 사용
         float extraFalloff = perMeterFalloff * ((distance - 100.f));
-        falloff = _bulletData._falloff100 + extraFalloff;
+        falloff = _projectileData._falloff100 + extraFalloff;
     }
 
     falloff = FMath::Clamp(falloff, 0.f, 1.f);
     return 1.0f - falloff;
 }
 
-void AGunBulletBase::InitializeProjectile()
+void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
 {
-
+    _projectileData = data;
+    _projectileMovement->InitialSpeed = data._initialSpeed * 100.f;
+    _projectileMovement->MaxSpeed = data._initialSpeed * 100.f;
+    _baseSpeed = _projectileMovement->InitialSpeed;
+    _projectileMovement->ProjectileGravityScale = data._gravityScale * 0.01f;
+    _prevLoc = GetActorLocation();
 }
 

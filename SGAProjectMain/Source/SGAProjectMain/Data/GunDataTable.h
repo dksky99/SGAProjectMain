@@ -127,8 +127,11 @@ struct FGunData : public FTableRowBase
 	FShotgunData _shotgunData;		// 샷건에 필요한 데이터
 
 	// 총알
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class AGunBulletBase> _projectileClass;*/
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AGunBulletBase> _projectileClass;
+	class UGunProjectileDataAsset* _projectileDataAsset;
 
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

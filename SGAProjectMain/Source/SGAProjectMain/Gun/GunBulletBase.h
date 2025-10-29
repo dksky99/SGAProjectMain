@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "../Data/GunDataTable.h"
+#include "../Data/GunProjectileDataAsset.h"
 #include "GunBulletBase.generated.h"
 
 UENUM(BlueprintType)
@@ -67,7 +68,7 @@ public:
 	AGunBulletBase();
 	
 
-	FBulletData GetBulletData() { return _bulletData; }
+	//FBulletData GetBulletData() { return _bulletData; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -86,11 +87,14 @@ protected:
 	float CalculateSpeedFalloffMultiplier(float distance); // 총알 감속 계산
 
 public:
-	void InitializeProjectile();
+	void InitializeProjectile(FGunProjectileData data);
 
 private:
+	//UPROPERTY(EditAnywhere, Category = "Game/GunData")
+	//FBulletData _bulletData;
+
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
-	FBulletData _bulletData;
+	FGunProjectileData _projectileData;
 
     UPROPERTY(VisibleAnywhere)
     class USphereComponent* _collisionComp;
