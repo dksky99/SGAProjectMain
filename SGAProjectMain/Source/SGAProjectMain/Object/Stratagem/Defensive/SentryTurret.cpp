@@ -16,8 +16,8 @@
 
 #include "../../../Gun/GunBulletBase.h"
 #include "SentryAnimInstance.h"
-
-#include "DrawDebugHelpers.h"
+#include "../../../Character/CharacterBase.h"
+#include "../../../Character/StatComponent.h"
 #include "../../../SGAProjectMain.h"
 
 ASentryTurret::ASentryTurret()
@@ -81,9 +81,6 @@ void ASentryTurret::BeginPlay()
 
 	// 스폰
 	StartSpawn();
-
-	// 아이들 스캔 시작(초기 타깃 없음 가정)
-	EnsureIdleTimer();
 }
 
 void ASentryTurret::Tick(float DeltaTime)
@@ -98,12 +95,6 @@ void ASentryTurret::Tick(float DeltaTime)
 // -------------------------------
 // 외부 호출
 // -------------------------------
-
-void ASentryTurret::SetTargetActor(AActor* target)
-{
-	_currentTarget = target;
-	EnsureIdleTimer();
-}
 
 void ASentryTurret::AIStartFire()
 {
@@ -143,7 +134,7 @@ void ASentryTurret::UpdateTargetSelection()
 	if (!_perception) return;
 
 	// 기존 타깃이 계속 보이면 유지
-	if (IsValid(_currentTarget) && IsEnemyActor(_currentTarget))
+	if (IsEnemyActor(_currentTarget) && IsTargetAttackable(_currentTarget))
 	{
 		FActorPerceptionBlueprintInfo info;
 		if (_perception->GetActorsPerception(_currentTarget, info))
@@ -162,17 +153,26 @@ void ASentryTurret::UpdateTargetSelection()
 	TArray<AActor*> perceived;
 	_perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), perceived);
 
-	AActor* best = nullptr;
+	ACharacterBase* best = nullptr;
 	float bestD2 = FLT_MAX;
-	const FVector from = _muzzlePoint ? _muzzlePoint->GetComponentLocation() : GetActorLocation();
 
 	for (AActor* actor : perceived)
 	{
 		if (!IsValid(actor)) continue;
-		if (!IsEnemyActor(actor)) continue; // 적만 통과
+		if (!IsEnemyActor(actor)) continue;
 
-		const float d2 = FVector::DistSquared(actor->GetActorLocation(), from);
-		if (d2 < bestD2) { bestD2 = d2; best = actor; }
+		// 캐릭터만 통과: Cast 한 번으로 충분합니다.
+		ACharacterBase* candidate = Cast<ACharacterBase>(actor);
+		if (!candidate) continue;
+
+		if (!IsTargetAttackable(candidate)) continue;
+
+		const float d2 = FVector::DistSquared(candidate->GetActorLocation(), GetMuzzleLocation());
+		if (d2 < bestD2)
+		{
+			bestD2 = d2;
+			best = candidate;
+		}
 	}
 
 	_currentTarget = best;
@@ -184,17 +184,27 @@ void ASentryTurret::UpdateTargetSelection()
 // -------------------------------
 float ASentryTurret::CalcYaw_Sentry()
 {
-	if (_currentTarget == nullptr)
-		return 0.0f;
+
 	FTransform root = _mesh->GetComponentTransform();
 
 
-	FTransform targetTransfrom = _currentTarget->GetTransform();
-
 	FVector rootForward = root.GetUnitAxis(EAxis::X);
 
-	FVector targetVector = targetTransfrom.GetLocation() - root.GetLocation();
-	targetVector.Normalize();
+	FVector targetVector;
+
+	if (_currentTarget == nullptr)
+	{
+		targetVector = _idleAimPointWS - root.GetLocation();
+		targetVector.Normalize();
+	}
+	else
+	{
+		FTransform targetTransfrom = _currentTarget->GetTransform();
+
+		targetVector = targetTransfrom.GetLocation() - root.GetLocation();
+		targetVector.Normalize();
+	}
+	
 	FRotator targetRotator = targetVector.Rotation();
 
 	float yaw = FMath::FindDeltaAngleDegrees(rootForward.Rotation().Yaw, targetRotator.Yaw);
@@ -204,10 +214,14 @@ float ASentryTurret::CalcYaw_Sentry()
 
 float ASentryTurret::CalcPitch_Sentry()
 {
-	if (_currentTarget == nullptr)
-		return 0.0f;
 	const FVector HousingLocation = _mesh->GetSocketLocation(_boneName_Pitch);
-	const FVector TargetLocation = _currentTarget->GetActorLocation();
+	FVector TargetLocation;
+
+	if (_currentTarget == nullptr)
+		TargetLocation = _idleAimPointWS;
+	else
+		TargetLocation = _currentTarget->GetActorLocation();
+
 	const FVector Direction = (TargetLocation - HousingLocation).GetSafeNormal();
 	//const FQuat RotationQuat = FQuat::MakeFromRotationVector(Direction).Rotator().Yaw;
 	return FQuat::FindBetweenNormals(GetActorForwardVector(), Direction).Rotator().Pitch;
@@ -243,19 +257,59 @@ bool ASentryTurret::IsAngleAligned(float currentDeg, float targetDeg, float tole
 	return FMath::Abs(FMath::FindDeltaAngleDegrees(currentDeg, targetDeg)) <= toleranceDeg;
 }
 
+bool ASentryTurret::IsSentryReadyToFire()
+{
+	// 탄/머즐
+	if (_curAmmo <= 0) return false;
+	if (!_muzzlePoint) return false;
+
+	// 상태(상승 완료 후, 정렬/하강 아님)
+	if (!_isRaised || _isTransitionalAlign || _isSinking) return false;
+
+	return true;
+}
+
+bool ASentryTurret::IsTargetAttackable(ACharacterBase* target) const
+{
+	if (!IsValid(target)) return false;
+
+	UStatComponent* stat = target->GetStatComponent();
+	if (!stat) return false;
+	if (stat->IsDead()) return false;
+
+	return true;
+}
+
+bool ASentryTurret::HasAnyShootableEnemy()
+{
+	   if (!_perception) return false;
+
+    TArray<AActor*> perceived;
+    _perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), perceived);
+
+    for (AActor* actor : perceived)
+    {
+        if (!IsValid(actor) || !IsEnemyActor(actor)) continue;
+
+        ACharacterBase* asChar = Cast<ACharacterBase>(actor);
+        if (!asChar) continue;
+        if (!IsTargetAttackable(asChar)) continue;
+
+        return true;
+    }
+    return false;
+}
+
 void ASentryTurret::UpdateAimToTarget(float deltaSeconds)
 {
 	if (!_mesh || !_muzzlePoint) return;
 	if (!_isRaised || _isTransitionalAlign || _isSinking) return;
 	if (!IsValid(_currentTarget))
-	{
 		EnsureIdleTimer();
-		return;
-	}
 
 	// 목표 각도 계산(절대값)
-	const float targetYawZDeg = CalcYaw_Sentry();
-	const float targetPitchZDeg = CalcPitch_Sentry();
+	float targetYawZDeg = CalcYaw_Sentry();
+	float targetPitchZDeg = CalcPitch_Sentry();
 
 	// 속도 제한을 적용해 현재각을 갱신
 	ApplyAimSpeedLimit(deltaSeconds, targetYawZDeg, targetPitchZDeg);
@@ -270,23 +324,22 @@ void ASentryTurret::UpdateAimToTarget(float deltaSeconds)
 
 void ASentryTurret::UpdateFireGate(float deltaSeconds)
 {
-	// 탄이 없거나 머즐 포인트가 없으면 즉시 정지
-	if (_curAmmo <= 0 || !_muzzlePoint)
-	{
-		if (_lastWantsFire) { _lastWantsFire = false; AIStopFire(); }
-		return;
-	}
-	if (!_isRaised || _isTransitionalAlign || _isSinking) return;
-
-	// 허용오차 코사인 캐시 갱신(회전/연출 참고용)
+	// 코사인 캐시는 기존대로 유지(연출용)
 	if (!FMath::IsNearlyEqual(_cachedAimTolDeg, _aimToleranceDeg, KINDA_SMALL_NUMBER))
 	{
 		_cachedAimTolDeg = _aimToleranceDeg;
 		_cosAimTol = FMath::Cos(FMath::DegreesToRadians(_cachedAimTolDeg));
 	}
 
-	// 조준각 계산은 계속 가능(회전/스프레드 등 연출용). 사격 게이트에는 사용하지 않음
-	if (IsValid(_currentTarget))
+	// 센트리 준비 상태 확인
+	if (!IsSentryReadyToFire())
+	{
+		if (_lastWantsFire) { _lastWantsFire = false; AIStopFire(); }
+		return;
+	}
+
+	// 조준각 계산(연출용)은 그대로
+	if (IsTargetAttackable(_currentTarget))
 	{
 		const FVector muzzleLoc = _muzzlePoint->GetComponentLocation();
 		const FVector muzzleFwd = _muzzlePoint->GetForwardVector();
@@ -295,30 +348,14 @@ void ASentryTurret::UpdateFireGate(float deltaSeconds)
 		if (!toVec.IsNearlyZero())
 		{
 			const FVector toDir = toVec.GetSafeNormal();
-			const float   dot = FVector::DotProduct(muzzleFwd, toDir);
-			const bool    bAimed = (dot >= (_cosAimTol - KINDA_SMALL_NUMBER));
+			const float dot = FVector::DotProduct(muzzleFwd, toDir);
+			const bool bAimed = (dot >= (_cosAimTol - KINDA_SMALL_NUMBER));
 			// bAimed는 필요 시 연출/스프레드에만 활용
 		}
 	}
 
-	// 현재 '인지된 적'이 1명이라도 있으면 계속 사격
-	bool hasAnyEnemy = false;
-	if (_perception)
-	{
-		TArray<AActor*> perceived;
-		_perception->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), perceived);
-
-		for (AActor* actor : perceived)
-		{
-			if (IsValid(actor) && IsEnemyActor(actor))
-			{
-				hasAnyEnemy = true;
-				break;
-			}
-		}
-	}
-
-	const bool wantsFire = hasAnyEnemy;
+	// 정책: 시야 내 ‘공격 가능한 적’이 1명이라도 있으면 발사 유지
+	const bool wantsFire = HasAnyShootableEnemy();
 
 	if (wantsFire != _lastWantsFire)
 	{
@@ -648,7 +685,7 @@ void ASentryTurret::EnsureIdleTimer()
 {
 	FTimerManager& tm = GetWorldTimerManager();
 
-	if (IsValid(_currentTarget))
+	if (IsTargetAttackable(_currentTarget))
 	{
 		tm.ClearTimer(_idleAimTimerHandle);
 		return;
@@ -670,7 +707,7 @@ void ASentryTurret::EnsureIdleTimer()
 
 void ASentryTurret::OnIdleAimTimer()
 {
-	if (IsValid(_currentTarget))
+	if (IsTargetAttackable(_currentTarget))
 	{
 		GetWorldTimerManager().ClearTimer(_idleAimTimerHandle);
 		return;

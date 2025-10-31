@@ -25,9 +25,6 @@ public:
 	// 외부 호출 함수(간단)
 	// -------------------------------
 
-	// 외부에서 강제로 타깃을 지정
-	void SetTargetActor(AActor* target);
-
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
 	void AIStartFire();
 
@@ -63,7 +60,10 @@ protected:
 	// 최단 각도 차 기반 총구 정렬 
 	bool IsAngleAligned(float currentDeg, float targetDeg, float toleranceDeg) const;
 	
-	// 발사 게이트/LOS
+	// 사격 가능 상태 확인/LOS
+	bool IsSentryReadyToFire();
+	bool IsTargetAttackable(ACharacterBase* target) const;
+	bool HasAnyShootableEnemy();
 	void UpdateFireGate(float deltaSeconds);
 
 	// 발사/이펙트
@@ -139,7 +139,7 @@ protected:
 	// 변수 묶음: 타겟팅/조준(스펙)
 	// =========================================================
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	AActor* _currentTarget = nullptr;
+	class ACharacterBase* _currentTarget = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _yawSpeedDegPerSec = 360.0f;		// Yaw 회전속도(도/초)

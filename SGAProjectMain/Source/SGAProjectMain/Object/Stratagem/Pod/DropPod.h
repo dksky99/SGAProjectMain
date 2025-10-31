@@ -20,18 +20,22 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	// 착지 가능한 표면인가?
+	bool IsLandableSurface(AActor* OtherActor, UPrimitiveComponent* OtherComp);
+
 	// 주변 캐릭터 날리기
 	void LaunchOverlappedActors(const FVector& hitPoint);
 
 	// 내부 액터 스폰
-	void SpawnInternalActor(const FVector& SpawnLocation);
+	virtual void SpawnInternalActor(const FVector& SpawnLocation);
 
 	// 땅에 착지시 호출되는 함수
 	void HandleGroundLanding(const FVector& hitPoint);
@@ -56,12 +60,6 @@ protected:
 
 	// 바닥 충돌 여부
 	bool _isGrounded = false;
-
-	FVector _targetLocation;
-	float _riseSpeed = 300.f; // 초당 300cm 상승
-
-	// 타이머 (올라오기 지연)
-	FTimerHandle _riseTimerHandle;
 
 	// 충돌한 캐릭터 저장 (중복 데미지 방지)
 	TSet<AActor*> _damagedCharacters;

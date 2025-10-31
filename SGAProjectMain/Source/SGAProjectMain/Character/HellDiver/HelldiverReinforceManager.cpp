@@ -1,104 +1,95 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "HelldiverReinforceManager.h"
-#include "../PlayerCharacter.h"
-#include "../../Controller/MainPlayerController.h"
-
 #include "NavigationSystem.h"
-// Sets default values
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+
+#include "GameFramework/Controller.h"
+#include "../../Object/Stratagem/Pod/HellDiverDropPod.h"
+
+// 생성자
 AHelldiverReinforceManager::AHelldiverReinforceManager()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
-// Called when the game starts or when spawned
 void AHelldiverReinforceManager::BeginPlay()
 {
 	Super::BeginPlay();
-	InitSquad();
 
-	
+	// 예산 자동 회복 타이머를 시작합니다(필요 없으면 _addReinforceBudgetCoolTime을 0으로 두거나 타이머 설정을 제거하십시오)
+	if (_addReinforceBudgetCoolTime > 0.0f)
+	{
+		GetWorldTimerManager().SetTimer(
+			_reinforceBudgetTimer,
+			this,
+			&AHelldiverReinforceManager::AddReinforceBudgetTick,
+			_addReinforceBudgetCoolTime,
+			true
+		);
+	}
 }
 
-void AHelldiverReinforceManager::InitSquad()
+void AHelldiverReinforceManager::ReinforceHelldiver(const FVector& deathPoint)
 {
-
-
-	FActorSpawnParameters param;
-	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	if (_hellDiverClass == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ReinforcementManager Init Fail"));
+	// 예산 확인
+	if (_remainReinforceBudget <= 0)
 		return;
-	}
-	for (int i = 0; i < _remainReinforceBudget; i++)
+
+	// 컨트롤러 큐에서 하나를 가져옵니다
+	AController* controller = nullptr;
+	if (!_controllerQ.Dequeue(controller) || controller == nullptr)
+		return;
+
+	// 드랍포드 클래스 확인
+	if (!_playerDropPodClass)
+		return;
+
+	// 네비게이션 시스템 참조
+	FVector groundPoint = deathPoint;
+	if (UNavigationSystemV1* navi = UNavigationSystemV1::GetNavigationSystem(GetWorld()))
 	{
-		APlayerCharacter* helldiver = GetWorld()->SpawnActor<APlayerCharacter>(_hellDiverClass, FVector::ZeroVector, FRotator::ZeroRotator, param);
-		if (helldiver)
+		FNavLocation navLoc;
+		if (navi->GetRandomPointInNavigableRadius(deathPoint, _reinforceSearchRadius, navLoc))
 		{
-			UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
-			helldiver->UnitDeactivate();
-			helldiver->AutoPossessPlayer = EAutoReceiveInput::Disabled;
-			helldiver->AutoPossessAI = EAutoPossessAI::Disabled;
-			_hellDiverPool.Add(helldiver);
+			groundPoint = navLoc.Location;
 		}
 	}
 
-		UE_LOG(LogTemp, Error, TEXT("ReinforcementManager Init Success"));
+	// 드랍 포드 스폰 위치: 네비 위치(또는 사망 지점) 위쪽으로 올립니다
+	const FVector dropPoint = groundPoint + FVector(0.0f, 0.0f, _dropHeight);
+
+	// 스폰 파라미터(Owner를 컨트롤러로 지정해 드랍포드 내부 인계에 사용)
+	FActorSpawnParameters sp;
+	sp.Owner = controller;
+	sp.Instigator = nullptr;
+	sp.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	AHellDiverDropPod* spawnedPod =
+		GetWorld()->SpawnActor<AHellDiverDropPod>(_playerDropPodClass, dropPoint, FRotator::ZeroRotator, sp);
+
+	if (!spawnedPod)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Reinforce failed: DropPod spawn failed"));
+		// 실패했으므로 컨트롤러를 다시 큐에 되돌려 놓는 것이 안전합니다
+		_controllerQ.Enqueue(controller);
+		return;
+	}
+
+	// 성공: 예산 1 소모
+	--_remainReinforceBudget;
 }
 
-void AHelldiverReinforceManager::ReinforceHelldiver(FVector callPoint)
-{
-	//헬포드에 빙의시키고 헬다이버는 내부의 소켓에 어태치하고 땅으로 떨어진후에 헬다이버에 빙의해야하지만 테스트 버전이니 바로 호출위치 주변 랜덤위치에 드롭하자.
-	AController* temp=nullptr;
-	APlayerCharacter* extra = nullptr;
-	if (_controllerQ.Dequeue(temp) == false)
-		return;
-	if (temp == nullptr)
-		return;
-	for (auto helldiver : _hellDiverPool)
-	{
-		if (helldiver->IsReadyToSpawn())
-		{
-			extra = helldiver;
-			break;
-		}
-	}
-
-	//NavMesh 찾기 : 이 지점을 기준으로 특정범위내에 소환가능위치가 있는지 확인. 
-	auto naviSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-
-	if (naviSystem->IsValidLowLevel() == false)
-		return ;
-
-
-
-	//반환받을 랜덤한 위치.
-	FNavLocation randLocation;
-	//일정 반경안의 랜덤한 지점을 가져오는 함수 여기서 가능한 위치가 없으면 false를 반환.
-	if (naviSystem->GetRandomPointInNavigableRadius(callPoint, 2000, randLocation))
-	{
-		extra->SetActorLocation(randLocation);
-
-	}
-	else
-	{
-
-		extra->SetActorLocation(callPoint);
-	}
-
-	temp->Possess(extra);
-	extra->ResetUnit();
-
-}
-
+// 사망 컨트롤러 반환
 void AHelldiverReinforceManager::ReturnDeadController(AController* controller)
 {
+	if (!controller)
+		return;
 
-	UE_LOG(LogTemp, Display, TEXT("ReturnDeadController  : %s"), *controller->GetName());
 	_controllerQ.Enqueue(controller);
 }
 
+// 예산 회복 틱
+void AHelldiverReinforceManager::AddReinforceBudgetTick()
+{
+	++_remainReinforceBudget;
+}
