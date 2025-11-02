@@ -65,7 +65,7 @@ void AGunBulletBase::Tick(float DeltaTime)
 	float speedFalloffMultiplier = CalculateSpeedFalloffMultiplier(_moveDistance / 100.f);
 	float targetSpeed = _baseSpeed * speedFalloffMultiplier;
 	float curSpeed = _projectileMovement->Velocity.Size();
-    UE_LOG(LogTemp, Log, TEXT("CurSpeed: %f"), curSpeed);
+    //UE_LOG(LogTemp, Log, TEXT("CurSpeed: %f"), curSpeed);
 
 	if (curSpeed < 10.f)    // 속도가 거의 0에 도달했으면 파괴
     {
@@ -97,12 +97,47 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         if (OtherComp->GetCollisionProfileName() != FName(TEXT("HitBox")))
             return; // 히트박스 콜리전만 공격
 
-        float finalDamage = _projectileData._baseDamage * (_projectileMovement->Velocity.Size() / _baseSpeed); // 속도에 비례하는 최종 데미지
+        // 피직스 머티리얼 가져오기
+        UPhysicalMaterial* PM = SweepResult.PhysMaterial.Get();
+        EPhysicalSurface surface = SurfaceType_Default;
+        if (!PM && OtherComp) // 비어있으면 타겟 컴포넌트의 BodyInstance에서 직접 가져오기
+        {
+            if (FBodyInstance* BI = OtherComp->GetBodyInstance())
+            {
+                PM = BI->GetSimplePhysicalMaterial(); // Override된 PM 받기
+                surface = PM->SurfaceType;
+            }
+        }
+
+        // Armor Value 계산
+        int32 armorValue = SurfaceToAV(surface);
+
+        EHitOutcome outcome = CalculateHitOutcome(armorValue, SweepResult);
+
+        UE_LOG(LogTemp, Log, TEXT("PM=%s Surf=%d AV=%d"),
+            PM ? *PM->GetName() : TEXT("None"), (int)surface, armorValue);
+
+        // 과관통이거나 도탄이 아닐 경우 총알 정지
+        if (outcome != EHitOutcome::OverPenetrating && outcome != EHitOutcome::Ricochet)
+        {
+            _projectileMovement->StopMovementImmediately();
+            _collisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            _collisionComp->SetGenerateOverlapEvents(false);
+        }
+
+        float damageMultiplier = 1.f;
+        if (outcome == EHitOutcome::Penetrate)      damageMultiplier = 0.65f;   // 관통 판정일 경우 데미지 65%
+        if (outcome == EHitOutcome::Ricochet)       damageMultiplier = 0.f;     // 도탄 판정일 경우 데미지 무효
+
+        float finalDamage = _projectileData._baseDamage
+            * (_projectileMovement->Velocity.Size() / _baseSpeed) // 속도에 비례하는 최종 데미지
+            * damageMultiplier;                                   // 관통 정도 반영
+
         FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
 
         UGameplayStatics::ApplyPointDamage(
             OtherActor,                     // 데미지를 받을 액터
-            finalDamage,                    // 적용할 기본 데미지 값
+            finalDamage,                    // 적용할 데미지 값
             shotDirection,                  // 데미지가 들어온 방향 벡터
             SweepResult,                    // 충돌 정보(FHitResult)
             GetInstigatorController(),      // 데미지를 유발한 컨트롤러
@@ -114,16 +149,14 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
 
-        FVector newVelocity = _projectileMovement->Velocity * (1.f - _projectileData._falloffPenetration);
-        _projectileMovement->Velocity = newVelocity;
-        _projectileMovement->MaxSpeed = newVelocity.Size();
-
         if (_projectileData._type == EGunProjectileType::Explosive)
         {
             _isExploded = true;
             Explode();
             Destroy();
         }
+
+        ProcessHitOutcome(outcome, SweepResult);
     }
 
     UE_LOG(LogTemp, Log, TEXT("Bullet Hit!"));
@@ -200,6 +233,65 @@ float AGunBulletBase::CalculateSpeedFalloffMultiplier(float distance)
 
     falloff = FMath::Clamp(falloff, 0.f, 1.f);
     return 1.0f - falloff;
+}
+
+EHitOutcome AGunBulletBase::CalculateHitOutcome(int32 AV, const FHitResult& SweepResult)
+{
+    FVector incidentVec = (-_projectileMovement->Velocity).GetSafeNormal(); // 입사 벡터
+    FVector normalVec = SweepResult.ImpactNormal.GetSafeNormal(); // 노말 벡터
+    float cos = FMath::Clamp(FVector::DotProduct(incidentVec, normalVec), -1.f, 1.f);
+    float IncidenceDeg = FMath::RadiansToDegrees(FMath::Acos(cos)); // 입사각
+
+    // 입사각에 따른 관통력 정도
+    FArmorPenetration armorPenetration = _projectileData._armorPenetration;
+    int32 AP = 0;
+    if (IncidenceDeg < 25.f)            AP = armorPenetration._direct;   
+    else if (IncidenceDeg < 60.f)       AP = armorPenetration._slightAngle;     
+    else if (IncidenceDeg < 80.f)       AP = armorPenetration._largeAngle;    
+    else                                AP = armorPenetration._extremeAngle;
+
+    AP -= _penetrationCount; // 한 번 관통할 때마다 관통력 감소
+
+    if (AP > AV + 1) return EHitOutcome::OverPenetrating; // 2단계 이상 많으면 과관통
+    else if (AP > AV) return EHitOutcome::FullPenetrate; // 1단계 많으면 완전 관통
+    else if (AP == AV) return EHitOutcome::Penetrate;   // 같으면 관통
+    else return EHitOutcome::Ricochet;                  // 적으면 도탄
+}
+
+void AGunBulletBase::ProcessHitOutcome(EHitOutcome outcome, const FHitResult& SweepResult)
+{
+    switch (outcome)
+    {
+    case EHitOutcome::OverPenetrating:
+    {
+        _penetrationCount++;
+        _baseSpeed *= (1.f - _projectileData._falloffPenetration); // 기본 속도 감소
+        FVector newVelocity = _projectileMovement->Velocity * (1.f - _projectileData._falloffPenetration);
+        _projectileMovement->Velocity = newVelocity;
+        _projectileMovement->MaxSpeed = newVelocity.Size();
+        _projectileMovement->UpdateComponentVelocity();
+        break;
+    }
+
+    case EHitOutcome::FullPenetrate:
+    case EHitOutcome::Penetrate:
+        if (!IsActorBeingDestroyed() && !IsPendingKillPending())
+            Destroy();
+        break;
+
+    case EHitOutcome::Ricochet:
+    {
+        FVector vector = _projectileMovement->Velocity;
+        FVector normalVec = SweepResult.ImpactNormal.GetSafeNormal();
+        FVector reflected = FMath::GetReflectionVector(vector, normalVec);  // 반사각 계산
+        _projectileMovement->Velocity = reflected * 0.6f;
+        _projectileMovement->UpdateComponentVelocity();
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
