@@ -7,27 +7,16 @@ AEnemy_Warrior::AEnemy_Warrior(const FObjectInitializer& ObjectInitializer) :Sup
 {
 }
 
-bool AEnemy_Warrior::CheckAbleTryNear(AActor* target)
-{
-    return false;
-}
-
 bool AEnemy_Warrior::CheckAbleTryMiddle(AActor* target)
 {
+    if (target == nullptr)
+        return false;
     return false;
 }
 
-bool AEnemy_Warrior::TryNear(AActor* target)
-{
-    return false;
-}
 
 bool AEnemy_Warrior::TryMiddle(AActor* target)
 {
-    return false;
-}
 
-bool AEnemy_Warrior::TryFar(AActor* target)
-{
     return false;
 }

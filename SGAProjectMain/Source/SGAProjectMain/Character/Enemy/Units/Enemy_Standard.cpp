@@ -32,7 +32,7 @@ bool AEnemy_Standard::CheckAbleTryMiddle(AActor* target)
 		return false;
 	if (_hasReinforceAuthority == false)
 		return false;
-	return false;
+	return true;
 }
 
 bool AEnemy_Standard::CheckAbleTryFar(AActor* target)
@@ -57,9 +57,9 @@ bool AEnemy_Standard::TryMiddle(AActor* target)
 {
 	if (CheckAbleTryMiddle(target) == false)
 		return false;
-	//if (TryCalling(target))
-	//	return true;
-	//
+	if (TryCalling(target))
+		return true;
+	
 	return false;
 }
 

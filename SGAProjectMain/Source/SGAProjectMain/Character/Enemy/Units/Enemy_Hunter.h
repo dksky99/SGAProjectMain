@@ -16,18 +16,14 @@ class SGAPROJECTMAIN_API AEnemy_Hunter : public AEnemy_Pouncer
 
 public:
 
-	AEnemy_Hunter(const FObjectInitializer& ObjectInitializer);
 
 
 
 
-	virtual bool CheckAbleTryNear(AActor* target) override;
-	virtual bool CheckAbleTryMiddle(AActor* target) override;
-	virtual bool TryNear(AActor* target)   override;
-	virtual bool TryMiddle(AActor* target) override;
+	virtual bool CheckAbleTryFar(AActor* target) override;
 	virtual bool TryFar(AActor* target)    override;
 
-	void TryDodge();
+	bool TryDodge(AActor* target);
 
 
 protected:

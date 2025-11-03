@@ -320,6 +320,26 @@ void ACharacterBase::RecoverFromDead()
 
 }
 
+void ACharacterBase::UnitUnable()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance() ;
+
+	if (AnimInstance)
+	{
+		AnimInstance->Montage_Stop(0.0f);
+	}
+	UCharacterMovementComponent* CMC = GetCharacterMovement();
+	if (CMC)
+	{
+		CMC->StopMovementImmediately();
+	}
+}
+
+void ACharacterBase::UnitRecoverFromUnable()
+{
+
+}
+
 void ACharacterBase::SpawnGhost()
 {
 	// 사망 직후 CurrentMesh는 이미 래그돌 상태

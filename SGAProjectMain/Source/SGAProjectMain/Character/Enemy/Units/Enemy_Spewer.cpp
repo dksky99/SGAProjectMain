@@ -5,29 +5,25 @@
 
 AEnemy_Spewer::AEnemy_Spewer(const FObjectInitializer& ObjectInitializer) :Super(ObjectInitializer)
 {
+	_errorDegree = 15.0f;
 }
 
 bool AEnemy_Spewer::CheckAbleTryNear(AActor* target)
 {
-    return false;
-}
 
-bool AEnemy_Spewer::CheckAbleTryMiddle(AActor* target)
-{
-    return false;
+	if (target == nullptr)
+		return false;
+	return true;
 }
 
 bool AEnemy_Spewer::TryNear(AActor* target)
 {
-    return false;
+	if (CheckAbleTryNear(target) == false)
+		return false;
+	if (AttackMelee())
+		return true;
+
+
+	return false;
 }
 
-bool AEnemy_Spewer::TryMiddle(AActor* target)
-{
-    return false;
-}
-
-bool AEnemy_Spewer::TryFar(AActor* target)
-{
-    return false;
-}

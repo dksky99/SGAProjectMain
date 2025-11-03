@@ -61,7 +61,6 @@ AEnemyController::AEnemyController()
     
     PerceptionComponent->ConfigureSense(*_damageSenseConfig);
 
-    _behaviorControlComponent = CreateDefaultSubobject<UBehaviorControlComponent>("Behavior Control");
 
     TeamId = FGenericTeamId(1);
 
@@ -77,10 +76,16 @@ void AEnemyController::OnPossess(APawn* InPawn)
     if (pawnTemp)
     {
         _pawn = pawnTemp;
+        _blackBoard = pawnTemp->GetBlackboardData();
+        _behaviorTree = pawnTemp->GetBehaviorTree();
+        _behaviorControlComponent = pawnTemp->GetBehaviorControl();
         _behaviorControlComponent->Init();
         SetAlertStep(_pawn->GetUnitState());
     }
-
+    if (PerceptionComponent)
+    {
+        PerceptionComponent->Activate(true);
+    }
     UBlackboardComponent* temp = Blackboard;
     IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(InPawn);
     if (TeamAgent)
@@ -118,6 +123,23 @@ void AEnemyController::OnPossess(APawn* InPawn)
 void AEnemyController::OnUnPossess()
 {
     Super::OnUnPossess();
+
+    UBrainComponent* Brain = GetBrainComponent();
+    if (Brain)
+    {
+        Brain->StopLogic(TEXT("Unpossessed"));
+    }
+
+    // <<< 2. 퍼셉션 컴포넌트 비활성화 >>>
+    // 이 함수가 호출되면 퍼셉션 컴포넌트가 더 이상 틱을 돌지 않고, 감각 업데이트를 수신하지 않습니다.
+    if (PerceptionComponent)
+    {
+        PerceptionComponent->Deactivate();
+    }
+
+    _pawn = nullptr;
+    _blackBoard = nullptr;
+    _behaviorTree = nullptr;
     ResetController();
 }
 
@@ -188,6 +210,9 @@ void AEnemyController::PerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 
 void AEnemyController::HandleSensedSight(AActor* Actor)
 {
+
+    if (_pawn == nullptr)
+        return;
     if (CheckTargetable(Actor) == false)
         return;
 
@@ -202,7 +227,8 @@ void AEnemyController::HandleSensedSight(AActor* Actor)
 void AEnemyController::HandleSensedHearing(FVector directionHeared)
 {
 
-
+    if (_pawn == nullptr)
+        return;
 
     _lastSensedLoc = directionHeared;
     if (_isReadyToStack == false)
@@ -218,7 +244,6 @@ void AEnemyController::HandleSensedHearing(FVector directionHeared)
     
 	 _curLoudnessStack +=1.f;
     
-     UE_LOG(LogTemp, Display, TEXT("%s LoudnessStack : %f"),*_pawn->GetName(), _curLoudnessStack);
 
      if (_pawn->GetUnitState() == EUnitState::InBattle)
      {
@@ -241,6 +266,8 @@ void AEnemyController::HandleSensedHearing(FVector directionHeared)
 void AEnemyController::HandleSensedDamage(AActor* Actor)
 {
 
+    if (_pawn == nullptr)
+        return;
     if (CheckTargetable(Actor) == false)
         return;
 

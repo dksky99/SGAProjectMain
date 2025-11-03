@@ -35,8 +35,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
 	//UnitType
@@ -77,12 +75,19 @@ public:
 
 
 
-	bool GetIsAbleToAct();	// 플레이어 가져오기 = 표적 가져오기
+	bool GetIsAbleToAct();	
 	void SetIsAbleToAct(bool condition);
 
 
-	bool GetIsTargetLookAtMe();	// 플레이어 가져오기 = 표적 가져오기
+	bool GetIsTargetLookAtMe();	
 	void SetIsTargetLookAtMe(bool condition);
+
+	bool GetIsTargetAimingMe();
+	void SetIsTargetAimingMe(bool condition);
+
+	bool GetIsUnable();	
+	void SetIsUnable(bool condition);
+
 
 	void SetBlackBoard(class UBlackboardComponent* InBlackboard) { blackboard = InBlackboard; }
 
@@ -114,12 +119,17 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FName IsTargetLookAtMeKey = "IsTargetLookAtMe";
+
+	UPROPERTY(EditAnywhere)
+	FName IsTargetAimingMeKey = "IsTargetAimingMe";
+
+	UPROPERTY(EditAnywhere)
+	FName IsUnableKey = "IsUnable";
 protected:
 
 	class UBlackboardComponent* blackboard;
-	UPROPERTY()
+
 	class AEnemyController* _ownerController;
-	UPROPERTY()
 	class AEnemy* _ownerPawn;
 		
 };

@@ -72,6 +72,10 @@ public:
 	virtual void RecoverFromKnockDown();
 	virtual void Dead();
 	virtual void RecoverFromDead();
+	virtual void UnitUnable();
+	virtual void UnitRecoverFromUnable();
+
+
 
 	virtual void UnitDeactivate();
 	virtual void UnitActivate();

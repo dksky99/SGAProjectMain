@@ -1698,6 +1698,28 @@ void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
 	_missionWidget->AddMissionSlot(texture, name);
 }
 
+void APlayerCharacter::UnitUnable()
+{
+	Super::UnitUnable();
+	APlayerController* controller = GetController<APlayerController>();
+	if (controller)
+	{
+
+		controller->DisableInput(controller);
+	}
+}
+
+void APlayerCharacter::UnitRecoverFromUnable()
+{
+	Super::UnitRecoverFromUnable();
+	APlayerController* controller = GetController<APlayerController>();
+	if (controller)
+	{
+
+		controller->EnableInput(controller);
+	}
+}
+
 void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)
 {
 	prevGun->GetAmmoComponent()->_ammoChanged.RemoveAll(_gunWidget);

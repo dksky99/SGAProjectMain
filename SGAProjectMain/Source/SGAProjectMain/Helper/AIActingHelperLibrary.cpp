@@ -2,6 +2,7 @@
 
 
 #include "AIActingHelperLibrary.h"
+#include "Math/UnrealMathUtility.h" // FMath::DegreesToRadians 포함
 
 bool UAIActingHelperLibrary::CalculateLaunchDirection(FVector& OutLaunchDirection, const FVector& StartLocation, const FVector& TargetLocation, float LaunchSpeed, bool bPreferHighArc, float GravityMagnitude)
 {
@@ -141,7 +142,7 @@ EAimStatus UAIActingHelperLibrary::CheckAimAndSuggestCorrection(const AActor* Ch
     }
 }
 
-bool UAIActingHelperLibrary::IsTargetFacingMe(const FVector& OwnerLoc, const FVector& TargetLoc, const FVector& TargetLook,  float& OutputAngle, float AngleTolerance)
+bool UAIActingHelperLibrary::IsFacingTarget_WithAngle(const FVector& OwnerLoc, const FVector& TargetLoc, const FVector& TargetLook,  float& OutputAngle, float AngleTolerance)
 {
     FVector temp = OwnerLoc - TargetLoc;
 
@@ -153,5 +154,23 @@ bool UAIActingHelperLibrary::IsTargetFacingMe(const FVector& OwnerLoc, const FVe
         return false;
 
     return true;
+}
+
+FVector UAIActingHelperLibrary::CalculateSpreadDirection(const FVector& Dir, float ErrorAngleDeg)
+{
+    // 0. 오차 각도가 0 이하면, 계산할 필요 없이 원본 방향만 정규화하여 반환
+    if (ErrorAngleDeg <= 0.0f)
+    {
+        return Dir.GetSafeNormal();
+    }
+
+    // 1. FMath::VRandCone은 '라디안' 단위를 사용하므로, 입력받은 '도'(Degree)를 '라디안'(Radian)으로 변환
+    const float ErrorAngleRad = FMath::DegreesToRadians(ErrorAngleDeg);
+
+    // 2. FMath::VRandCone을 호출하여 무작위 벡터 생성
+    //    이 함수는 Dir을 기준으로 ErrorAngleRad 각도 내에서 균일하게 분포된
+    //    무작위 방향 벡터를 반환합니다.
+    //    입력되는 Dir이 정규화(Normalized)되어 있어야 하므로 GetSafeNormal()을 사용합니다.
+    return FMath::VRandCone(Dir.GetSafeNormal(), ErrorAngleRad);
 }
 

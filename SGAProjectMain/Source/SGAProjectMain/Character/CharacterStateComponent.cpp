@@ -76,11 +76,14 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 		damage = 5;
 		time = 0.1f;
 		break;
-	case EAbnormalityState::Shock:
-		time = 3.f;
+	case EAbnormalityState::LightStagger:
+		time = 0.2f;
 		break;
 	case EAbnormalityState::StrongStagger:
 		time = 1.5f;
+		break;
+	case EAbnormalityState::Shock:
+		time = 3.f;
 		break;
 	default:
 		break;
@@ -95,12 +98,21 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 	
 	//지속시간 초기화
 	_remainTimes[state] = time;
-	bool prev = IsSlow();
+	bool prevSlow = IsSlow();
+	bool prevUnable = IsUnable();
 	_activeAbnormalities |= temp;
-	bool cur = IsSlow();
-	if (prev == cur || cur == false)
-		return;
-	ActiveSlow();
+	bool curSlow = IsSlow();
+	bool curUnable = IsUnable();
+	if (prevSlow != curSlow || curSlow == true)
+	{
+		ActiveSlow();
+
+	}
+	if (prevUnable != curUnable || curUnable == true)
+	{
+		ActiveUnable();
+
+	}
 	//코어에 직접적인 데미지 입히기.상태이상은 부위와 관련이 읎다.
 
 }
@@ -111,12 +123,22 @@ void UCharacterStateComponent::SubAbnormality(EAbnormality abnormality)
 		return;
 	uint32 temp = 1 << (uint8)abnormality;
 
-	bool prev = IsSlow();
+	bool prevSlow = IsSlow();
+	bool prevUnable = IsUnable();
 	_activeAbnormalities &= ~temp;
-	bool cur = IsSlow();
-	if (prev == cur||cur==true)
-		return;
-	DeactiveSlow();
+	bool curSlow = IsSlow();
+	bool curUnable = IsUnable();
+
+	if (prevSlow != curSlow || curSlow == false)
+	{
+		DeactiveSlow();
+
+	}
+	if (prevUnable != curUnable || curUnable == false)
+	{
+		DeactiveUnable();
+
+	}
 }
 
 void UCharacterStateComponent::SubAbnormality(EAbnormalityState abnormality)
@@ -125,12 +147,22 @@ void UCharacterStateComponent::SubAbnormality(EAbnormalityState abnormality)
 	if (CheckAbnormality(temp) == false)
 		return;
 
-	bool prev = IsSlow();
+	bool prevSlow = IsSlow();
+	bool prevUnable = IsUnable();
 	_activeAbnormalities &= ~temp;
-	bool cur = IsSlow();
-	if (prev == cur || cur == true)
-		return;
-	DeactiveSlow();
+	bool curSlow = IsSlow();
+	bool curUnable = IsUnable();
+
+	if (prevSlow != curSlow || curSlow == false)
+	{
+		DeactiveSlow();
+
+	}
+	if (prevUnable != curUnable || curUnable == false)
+	{
+		DeactiveUnable();
+
+	}
 }
 
 bool UCharacterStateComponent::CheckAbnormality(EAbnormality abnormality)
@@ -164,7 +196,7 @@ bool UCharacterStateComponent::ActionBegin()
 
 bool UCharacterStateComponent::IsUnable()
 {
-	uint32 temp=(uint32)EAbnormalityState::Shock + (uint32)EAbnormalityState::StrongStagger;
+	uint32 temp=(uint32)EAbnormalityState::Shock + (uint32)EAbnormalityState::StrongStagger+ (uint32)EAbnormalityState::LightStagger;
 	return CheckAbnormality(temp);
 }
 
@@ -188,6 +220,16 @@ void UCharacterStateComponent::DeactiveSlow()
 	temp = temp*4.f/ 3.f;
 	//원상복구. 속도는 ChangeSpeed에서 슬로우상태면 자동으로 75퍼를 깎지만 지금은 슬로우가 아닐테니 현상태에서 원상복구로 들어감
 	_owner->GetStatComponent()->ChangeSpeed(temp);
+}
+
+void UCharacterStateComponent::ActiveUnable()
+{
+	_owner->UnitUnable();
+}
+
+void UCharacterStateComponent::DeactiveUnable()
+{
+	_owner->UnitRecoverFromUnable();
 }
 
 void UCharacterStateComponent::CalcAbnormalityTime(float deltaTime)
@@ -243,6 +285,7 @@ int UCharacterStateComponent::CalcActivates(uint32 type,float deltaTime)
 	case EAbnormalityState::None:
 	case EAbnormalityState::AcidBubble:
 	case EAbnormalityState::StrongStagger:
+	case EAbnormalityState::LightStagger:
 	case EAbnormalityState::Shock:
 	default:
 		return 0;

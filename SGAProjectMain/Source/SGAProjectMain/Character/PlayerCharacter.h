@@ -205,6 +205,11 @@ public:
 	void OpenMap();
 	void AddMissionSlot(UTexture2D* texture, FString name); // 임시. 추후 삭제 예정
 
+
+	virtual void UnitUnable() override;
+	virtual void UnitRecoverFromUnable() override;
+
+
 protected:
 	void OnPreSwitchGun(AGunBase* prevGun) override;
 	void OnPostSwitchGun(AGunBase* newGun) override;

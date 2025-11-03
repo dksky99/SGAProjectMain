@@ -134,7 +134,7 @@ void AEnemy_Spitter::SpitProjectile()
 {
 
     FVector muzzleLocation = GetMesh()->GetSocketLocation(TEXT("attach_acid_spray")) + GetActorForwardVector() * 10.f;
-    FVector fireDirection = _spitDirection;
+    FVector fireDirection = UAIActingHelperLibrary::CalculateSpreadDirection(_spitDirection,_errorDegree);
 
     FRotator fireRotation = fireDirection.Rotation();
 

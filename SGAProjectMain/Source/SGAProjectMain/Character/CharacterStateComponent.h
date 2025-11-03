@@ -35,6 +35,7 @@ enum class EAbnormality : uint8
 	AcidStream,
 	bleeding ,
 	Thornbush ,
+	LightStagger,
 	StrongStagger, 
 	Shock ,
 
@@ -51,8 +52,9 @@ enum class EAbnormalityState : uint32
 	AcidStream = 1 << 4,
 	bleeding = 1 << 5,
 	Thornbush = 1 << 6,
-	StrongStagger = 1 << 7,
-	Shock = 1 << 8,
+	LightStagger = 1 << 7,
+	StrongStagger = 1 << 8,
+	Shock = 1 << 9,
 
 	Max
 };
@@ -93,6 +95,8 @@ public:
 	bool IsSlow();
 	void ActiveSlow();
 	void DeactiveSlow();
+	virtual void ActiveUnable();
+	virtual void DeactiveUnable();
 	void CalcAbnormalityTime(float deltaTime);
 
 	int CalcActivates(uint32 type,float deltaTime);

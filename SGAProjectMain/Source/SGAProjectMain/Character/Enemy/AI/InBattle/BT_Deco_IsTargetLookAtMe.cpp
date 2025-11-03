@@ -67,7 +67,7 @@ bool UBT_Deco_IsTargetLookAtMe::CalculateRawConditionValue(UBehaviorTreeComponen
 
     
     // 4. 핵심 함수 호출
-    const bool bIsFacingMe = UAIActingHelperLibrary::IsTargetFacingMe(OwnerLoc, targetEye, targetLook,angle, AngleTolerance);
+    const bool bIsFacingMe = UAIActingHelperLibrary::IsFacingTarget_WithAngle(OwnerLoc, targetEye, targetLook,angle, AngleTolerance);
 
     UE_LOG(LogTemp, Display, TEXT("He Look At Me %f : %s"),angle, bIsFacingMe ? TEXT("true") : TEXT("false"));
     DrawDebugLine(

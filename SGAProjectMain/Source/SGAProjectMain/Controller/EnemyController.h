@@ -94,12 +94,10 @@ public:
 	
 	class AEnemy* _pawn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UBlackboardData* _blackBoard;
 
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UBehaviorTree* _behaviorTree;
 
 protected:
@@ -133,7 +131,6 @@ protected:
 	FVector _lastSensedLoc;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Behavior", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorControlComponent* _behaviorControlComponent;
 
 	UPROPERTY()

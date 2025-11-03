@@ -56,4 +56,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Attack", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AGunBulletBase> _projectileClass;
 	FVector _spitDirection;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Attack", meta = (AllowPrivateAccess = "true"))
+	float _errorDegree = 0.0f;
+	
 };
