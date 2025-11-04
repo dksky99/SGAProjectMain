@@ -108,7 +108,7 @@ protected:
 	USceneComponent* _muzzlePoint = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	USentryAnimInstance* _anim = nullptr;
+	class USentryAnimInstance* _anim = nullptr;
 
 	// =========================================================
 	// 변수 묶음: 스펙/파라미터(사격/체력/사거리/탄 등)

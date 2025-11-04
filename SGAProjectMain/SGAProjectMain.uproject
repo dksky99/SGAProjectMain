@@ -14,7 +14,8 @@
 				"CoreUObject",
 				"AIModule",
 				"FieldSystemEngine",
-				"NavigationSystem"
+				"NavigationSystem",
+				"PhysicsCore"
 			]
 		}
 	],

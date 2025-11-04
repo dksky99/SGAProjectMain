@@ -30,7 +30,6 @@
 #include "../../CGameInstance.h"
 
 #include "../../Gun/GunBase.h"
-#include "../../Gun/ExplosiveGun.h"
 #include "../../Object/Item/Backpack.h"
 #include "../../Object/Item/ReloadBackpack.h"
 #include "../../Object/Item/SampleResources.h"

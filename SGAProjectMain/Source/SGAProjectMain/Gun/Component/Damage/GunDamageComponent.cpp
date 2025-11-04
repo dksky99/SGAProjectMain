@@ -55,23 +55,22 @@ void UGunDamageComponent::FireShot(FVector muzzleLocation, FRotator muzzleRotati
 
 float UGunDamageComponent::CalculateDamage(float distance) // distance는 meter 단위
 {
+	float falloff = 0.0f;
+
 	if (distance <= 25.f) // 25m까지
 	{
 		float alpha = distance / 25.0f;
-		float falloff = FMath::Lerp(0.0f, _falloff25, alpha);
-		return _baseDamage * (1.0f - falloff);
+		falloff = FMath::Lerp(0.0f, _falloff25, alpha);
 	}
 	else if (distance <= 50.f) // 50m까지
 	{
 		float alpha = (distance - 25.0f) / 25.0f;
-		float falloff = FMath::Lerp(_falloff25, _falloff50, alpha);
-		return _baseDamage * (1.0f - falloff);
+		falloff = FMath::Lerp(_falloff25, _falloff50, alpha);
 	}
 	else if (distance <= 100.f) // 100m까지
 	{
 		float alpha = (distance - 50.0f) / 50.0f;
-		float falloff = FMath::Lerp(_falloff50, _falloff100, alpha);
-		return _baseDamage * (1.0f - falloff);
+		falloff = FMath::Lerp(_falloff50, _falloff100, alpha);
 	}
 	else
 	{
@@ -80,9 +79,10 @@ float UGunDamageComponent::CalculateDamage(float distance) // distance는 meter 
 
 		// 100m 이후부터는 50~100m 구간의 감속 기울기 사용
 		float extraFalloff = perMeterFalloff * ((distance - 100.f));
-		float finalFalloff = _falloff100 + extraFalloff;
-
-		return _baseDamage * (1.0f - finalFalloff);
+		falloff = _falloff100 + extraFalloff;
 	}
+
+	falloff = FMath::Clamp(falloff, 0.f, 1.f);
+	return _baseDamage * (1.0f - falloff);
 }
 

@@ -373,7 +373,7 @@ void ASentryTurret::SpawnBullet(const FVector& muzzleLocation, const FVector& di
 
 	if (bullet)
 	{
-		bullet->InitializeProjectile();
+		bullet->InitializeProjectile(FGunProjectileData()); //TODO
 	}
 }
 
