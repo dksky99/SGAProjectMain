@@ -8,64 +8,57 @@
 #include "../Data/GunProjectileDataAsset.h"
 #include "GunBulletBase.generated.h"
 
-UENUM(BlueprintType)
-enum class EBulletType : uint8
-{
-	Standard,
-	Explosive
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBulletHit, EHitOutcome, hitOutcome);
 
-UENUM(BlueprintType)
-enum class EHitOutcome : uint8
-{ 
-	OverPenetrating, 
-	FullPenetrate, 
-	Penetrate, 
-	Ricochet 
-};
+//UENUM(BlueprintType)
+//enum class EBulletType : uint8
+//{
+//	Standard,
+//	Explosive
+//};
 
-USTRUCT(BlueprintType)
-struct FBulletData : public FTableRowBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EBulletType _type = EBulletType::Standard;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _initialSpeed = 3500.f; // 초기 속도
-
-	// 데미지
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _baseDamage = 3500.f; // 기본 데미지
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _vsDurableDamage = 3500.f; // 내구 데미지
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _explosionDamage = 150.f; // 폭발 데미지
-
-	// 관통력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _basePenetrateTrait = EPenetrateTrait::AntiTank;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _explosionPenetrateTrait = EPenetrateTrait::AntiTank;
-
-	// 거리에 따른 데미지 감소량
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff25 = 0.04f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff50 = 0.072f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff100 = 0.133f;
-
-	// 폭발 범위
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _innerRadius = 150.f; // 중심 범위
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _outerRadius = 600.f; // 전체 범위
-
-};
+//USTRUCT(BlueprintType)
+//struct FBulletData : public FTableRowBase
+//{
+//	GENERATED_BODY()
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EBulletType _type = EBulletType::Standard;
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _initialSpeed = 3500.f; // 초기 속도
+//
+//	// 데미지
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _baseDamage = 3500.f; // 기본 데미지
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _vsDurableDamage = 3500.f; // 내구 데미지
+//
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _explosionDamage = 150.f; // 폭발 데미지
+//
+//	// 관통력
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EPenetrateTrait _basePenetrateTrait = EPenetrateTrait::AntiTank;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EPenetrateTrait _explosionPenetrateTrait = EPenetrateTrait::AntiTank;
+//
+//	// 거리에 따른 데미지 감소량
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff25 = 0.04f;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff50 = 0.072f;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff100 = 0.133f;
+//
+//	// 폭발 범위
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _innerRadius = 150.f; // 중심 범위
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _outerRadius = 600.f; // 전체 범위
+//
+//};
 
 UCLASS()
 class SGAPROJECTMAIN_API AGunBulletBase : public AActor
@@ -97,23 +90,13 @@ protected:
 	EHitOutcome CalculateHitOutcome(int32 AV, const FHitResult& SweepResult);
 	void ProcessHitOutcome(EHitOutcome outcome, const FHitResult& SweepResult);
 
-	int32 SurfaceToAV(EPhysicalSurface surface)
-	{
-		switch (surface)
-		{
-		case SurfaceType1: return 0; // AV0_UnarmoredI
-		case SurfaceType2: return 1; // AV1_UnarmoredII
-		case SurfaceType3: return 2; // AV2_Light
-		case SurfaceType4: return 3; // AV3_Medium
-		case SurfaceType5: return 4; // AV4_Heavy
-		case SurfaceType6: return 5; // AV5_TankI
-		case SurfaceType7: return 6; // AV6_TankII
-		default:           return 0;
-		}
-	}
+	int32 SurfaceToAV(EPhysicalSurface surface);
 
 public:
 	void InitializeProjectile(FGunProjectileData data);
+
+	UPROPERTY()
+	FOnBulletHit _bulletHitEvent;
 
 private:
 	//UPROPERTY(EditAnywhere, Category = "Game/GunData")

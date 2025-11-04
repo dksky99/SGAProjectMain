@@ -95,6 +95,9 @@ public:
 
 	FTransform GetLeftHandleTrans();
 
+	UFUNCTION()
+	void ShowHitMarker(EHitOutcome hitOutcome);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _gunMesh;
@@ -141,7 +144,7 @@ protected:
 	class AImpactMarker* _marker;
 
 	UPROPERTY()
-	UUserWidget* _crosshair;
+	class UCrosshairWidget* _crosshair;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	//int32 _scopeMode;

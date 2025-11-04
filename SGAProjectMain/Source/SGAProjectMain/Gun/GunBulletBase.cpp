@@ -147,6 +147,9 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 
         UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
 
+        if (_bulletHitEvent.IsBound())
+            _bulletHitEvent.Broadcast(outcome);
+
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
 
         if (_projectileData._type == EGunProjectileType::Explosive)
@@ -291,6 +294,21 @@ void AGunBulletBase::ProcessHitOutcome(EHitOutcome outcome, const FHitResult& Sw
 
     default:
         break;
+    }
+}
+
+int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
+{
+    switch (surface)
+    {
+    case SurfaceType1: return 0; // AV0_UnarmoredI
+    case SurfaceType2: return 1; // AV1_UnarmoredII
+    case SurfaceType3: return 2; // AV2_Light
+    case SurfaceType4: return 3; // AV3_Medium
+    case SurfaceType5: return 4; // AV4_Heavy
+    case SurfaceType6: return 5; // AV5_TankI
+    case SurfaceType7: return 6; // AV6_TankII
+    default:           return 0;
     }
 }
 

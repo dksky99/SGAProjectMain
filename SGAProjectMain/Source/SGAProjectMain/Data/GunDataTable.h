@@ -11,6 +11,15 @@
  */
 
 UENUM(BlueprintType)
+enum class EHitOutcome : uint8
+{
+	OverPenetrating,
+	FullPenetrate,
+	Penetrate,
+	Ricochet
+};
+
+UENUM(BlueprintType)
 enum class EGunGripType : uint8
 {
 	OneHanded,
@@ -201,7 +210,7 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AImpactMarker> _impactMarkerClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UUserWidget> _crosshairClass;
+	TSubclassOf<class UCrosshairWidget> _crosshairClass;
 
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
