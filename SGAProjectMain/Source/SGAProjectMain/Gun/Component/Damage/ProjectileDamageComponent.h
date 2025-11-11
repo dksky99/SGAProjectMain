@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GunDamageComponent.h"
+#include "../../GunBulletBase.h"
 #include "ProjectileDamageComponent.generated.h"
 
 /**
@@ -21,5 +22,7 @@ protected:
 	virtual void DoFireShot(FVector fireLocation, FVector fireDirection);
 
 	UPROPERTY()
-	TSubclassOf<class AGunBulletBase> _projectileClass;
+	TSubclassOf<AGunBulletBase> _projectileClass;
+	UPROPERTY()
+	FGunProjectileData _projectileData;
 };

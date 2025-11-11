@@ -6,6 +6,7 @@
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "../UI/ImpactMarker.h"
+#include "../UI/CrosshairWidget.h"
 #include "Blueprint/UserWidget.h"
 
 #include "Component/GunFireComponent.h"
@@ -66,7 +67,7 @@ void AGunBase::BeginPlay()
 
 	if (_gunData._crosshairClass)
 	{
-		_crosshair = CreateWidget<UUserWidget>(GetWorld(), _gunData._crosshairClass);
+		_crosshair = CreateWidget<UCrosshairWidget>(GetWorld(), _gunData._crosshairClass);
 
 		if (_crosshair)
 		{
@@ -496,5 +497,10 @@ FTransform AGunBase::GetLeftHandleTrans()
 	if(_gunMesh->DoesSocketExist(TEXT("LeftGrip")))
 		return _gunMesh->GetSocketTransform(TEXT("LeftGrip"),RTS_World);
 	return _gunMesh->GetComponentTransform();
+}
+
+void AGunBase::ShowHitMarker(EHitOutcome hitOutcome)
+{
+	_crosshair->ShowHitMarker(hitOutcome);
 }
 
