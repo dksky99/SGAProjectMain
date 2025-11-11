@@ -20,6 +20,8 @@ struct FMissionProgress
 
 	bool _isMainObjectiveCleared = false;
 
+	int _extractedHelldiversNum = 0;
+
 	UPROPERTY()
 	TSet<FName> _completedOptionalObjectives;
 };
@@ -38,16 +40,24 @@ public:
 	void OnObjectiveCleared(FName objectiveID);
 	void EnableExtraction();
 	void CallEscapePlane();
-	void EndBattle(bool isCleared);
+	void EndBattle();
 
 	class AEnemyReinforceManager* GetEnemyReinforceManager() { return _enemyReinforceManager; }
 	class AHelldiverReinforceManager* GetHelldiverReinforceManager() { return _helldiverReinforceManager; }
+
+	bool IsTimeOver() const { return _remainingTime <= 0.f; }
 private:
+	void UpdateTimer(); 
+	struct FPlayerCurrency CalculateMissionReward();
+
 	UPROPERTY()
 	FMissionProgress _missionProgress;
 
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	TSubclassOf<class AEscapePlane> _escapePlaneClass;
+
+	UPROPERTY()
+	class AEscapePlane* _escapePlane;
 
 	UPROPERTY(EditAnywhere, Category = "Game/Plane")
 	FVector _planeSpawnLoc;
@@ -68,4 +78,7 @@ private:
 	class AEnemyReinforceManager* _enemyReinforceManager;
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AHelldiverReinforceManager* _helldiverReinforceManager;
+
+	float _remainingTime = 0.f;
+	FTimerHandle _missionTimerHandle;
 };

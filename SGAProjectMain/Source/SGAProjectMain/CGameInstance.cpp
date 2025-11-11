@@ -66,7 +66,25 @@ TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 i
 	return *row->StratagemClass;
 }
 
-void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
+//void UCGameInstance::AddCurrency(ECurrencyType type, int32 amount)
+//{
+//	_playerCurrency.Add(type, amount);
+//}
+//
+//void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
+//{
+//	_playerCurrency._samples.AddSample(earnedSample);
+//}
+
+void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
 {
-	_savedSample.AddSample(earnedSample);
+	_playerCurrency.AddCurrency(reward);
+}
+
+FSampleBundle UCGameInstance::GetSavedSample()
+{
+	if (!_playerCurrency._samples.IsEmpty())
+		return _playerCurrency._samples;
+
+	return FSampleBundle();
 }

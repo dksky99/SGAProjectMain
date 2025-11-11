@@ -31,6 +31,9 @@ void UPreDeploymentState::SetCurOperation(UOperationDataAsset* op)
 
 	if (op)
 	{
+		_curMission = nullptr;
+		_missions.Empty();
+
 		auto missions = _curOperation->GetMissions();
 		for (auto mission : missions)
 		{
@@ -53,6 +56,8 @@ void UPreDeploymentState::SetCurMission(UMissionDataAsset* mission)
 
 void UPreDeploymentState::ApplyMissionResult(bool isCleared)
 {
+	if (!_curMission) return;
+	if (!_missions.Contains(_curMission)) return;
 	EMissionState state = isCleared ? EMissionState::Cleared : EMissionState::Failed;
 	_missions[_curMission] = state;
 	_curMission = nullptr;
