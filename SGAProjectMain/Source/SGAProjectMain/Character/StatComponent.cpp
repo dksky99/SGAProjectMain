@@ -3,7 +3,10 @@
 
 #include "StatComponent.h"
 #include "CharacterStateComponent.h"
+#include "UnitDataTable.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "../CGameInstance.h"
+#include "../Object/CDamageType.h"
 #include "CharacterBase.h"
 
 // Sets default values for this component's properties
@@ -13,20 +16,18 @@ UStatComponent::UStatComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	_coreMaxHP = 100.0f;
-	_coreHP = _coreMaxHP;
-	_headMaxHP = 100.0f;
-	_headHP = _headMaxHP;
-	_torsoMaxHP = 100.0f;
-	_torsoHP = _torsoMaxHP;
-	_leftArmMaxHP = 20.0f;
-	_leftArmHP = _leftArmMaxHP;
-	_rightArmMaxHP = 20.0f;
-	_rightArmHP = _rightArmMaxHP;
-	_leftLegMaxHP = 20.0f;
-	_leftLegHP = _leftLegMaxHP;
-	_rightLegMaxHP = 20.0f;
-	_rightLegHP = _rightLegMaxHP;
+	
+}
+
+void UStatComponent::InitData(FProcessedUnitData* data)
+{
+	if (data == nullptr)
+		return;
+	_partDatas = data->_partDatas;
+	_battleMovementSpeed= data->_battleMovementSpeed;
+	_defaultMovementSpeed= data->_defaultMovementSpeed;
+	
+
 }
 
 
@@ -37,23 +38,29 @@ void UStatComponent::BeginPlay()
 
 	_owner = Cast<ACharacterBase>(GetOwner());
 
-	if (_owner)
-	{
-		// 포인트 데미지 이벤트 바인딩
-		_owner->OnTakePointDamage.AddDynamic(this, &UStatComponent::HandlePointDamage);
-	}
+	// 복합적인 피해 판정을 위해 데미지 이벤트와 데미지 타입을 써야해서 이 방식으론 불가. 데미지이벤트를 받아올 방법이 없다.
+	// 그러니 TakeDamage에 데미지이벤트를 충돌한 컴포넌트를 포함하게 작성.
+	//if (_owner)
+	//{
+	//	// 포인트 데미지 이벤트 바인딩
+	//	_owner->OnTakePointDamage.AddDynamic(this, &UStatComponent::HandlePointDamage);
+	//}
 	
 }
 
 
 void UStatComponent::Reset()
 {
-	_coreHP = _coreMaxHP;
+	StartRegen();
 }
 
 bool UStatComponent::IsDead()
 {
-	if (_coreHP <= 0)
+	if (_partDatas[EBodyPart::Core].PartStats.IsValidIndex(0)==false)
+	{
+		return true;
+	}
+	if (_partDatas[EBodyPart::Core].PartStats[0]._curHP <=0)
 	{
 		return true;
 	}
@@ -74,7 +81,7 @@ void UStatComponent::ChangeSpeed(float speed)
 		temp *= 0.75f;
 	_owner->GetCharacterMovement()->MaxWalkSpeed = temp;
 }
-
+/*
 void UStatComponent::HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
 {
 	EBodyPart Part = EBodyPart::Core;
@@ -95,126 +102,112 @@ void UStatComponent::HandlePointDamage(AActor* DamagedActor, float Damage, ACont
 
 	ProcessDamage(Part, Damage);
 }
-
-void UStatComponent::ChangeHp(float Amount)
+*/
+void UStatComponent::ChangeHp(FUnitPartStat* part,float Amount)
 {
-	_coreHP = FMath::Clamp(_coreHP + Amount, 0.f, _coreMaxHP);
-	if (_coreHP <= 0.f)
+	//피해양과 영향력으로 코어에 들어가는 데미지를 정한다.
+	part->_curHP= FMath::Clamp(part->_curHP + Amount, 0.f, part->_partHP);
+	
+	if (part->_curHP <= 0.f)
 	{
-		OnDeath.Broadcast();
+		//파트가 파괴됨. 몇몇 파트는 파괴될 시 사망하는 치명효과가 있음. 파트자체에 델리게이트를 달아보자. 그러면 파트가 파괴될떄 다양한 효과를 낼 수 있을거같다.
+		if(part->_onPartDestroyed.IsBound())
+			part->_onPartDestroyed.Broadcast();
+	}
+}
+
+void UStatComponent::ChangeCoreHp(float Amount)
+{
+	FUnitPartStat* part = &(_partDatas[EBodyPart::Core].PartStats[0]);
+	part->_curHP = FMath::Clamp(part->_curHP + Amount, 0.f, part->_partHP);
+
+	if (_coreHpChanged.IsBound())
+		_coreHpChanged.Broadcast((float)(part->_curHP));
+	if (part->_curHP <= 0.f)
+	{
+		//파트가 파괴됨. 몇몇 파트는 파괴될 시 사망하는 치명효과가 있음. 파트자체에 델리게이트를 달아보자. 그러면 파트가 파괴될떄 다양한 효과를 낼 수 있을거같다.
+		if (part->_onPartDestroyed.IsBound())
+			part->_onPartDestroyed.Broadcast();
+		
 	}
 }
 
 void UStatComponent::StartRegen()
 {
-	// 머리 복구
-	_headHP = _headMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::Head);
 
-	// 몸통 복구
-	_torsoHP = _torsoMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::Torso);
+	for (auto part : _partDatas)
+	{
+		for (auto layer : part.Value.PartStats)
+		{
 
-	// 왼팔 복구
-	_leftArmHP = _leftArmMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::LeftArm);
+			layer._curHP = layer._partHP;
+		}
 
-	// 오른팔 복구
-	_rightArmHP = _rightArmMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::RightArm);
-
-	// 왼다리 복구
-	_leftLegHP = _leftLegMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::LeftLeg);
-
-	// 오른다리 복구
-	_rightLegHP = _rightLegMaxHP;
-	OnPartRestored.Broadcast(EBodyPart::RightLeg);
+	}
+	
 }
 
-void UStatComponent::ReceiveDirectDamage(float Damage)
+FUnitPartStat* UStatComponent::GetCoreStat()
 {
-	ProcessDamage(EBodyPart::Core, Damage);
+	if(_partDatas.Find(EBodyPart::Core)==nullptr)
+		return nullptr;
+	if (_partDatas[EBodyPart::Core].PartStats.Num()==0)
+		return nullptr;
+	return &_partDatas[EBodyPart::Core].PartStats[0];
+
 }
 
-void UStatComponent::ProcessDamage(EBodyPart Part, float Damage)
+
+FUnitPartStatArrayWrapper* UStatComponent::GetPartData(EBodyPart part)
 {
+	FUnitPartStatArrayWrapper* PartDataPtr = _partDatas.Find(part);
+
+	if (PartDataPtr && PartDataPtr->PartStats.Num() > 0)
+	{
+		return PartDataPtr;
+	}
+
+	FUnitPartStatArrayWrapper* CoreDataPtr = _partDatas.Find(EBodyPart::Core);
+
+	if (CoreDataPtr && CoreDataPtr->PartStats.Num() > 0)
+	{
+		return CoreDataPtr;
+	}
+
+
+	return nullptr;
+}
+
+void UStatComponent::ProcessDamage(FUnitPartStat* part, struct FCDamageEvent* damageEvent)
+{
+	if (part == nullptr || damageEvent == nullptr)
+		return;
 	// 부위별 현 체력 포인터 및 최대 체력 참조
-	float* CurrentHP = nullptr;
-	float MaxHP = 0.0f;
+	int32* CurrentHP = &(part->_curHP);
+	int32 MaxHP = part->_partHP;
 
-	// 각 부위별 데미지 브로드캐스트
-	switch (Part)
+
+	//데미지 기초계수
+	float damage = 1.f;
+	//장갑과 관통레벨에 따른 피해량 적용
+	if (part->_partAV == damageEvent->PenetrationLevel)
+		damage *= 0.65;
+	else if (part->_partAV > damageEvent->PenetrationLevel)
+		damage *= 0;
+	//	폭발피해일시 폭발 저항력을 적용.
+	if (damageEvent->IsExplosionDamage)
 	{
-	case EBodyPart::Head:
-		CurrentHP = &_headHP;
-		MaxHP = _headMaxHP;
-		if (_headHpChanged.IsBound())
-			_headHpChanged.Broadcast(_headHP / _headMaxHP);
-		break;
-	case EBodyPart::Torso:
-		CurrentHP = &_torsoHP;
-		MaxHP = _torsoMaxHP;
-		if (_torsoHpChanged.IsBound())
-			_torsoHpChanged.Broadcast(_torsoHP / _torsoMaxHP);
-		break;
-	case EBodyPart::LeftArm:
-		CurrentHP = &_leftArmHP;
-		MaxHP = _leftArmMaxHP;
-		if (_leftArmHpChanged.IsBound())
-			_leftArmHpChanged.Broadcast(_leftArmHP / _leftArmMaxHP);
-		break;
-	case EBodyPart::RightArm:
-		CurrentHP = &_rightArmHP;
-		MaxHP = _rightArmMaxHP;
-		if (_rightArmHpChanged.IsBound())
-			_rightArmHpChanged.Broadcast(_rightArmHP / _rightArmMaxHP);
-		break;
-	case EBodyPart::LeftLeg:
-		CurrentHP = &_leftLegHP;
-		MaxHP = _leftLegMaxHP;
-		if (_leftLegHpChanged.IsBound())
-			_leftLegHpChanged.Broadcast(_leftLegHP / _leftLegMaxHP);
-		break;
-	case EBodyPart::RightLeg:
-		CurrentHP = &_rightLegHP;
-		MaxHP = _rightLegMaxHP;
-		if (_rightLegHpChanged.IsBound())
-			_rightLegHpChanged.Broadcast(_rightLegHP / _rightLegMaxHP);
-		break;
-	default:
-		// 코어 직접 처리
-		_coreHP = FMath::Max(0.0f, _coreHP - Damage);
-
-		_coreHpChanged.Broadcast(_coreHP / _coreMaxHP);
-
-		if (_coreHP == 0.0f)
-			OnDeath.Broadcast();
-		return;
+		damage *= (1 - part->_partExplosionImmunity);
 	}
 
-	// 부위가 흡수할 수 있는 데미지
-	float DamageToPart = FMath::Min(Damage, *CurrentHP);
-	// 파트가 흡수한 만큼만 코어도 흡수 (초과분은 버림)
-	float DamageToCore = DamageToPart;
 
-	// 체력 차감
-	*CurrentHP = FMath::Max(0.f, *CurrentHP - DamageToPart);
-	_coreHP = FMath::Max(0.0f, _coreHP - DamageToCore);
-
-	_coreHpChanged.Broadcast(_coreHP / _coreMaxHP);
-
-	// 코어 사망 우선 체크
-	if (_coreHP == 0.0f)
+	if (damage != 0.f)
 	{
-		OnDeath.Broadcast();
-		return;
+		//내구성에대한 판정. 
+		damage *= (part->_partDurability * damageEvent->DurabilityDamage + (1.f - part->_partDurability) * damageEvent->BaseDamage);
 	}
 
-	// 부위 파괴 이벤트
-	if (*CurrentHP == 0.0f)
-	{
-		OnPartDestroyed.Broadcast(Part);
-	}
+
+	
 }
 

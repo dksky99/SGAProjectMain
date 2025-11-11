@@ -1,32 +1,95 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "UnitDataTable.h"
 #include "StatComponent.generated.h"
 
-// 부위 식별용 열거형
-UENUM(BlueprintType)
-enum class EBodyPart : uint8
-{
-	Core,
-	Head,
-	Torso,
-	LeftArm,
-	RightArm,
-	LeftLeg,
-	RightLeg
-};
+
+
 
 // 사망 이벤트 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 // 체력 변화 델리게이트
 DECLARE_MULTICAST_DELEGATE_OneParam(FHPChanged, float);
+
 // 부위 파괴 이벤트 델리게이트 (어느 부위인지 전달)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartDestroyed, EBodyPart, Part);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPartDestroyed);
 // 부위 복구 델리게이트
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPartRestored, EBodyPart, Part);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPartRestored);
+
+
+USTRUCT(BlueprintType)
+struct FUnitPartStat
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName LayerName;
+	// 파트별 스탯
+
+	//파트의 현재체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _curHP = 100;
+	//파트의 최대체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _partHP = 100;
+	//파트의 장갑수치
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _partAV = 0;
+
+	// 파트의 내구성: 이 비율만큼 내구피해로 받음 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _partDurability = 0.f;
+
+	//파트의 영향력: 파트의 입은피해의 이 비율만큼 코어체력에서 감소
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _partInfluence = 1.f;
+
+	//파트의 폭발저항. 1이면 폭발피해를 전혀받지않음.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _partExplosionImmunity = 0.f;
+
+	FOnPartDestroyed _onPartDestroyed;
+
+	FOnPartRestored _onPartRestored;
+
+	FUnitPartStat(const FUnitPartLayerData& data)
+	{
+		_partHP = data._partHP;
+		_curHP = data._partHP;
+		_partAV = data._partAV;
+		_partDurability = data._partDurability;
+		_partInfluence = data._partInfluence;
+		_partExplosionImmunity = data._partExplosionImmunity;
+	}
+	FUnitPartStat()
+	{
+
+	}
+
+};
+
+USTRUCT(BlueprintType)
+struct FUnitPartStatArrayWrapper
+{
+	GENERATED_BODY()
+
+public:
+	// TArray<struct FUnitPartStat> 대신 사용할 멤버 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
+	TArray<struct FUnitPartStat> PartStats;
+};
+
+
+
+/*
+	모든부위가 별도의 체력을 가질 이유가 없다. 초기화를 받지 못한 부위라면 바로 코어로 직행시키자
+
+
+*/
 
 
 
@@ -38,7 +101,7 @@ class SGAPROJECTMAIN_API UStatComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UStatComponent();
-
+	void InitData(struct FProcessedUnitData* data);
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -49,115 +112,61 @@ public:
 
 	bool IsDead();
 
-	float GetDefaultSpeed() { return _defaultSpeed; }
+	float GetDefaultSpeed() { return _defaultMovementSpeed; }
+
+	float GetBattleSpeed() { return _battleMovementSpeed; }
 	virtual float GetCurStateSpeed();
 	void ChangeSpeed(float speed);
-	// 포인트 데미지(부위별) 핸들러
-	UFUNCTION()
-	void HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation,
-		UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
+
+	// 포인트 데미지(부위별) 핸들러 : takeDamage에 커스텀 이벤트 방식으로 가기때문에 일단 주석처리
+	//UFUNCTION()
+	//void HandlePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation,
+	//	UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
+
+	void ChangeHp(FUnitPartStat* part,float Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Stat")
-	void ChangeHp(float Amount);
+	void ChangeCoreHp( float Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Stat")
 	void StartRegen();
 	
-	float GetCoreHP()     const { return _coreHP; }
-	float GetHeadHP()     const { return _headHP; }
-	float GetTorsoHP()    const { return _torsoHP; }
-	float GetLeftArmHP()  const { return _leftArmHP; }
-	float GetRightArmHP() const { return _rightArmHP; }
-	float GetLeftLegHP()  const { return _leftLegHP; }
-	float GetRightLegHP() const { return _rightLegHP; }
+	FUnitPartStat* GetCoreStat() ;
 
-	float GetImpactResistance() const { return _impactResistance; }
+	
 
-	void ChangeHeadHP(float Damage);
 
-	void ReceiveDirectDamage(float Damage);
+	TMap<EBodyPart, FUnitPartStatArrayWrapper>* GetPartDatas() { return &_partDatas; }
 
+
+	FUnitPartStatArrayWrapper* GetPartData(EBodyPart part);
 	// 사망 알림
 	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
 	FOnDeath OnDeath;
 
-	// 체력 변화 알림
 	FHPChanged _coreHpChanged;
-	FHPChanged _headHpChanged;
-	FHPChanged _torsoHpChanged;
-	FHPChanged _rightArmHpChanged;
-	FHPChanged _leftArmHpChanged;
-	FHPChanged _rightLegHpChanged;
-	FHPChanged _leftLegHpChanged;
-
-	// 부위 파괴 알림
-	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
-	FOnPartDestroyed OnPartDestroyed;
-
-	// 부위 복구 알림
-	UPROPERTY(BlueprintAssignable, Category = "Game/Stat")
-	FOnPartRestored OnPartRestored;
 	
 private:
 	// 실제 HP 차감 및 이벤트 브로드캐스트
-	void ProcessDamage(EBodyPart Part, float Damage);
+	void ProcessDamage(FUnitPartStat* part, struct FCDamageEvent* damageEvent);
 
 protected:
-	float _defaultSpeed = 300.0f;
+
+	
+	//평소에 헬다이버의 기본걸음속도 혹은 유닛들의 정찰중 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
+	float _defaultMovementSpeed = 300.0f;
+
+	//헬다이버의 스프린트중의 속도 혹은 유닛들의 전투 혹은 경계중 속도.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
+	float _battleMovementSpeed = 500.0f;
+
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stat")
 	class ACharacterBase* _owner;
 
-	// 코어 최대 체력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _coreMaxHP;
-	// 코어 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _coreHP;
+	TMap<EBodyPart,FUnitPartStatArrayWrapper> _partDatas;
 
-	// 머리 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _headMaxHP;
-	// 머리 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _headHP;
-
-	// 몸통 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _torsoMaxHP;
-	// 몸통 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _torsoHP;
-
-	// 왼팔 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _leftArmMaxHP;
-	// 왼팔 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _leftArmHP;
-
-	// 오른팔 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _rightArmMaxHP;
-	// 오른팔 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _rightArmHP;
-
-	// 왼다리 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _leftLegMaxHP;
-	// 왼다리 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _leftLegHP;
-
-	// 오른다리 최대 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _rightLegMaxHP;
-	// 오른다리 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _rightLegHP;
-		
-	//경직 저항.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
-	float _impactResistance = 1.0f;
 };

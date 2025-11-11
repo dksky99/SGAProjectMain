@@ -29,6 +29,9 @@
 #include "../Data/UnitAttackDataAsset.h"
 
 #include "../Object/Corpse.h"
+#include "../Object/CDamageType.h"
+
+#include "../CGameInstance.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -59,6 +62,10 @@ ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
 void ACharacterBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
+	//여기서 레이어데이터를 게임인스턴스에서 가져오자.
+	InitUnit();
+
 }
 
 // Called when the game starts or when spawned
@@ -74,6 +81,23 @@ void ACharacterBase::BeginPlay()
 		_statComponent->OnDeath.AddDynamic(this, &ACharacterBase::OnDeath_Handler);
 	}
 	
+}
+
+void ACharacterBase::InitUnit()
+{
+	UGameInstance* gc = GetGameInstance();
+	if (gc == nullptr)
+		return;
+	UCGameInstance* ugc=Cast<UCGameInstance>(gc);
+	if (ugc == nullptr)
+		return;
+	FProcessedUnitData data;
+	if (ugc->GetProcessedUnitData(_unitID,data) == false)
+		return;
+
+
+	_statComponent->InitData(data);
+	_stateComp->InitData(data._resistData);
 }
 
 // Called every frame
@@ -641,6 +665,87 @@ void ACharacterBase::DeactivateMeleeColision()
 	ClearHitted();
 	
 }
+//
+EBodyPart ACharacterBase::GetHittedPart(FCDamageEvent const& DamageEvent)
+{
+	FUnitPartStat* temp = nullptr;
+	EBodyPart Part = EBodyPart::Core;
+	if (_statComponent )
+	{
+
+		auto HitComponent = DamageEvent.ColComp;
+
+		// 태그 검사로 부위 판별
+		if (HitComponent->ComponentHasTag("Head"))
+			Part = EBodyPart::Head;
+		else if (HitComponent->ComponentHasTag("Torso"))
+			Part = EBodyPart::Torso;
+		else if (HitComponent->ComponentHasTag("Tail"))
+			Part = EBodyPart::Tail;
+		else if (HitComponent->ComponentHasTag("LeftArm"))
+			Part = EBodyPart::LeftArm;
+		else if (HitComponent->ComponentHasTag("RightArm"))
+			Part = EBodyPart::RightArm;
+		else if (HitComponent->ComponentHasTag("LeftLeg"))
+			Part = EBodyPart::LeftLeg;
+		else if (HitComponent->ComponentHasTag("RightLeg"))
+			Part = EBodyPart::RightLeg;
+		else if (HitComponent->ComponentHasTag("LeftClaw"))
+			Part = EBodyPart::LeftClaw;
+		else if (HitComponent->ComponentHasTag("RightLeg"))
+			Part = EBodyPart::RightClaw;
+
+
+
+	}
+	return Part;
+
+}
+FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part)
+{
+	auto datas=_statComponent->GetPartData(part);
+	if (datas == nullptr)
+		return nullptr;
+	return &datas->PartStats[0];
+}
+//피격시 같은 부위를 맞았어도 조건에 따라 등일수있고 배일수 있다 그러니 델리게이트를 통해 어떤파트인지 세분화시킬 필요가 있을듯? 하다? 
+// 굳이 델리게이트가 필요할까? 그냥 오버라이드 하나로 될것같기도하다.
+// 반환받을것은 파트 , 입력할것은 태그와 충돌위치, 
+// 자료로 필요한것도 다시 생각해보자 난 지금 파트스탯을 각부위별로 배분해놨다 이럴필요없을지도 모른다 맵 한곳에 몰아넣고 태그이름을 키로 생성해놓자. 
+// 구분되는 특수한 경우가 겉의 표면을 파괴했을때 새로운 부위가 나타나는것. 그리고 등, 배로 둘의 레이어가 다를경우 이렇게 두가지 정도가 있다.
+// 이때 같은 태그로 피해를 봤지만 먼저 첫번쨰가 파괴되야 두번째 레이어가 나타나는경우가 있고 
+// 같은태그로 피해를 봤지만 맞는 위치의 높이에 따라 배냐 등이냐가 될수있다. 
+// 우선 캐릭터의 takeDamage는 공통이다 중요한건 데미지이벤트로부터 받은 피격위치와 태그를 통핸 레이어가 중요하다. 
+// 아무래도 태그마다 별개의 배열을 두는건 필요할듯하다. 맵에 하나의 키에 여러 값을 넣는건 불가하고 풀링했던것처럼 구조체와 그안에 배열을 넣는방식은 좀 귀찮다.
+// 어짜피 태그가 많아져봐야 머리가슴배, 다리6개가 최대. enum의 값을 더 늘리자 
+
+float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+
+	//커스텀 데미지이벤트. 이곳에 피해를 입은 부위와 일반피해, 내구피해, 철거력, 관통력 등을 가져올 수 있다.그리고 상태이상을 유발한다면 얼마나가중할지도 포함된다.
+	if (const FCDamageEvent* CustomEvent = DamageEvent.GetAsType<FCDamageEvent>())
+	{
+		//데미지타입을 가져온다 여기에는 피해의 속성과 이것이 추가적인상태이상수치를 유발하는지 여부를 가져온다.
+		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject());
+
+		EBodyPart part = GetHittedPart(*CustomEvent);
+
+		FUnitPartStat* partStat= GetHittedPartStat(part);
+
+		
+		
+		
+		
+
+
+		
+	}
+
+
+	// 기본 로직을 반드시 호출
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
 
 bool ACharacterBase::CheckHitted(AActor* target)
 {

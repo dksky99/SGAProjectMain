@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "UnitDataTable.h"
 #include "CharacterStateComponent.generated.h"
 
 /*
@@ -23,24 +24,11 @@
 	슬로우 : 가스,산성,
 	행동불가: 강경직, 기절
 
+	상태이상은 최소치가있고 이 값을 넘겨야 상태이상이 발생. 
+	0.5의 수치가 빠지는데 각각 걸리는 시간이 있는듯하다. 피해또한 내구피해와 일반피해가 따로있다. 
+
 */
 
-UENUM(BlueprintType)
-enum class EAbnormality : uint8
-{
-	Fire=0,
-	Burn =1,
-	Gas,
-	AcidBubble,
-	AcidStream,
-	bleeding ,
-	Thornbush ,
-	LightStagger,
-	StrongStagger, 
-	Shock ,
-
-	Max
-};
 UENUM()
 enum class EAbnormalityState : uint32
 {
@@ -67,7 +55,7 @@ class SGAPROJECTMAIN_API UCharacterStateComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UCharacterStateComponent();
-
+	void InitData(FUnitAbnormalResistData data) { _resistData = data; }
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -116,6 +104,11 @@ protected:
 	UPROPERTY()
 	TMap<EAbnormalityState, float> _remainTimes;
 
+
+
+	//경직 저항.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat")
+	FUnitAbnormalResistData _resistData;
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

@@ -32,6 +32,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void InitUnit();
+
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -133,7 +136,18 @@ public:
 	virtual void ActivateMeleeColision();
 	virtual void DeactivateMeleeColision();
 
+	//데미지이벤트에 기록된 컴포넌트로부터 어느 부위인지 뽑아내는 함수
+	EBodyPart GetHittedPart( struct FCDamageEvent const& DamageEvent);
+	//뽑아진 부위에서 캐릭터마다 판정이 다를 수있다 만약 특별한 파트 판정을 갖는유닛들은 이것을 오버라이드.
+	//기본적으로는 제일 첫번째 레이어를 가져오도록 해놨다. 판정이 필요하다면 switch문과 enum을 활용해 
+	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part);
 
+	//부위의 복구를 할떄 사용. 파괴되어 효과를 발동한게 있다면 복구할떄 이걸 오버라이드해서 복구.
+	virtual void RestoreParts() {}
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	
 
 	//한번의 OnOff로 한 액터가 여러번의 타격을 방지.
 	bool CheckHitted(AActor* target);
@@ -146,6 +160,8 @@ public:
 	void HitRecovery();
 
 	class UUnitAttackDataAsset* GetCurAttackData() { return _curAttackData; }
+
+
 	
 
 public:
@@ -193,6 +209,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
 	class UCharacterStateComponent* _stateComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
+	FName _unitID;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
 
