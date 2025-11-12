@@ -43,16 +43,16 @@ public:
 	void DestroySelf();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem/Droppod")
 	UStaticMeshComponent* _mesh;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem/Droppod")
 	TSubclassOf<AActor> _dropPodToSpawn;
 
-	UPROPERTY(VisibleAnywhere, Category = "Game/Hellpod")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem/Droppod")
 	class UProjectileMovementComponent* _projectile;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Game/Hellpod")
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem/Droppod")
 	float _damage = 1000.f;
 
 	// 중복 실행 방지

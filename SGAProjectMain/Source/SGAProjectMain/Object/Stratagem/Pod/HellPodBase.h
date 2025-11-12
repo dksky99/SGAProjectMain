@@ -64,7 +64,7 @@ private:
 protected:
 	
 	// 본체 메시
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	USkeletalMeshComponent* _mesh;
 
 	// 메시 높이
@@ -74,46 +74,46 @@ protected:
 	float _targetHeight;
 
 	// 높이 오차
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	float _riseStopToleranceZ;
 
 	// 체력
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	float _maxHp = 200.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	float _currentHp = 0.0f;
 
 	// 몽타주(필요한 것만 세팅, 없어도 동작)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	UAnimMontage* _openMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	UAnimMontage* _closeMontage;
 
 	// 스폰할 아이템 클래스(AItemBase 기반)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	TSubclassOf<AItemBase> _itemClass;
 
 	// 스폰할 아이템 클래스 2번 없으면 널
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	TSubclassOf<AItemBase> _ItemClass2 = nullptr;
 
 	// 부착된 아이템 목록
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	TArray<AItemBase*> _items;
 
 	// 파직스가 켜져있나
 	bool _isPhysicsOn = false;
 
 	// 소켓 네임
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	FName _socketName;
 
 	// 아이템 수
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Pod")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Hellpod")
 	int32 _maxItemCount = 0;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Pod")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Hellpod")
 	int32 _remainingItems = 0;
 };
