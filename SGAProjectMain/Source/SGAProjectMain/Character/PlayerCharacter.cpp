@@ -25,7 +25,6 @@
 #include "../Object/Map/TerminalConsole.h"
 
 #include "../Gun/GunBase.h"
-#include "../Gun/ExplosiveGun.h"
 #include "../Gun/Component/GunAmmoComponent.h"
 #include "../UI/UIManager.h"
 #include "../UI/GunWidget.h"
@@ -536,9 +535,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (_stateComponent->IsActionable() == false)
 		return;
-	if (auto explosiveGun = Cast<AExplosiveGun>(_invenComponent->GetEquippedGun())) // 현재 총이 폭발성일 경우
+	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{
-		if (_stateComponent->IsReloading()) return; // 장전 중에는 움직일 수 없음
+		if (gun->IsStationaryReload() && _stateComponent->IsReloading()) // 정지 재장전 중일 때는 이동 불가
+			return;
 	}
 	FVector2D moveVector = value.Get<FVector2D>();
 
@@ -1696,6 +1696,28 @@ void APlayerCharacter::OpenMap()
 void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
 {
 	_missionWidget->AddMissionSlot(texture, name);
+}
+
+void APlayerCharacter::UnitUnable()
+{
+	Super::UnitUnable();
+	APlayerController* controller = GetController<APlayerController>();
+	if (controller)
+	{
+
+		controller->DisableInput(controller);
+	}
+}
+
+void APlayerCharacter::UnitRecoverFromUnable()
+{
+	Super::UnitRecoverFromUnable();
+	APlayerController* controller = GetController<APlayerController>();
+	if (controller)
+	{
+
+		controller->EnableInput(controller);
+	}
 }
 
 void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)

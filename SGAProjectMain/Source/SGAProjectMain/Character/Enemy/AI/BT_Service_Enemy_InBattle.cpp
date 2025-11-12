@@ -51,27 +51,18 @@ void UBT_Service_Enemy_InBattle::TickNode(UBehaviorTreeComponent& OwnerComp, uin
 	FVector targetEye;
 	float angle;
 	bool bIsFacingMe = false;
-	//타겟이 시선을 가지지 못한다면 중단
+	bool bIsAimingMe = false;
+	//타겟이 시선을 가지지 못한다면 패스
 	if (targetable->GetTargetLook(targetEye, targetLook) )
 	{
 
-		bIsFacingMe = UAIActingHelperLibrary::IsTargetFacingMe(selfRef->GetActorLocation(), targetEye, targetLook, angle, 45.f);
-		UE_LOG(LogTemp, Display, TEXT("He Look At Me %f : %s"), angle, bIsFacingMe ? TEXT("true") : TEXT("false"));
-		DrawDebugLine(
-			GetWorld(),                 // 월드 컨텍스트
-			targetEye,                  // 시작점 (특정 위치)
-			targetEye + targetLook * 500.f,                    // 끝점 (시작점 + 방향 * 길이)
-			FColor::Red,                // 라인 색상 (빨간색으로 설정)
-			false,                      // 지속 여부 (false = 이 프레임에만 표시)
-			0.1f,                       // 지속 시간 (0.1초 동안 유지)
-			0,                          // 깊이 그룹 (기본값)
-			2.0f                        // 라인 두께 (2.0으로 설정)
-		);
-
+		bIsFacingMe = UAIActingHelperLibrary::IsFacingTarget_WithAngle(selfRef->GetActorLocation(), targetEye, targetLook, angle, _isTargetLookAngle);
+		
+		bIsAimingMe = angle < _isTargetAimingAngle;
 	}
 	
 	behavior->SetIsTargetLookAtMe(bIsFacingMe);
-
+	behavior->SetIsTargetAimingMe(bIsAimingMe);
 
 	float distance = selfRef->GetDistanceTo(target);// 나로부터 상대까지의 위치 간 거리
 

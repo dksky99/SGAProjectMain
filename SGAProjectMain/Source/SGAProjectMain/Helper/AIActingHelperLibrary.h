@@ -41,13 +41,7 @@ public:
 
 
 
-    UFUNCTION(BlueprintPure, Category = "AI|Aiming")
-    static bool IsFacingTarget(              // * @return 현재 타겟이 나의 정면에 있는지 확인.
-        const FVector& ForwardVector,        // * @param  ForwardVector - 확인할 시선의 방향.캐릭터의 정면벡터든 Head소켓의 특정 축이든.
-        const FVector& StartLocation,        // * @param  StartLocation - 시선이 시작되는 지점. 캐릭터의 위치든 Head 소켓이든 
-        const FVector& TargetLocation,       // * @param  TargetLocation - 바라봐야할 타겟
-        float AngleTolerance = 15.0f         // * @param  AngleTolerance - 허용 각도. 이정도는 틀어져도 상관없다.
-    );
+   
 
     /**
     // * 캐릭터의 좌우(Yaw) 조준이 맞았는지, 아니면 상하(Pitch) 조준만 필요한지 상세히 확인합니다.
@@ -61,12 +55,20 @@ public:
 
 
     UFUNCTION(BlueprintPure, Category = "AI|Aiming", meta = (DefaultToSelf = "Character"))
-    static bool IsTargetFacingMe(       // return 상대의 시선혹은 정면벡터가 자신과 얼마나 일치하는지 확인. 
+    static bool IsFacingTarget_WithAngle(       // return 상대의 시선혹은 정면벡터가 자신과 얼마나 일치하는지 확인. 
         const FVector& OwnerLoc,        // OwnerLoc.  
         const FVector& TargetLoc ,      // TargetLoc  :대상의 시선의 시작점. 머리일수 있고 총구일수 있고 그냥 캐릭터의 루트 컴포넌트의 위치일 수 있다.
         const FVector& TargetLook,      // TargetLook  :대상의 시선 방향.
         float& OutputAngle,
         float AngleTolerance = 15.0f     // 대상의 시선의 중심에서 얼마만큼 벗어나있어야 보고있지 않는것으로 치는지
         );
-
+    UFUNCTION(BlueprintPure, Category = "AI|Aiming", meta = (DefaultToSelf = "Character"))
+    static bool IsFacingTarget(       // return 상대의 시선혹은 정면벡터가 자신과 얼마나 일치하는지 확인. 
+        const FVector& OwnerLoc,        // OwnerLoc.  
+        const FVector& TargetLoc,      // TargetLoc  :대상의 시선의 시작점. 머리일수 있고 총구일수 있고 그냥 캐릭터의 루트 컴포넌트의 위치일 수 있다.
+        const FVector& TargetLook,      // TargetLook  :대상의 시선 방향.
+        float AngleTolerance = 15.0f     // 대상의 시선의 중심에서 얼마만큼 벗어나있어야 보고있지 않는것으로 치는지
+    );
+    UFUNCTION(BlueprintPure, Category = "MyMath|Helpers", meta = (DisplayName = "Calculate Spread Direction"))
+    static FVector CalculateSpreadDirection(const FVector& Dir, float ErrorAngleDeg);
 };

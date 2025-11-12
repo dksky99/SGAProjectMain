@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "../GunDataTable.h"
+#include "../../Data/GunDataTable.h"
 #include "GunFireComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnFire);

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GunDataTable.h"
+#include "../Data/GunDataTable.h"
 #include "../Object/Item/ItemBase.h"
 #include "GunBase.generated.h"
 
@@ -57,8 +57,8 @@ public:
 	virtual void Reload();
 	virtual void OnReloadSectionEnded(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
-
 	void RefillMag();
+	bool IsStationaryReload() { return _gunData._isStationaryReload; }
 
 	void RecoverRecoil(float DeltaTime); // 반동 복구
 	void ApplyFireRecoil(); // 사격에 따른 반동
@@ -72,10 +72,6 @@ public:
 	FGunModes GetGunModes();
 
 	virtual void PickupItem(AHellDiver* player) override;
-
-	//virtual void PlayFireEffect();
-	//
-	//void ResetCanFire() { _canFire = true; }
 
 	int32 GetGunSlotIndex();
 	const FGunData& GetGunData() { return _gunData; }
@@ -98,6 +94,9 @@ public:
 	FRotator GetMuzzleRot();
 
 	FTransform GetLeftHandleTrans();
+
+	UFUNCTION()
+	void ShowHitMarker(EHitOutcome hitOutcome);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
@@ -145,7 +144,7 @@ protected:
 	class AImpactMarker* _marker;
 
 	UPROPERTY()
-	UUserWidget* _crosshair;
+	class UCrosshairWidget* _crosshair;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Gun", meta = (AllowPrivateAccess = "true"))
 	//int32 _scopeMode;

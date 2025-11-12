@@ -16,4 +16,10 @@ class SGAPROJECTMAIN_API UBT_Service_Enemy_InBattle : public UBTService
 
 public:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Service Properties")
+	float _isTargetLookAngle = 45.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Service Properties")
+	float _isTargetAimingAngle=5.0f;
 };

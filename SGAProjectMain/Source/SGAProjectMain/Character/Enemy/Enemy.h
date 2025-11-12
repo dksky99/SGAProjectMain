@@ -68,7 +68,11 @@ public:
 	void MoveNormal();
 	void MoveBattle();
 
+	class UBlackboardData* GetBlackboardData() { return _blackBoard; }
+
+	class UBehaviorTree* GetBehaviorTree() { return _behaviorTree; }
 	
+	class UBehaviorControlComponent* GetBehaviorControl() { return _behaviorControlComponent; }
 
 	EUnitState GetUnitState() { return _unitState; }
 	void SetUnitState(EUnitState state);
@@ -105,18 +109,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Nav", meta = (AllowPrivateAccess = "true"))
 	class UNavigationInvokerComponent* _navInvokerComponent;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Behavior", meta = (AllowPrivateAccess = "true"))
+	class UBehaviorControlComponent* _behaviorControlComponent;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _warCryMontage;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _meleeRange=150.f;
+	float _meleeRange=250.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _nearRange = 500.f;
+	float _nearRange = 600.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
 	float _middleRange = 1500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
-	float _farRange = 3000.f;
+	float _farRange = 3500.f;
 
 
 	UPROPERTY()
@@ -125,5 +134,13 @@ protected:
 	UPROPERTY()
 	TWeakObjectPtr<class AEnemySquad> _squad;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	class UBlackboardData* _blackBoard;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	class UBehaviorTree* _behaviorTree;
 
 };

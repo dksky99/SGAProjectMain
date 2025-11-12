@@ -35,6 +35,9 @@ public:
 
 	void CancelCharging();
 
+	void SetDefaultState();
+	void SetChargingState();
+
 protected:
 
 
@@ -50,4 +53,9 @@ protected:
 	class UAnimMontage* _chargingCanceledMontage;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
+	float _chargingMoveSpeed=1000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stat", meta = (AllowPrivateAccess = "true"))
+	float _chargingMaxRotateSpeed = 50.f;
 };

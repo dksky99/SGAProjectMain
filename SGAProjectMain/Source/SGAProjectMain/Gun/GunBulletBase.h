@@ -4,58 +4,61 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GunDataTable.h"
+#include "../Data/GunDataTable.h"
+#include "../Data/GunProjectileDataAsset.h"
 #include "GunBulletBase.generated.h"
 
-UENUM(BlueprintType)
-enum class EBulletType : uint8
-{
-	Standard,
-	Explosive
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBulletHit, EHitOutcome, hitOutcome);
 
-USTRUCT(BlueprintType)
-struct FBulletData : public FTableRowBase
-{
-	GENERATED_BODY()
+//UENUM(BlueprintType)
+//enum class EBulletType : uint8
+//{
+//	Standard,
+//	Explosive
+//};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EBulletType _type = EBulletType::Standard;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _initialSpeed = 3500.f; // 기본 데미지
-
-	// 데미지
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _baseDamage = 3500.f; // 기본 데미지
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _vsDurableDamage = 3500.f; // 내구 데미지
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _explosionDamage = 150.f; // 폭발 데미지
-
-	// 관통력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _basePenetrateTrait = EPenetrateTrait::AntiTank;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPenetrateTrait _explosionPenetrateTrait = EPenetrateTrait::AntiTank;
-
-	// 거리에 따른 데미지 감소량
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff25 = 0.04f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff50 = 0.072f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _falloff100 = 0.133f;
-
-	// 폭발 범위
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _innerRadius = 150.f; // 중심 범위
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//float _outerRadius = 600.f; // 전체 범위
-
-};
+//USTRUCT(BlueprintType)
+//struct FBulletData : public FTableRowBase
+//{
+//	GENERATED_BODY()
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EBulletType _type = EBulletType::Standard;
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _initialSpeed = 3500.f; // 초기 속도
+//
+//	// 데미지
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _baseDamage = 3500.f; // 기본 데미지
+//
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _vsDurableDamage = 3500.f; // 내구 데미지
+//
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _explosionDamage = 150.f; // 폭발 데미지
+//
+//	// 관통력
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EPenetrateTrait _basePenetrateTrait = EPenetrateTrait::AntiTank;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	EPenetrateTrait _explosionPenetrateTrait = EPenetrateTrait::AntiTank;
+//
+//	// 거리에 따른 데미지 감소량
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff25 = 0.04f;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff50 = 0.072f;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	float _falloff100 = 0.133f;
+//
+//	// 폭발 범위
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _innerRadius = 150.f; // 중심 범위
+//	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	//float _outerRadius = 600.f; // 전체 범위
+//
+//};
 
 UCLASS()
 class SGAPROJECTMAIN_API AGunBulletBase : public AActor
@@ -67,7 +70,7 @@ public:
 	AGunBulletBase();
 	
 
-	FBulletData GetBulletData() { return _bulletData; }
+	//FBulletData GetBulletData() { return _bulletData; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -78,17 +81,29 @@ protected:
 
 	UFUNCTION()
 	void OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+	UFUNCTION()
+	void OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
 	void Explode();
 
-	float GetSpeedMultiplier(float distance); // 총알 감속 계산
+	float CalculateSpeedFalloffMultiplier(float distance); // 총알 감속 계산
+	EHitOutcome CalculateHitOutcome(int32 AV, const FHitResult& SweepResult);
+	void ProcessHitOutcome(EHitOutcome outcome, const FHitResult& SweepResult);
+
+	int32 SurfaceToAV(EPhysicalSurface surface);
 
 public:
-	void InitializeProjectile();
+	void InitializeProjectile(FGunProjectileData data);
+
+	UPROPERTY()
+	FOnBulletHit _bulletHitEvent;
 
 private:
+	//UPROPERTY(EditAnywhere, Category = "Game/GunData")
+	//FBulletData _bulletData;
+
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
-	FBulletData _bulletData;
+	FGunProjectileData _projectileData;
 
     UPROPERTY(VisibleAnywhere)
     class USphereComponent* _collisionComp;
@@ -101,9 +116,11 @@ private:
 	TSet<UPrimitiveComponent*> _hitComponents; 
 
 	bool _isExploded = false;
+	int32 _penetrationCount = 0;
 
 	float _baseSpeed;
 	float _moveDistance = 0.f;
+	FVector _prevLoc;
 
 	// 폭발 데미지 컴포넌트
 	UPROPERTY(EditAnywhere, Category = "Game/GunBullet/Explosion")

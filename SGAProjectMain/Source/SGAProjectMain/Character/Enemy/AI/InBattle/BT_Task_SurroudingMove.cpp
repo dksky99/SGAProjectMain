@@ -95,7 +95,7 @@ void UBT_Task_SurroudingMove::TickTask(UBehaviorTreeComponent& OwnerComp, uint8*
 
 
     // 4. 핵심 함수 호출
-    const bool bIsFacingMe = UAIActingHelperLibrary::IsTargetFacingMe(AIPawn->GetActorLocation(), targetLoc, targetLook, angle, _angleTolerence);
+    const bool bIsFacingMe = UAIActingHelperLibrary::IsFacingTarget_WithAngle(AIPawn->GetActorLocation(), targetLoc, targetLook, angle, _angleTolerence);
     // 1. 타겟의 시선에서 벗어나면 성공 시야에서 45도이상 벗어나면 스트레이프 중단.
     if (bIsFacingMe==false)
     {

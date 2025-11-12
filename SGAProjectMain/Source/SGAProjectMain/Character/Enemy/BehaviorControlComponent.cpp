@@ -11,7 +11,7 @@ UBehaviorControlComponent::UBehaviorControlComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -30,19 +30,12 @@ void UBehaviorControlComponent::BeginPlay()
 
 void UBehaviorControlComponent::Init()
 {
-	_ownerController = Cast<AEnemyController>(GetOwner());
-	_ownerPawn = Cast<AEnemy>(_ownerController->GetPawn());
+	_ownerPawn = Cast<AEnemy>(GetOwner());
+	_ownerController = Cast<AEnemyController>(_ownerPawn->GetController());
 
 
 }
 
-// Called every frame
-void UBehaviorControlComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
 
 bool UBehaviorControlComponent::CheckUnitType(EUnitState InType)
 {
@@ -121,6 +114,27 @@ void UBehaviorControlComponent::SetIsTargetLookAtMe(bool condition)
 {
 
 	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsTargetLookAtMeKey, condition);
+}
+
+bool UBehaviorControlComponent::GetIsTargetAimingMe()
+{
+	return _ownerController->GetBlackboardComponent()->GetValueAsBool(IsTargetAimingMeKey);
+
+}
+
+void UBehaviorControlComponent::SetIsTargetAimingMe(bool condition)
+{
+	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsTargetAimingMeKey, condition);
+}
+
+bool UBehaviorControlComponent::GetIsUnable()
+{
+	return _ownerController->GetBlackboardComponent()->GetValueAsBool(IsUnableKey);
+}
+
+void UBehaviorControlComponent::SetIsUnable(bool condition)
+{
+	_ownerController->GetBlackboardComponent()->SetValueAsBool(IsUnableKey, condition);
 }
 
 

@@ -11,6 +11,15 @@
  */
 
 UENUM(BlueprintType)
+enum class EHitOutcome : uint8
+{
+	OverPenetrating,
+	FullPenetrate,
+	Penetrate,
+	Ricochet
+};
+
+UENUM(BlueprintType)
 enum class EGunGripType : uint8
 {
 	OneHanded,
@@ -127,8 +136,11 @@ struct FGunData : public FTableRowBase
 	FShotgunData _shotgunData;		// 샷건에 필요한 데이터
 
 	// 총알
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class AGunBulletBase> _projectileClass;*/
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AGunBulletBase> _projectileClass;
+	class UGunProjectileDataAsset* _projectileDataAsset;
 
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -143,6 +155,8 @@ struct FGunData : public FTableRowBase
 	EReloadType _reloadType;	// 재장전 방식
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool _needAmmoBag = false;	// 재장전할 때 가방이 필요한지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool _isStationaryReload = false; // 재장전 시 정지해야 하는지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 _maxAmmo = 45;		// 탄약
@@ -196,7 +210,7 @@ struct FGunData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AImpactMarker> _impactMarkerClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UUserWidget> _crosshairClass;
+	TSubclassOf<class UCrosshairWidget> _crosshairClass;
 
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

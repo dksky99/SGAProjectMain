@@ -7,6 +7,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 
 #include "../Enemy.h"
+#include "../../CharacterStateComponent.h"
 #include "../../../Controller/EnemyController.h"
 #include "../PatrolComponent.h"
 
@@ -35,6 +36,8 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 	if (behavior == nullptr)
 		return;
 	
+	behavior->SetIsUnable(selfRef->GetStateComponent()->IsUnable());
+
 	if (target) // 표적이 있으면
 	{
 		behavior->SetTargetActor(target);

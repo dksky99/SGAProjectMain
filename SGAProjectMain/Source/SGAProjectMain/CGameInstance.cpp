@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Game/PreDeployment/PreDeploymentState.h"
-#include "Gun/GunDataTable.h"
+#include "Data/GunDataTable.h"
 #include "Gun/GunBase.h"
 
 #include "StratagemComponent.h"

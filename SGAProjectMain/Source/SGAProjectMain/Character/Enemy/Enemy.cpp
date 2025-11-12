@@ -41,6 +41,8 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
 
     _patrolComponent=CreateDefaultSubobject<UPatrolComponent>(TEXT("Patrol"));
     _navInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+
+    _behaviorControlComponent = CreateDefaultSubobject<UBehaviorControlComponent>("Behavior Control");
     //Tile Generation Radius(타일 생성 반경) : NavMesh를 생성할 플레이어 주변의 반경을 설정합니다. (예 : 5000 또는 10000 cm)
     //
     //    Tile Removal Radius
