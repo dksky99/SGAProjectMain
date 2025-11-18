@@ -117,14 +117,6 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         UE_LOG(LogTemp, Log, TEXT("PM=%s Surf=%d AV=%d"),
             PM ? *PM->GetName() : TEXT("None"), (int)surface, armorValue);
 
-        // 과관통이거나 도탄이 아닐 경우 총알 정지
-        if (outcome != EHitOutcome::OverPenetrating && outcome != EHitOutcome::Ricochet)
-        {
-            _projectileMovement->StopMovementImmediately();
-            _collisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-            _collisionComp->SetGenerateOverlapEvents(false);
-        }
-
         float damageMultiplier = 1.f;
         if (outcome == EHitOutcome::Penetrate)      damageMultiplier = 0.65f;   // 관통 판정일 경우 데미지 65%
         if (outcome == EHitOutcome::Ricochet)       damageMultiplier = 0.f;     // 도탄 판정일 경우 데미지 무효
@@ -134,6 +126,14 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
             * damageMultiplier;                                   // 관통 정도 반영
 
         FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
+
+        // 과관통이거나 도탄이 아닐 경우 총알 정지
+        if (outcome != EHitOutcome::OverPenetrating && outcome != EHitOutcome::Ricochet)
+        {
+            _projectileMovement->StopMovementImmediately();
+            _collisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            _collisionComp->SetGenerateOverlapEvents(false);
+        }
 
         UGameplayStatics::ApplyPointDamage(
             OtherActor,                     // 데미지를 받을 액터

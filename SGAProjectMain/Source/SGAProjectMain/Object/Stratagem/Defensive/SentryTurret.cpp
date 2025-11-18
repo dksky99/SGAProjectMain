@@ -77,6 +77,17 @@ void ASentryTurret::BeginPlay()
 
 	_anim = Cast<USentryAnimInstance>(_mesh->GetAnimInstance());
 
+	// 센트리용 프로젝타일 데이터 초기화
+	if (_projectileDataAsset)
+	{
+		// 에셋에 들어있는 기본 프로젝타일 데이터 복사
+		_projectileData = _projectileDataAsset->_projectileData;
+
+		// 센트리 고유 데미지로 덮어쓰기
+		_projectileData._baseDamage = _sentryBaseDamage;
+		_projectileData._vsDurableDamage = _sentryVsDurableDamage;
+	}
+
 	InitNiagaraEffects();
 
 	// 스폰
@@ -393,16 +404,24 @@ void ASentryTurret::Fire()
 
 void ASentryTurret::SpawnBullet(const FVector& muzzleLocation, const FVector& direction)
 {
-	if (!_bulletClass) return;
+	if (!_projectileDataAsset)
+		return;
+
+	// 에셋에서 실제 스폰할 총알 클래스를 가져옵니다.
+	TSubclassOf<AGunBulletBase> bulletClass = _projectileDataAsset->_projectileClass;
+	if (!bulletClass)
+		return;
+
+	const FRotator spawnRot = direction.Rotation();
 
 	FActorSpawnParameters spawnParams;
 	spawnParams.Owner = this;
 	spawnParams.Instigator = GetInstigator();
-
-	const FRotator spawnRot = direction.Rotation();
+	spawnParams.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	AGunBulletBase* bullet = GetWorld()->SpawnActor<AGunBulletBase>(
-		_bulletClass,
+		bulletClass,
 		muzzleLocation,
 		spawnRot,
 		spawnParams
@@ -410,7 +429,8 @@ void ASentryTurret::SpawnBullet(const FVector& muzzleLocation, const FVector& di
 
 	if (bullet)
 	{
-		bullet->InitializeProjectile(FGunProjectileData()); //TODO
+		// 센트리용으로 준비해 둔 프로젝타일 데이터 주입
+		bullet->InitializeProjectile(_projectileData);
 	}
 }
 

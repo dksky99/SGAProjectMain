@@ -110,9 +110,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	class USentryAnimInstance* _anim = nullptr;
 
+	// 센트리가 사용할 발사체 에셋 (총알 클래스 + 기본 프로젝타일 데이터)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	UGunProjectileDataAsset* _projectileDataAsset = nullptr;
+
 	// =========================================================
 	// 변수 묶음: 스펙/파라미터(사격/체력/사거리/탄 등)
 	// =========================================================
+
+	// 센트리 전용 데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _sentryBaseDamage = 80.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _sentryVsDurableDamage = 15.0f;
+
+	// 총알 초기화용 데이터
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	FGunProjectileData _projectileData;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _fireInterval = 0.1f;
 
@@ -127,9 +143,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	float _curHp = 100.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	TSubclassOf<class AGunBulletBase> _bulletClass;
 
 	FTimerHandle _fireTimerHandle;
 
