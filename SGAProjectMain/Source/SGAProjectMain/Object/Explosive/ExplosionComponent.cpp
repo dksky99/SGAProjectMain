@@ -84,13 +84,19 @@ void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Ov
 			{
 				// 콜리더 태그로 부위 판별 및 HP 조회 (태그 없으면 Core 로 간주)
 				UStatComponent* StatComp = HitActor->FindComponentByClass<UStatComponent>();
-				float PartHP = StatComp->GetCoreHP(); // 태그가 없다면 코어
-				if (HitComp->ComponentHasTag("Head"))			  PartHP = StatComp->GetHeadHP();
-				else if (HitComp->ComponentHasTag("Torso"))	  PartHP = StatComp->GetTorsoHP();
-				else if (HitComp->ComponentHasTag("LeftArm"))    PartHP = StatComp->GetLeftArmHP();
-				else if (HitComp->ComponentHasTag("RightArm"))   PartHP = StatComp->GetRightArmHP();
-				else if (HitComp->ComponentHasTag("LeftLeg"))    PartHP = StatComp->GetLeftLegHP();
-				else if (HitComp->ComponentHasTag("RightLeg"))   PartHP = StatComp->GetRightLegHP();
+				
+				
+				float PartHP = StatComp->GetCoreStat()->_curHP; // 태그가 없다면 코어
+				
+				//태그를 확인하고 그에 맞는 데이터로 반환하는 기능을 추가해서 바꿔놨습니다. 맞는 태그를 찾으면 그에맞는 파트 데이터를 반환받을 수 있습니다.
+				for (auto tag : HitComp->ComponentTags)
+				{
+					auto data = StatComp->GetPartStat(tag);
+					if (data == nullptr)
+						continue;
+					PartHP = data->_curHP;
+					break;
+				}
 
 				// HP가 0 이하인 부위는 건너뜀
 				if (PartHP <= 0.0f)                          

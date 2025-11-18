@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "../Object/CDamageType.h"
 #include "UnitAttackDataAsset.generated.h"
 
 /**
@@ -19,12 +20,30 @@ public:
 	class UAnimMontage* Motion;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Attack;
+	int32 Attack;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 DurabilityAttack;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 DemolitionAttack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 PenetrationLevel; // 관통력 
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Stagger = 0; // 비틀거림 유발.
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 PushForce = 0; // 밀치기 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FName> ActiveColliders;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf< UCDamageType> DamageType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Interval;

@@ -76,7 +76,16 @@ void UStimPackComponent::HandleRegen()
 
 	if (auto statComp = _owner->GetStatComponent())
 	{
-		statComp->ChangeHp(AmountPerTick);
+		auto temp = statComp->GetPartDatas();
+		for (auto& wrapper : *temp)
+		{
+			for (auto& data : wrapper.Value.PartStats)
+			{
+
+				statComp->ChangeHp(&data,AmountPerTick);
+			}
+		}
+
 	}
 }
 
