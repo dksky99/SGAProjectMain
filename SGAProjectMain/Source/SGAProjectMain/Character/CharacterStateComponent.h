@@ -27,6 +27,12 @@
 	상태이상은 최소치가있고 이 값을 넘겨야 상태이상이 발생. 
 	0.5의 수치가 빠지는데 각각 걸리는 시간이 있는듯하다. 피해또한 내구피해와 일반피해가 따로있다. 
 
+	상태이상에는 캐릭터마다 가중치가있다.가중치는 계속 감소하며 임계치와 최대 가중치가있다 가중치가 임계치를 넘어가면 상태이상이 부여되고 가중치가 임계치를 넘어있는한 지속시간이 
+	계속 재부여된다. 
+
+	
+
+
 */
 
 UENUM()
@@ -55,7 +61,7 @@ class SGAPROJECTMAIN_API UCharacterStateComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UCharacterStateComponent();
-	void InitData(FUnitAbnormalResistData data) { _resistData = data; }
+	void InitData(const FUnitAbnormalResistData data) { _resistData = data; }
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -86,8 +92,11 @@ public:
 	virtual void ActiveUnable();
 	virtual void DeactiveUnable();
 	void CalcAbnormalityTime(float deltaTime);
+	void CalcAbnormalityWeight(float deltaTime);
 
+	void CalcActivatesWeight(uint32 type, float deltaTime);
 	int CalcActivates(uint32 type,float deltaTime);
+	void CalcDamage(EAbnormality state);
 
 	virtual void Reset();
 
@@ -100,9 +109,11 @@ protected:
 
 	UPROPERTY()
 	uint32 _activeAbnormalities;
+	uint32 _activeAbnormalitiesWeight;
 
 	UPROPERTY()
 	TMap<EAbnormalityState, float> _remainTimes;
+	TMap<EAbnormalityState, float> _remainWeights;
 
 
 

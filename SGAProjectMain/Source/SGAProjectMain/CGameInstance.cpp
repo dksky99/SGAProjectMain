@@ -11,6 +11,8 @@
 
 #include "StratagemComponent.h"
 #include "Object/Stratagem/Stratagem.h"
+#include "Object/AbnormalityTable.h"
+#include "Object/CDamageType.h"
 
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
@@ -18,6 +20,7 @@
 
 #include "Character/CharacterBase.h"
 #include "Character/StatComponent.h"
+#include "Character/UnitDataTable.h"
 
 void UCGameInstance::Init()
 {
@@ -25,6 +28,8 @@ void UCGameInstance::Init()
 
 	_preDeployState = NewObject<UPreDeploymentState>(this);
 
+	CachingUnitDataFromTable();
+	CachingAbnormalityDataFromTable();
 	//유닛 데이터 초기화함수.
 	//InitializeUnitData();
 }
@@ -56,6 +61,79 @@ UTexture2D* UCGameInstance::GetGunPreviewFromTable(int32 id)
 	FString rowName = FString::FromInt(id);
 	auto row = _gunTable->FindRow<FGunData>(*rowName, TEXT(""));
 	return row->_previewImage;
+}
+void UCGameInstance::CachingUnitDataFromTable()
+{
+	// 1. 테이블 유효성 검사
+	if (!_unitTable || !_unitPartDefinitionTable)
+	{
+		UE_LOG(LogTemp, Error, TEXT("CachingUnitDataFromTable failed: One or both DataTables are null."));
+		return;
+	}
+
+	// 기존 맵 클리어 (재호출 대비)
+	_processedUnitDataMap.Empty();
+
+	// 2. _unitTable 순회 시작
+	_unitTable->ForeachRow<FUnitData>(
+		TEXT("UCGameInstance::CachingUnitDataFromTable"), 
+		[&](const FName& Key, const FUnitData& Value)
+		{
+			FProcessedUnitData temp;
+
+			// 기본 데이터 복사
+			temp._battleMovementSpeed = Value._battleMovementSpeed;
+			temp._defaultMovementSpeed = Value._defaultMovementSpeed;
+			temp._name = Value._name; // FText
+			temp._desc = Value._desc; // FText
+			temp._resistData = Value._resistData;
+			temp._unitClass = Value._unitClass;
+
+			// 3. 부위 정의 테이블 순회 및 캐싱
+			// Value._PartIDs의 Key는 EBodyPart, Value는 FName(PartDefinition Row Key)이라고 가정
+			for (const auto& partID : Value._PartIDs)
+			{
+				const FName PartDefRowKey = partID.Value; // FName 키를 바로 사용 (효율적)
+
+				// 3-1. 중첩된 테이블에서 행 검색 (NULL 체크 필수)
+				const FPartDefinitionRow* row = _unitPartDefinitionTable->FindRow<FPartDefinitionRow>(PartDefRowKey, TEXT("PartDefLookup"));
+
+				if (row)
+				{
+					// FProcessedUnitData에 부위 컨테이너 추가 (PartID.Key는 EBodyPart 타입)
+					temp._partDatas.Add(partID.Key);
+
+					// 3-2. 레이어 데이터 순회 및 Stat 구조체 생성
+					for (const auto& part : row->Layers)
+					{
+						FUnitPartStat partStat;
+						partStat.LayerName = part.LayerName;
+						partStat._curHP = part._partHP;
+						partStat._partHP = part._partHP;
+						partStat._partAV = part._partAV;
+						partStat._partDurability = part._partDurability;
+						partStat._partExplosionImmunity = part._partExplosionImmunity;
+						partStat._partInfluence = part._partInfluence;
+
+						// FProcessedUnitData의 맵에 Stat 추가
+						// temp._partDatas[EBodyPart] 컨테이너 내부에 PartStat을 추가
+						temp._partDatas[partID.Key].PartStats.Add(partStat);
+					}
+				}
+				else
+				{
+					// 디버깅을 위해 어느 유닛의 어떤 부위 정의를 찾지 못했는지 로그를 남김
+					UE_LOG(LogTemp, Error, TEXT("Part Definition Error for Unit '%s': Missing row for PartDefKey '%s'."),
+						*Key.ToString(), *PartDefRowKey.ToString());
+				}
+			}
+
+			// 4. 최종 결과 맵에 저장
+			_processedUnitDataMap.Add(temp._unitClass, temp);
+		}
+	);
+
+	UE_LOG(LogTemp, Display, TEXT("UnitData Init Num : %d "),_processedUnitDataMap.Num());
 }
 
 FUnitData UCGameInstance::GetUnitDataFromTable(int32 id)
@@ -104,6 +182,60 @@ FUnitPartStatArrayWrapper UCGameInstance::GetPartDataFromTable(FName partID)
 	}
 }
 
+void UCGameInstance::CachingAbnormalityDataFromTable()
+{
+
+	if (!_abnormalityTable)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DataTable is null."));
+		return;
+	}
+
+	_abnormalityTable->ForeachRow<FAbnormalityData>(TEXT("UCGameInstance::CachingAbnormalityDataFromTable"), [&](const FName& Key, const FAbnormalityData& Value)
+		{
+			FProcessedAbnormalityDefinitionData data;
+			FCDamageEvent event;
+			// 기본 데이터 복사
+			data._abnormalityType = Value._abnormalityType;
+			data._name= Value._name;
+			data._stateDruration = Value._stateDuration;
+			data._stateWeight = Value._stateWeight;
+			data._statusID = (int32)Value._statusID;
+		
+			event.BaseDamage = Value._normalDamage;
+			event.DurabilityDamage = Value._durabilityDamage;
+			event.IsExplosionDamage = false;
+			event.PenetrationLevel = Value._penetrationLevel;
+			event.DemolitionDamage = 0;
+			event.DamageTypeClass = Value._damageType;
+			
+
+			// 4. 최종 결과 맵에 저장
+			_abnormalityDefinitions.Add(Value._statusID, data);
+			_abnormalityDamageEvents.Add(Value._statusID, event);
+		}
+	);
+
+	UE_LOG(LogTemp, Display, TEXT("AbnormalData Init Num :%d "), _abnormalityDefinitions.Num());
+}
+
+FProcessedAbnormalityDefinitionData UCGameInstance::GetAbnormalDefinitionDataFromTable(FName partID)
+{
+	return FProcessedAbnormalityDefinitionData();
+}
+
+const FProcessedAbnormalityDefinitionData* UCGameInstance::GetProcessedAbnormalityDefinitionData(EAbnormality state)
+{
+	return _abnormalityDefinitions.Find(state);
+}
+
+const FCDamageEvent* UCGameInstance::GetAbnormalDamageEventData(EAbnormality state)
+{
+
+	return _abnormalityDamageEvents.Find(state);
+		
+}
+
 FStratagemSlot UCGameInstance::GetStratagemSlotFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
@@ -126,7 +258,7 @@ void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
 void UCGameInstance::InitializeUnitData()
 {
 	// 맵 비우기
-	ProcessedUnitDataMap.Empty();
+	_processedUnitDataMap.Empty();
 
 	// 데이터 테이블 에셋이 유효한지 확인 (에디터에서 할당되었는지)
 	if (!IsValid(_unitTable) || !IsValid(_unitPartDefinitionTable))
@@ -170,25 +302,16 @@ void UCGameInstance::InitializeUnitData()
 		
 
 		// 3. 완성된 ProcessedData를 맵에 추가
-		ProcessedUnitDataMap.Add(UnitID, ProcessedData);
+		_processedUnitDataMap.Add(ProcessedData._unitClass, ProcessedData);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("UMyGameInstance: Successfully initialized %d units into ProcessedUnitDataMap."), ProcessedUnitDataMap.Num());
+	UE_LOG(LogTemp, Log, TEXT("UCGameInstance: Successfully initialized %d units into ProcessedUnitDataMap."), _processedUnitDataMap.Num());
 }
 
-bool UCGameInstance::GetProcessedUnitData(FName UnitID, FProcessedUnitData& OutData)
+const FProcessedUnitData* UCGameInstance::GetProcessedUnitData(TSubclassOf<class ACharacterBase> UnitID)
 {
 	// 맵에서 UnitID(Key)에 해당하는 FProcessedUnitData(Value)를 찾습니다.
-	const FProcessedUnitData* FoundData = ProcessedUnitDataMap.Find(UnitID);
+	const FProcessedUnitData* FoundData = _processedUnitDataMap.Find(UnitID);
 
-	if (FoundData)
-	{
-		// 데이터를 찾았다면, 출력 변수(OutData)에 복사하고 true 반환
-		OutData = *FoundData;
-		return true;
-	}
-
-	// 데이터를 못 찾았다면, OutData는 변경하지 않고 false 반환
-	UE_LOG(LogTemp, Warning, TEXT("GetProcessedUnitData: Failed to find processed data for UnitID: %s"), *UnitID.ToString());
-	return false;
+	return FoundData;
 }

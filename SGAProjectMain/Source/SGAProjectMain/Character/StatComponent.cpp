@@ -19,7 +19,7 @@ UStatComponent::UStatComponent()
 	
 }
 
-void UStatComponent::InitData(FProcessedUnitData* data)
+void UStatComponent::InitData(const FProcessedUnitData* data)
 {
 	if (data == nullptr)
 		return;
@@ -56,9 +56,13 @@ void UStatComponent::Reset()
 
 bool UStatComponent::IsDead()
 {
+	if (_partDatas.IsEmpty())
+	{
+		return false;
+	}
 	if (_partDatas[EBodyPart::Core].PartStats.IsValidIndex(0)==false)
 	{
-		return true;
+		return false;
 	}
 	if (_partDatas[EBodyPart::Core].PartStats[0]._curHP <=0)
 	{
@@ -108,6 +112,8 @@ void UStatComponent::ChangeHp(FUnitPartStat* part,float Amount)
 	//피해양과 영향력으로 코어에 들어가는 데미지를 정한다.
 	part->_curHP= FMath::Clamp(part->_curHP + Amount, 0.f, part->_partHP);
 	
+
+	UE_LOG(LogTemp, Display, TEXT("Change HP: UnitName :%s ,LayerName : %s , CurHP : %d , MaxHP : %d"),*(_owner->GetName()),*(part->LayerName.ToString()),part->_curHP,part->_partHP);
 	if (part->_curHP <= 0.f)
 	{
 		//파트가 파괴됨. 몇몇 파트는 파괴될 시 사망하는 치명효과가 있음. 파트자체에 델리게이트를 달아보자. 그러면 파트가 파괴될떄 다양한 효과를 낼 수 있을거같다.
@@ -157,6 +163,30 @@ FUnitPartStat* UStatComponent::GetCoreStat()
 
 }
 
+FUnitPartStat* UStatComponent::GetPartStat(EBodyPart part)
+{
+
+	//이캐릭터가 이 파트를 사용하지 않는다면
+	if (_partDatas.Find(part) == nullptr)
+		return nullptr;
+
+	return _owner->GetHittedPartStat(part);
+}
+
+FUnitPartStat* UStatComponent::GetPartStat(FName partName)
+{
+	//맵에 이런이름의 태그가 없다면 
+	if (_owner->GetPartTagMap().Find(partName)==nullptr)
+		return nullptr;
+	
+	EBodyPart part=	_owner->GetPartTagMap()[partName];
+
+
+	return GetPartStat(part);
+
+
+}
+
 
 FUnitPartStatArrayWrapper* UStatComponent::GetPartData(EBodyPart part)
 {
@@ -167,18 +197,11 @@ FUnitPartStatArrayWrapper* UStatComponent::GetPartData(EBodyPart part)
 		return PartDataPtr;
 	}
 
-	FUnitPartStatArrayWrapper* CoreDataPtr = _partDatas.Find(EBodyPart::Core);
-
-	if (CoreDataPtr && CoreDataPtr->PartStats.Num() > 0)
-	{
-		return CoreDataPtr;
-	}
-
 
 	return nullptr;
 }
 
-void UStatComponent::ProcessDamage(FUnitPartStat* part, struct FCDamageEvent* damageEvent)
+void UStatComponent::ProcessDamage(FUnitPartStat* part,const struct FCDamageEvent* damageEvent, EDamageType damageType)
 {
 	if (part == nullptr || damageEvent == nullptr)
 		return;
@@ -207,6 +230,12 @@ void UStatComponent::ProcessDamage(FUnitPartStat* part, struct FCDamageEvent* da
 		damage *= (part->_partDurability * damageEvent->DurabilityDamage + (1.f - part->_partDurability) * damageEvent->BaseDamage);
 	}
 
+	//속성에따른 피해 변화가 있다면 이쪽에서.
+	
+	//체력 변환.
+	ChangeHp(part, -damage);
+	float coreDamage = damage *= part->_partInfluence;
+	ChangeHp(GetCoreStat(), -coreDamage);
 
 	
 }

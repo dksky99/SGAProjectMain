@@ -10,6 +10,9 @@
 #include "GenericTeamAgentInterface.h"
 
 #include "../SGAProjectMain.h"
+
+#include "../Object/CDamageType.h"
+
 #include "CharacterBase.generated.h"
 
 
@@ -28,13 +31,20 @@ public:
 	ACharacterBase(const FObjectInitializer& ObjectInitializer);
 
 	void PostInitializeComponents() override;
+
+	static const TMap<FName, EBodyPart>& GetPartTagMap();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void InitUnit();
 
-	
+	static const TMap<FName, EBodyPart> PartTagMap;
+
+	struct FCDamageEvent AttackDataToDamageEvent(class UUnitAttackDataAsset* attackData);
+
+	//각 파트에 파괴시 호출될 델리게이트를 추가하는 메소드
+	virtual void PartInit();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -137,17 +147,21 @@ public:
 	virtual void DeactivateMeleeColision();
 
 	//데미지이벤트에 기록된 컴포넌트로부터 어느 부위인지 뽑아내는 함수
-	EBodyPart GetHittedPart( struct FCDamageEvent const& DamageEvent);
+	EBodyPart GetHittedPart( const struct FCDamageEvent * DamageEvent);
 	//뽑아진 부위에서 캐릭터마다 판정이 다를 수있다 만약 특별한 파트 판정을 갖는유닛들은 이것을 오버라이드.
 	//기본적으로는 제일 첫번째 레이어를 가져오도록 해놨다. 판정이 필요하다면 switch문과 enum을 활용해 
-	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part);
+	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part,FVector hitLoc=FVector::ZeroVector);
 
 	//부위의 복구를 할떄 사용. 파괴되어 효과를 발동한게 있다면 복구할떄 이걸 오버라이드해서 복구.
 	virtual void RestoreParts() {}
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	
+	void LightStagger(float time);
+
+	void StrongStagger(float time);
+
+	void KnockBack(FVector dir);
 
 	//한번의 OnOff로 한 액터가 여러번의 타격을 방지.
 	bool CheckHitted(AActor* target);

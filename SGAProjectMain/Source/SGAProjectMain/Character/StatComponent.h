@@ -8,7 +8,7 @@
 #include "StatComponent.generated.h"
 
 
-
+enum class EDamageType : uint8;
 
 // 사망 이벤트 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
@@ -101,12 +101,15 @@ class SGAPROJECTMAIN_API UStatComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UStatComponent();
-	void InitData(struct FProcessedUnitData* data);
+	void InitData(const struct FProcessedUnitData* data);
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	
 public:	
+
+
 
 	virtual void Reset();
 
@@ -132,6 +135,8 @@ public:
 	void StartRegen();
 	
 	FUnitPartStat* GetCoreStat() ;
+	FUnitPartStat* GetPartStat(EBodyPart part);
+	FUnitPartStat* GetPartStat(FName partName);
 
 	
 
@@ -146,9 +151,9 @@ public:
 
 	FHPChanged _coreHpChanged;
 	
+	void ProcessDamage(FUnitPartStat* part, const struct FCDamageEvent* damageEvent, EDamageType damageType);
 private:
 	// 실제 HP 차감 및 이벤트 브로드캐스트
-	void ProcessDamage(FUnitPartStat* part, struct FCDamageEvent* damageEvent);
 
 protected:
 

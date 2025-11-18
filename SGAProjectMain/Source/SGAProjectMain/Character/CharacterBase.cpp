@@ -29,13 +29,28 @@
 #include "../Data/UnitAttackDataAsset.h"
 
 #include "../Object/Corpse.h"
-#include "../Object/CDamageType.h"
+//#include "../Object/CDamageType.h"
 
 #include "../CGameInstance.h"
 
 #include "Kismet/GameplayStatics.h"
 
 const FName ACharacterBase::StatComponentName = "StatComponent";
+
+const TMap<FName, EBodyPart> ACharacterBase::PartTagMap =
+{
+	{TEXT("Core"), EBodyPart::Core},
+	{TEXT("Head"), EBodyPart::Head},
+	{TEXT("Torso"), EBodyPart::Torso},
+	{TEXT("Tail"), EBodyPart::Tail},
+	{TEXT("LeftClaw"), EBodyPart::LeftClaw},
+	{TEXT("RightClaw"), EBodyPart::RightClaw},
+	{TEXT("LeftArm"), EBodyPart::LeftArm},
+	{TEXT("RightArm"), EBodyPart::RightArm},
+	{TEXT("LeftLeg"), EBodyPart::LeftLeg},
+	{TEXT("RightLeg"), EBodyPart::RightLeg}
+};
+
 
 // Sets default values
 ACharacterBase::ACharacterBase(const FObjectInitializer& ObjectInitializer) :
@@ -68,6 +83,11 @@ void ACharacterBase::PostInitializeComponents()
 
 }
 
+const TMap<FName, EBodyPart>& ACharacterBase::GetPartTagMap()
+{
+	return PartTagMap;
+}
+
 // Called when the game starts or when spawned
 void ACharacterBase::BeginPlay()
 {
@@ -75,10 +95,13 @@ void ACharacterBase::BeginPlay()
 
 	if (_statComponent->IsValidLowLevel())
 	{
-		// 부위 파괴
-		_statComponent->OnPartDestroyed.AddDynamic(this, &ACharacterBase::OnPartDestroyed_Handler);
+		//TODO : 
+		// 부위 파괴이벤트 바인드
+		//_statComponent->OnPartDestroyed.AddDynamic(this, &ACharacterBase::OnPartDestroyed_Handler);
 		// 사망
 		_statComponent->OnDeath.AddDynamic(this, &ACharacterBase::OnDeath_Handler);
+
+		PartInit();
 	}
 	
 }
@@ -91,13 +114,53 @@ void ACharacterBase::InitUnit()
 	UCGameInstance* ugc=Cast<UCGameInstance>(gc);
 	if (ugc == nullptr)
 		return;
-	FProcessedUnitData data;
-	if (ugc->GetProcessedUnitData(_unitID,data) == false)
+	const FProcessedUnitData* data= ugc->GetProcessedUnitData(GetClass());
+	if (data == nullptr)
+	{
+
+		UE_LOG(LogTemp, Error, TEXT("UnitDataInit Fail : Non data"));
 		return;
+	}
 
 
 	_statComponent->InitData(data);
-	_stateComp->InitData(data._resistData);
+	_stateComp->InitData(data->_resistData);
+	UE_LOG(LogTemp, Display, TEXT("UnitDataInit Success"));
+}
+
+FCDamageEvent ACharacterBase::AttackDataToDamageEvent(UUnitAttackDataAsset* attackData)
+{
+	FCDamageEvent event;
+
+	event.BaseDamage = attackData->Attack;
+	event.DemolitionDamage = attackData->DemolitionAttack;
+	event.DurabilityDamage = attackData->DurabilityAttack;
+	event.PenetrationLevel = attackData->PenetrationLevel;
+	event.Stagger = attackData->Stagger;
+	event.PushForce = attackData->PushForce;
+	event.DamageTypeClass = attackData->DamageType;
+	event.IsExplosionDamage = false;
+
+
+	return event;
+}
+
+void ACharacterBase::PartInit()
+{
+	if (_statComponent == nullptr)
+		return;
+	auto partDatas = _statComponent->GetPartDatas();
+	
+	if(partDatas->IsEmpty())
+		return;
+	auto part = partDatas->Find(EBodyPart::Core);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty()==false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &ACharacterBase::OnDeath_Handler);
+	}
+
 }
 
 // Called every frame
@@ -164,6 +227,7 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 
 	if (zVelocity < -1200.f)
 	{
+
 		// 하드랜딩
 	}
 	else if (zVelocity < -400.f)
@@ -563,19 +627,26 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 		if (CheckHitted(OtherActor))
 			return;
 
-		float finalDamage = _curAttackData->Attack;
 
-		FVector shotDirection = SweepResult.ImpactNormal; // 데미지 방향
 
-		UGameplayStatics::ApplyPointDamage(
-			OtherActor,                     // 데미지를 받을 액터
-			finalDamage,                    // 적용할 기본 데미지 값
-			shotDirection,                  // 데미지가 들어온 방향 벡터
-			SweepResult,                    // 충돌 정보(FHitResult)
-			GetInstigatorController(),      // 데미지를 유발한 컨트롤러
-			this,                           // 데미지 발생 주체 액터
-			UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
-		);
+		FCDamageEvent event=AttackDataToDamageEvent(_curAttackData);
+		event.ShotDirection = SweepResult.ImpactNormal;
+		event.ColComp = OtherComp;
+		
+
+
+
+		OtherActor->TakeDamage(0.f, event, GetInstigatorController(), this);
+
+		//UGameplayStatics::ApplyPointDamage(
+		//	OtherActor,                     // 데미지를 받을 액터
+		//	finalDamage,                    // 적용할 기본 데미지 값
+		//	shotDirection,                  // 데미지가 들어온 방향 벡터
+		//	SweepResult,                    // 충돌 정보(FHitResult)
+		//	GetInstigatorController(),      // 데미지를 유발한 컨트롤러
+		//	this,                           // 데미지 발생 주체 액터
+		//	UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
+		//);
 
 
 		AddHitted(OtherActor);
@@ -666,42 +737,38 @@ void ACharacterBase::DeactivateMeleeColision()
 	
 }
 //
-EBodyPart ACharacterBase::GetHittedPart(FCDamageEvent const& DamageEvent)
+EBodyPart ACharacterBase::GetHittedPart(const FCDamageEvent* DamageEvent)
 {
 	FUnitPartStat* temp = nullptr;
-	EBodyPart Part = EBodyPart::Core;
+	EBodyPart result = EBodyPart::Core;
 	if (_statComponent )
 	{
+		
+		auto HitComponent = DamageEvent->ColComp;
+		{
 
-		auto HitComponent = DamageEvent.ColComp;
+			for (auto tag : HitComponent->ComponentTags)
+			{
 
-		// 태그 검사로 부위 판별
-		if (HitComponent->ComponentHasTag("Head"))
-			Part = EBodyPart::Head;
-		else if (HitComponent->ComponentHasTag("Torso"))
-			Part = EBodyPart::Torso;
-		else if (HitComponent->ComponentHasTag("Tail"))
-			Part = EBodyPart::Tail;
-		else if (HitComponent->ComponentHasTag("LeftArm"))
-			Part = EBodyPart::LeftArm;
-		else if (HitComponent->ComponentHasTag("RightArm"))
-			Part = EBodyPart::RightArm;
-		else if (HitComponent->ComponentHasTag("LeftLeg"))
-			Part = EBodyPart::LeftLeg;
-		else if (HitComponent->ComponentHasTag("RightLeg"))
-			Part = EBodyPart::RightLeg;
-		else if (HitComponent->ComponentHasTag("LeftClaw"))
-			Part = EBodyPart::LeftClaw;
-		else if (HitComponent->ComponentHasTag("RightLeg"))
-			Part = EBodyPart::RightClaw;
+				 if (PartTagMap.Contains(tag))
+				{
+					 result = PartTagMap[tag];
+					 break;
+				}
+			}
+
+	
+		}
+
+		
 
 
 
 	}
-	return Part;
+	return result;
 
 }
-FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part)
+FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part, FVector hitLoc)
 {
 	auto datas=_statComponent->GetPartData(part);
 	if (datas == nullptr)
@@ -718,32 +785,65 @@ FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part)
 // 우선 캐릭터의 takeDamage는 공통이다 중요한건 데미지이벤트로부터 받은 피격위치와 태그를 통핸 레이어가 중요하다. 
 // 아무래도 태그마다 별개의 배열을 두는건 필요할듯하다. 맵에 하나의 키에 여러 값을 넣는건 불가하고 풀링했던것처럼 구조체와 그안에 배열을 넣는방식은 좀 귀찮다.
 // 어짜피 태그가 많아져봐야 머리가슴배, 다리6개가 최대. enum의 값을 더 늘리자 
+//폭발컴포넌트는 폭발로 생긴 피해를 각각의 부위에 전달하는게 옳다고 한다. 만약 범위가 엄청커서 모든부위가 폭발에겹쳐졌다면 그에 맞게 부위수만큼 TakeDamage를 걸어줘야 마땅하다.
 
 float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 
 	//커스텀 데미지이벤트. 이곳에 피해를 입은 부위와 일반피해, 내구피해, 철거력, 관통력 등을 가져올 수 있다.그리고 상태이상을 유발한다면 얼마나가중할지도 포함된다.
-	if (const FCDamageEvent* CustomEvent = DamageEvent.GetAsType<FCDamageEvent>())
+	if (DamageEvent.GetTypeID() == FCDamageEvent::ClassID)
 	{
+		// 1. FCDamageEvent 타입으로 안전하게 캐스팅
+		// &DamageEvent는 FDamageEvent const*이므로, FCDamageEvent const*로 static_cast합니다.
+		const FCDamageEvent* CustomEvent = static_cast<const FCDamageEvent*>(&DamageEvent);
 		//데미지타입을 가져온다 여기에는 피해의 속성과 이것이 추가적인상태이상수치를 유발하는지 여부를 가져온다.
-		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject());
+		//데미지타입이 있다면 그것으로하고 없다면 기본클래스를 만들어 사용.
+		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())!=nullptr ?
+			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
+			Cast<UCDamageType>(UCDamageType::StaticClass());
 
-		EBodyPart part = GetHittedPart(*CustomEvent);
+		//상태이상부여가 걸려있다면 상태이상을 건다.
+		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
+			_stateComp->AddAbnormality(CustomDamageType->_abnormalityType);
+
+		EBodyPart part = GetHittedPart(CustomEvent);
 
 		FUnitPartStat* partStat= GetHittedPartStat(part);
+		//만약 파트가 폭발피해에 면역이라면 대신 코어가 맞도록하자
+		if (partStat->_partExplosionImmunity == 1.f && CustomEvent->IsExplosionDamage == true)
+		{
+			partStat = _statComponent->GetCoreStat();
+		}
+		//본격적인 피해판정.
+		
+			
+		_statComponent->ProcessDamage(partStat, CustomEvent, CustomDamageType->_damageType);
 
-		
-		
-		
-		
 
 
-		
+
 	}
 
 
 	// 기본 로직을 반드시 호출
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void ACharacterBase::LightStagger(float time)
+{
+	//이동을 저지. 이동속도를 0으로 바꾸고 
+}
+
+void ACharacterBase::StrongStagger(float time)
+{
+	//이동 저지 + 실행중이던 행동 저지.
+}
+
+void ACharacterBase::KnockBack(FVector dir)
+{
+	// 그방향으로 밀림
+
+
 }
 
 
@@ -766,11 +866,12 @@ void ACharacterBase::ClearHitted()
 
 void ACharacterBase::TakeHitted(FVector hitPoint, float hitPower)
 {
+	//TODO : 충격을 받았을떄 휘청거림 혹은 밀려남 구현 필요
 	//피격시 충격이 저항력보다 크면 경직, 헬다이버는 충격량이2배이상이면 넉다운 적은 피격방향에따라 다른 애니메이션 혹은 단순히 몽타주 캔슬만.
-	if (_statComponent->GetImpactResistance() < hitPower)
+	//if (_statComponent->GetImpactResistance() < hitPower)
 		return;
 
-	PlayHitReaction();
+	//PlayHitReaction();
 
 
 

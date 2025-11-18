@@ -1985,6 +1985,7 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 			if (_stateComponent->GetActionState() == EActionState::Stratagem)
 			{
+				//이전상태로 돌릴필요가 있다. 이전상태를 저장할 방법을 찾아보자.
 				_stateComponent->SetActionState(EActionState::None);
 			}
 			_stratagemWidget->SetWidgetOperatingState(i);

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "../Object/AbnormalityTable.h"
 #include "UnitDataTable.generated.h"
 
 /*
@@ -37,23 +38,6 @@ enum class EBodyPart : uint8
 };
 
 
-UENUM(BlueprintType)
-enum class EAbnormality : uint8
-{
-	Fire = 0,
-	Burn = 1,
-	Gas,
-	AcidBubble,
-	AcidStream,
-	bleeding,
-	Thornbush,
-	LightStagger,
-	StrongStagger,
-	Shock,
-
-
-	Max
-};
 
 
 USTRUCT(BlueprintType)
@@ -76,7 +60,7 @@ struct FUnitPartLayerData
 	float _partInfluence = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _partExplosionImmunity = 0.f;
+	float _partExplosionImmunity = 1.f;
 };
 
 USTRUCT(BlueprintType)
@@ -85,16 +69,16 @@ struct FUnitAbnormalResistData
 	GENERATED_BODY()
 	//휘청거림을 위한 저항력. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _stagger1 = -1;
+	int32 _lowStaggerWeight = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _stagger2 = -1;
+	float _lowStaggerTime = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _stagger3 = -1;
+	int32 _strongStaggerWeight = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _stagger4 = 1;
+	float _strongStaggerTime = 1.6f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -115,7 +99,7 @@ struct FUnitAbnormalResistData
 	float _minStun = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _maxStun = 1.f;
+	float _maxStun = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _minThermite = 0.5f;
@@ -143,11 +127,11 @@ struct FUnitData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText _name = FText::FromString(TEXT("unit"));
+	FName _name = TEXT("unit");
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TMap<EBodyPart,FText> _PartIDs;
+	TMap<EBodyPart, FName> _PartIDs;
 
 
 

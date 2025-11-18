@@ -6,7 +6,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "StatComponent.h"
 #include "GameFramework/Character.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "../Object/CDamageType.h"
+#include "../CGameInstance.h"
 // Sets default values for this component's properties
 UCharacterStateComponent::UCharacterStateComponent()
 {
@@ -33,6 +35,7 @@ void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	CalcAbnormalityWeight(DeltaTime);
 	CalcAbnormalityTime(DeltaTime);
 
 	// ...
@@ -46,61 +49,58 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 	int damage = 0;
 	float time = 0.f;
 	EAbnormalityState state = (EAbnormalityState)temp;
-	switch (state)
+	UCGameInstance* gm=GetWorld()->GetGameInstance<UCGameInstance>();
+	
+	const FProcessedAbnormalityDefinitionData* data= gm->GetProcessedAbnormalityDefinitionData(abnormality);
+	if (data == nullptr)
+		return;
+
+	float curWeight = _remainWeights.FindOrAdd(state, 0.f);
+	float minState = 0.5f;
+	float maxState = 1.f;
+	switch (data->_abnormalityType)
 	{
-	case EAbnormalityState::Fire:
-		damage = 100;
-		time = 3.f;
+	case EAbnormalityType::Fire:
+		minState = _resistData._minBurn;
+		maxState = _resistData._maxBurn;
 		break;
-	case EAbnormalityState::Burn:
-		damage = 400;
-		time = 1.25f;
+	case EAbnormalityType::Gas:
+		minState = _resistData._minGas;
+		maxState = _resistData._maxGas;
 		break;
-	case EAbnormalityState::Gas:
-		damage = 25;
-		time = 6.f;
+	case EAbnormalityType::Shock:
+		minState = _resistData._minStun;
+		maxState = _resistData._maxStun;
 		break;
-	case EAbnormalityState::AcidBubble:
-		damage = 3;
-		time = 3.f;
-		break;
-	case EAbnormalityState::AcidStream:
-		damage = 100;
-		time = 0.5f;
-		break;
-	case EAbnormalityState::bleeding:
-		damage = 1;
-		time = 99999.f;
-		break;
-	case EAbnormalityState::Thornbush:
-		damage = 5;
-		time = 0.1f;
-		break;
-	case EAbnormalityState::LightStagger:
-		time = 0.2f;
-		break;
-	case EAbnormalityState::StrongStagger:
-		time = 1.5f;
-		break;
-	case EAbnormalityState::Shock:
-		time = 3.f;
-		break;
+	case EAbnormalityType::None:
+	case EAbnormalityType::Acid:
+	case EAbnormalityType::bleeding:
+	case EAbnormalityType::Max:
 	default:
 		break;
 	}
+	//가중치 추가
+	curWeight = FMath::Clamp(curWeight + data->_stateWeight, 0.f, maxState );
+	
+	_remainWeights[state] = curWeight;
 
-	_owner->GetStatComponent()->ReceiveDirectDamage(damage);
+		//GetStatComponent()->ReceiveDirectDamage(damage);
 	//틱이 꺼져있으면 활성화.
 	if (PrimaryComponentTick.bCanEverTick == false)
 		PrimaryComponentTick.bCanEverTick = true;
 		
 
+	_activeAbnormalitiesWeight |= temp;
 	
-	//지속시간 초기화
-	_remainTimes[state] = time;
+	//임계치가 최소임계치를 넘어 상태이상이 생김.
+	if (curWeight > minState)
+	{
+		_remainTimes[state] = data->_stateDruration;
+		_activeAbnormalities |= temp;
+
+	}
 	bool prevSlow = IsSlow();
 	bool prevUnable = IsUnable();
-	_activeAbnormalities |= temp;
 	bool curSlow = IsSlow();
 	bool curUnable = IsUnable();
 	if (prevSlow != curSlow || curSlow == true)
@@ -113,7 +113,6 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 		ActiveUnable();
 
 	}
-	//코어에 직접적인 데미지 입히기.상태이상은 부위와 관련이 읎다.
 
 }
 
@@ -196,14 +195,14 @@ bool UCharacterStateComponent::ActionBegin()
 
 bool UCharacterStateComponent::IsUnable()
 {
-	uint32 temp=(uint32)EAbnormalityState::Shock + (uint32)EAbnormalityState::StrongStagger+ (uint32)EAbnormalityState::LightStagger;
+	uint32 temp=(uint32)EAbnormalityState::Shock | (uint32)EAbnormalityState::StrongStagger| (uint32)EAbnormalityState::LightStagger;
 	return CheckAbnormality(temp);
 }
 
 bool UCharacterStateComponent::IsSlow()
 {
 
-	uint32 temp = (uint32)EAbnormalityState::AcidBubble + (uint32)EAbnormalityState::AcidStream + (uint32)EAbnormalityState::Gas + (uint32)EAbnormalityState::Thornbush;
+	uint32 temp = (uint32)EAbnormalityState::AcidBubble | (uint32)EAbnormalityState::AcidStream | (uint32)EAbnormalityState::Gas | (uint32)EAbnormalityState::Thornbush;
 	return CheckAbnormality(temp);
 }
 
@@ -236,25 +235,59 @@ void UCharacterStateComponent::CalcAbnormalityTime(float deltaTime)
 {
 	uint32 flags = _activeAbnormalities;
 
-	int damage = 0;
 	while (flags != 0)
 	{
 		uint32 active = flags & (~flags + 1);
 		flags = flags & (flags - 1);          
-		damage += CalcActivates(active, deltaTime);
+		CalcActivates(active, deltaTime);
 	}
 
-	_owner->GetStatComponent()->ReceiveDirectDamage(damage);
+	//_owner->GetStatComponent()->ReceiveDirectDamage(damage);
 	if(_activeAbnormalities==0)
 		PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UCharacterStateComponent::CalcAbnormalityWeight(float deltaTime)
+{
+
+	uint32 flags = _activeAbnormalitiesWeight;
+
+	while (flags != 0)
+	{
+		uint32 active = flags & (~flags + 1);
+		flags = flags & (flags - 1);
+
+		CalcActivatesWeight(active, deltaTime);
+	}
+
+}
+
+void UCharacterStateComponent::CalcActivatesWeight(uint32 type, float deltaTime)
+{
+	EAbnormalityState temp = (EAbnormalityState)type;
+	float* foundWeight = _remainWeights.Find(temp);
+	if (foundWeight == nullptr)
+		return ;
+	float prev = *foundWeight;
+	float cur = FMath::Max(prev - deltaTime, 0.f);
+	*foundWeight = cur;
+	if (cur <= 0.f)
+	{
+		//시간이 종료되면 목록에서 제거
+
+		_activeAbnormalitiesWeight &= ~type;
+	}
 }
 
 int UCharacterStateComponent::CalcActivates(uint32 type,float deltaTime)
 {
 	EAbnormalityState temp = (EAbnormalityState)type;
-	float prev = _remainTimes[temp];
+	float* foundRemain = _remainTimes.Find(temp);
+	if (foundRemain == nullptr)
+		return 0;
+	float prev = *foundRemain;
 	float cur = FMath::Max(prev - deltaTime, 0.f);
-	_remainTimes[temp] = cur;
+	*foundRemain = cur;
 	if (cur <= 0.f)
 	{
 		//시간이 종료되면 목록에서 제거
@@ -265,35 +298,26 @@ int UCharacterStateComponent::CalcActivates(uint32 type,float deltaTime)
 	{
 		return 0;
 	}
-	//피해 반환.
-	switch (temp)
-	{
-	case EAbnormalityState::Fire:
-		return 25;
-		break;
-	case EAbnormalityState::Burn:
-		return 20;
-		break;
-	case EAbnormalityState::Gas:
-		return 6;
-		break;
-	case EAbnormalityState::AcidStream:
-		return 5;
-		break;
-	case EAbnormalityState::bleeding:
-		break;
-	case EAbnormalityState::None:
-	case EAbnormalityState::AcidBubble:
-	case EAbnormalityState::StrongStagger:
-	case EAbnormalityState::LightStagger:
-	case EAbnormalityState::Shock:
-	default:
-		return 0;
-		break;
-	}
 
 
-	return 0;
+	int32 abnormalityIndex = FMath::FloorLog2(type);
+	CalcDamage((EAbnormality)abnormalityIndex);
+	return 1;
+}
+
+void UCharacterStateComponent::CalcDamage(EAbnormality state)
+{
+	UCGameInstance* gm = GetWorld()->GetGameInstance<UCGameInstance>();
+	const FCDamageEvent* de = gm->GetAbnormalDamageEventData(state);
+	if (de == nullptr)
+		return;
+
+	float actualDamage = _owner->TakeDamage(
+		0.f,
+		*de, // FCDamageEvent를 FDamageEvent const&로 전달
+		nullptr,
+		nullptr
+	);
 }
 
 void UCharacterStateComponent::Reset()

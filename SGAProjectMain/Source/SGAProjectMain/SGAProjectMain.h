@@ -14,6 +14,6 @@ UENUM(BlueprintType)
 enum class ETeamID : uint8
 {
 	HellDiver = 0 UMETA(DisplayName = "HellDiver"),
-	Enemy = 1 UMETA(DisplayName = "Far"),
+	Enemy = 1 UMETA(DisplayName = "Enemy"),
 	MAX
 };

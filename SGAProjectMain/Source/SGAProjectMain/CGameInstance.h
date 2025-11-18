@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Object/Item/SampleResources.h"
+#include "Object/AbnormalityTable.h"
 
 #include "Character/UnitDataTable.h"
 #include "Character/StatComponent.h"
@@ -22,7 +23,7 @@ struct FProcessedUnitData
 
 	// FUnitData에서 직접 복사되는 기본 정보
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UnitData")
-	FText _name;
+	FName _name;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UnitData")
 	float _defaultMovementSpeed;
@@ -45,7 +46,7 @@ struct FProcessedUnitData
 
 	// 기본 생성자
 	FProcessedUnitData()
-		: _name(FText::GetEmpty())
+		: _name(FName())
 		, _defaultMovementSpeed(0.0f)
 		, _battleMovementSpeed(0.0f)
 		, _unitClass(nullptr)
@@ -54,6 +55,34 @@ struct FProcessedUnitData
 		// _resistData, _..._Part 변수들은 기본 생성자로 자동 초기화됩니다.
 	}
 };
+
+
+USTRUCT(BlueprintType)
+struct FProcessedAbnormalityDefinitionData
+{
+	GENERATED_BODY()
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 _statusID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName _name;
+
+	//지속시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _stateDruration = 0.f;
+
+	//부여될 가중치.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _stateWeight = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EAbnormalityType _abnormalityType = EAbnormalityType::None;
+
+
+};
+
 
 UENUM(BlueprintType)
 enum class EGamePhase : uint8
@@ -86,20 +115,39 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TMap<FName, FSelectedStratagemSet> AllPlayerStratagemSets;
 
+	//장비
 	struct FGunData GetGunDataFromTable(int32 id);
 	TSubclassOf<class AGunBase> GetGunClassFromTable(int32 id);
 	class UTexture2D* GetGunPreviewFromTable(int32 id);
 	class UDataTable* GetGunTable() { return _gunTable; }
 
 
-	struct FUnitData GetUnitDataFromTable(int32 id);
-	TSubclassOf<class ACharacterBase> GetUnitClassFromTable(int32 id);
-	struct FUnitPartStatArrayWrapper GetPartDataFromTable(FName partID);
-	class UDataTable* GetUnitTable() { return _unitTable; }
 
+
+	//스트라타젬
 	struct FStratagemSlot GetStratagemSlotFromTable(int32 id);
 	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
 	class UDataTable* GetStratagemTable() { return _stratagemTable; }
+
+
+	//유닛
+	struct FUnitData GetUnitDataFromTable(int32 id);
+	TSubclassOf<class ACharacterBase> GetUnitClassFromTable(int32 id);
+	//스테이터스 정보 반환받기
+	const FProcessedUnitData* GetProcessedUnitData(TSubclassOf<class ACharacterBase> UnitID);
+
+	struct FUnitPartStatArrayWrapper GetPartDataFromTable(FName partID);
+	class UDataTable* GetUnitTable() { return _unitTable; }
+
+	//상태이상
+	class UDataTable* GetAbnormalityTable() { return _abnormalityTable; }
+	struct FProcessedAbnormalityDefinitionData GetAbnormalDefinitionDataFromTable(FName partID);
+	const FProcessedAbnormalityDefinitionData* GetProcessedAbnormalityDefinitionData(EAbnormality state);
+	const struct FCDamageEvent* GetAbnormalDamageEventData(EAbnormality state);
+
+
+
+
 
 	void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample() { return _savedSample; }
@@ -113,9 +161,11 @@ public:
 
 	void InitializeUnitData();
 
-	UFUNCTION(BlueprintCallable, Category = "Game Data")
-	bool GetProcessedUnitData(FName UnitID, FProcessedUnitData& OutData);
 
+protected:
+	//미리 데이터들을 캐싱
+	void CachingAbnormalityDataFromTable();
+	void CachingUnitDataFromTable();
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
@@ -126,10 +176,21 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _unitTable;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data Tables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _unitPartDefinitionTable;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
-	TMap<FName, FProcessedUnitData> ProcessedUnitDataMap;
+	TMap<TSubclassOf<class ACharacterBase>, FProcessedUnitData> _processedUnitDataMap;
+
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _abnormalityTable;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
+	TMap<EAbnormality, FProcessedAbnormalityDefinitionData> _abnormalityDefinitions;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
+	TMap<EAbnormality, struct FCDamageEvent> _abnormalityDamageEvents;
+
 
 
 	UPROPERTY(EditAnywhere, Category = "Sample")
