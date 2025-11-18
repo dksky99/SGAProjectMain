@@ -92,3 +92,16 @@ bool UPreDeploymentState::IsOperationFailed()
 
 	return false;
 }
+
+int32 UPreDeploymentState::GetClearedMissionsNum()
+{
+	int32 clearedCount = 0;
+
+	for (auto& pair : _missions)
+	{
+		if (pair.Value == EMissionState::Cleared)
+			clearedCount++;
+	}
+
+	return clearedCount;
+}

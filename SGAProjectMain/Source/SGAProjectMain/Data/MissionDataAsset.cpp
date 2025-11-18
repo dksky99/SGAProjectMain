@@ -17,6 +17,14 @@ bool UMissionDataAsset::IsOptionalObjectiveIDValid(FName objectiveID)
 	return false;
 }
 
+bool UMissionDataAsset::HasOptionalObjectives()
+{
+	if (_optionalObjectives.Num() > 0)
+		return true;
+
+	return false;
+}
+
 FName UMissionDataAsset::GetMainObjectiveID()
 {
 	return _mainObjective ? _mainObjective->GetObjectiveID() : FName();

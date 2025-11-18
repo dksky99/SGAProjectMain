@@ -20,7 +20,7 @@ AGunBulletBase::AGunBulletBase()
     _collisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
     _collisionComp->SetNotifyRigidBodyCollision(true); // OnHit 이벤트에 필요
     _collisionComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    _collisionComp->SetCollisionResponseToAllChannels(ECR_Overlap);
+    //_collisionComp->SetCollisionResponseToAllChannels(ECR_Overlap);
     RootComponent = _collisionComp;
 
     // 이동 컴포넌트
@@ -315,7 +315,7 @@ int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
 {
     _projectileData = data;
-    _projectileMovement->InitialSpeed = data._initialSpeed * 100.f;
+    _projectileMovement->InitialSpeed = data._initialSpeed;// *100.f;
     _projectileMovement->MaxSpeed = data._initialSpeed * 100.f;
     _baseSpeed = _projectileMovement->InitialSpeed;
     _projectileMovement->ProjectileGravityScale = data._gravityScale * 0.01f;

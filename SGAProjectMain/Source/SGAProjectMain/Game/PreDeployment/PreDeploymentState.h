@@ -55,6 +55,8 @@ public:
 	bool IsOperationCleared();
 	bool IsOperationFailed();
 
+	int32 GetClearedMissionsNum();
+
 private:
 	int32 _primaryGunID = 1;
 	int32 _secondaryGunID = 101;

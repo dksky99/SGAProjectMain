@@ -59,6 +59,11 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
         _samples.AddSample(other._samples);
 	}
 
+    void AddSample(const FSampleBundle& sample)
+    {
+        _samples.AddSample(sample);
+    }
+
     int32 Get(ECurrencyType type)
     {
         switch (type)

@@ -16,6 +16,7 @@ class SGAPROJECTMAIN_API UMissionDataAsset : public UPrimaryDataAsset
 
 public:
 	bool IsOptionalObjectiveIDValid(FName objectiveID);
+	bool HasOptionalObjectives();
 	FName GetMainObjectiveID();
 	float GetTimeLimitSeconds() { return _timeLimitSeconds; }
 	

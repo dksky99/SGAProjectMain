@@ -14,6 +14,7 @@
 #include "Game/EnemyReinforceManager.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
 #include "Data/MissionDataAsset.h"
+#include "UI/MissionResultWidget.h"
 
 void AMainGameMode::BeginPlay()
 {
@@ -99,17 +100,42 @@ void AMainGameMode::CallEscapePlane()
 
 void AMainGameMode::EndBattle() // 게임이 끝났을 경우
 {
+	GetWorldTimerManager().ClearTimer(_missionTimerHandle);
+	float timeLimit = _missionProgress._curMission->GetTimeLimitSeconds();
+    _missionResult._remainingTimeRatio = FMath::Clamp(_remainingTime / timeLimit, 0.f, 1.f);
+
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
 
-    GI->GetPreDeployState()->ApplyMissionResult(_missionProgress._isMainObjectiveCleared);
+	auto preDeployState = GI->GetPreDeployState();
+    preDeployState->ApplyMissionResult(_missionProgress._isMainObjectiveCleared);
+    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
 
-	FPlayerCurrency reward = CalculateMissionReward();
-	GI->AddRewardCurrency(reward);
+    _missionResult._mission = _missionProgress._curMission;
+    _missionResult._completedOptionalObjectives = _missionProgress._completedOptionalObjectives;
+    _missionResult._isMainObjectiveCleared = _missionProgress._isMainObjectiveCleared;
+    _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
 
-    UGameplayStatics::OpenLevel(this, FName("Lobby")); // 레벨 이동
+	CalculateMissionReward();
 
-    UE_LOG(LogTemp, Log, TEXT("Move Level!"))
+    if (_resultWidgetClass)
+    {
+        auto resultWidget = CreateWidget<UMissionResultWidget>(GetWorld(), _resultWidgetClass);
+
+        if (resultWidget)
+        {
+            resultWidget->AddToViewport();
+            resultWidget->InitializeWidget(_missionResult);
+        }
+    }
+	GI->AddRewardCurrency(_missionResult._totalReward);
+
+    // 임시, 10초 후 로비로 자동 이동
+    FTimerHandle timerHandle;
+    GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+        {
+            UGameplayStatics::OpenLevel(this, FName("Lobby"));
+        }, 10.0f, false);
 }
 
 void AMainGameMode::UpdateTimer()
@@ -126,24 +152,48 @@ void AMainGameMode::UpdateTimer()
 	_remainingTime -= 1.f;
 }
 
-FPlayerCurrency AMainGameMode::CalculateMissionReward()
+void AMainGameMode::CalculateMissionReward()
 {
-    FPlayerCurrency reward;
-
 	// 메인 목표 클리어 보상
+    FMissionReward mainReward;
+    mainReward._category = ERewardCategory::MainObjective;
     if (_missionProgress._isMainObjectiveCleared)
-    {
-        reward.Add(ECurrencyType::Experience, 100);
-        reward.Add(ECurrencyType::RequisitionSlips, 500);
+    {   
+		mainReward._experience = 100;
+        mainReward._requisitionSlips = 500;
+
+        // 메달은 메인 목표 성공 시에만 지급
+        if (_missionResult._clearedMissionNum == 1)
+            _missionResult._totalReward.Add(ECurrencyType::Medals, 3);
+		else if (_missionResult._clearedMissionNum == 2)
+            _missionResult._totalReward.Add(ECurrencyType::Medals, 5);
+		else if (_missionResult._clearedMissionNum == 3)
+            _missionResult._totalReward.Add(ECurrencyType::Medals, 8);
+        else
+            _missionResult._totalReward.Add(ECurrencyType::Medals, 0);
 	}
+    _missionResult._missionRewards.Add(mainReward);
 
 	// 추가 목표 클리어 보상
-	reward.Add(ECurrencyType::Experience, 50 * _missionProgress._completedOptionalObjectives.Num());
-	reward.Add(ECurrencyType::RequisitionSlips, 200 * _missionProgress._completedOptionalObjectives.Num());
+	FMissionReward optionalReward;
+	optionalReward._category = ERewardCategory::OptionalObjectives;
+    optionalReward._experience = 50 * _missionProgress._completedOptionalObjectives.Num();
+    optionalReward._requisitionSlips = 200 * _missionProgress._completedOptionalObjectives.Num();
+    _missionResult._missionRewards.Add(optionalReward);
 
 	// 헬다이버 추출 보상
-	reward.Add(ECurrencyType::Experience, 20 * _missionProgress._extractedHelldiversNum);
-	reward.Add(ECurrencyType::RequisitionSlips, 50 * _missionProgress._extractedHelldiversNum);
+    FMissionReward extractionReward;
+	extractionReward._category = ERewardCategory::HelldiversExtracted;
+    extractionReward._experience = 20 * _missionProgress._extractedHelldiversNum;
+    extractionReward._requisitionSlips = 50 * _missionProgress._extractedHelldiversNum;
+    _missionResult._missionRewards.Add(extractionReward);
+
+    // 남은 시간 보상
+    FMissionReward remainingTimeReward;
+	remainingTimeReward._category = ERewardCategory::MissionTimeRemaining;
+    remainingTimeReward._experience = 100 * _missionResult._remainingTimeRatio;
+    remainingTimeReward._requisitionSlips = 400 * _missionResult._remainingTimeRatio;
+    _missionResult._missionRewards.Add(remainingTimeReward);
 
     // 탈출한 헬다이버가 있다면 샘플 획득
     if (_missionProgress._extractedHelldiversNum > 0)
@@ -152,9 +202,15 @@ FPlayerCurrency AMainGameMode::CalculateMissionReward()
         if (player)
         {
             FSampleBundle earnedSample = player->GetInvenComponent()->GetSampleBundle();
-			reward._samples = earnedSample;
+            _missionResult._totalReward.AddSample(earnedSample);
         }
     }
 
-    return FPlayerCurrency();
+    for (const FMissionReward& reward : _missionResult._missionRewards)
+    {
+        if (reward._experience != 0)
+            _missionResult._totalReward.Add(ECurrencyType::Experience, reward._experience);
+        if (reward._requisitionSlips != 0)
+            _missionResult._totalReward.Add(ECurrencyType::RequisitionSlips, reward._requisitionSlips);
+    }
 }
