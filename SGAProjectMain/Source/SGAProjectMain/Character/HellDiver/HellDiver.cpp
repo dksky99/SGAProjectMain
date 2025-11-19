@@ -1004,6 +1004,12 @@ void AHellDiver::RecoverFromDead()
     _isReadyToSpawn = true;
 }
 
+void AHellDiver::StrongStagger(float time)
+{
+    Super::StrongStagger(time);
+    KnockDown(time);
+}
+
 FTransform  AHellDiver::GetHandSocketTransform() const
 {
 	USkeletalMeshComponent* mesh = GetMesh();

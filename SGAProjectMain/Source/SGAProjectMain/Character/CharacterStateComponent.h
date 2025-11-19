@@ -66,6 +66,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	//틱을 상시 켜놓기엔 부담스럽다 필요할떄만 켜놓을예정이다.
+	void CheckTickOnOff();
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -99,6 +101,9 @@ public:
 	void CalcDamage(EAbnormality state);
 
 	virtual void Reset();
+	
+	void CheckStagger(const struct FCDamageEvent* damageEvent);
+	
 
 protected:
 

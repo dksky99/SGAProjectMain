@@ -163,6 +163,14 @@ void ACharacterBase::PartInit()
 
 }
 
+void ACharacterBase::Critical()
+{
+	auto main = _statComponent->GetCoreStat();
+
+	_statComponent->ChangeHp(main, (float)(main->_partHP));
+	
+}
+
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
 {
@@ -633,6 +641,7 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 		event.ShotDirection = SweepResult.ImpactNormal;
 		event.ColComp = OtherComp;
 		
+		
 
 
 
@@ -768,7 +777,7 @@ EBodyPart ACharacterBase::GetHittedPart(const FCDamageEvent* DamageEvent)
 	return result;
 
 }
-FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part, FVector hitLoc)
+FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part, const UPrimitiveComponent* OverlappedComponent, FVector hitLoc)
 {
 	auto datas=_statComponent->GetPartData(part);
 	if (datas == nullptr)
@@ -806,6 +815,8 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
 			_stateComp->AddAbnormality(CustomDamageType->_abnormalityType);
 
+		_stateComp->CheckStagger(CustomEvent);
+
 		EBodyPart part = GetHittedPart(CustomEvent);
 
 		FUnitPartStat* partStat= GetHittedPartStat(part);
@@ -829,20 +840,29 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
-void ACharacterBase::LightStagger(float time)
+
+void ACharacterBase::WeakStagger(float time)
 {
-	//이동을 저지. 이동속도를 0으로 바꾸고 
+	//이동을 저지. 이동속도를 0으로 바꾸고 아주잠깐 슬로우를 걸어 미약한 저지력을 만든다.
+	GetCharacterMovement()->StopMovementImmediately();
+	_stateComp->AddAbnormality(EAbnormality::LightStagger);
 }
 
 void ACharacterBase::StrongStagger(float time)
 {
-	//이동 저지 + 실행중이던 행동 저지.
+	//이동 저지 + 실행중이던 행동 저지.행동불능 잠시.
+	ActionEnd();
+	GetCharacterMovement()->StopMovementImmediately();
+	_stateComp->AddAbnormality(EAbnormality::StrongStagger);
+	
+
 }
 
 void ACharacterBase::KnockBack(FVector dir)
 {
 	// 그방향으로 밀림
-
+	float knockbackCo = 10.f;
+	LaunchCharacter(dir* knockbackCo, false, false);
 
 }
 

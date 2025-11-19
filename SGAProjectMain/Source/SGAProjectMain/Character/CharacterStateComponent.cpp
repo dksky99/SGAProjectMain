@@ -29,6 +29,18 @@ void UCharacterStateComponent::BeginPlay()
 	
 }
 
+void UCharacterStateComponent::CheckTickOnOff()
+{
+	if (_activeAbnormalities != 0)
+		return;
+
+	if (_activeAbnormalitiesWeight != 0)
+		return;
+
+		PrimaryComponentTick.bCanEverTick = false;
+
+}
+
 
 // Called every frame
 void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -37,7 +49,7 @@ void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 	CalcAbnormalityWeight(DeltaTime);
 	CalcAbnormalityTime(DeltaTime);
-
+	CheckTickOnOff();
 	// ...
 }
 
@@ -195,14 +207,14 @@ bool UCharacterStateComponent::ActionBegin()
 
 bool UCharacterStateComponent::IsUnable()
 {
-	uint32 temp=(uint32)EAbnormalityState::Shock | (uint32)EAbnormalityState::StrongStagger| (uint32)EAbnormalityState::LightStagger;
+	uint32 temp=(uint32)EAbnormalityState::Shock | (uint32)EAbnormalityState::StrongStagger;
 	return CheckAbnormality(temp);
 }
 
 bool UCharacterStateComponent::IsSlow()
 {
 
-	uint32 temp = (uint32)EAbnormalityState::AcidBubble | (uint32)EAbnormalityState::AcidStream | (uint32)EAbnormalityState::Gas | (uint32)EAbnormalityState::Thornbush;
+	uint32 temp = (uint32)EAbnormalityState::AcidBubble | (uint32)EAbnormalityState::AcidStream | (uint32)EAbnormalityState::Gas | (uint32)EAbnormalityState::Thornbush | (uint32)EAbnormalityState::LightStagger ;
 	return CheckAbnormality(temp);
 }
 
@@ -322,7 +334,29 @@ void UCharacterStateComponent::CalcDamage(EAbnormality state)
 
 void UCharacterStateComponent::Reset()
 {
+	for (auto& temp : _remainTimes)
+	{
+		temp.Value = 0.f;
+	}
+	for (auto& temp : _remainWeights)
+	{
+		temp.Value = 0.f;
+	}
+	_activeAbnormalities = 0;
+	_activeAbnormalitiesWeight = 0;
+}
 
+void UCharacterStateComponent::CheckStagger( const struct FCDamageEvent* damageEvent )
+{
+	if (damageEvent->Stagger >= _resistData._strongStaggerWeight)
+	{
+		_owner->StrongStagger(_resistData._strongStaggerTime);
+		_owner->KnockBack(damageEvent->PushForce * damageEvent->ShotDirection * -1.f);
 
+	}
+	if (damageEvent->Stagger >= _resistData._lowStaggerWeight)
+	{
+		_owner->WeakStagger(_resistData._lowStaggerTime);
+	}
 }
 
