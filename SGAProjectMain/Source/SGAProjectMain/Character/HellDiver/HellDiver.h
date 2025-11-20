@@ -117,6 +117,10 @@ public:
 	virtual void Dead() override;
 	virtual void AfterDead();
 	virtual void RecoverFromDead() override;
+
+
+	virtual void StrongStagger(float time) override;
+
 protected:
 
 	FTransform GetHandSocketTransform() const;

@@ -64,10 +64,10 @@ struct FCDamageEvent : public FPointDamageEvent
     int32 PenetrationLevel = 0; // 관통력 
 
     UPROPERTY()
-    int32 Stagger = 0; // 비틀거림 유발.
+    int32 Stagger = 0; // 비틀거림 유발. 헬다이버는 30이넘으면 날라간다.
 
     UPROPERTY()
-    int32 PushForce = 0; // 밀치기 
+    int32 PushForce = 0; // 밀치기 위력. 만약 헬다이버가 비틀거림유발이 30이넘어서 넉다운이될때 이수치만큼의 위력으로 날라가게될것.
 
     UPROPERTY()
     bool IsExplosionDamage= false; // 폭발피해인지 : 폭발저항력떄문에 

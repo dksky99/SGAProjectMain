@@ -20,6 +20,7 @@ public:
 
 
 
+	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part,const UPrimitiveComponent* OverlappedComponent, FVector hitLoc ) override;
 
 	virtual bool CheckAbleTryNear(AActor* target) override;
 	virtual bool TryNear(AActor* target)   override;

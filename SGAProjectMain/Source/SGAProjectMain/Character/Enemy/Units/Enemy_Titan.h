@@ -19,6 +19,7 @@ public:
 	AEnemy_Titan(const FObjectInitializer& ObjectInitializer);
 
 
+	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part, const UPrimitiveComponent* OverlappedComponent, FVector hitLoc) override;
 
 
 
