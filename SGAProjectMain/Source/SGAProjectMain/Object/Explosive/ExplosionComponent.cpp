@@ -76,56 +76,72 @@ void UExplosionComponent::HandleExplosion()
 
 void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps)
 {
-	for (const FOverlapResult& OverlapResult : Overlaps) 
+	// 폭심지(폭발 중심)는 보통 이 컴포넌트를 가진 액터의 위치로 사용한다.
+	const FVector center = GetOwner()->GetActorLocation();
+
+	for (const FOverlapResult& overlap : Overlaps)
 	{
-		if (AActor* HitActor = OverlapResult.GetActor()) 
+		AActor* hitActor = overlap.GetActor();
+		UPrimitiveComponent* hitComp = overlap.GetComponent();
+
+		// 액터나 컴포넌트가 유효하지 않으면 스킵
+		if (!IsValid(hitActor) || !IsValid(hitComp))
 		{
-			if (UPrimitiveComponent* HitComp = OverlapResult.GetComponent())
-			{
-				// 콜리더 태그로 부위 판별 및 HP 조회 (태그 없으면 Core 로 간주)
-				UStatComponent* StatComp = HitActor->FindComponentByClass<UStatComponent>();
-				
-				
-				float PartHP = StatComp->GetCoreStat()->_curHP; // 태그가 없다면 코어
-				
-				//태그를 확인하고 그에 맞는 데이터로 반환하는 기능을 추가해서 바꿔놨습니다. 맞는 태그를 찾으면 그에맞는 파트 데이터를 반환받을 수 있습니다.
-				for (auto tag : HitComp->ComponentTags)
-				{
-					auto data = StatComp->GetPartStat(tag);
-					if (data == nullptr)
-						continue;
-					PartHP = data->_curHP;
-					break;
-				}
-
-				// HP가 0 이하인 부위는 건너뜀
-				if (PartHP <= 0.0f)                          
-					continue;                                
-
-				// 거리 기반 감쇠 및 실제 데미지 계산
-				const FVector Center = GetOwner()->GetActorLocation();					// 폭발 중심        
-				const FVector ColliderLoc = HitComp->GetComponentLocation();			// 맞은 컴포넌트
-				float Distance = FVector::Dist(Center, ColliderLoc);					// 폭발과의 거리
-				float Ratio = FMath::Clamp(1.0f - (Distance / _radius), 0.0f, 1.0f);	// 거리 감쇠 비율
-				float ActualDmg = _damage * Ratio;										// 최종 적용할 데미지
-
-				// 데미지 히트 정보 세팅 및 적용
-				FHitResult HitInfo;                                              
-				HitInfo.TraceStart = Center;                                     
-				HitInfo.ImpactPoint = ColliderLoc;                               
-				HitInfo.Component = HitComp;                                     
-				HitInfo.bBlockingHit = true;                                     
-
-				UGameplayStatics::ApplyPointDamage(                              
-					HitActor,                                                    
-					ActualDmg,                                                   
-					(ColliderLoc - Center).GetSafeNormal(),                      
-					HitInfo,                                                     
-					GetOwner()->GetInstigatorController(),                       
-					GetOwner(),                                                  
-					UDamageType::StaticClass()                                   
-				);                                                               
-			}
+			continue;
 		}
+
+		// 히트박스가 아닌 콜리전이라면 스킵 (예: HitBox 태그로 구분한다고 가정)
+		if (!hitComp->ComponentTags.Contains("HitBox"))
+		{
+			continue;
+		}
+				
+		// 폭심지와 콜리전 위치 사이 거리로 피해 비율 계산
+		const FVector colliderLoc = hitComp->GetComponentLocation();
+		const float distance = FVector::Dist(center, colliderLoc);
+		const float ratio = FMath::Clamp(1.0f - (distance / _radius), 0.0f, 1.0f);
+		const float actualDmg = _damage * ratio;
+
+		// 실제 피해량이 0 이하라면 의미가 없으므로 스킵
+		if (actualDmg <= 0.0f)
+		{
+			continue;
+		}
+
+		// FPointDamageEvent 기반 필드(FHitResult)를 채워준다.
+		FHitResult hitInfo;
+		hitInfo.TraceStart = center;
+		hitInfo.ImpactPoint = colliderLoc;
+		hitInfo.Component = hitComp;
+		hitInfo.bBlockingHit = true;
+
+		// 이번 콜리전에 대한 커스텀 데미지 이벤트를 새로 생성한다.
+		FCDamageEvent damageEvent;
+		damageEvent.HitInfo = hitInfo;
+		// 폭심지 -> 콜리전 방향(넉백/이펙트 방향 등으로 활용 가능)
+		damageEvent.ShotDirection = (colliderLoc - center).GetSafeNormal();
+
+		// 폭발이 주는 실제 피해량을 BaseDamage로 전달
+		damageEvent.BaseDamage = static_cast<int32>(actualDmg);
+		// 필요하면 여기서 내구 피해/철거 피해를 따로 설정할 수 있다.
+		damageEvent.DurabilityDamage = 0;
+		damageEvent.DemolitionDamage = 0;
+		damageEvent.PenetrationLevel = 0;
+
+		// 폭발 피해 플래그와 이번에 맞은 콜리전 컴포넌트 설정
+		damageEvent.IsExplosionDamage = true;
+		damageEvent.ColComp = hitComp;
+
+		// 데미지 타입 (나중에 폭발 전용 UCDamageType BP로 교체 가능)
+		damageEvent.DamageTypeClass = UCDamageType::StaticClass();
+
+		// 최종적으로 이 액터의 TakeDamage를 호출한다.
+		// ACharacterBase라면 FCDamageEvent를 받아서 부위/장갑/폭발저항까지 모두 계산한다.
+		hitActor->TakeDamage(
+			actualDmg,
+			damageEvent,
+			GetOwner()->GetInstigatorController(),
+			GetOwner()
+		);
 	}
 }

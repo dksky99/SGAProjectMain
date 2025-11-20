@@ -755,15 +755,32 @@ void ASentryTurret::OnIdleAimTimer()
 
 float ASentryTurret::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	_curHp -= DamageAmount;
+	float appliedDamage = 0.0f;
+
+	if (DamageEvent.GetTypeID() == FCDamageEvent::ClassID)
+	{
+		const FCDamageEvent* customEvent = static_cast<const FCDamageEvent*>(&DamageEvent);
+		if (customEvent)
+		{
+			// 현재는 베이스 데미지를 사용 
+			appliedDamage = static_cast<float>(customEvent->BaseDamage);
+		}
+	}
+
+	if (appliedDamage <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	_curHp -= appliedDamage;
 
 	if (_curHp <= 0.0f)
 	{
-		//HandleOutOfAmmo();
 		Destroy();
 	}
 
-	return DamageAmount;
+	// 엔진/부모 쪽 데미지 이벤트(델리게이트, BP 이벤트 등)를 살려두기 위해 호출
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
 void ASentryTurret::HandleOutOfAmmo()
