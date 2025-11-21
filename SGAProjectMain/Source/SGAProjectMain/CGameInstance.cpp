@@ -6,8 +6,11 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Game/PreDeployment/PreDeploymentState.h"
-#include "Data/GunDataTable.h"
 #include "Gun/GunBase.h"
+#include "Data/GunDataTable.h"
+#include "Data/OperationDataAsset.h"
+#include "Data/MissionDataAsset.h"
+#include "Data/ObjectiveDataAsset.h"
 
 #include "StratagemComponent.h"
 #include "Object/Stratagem/Stratagem.h"
@@ -21,6 +24,19 @@ void UCGameInstance::Init()
 	Super::Init();
 
 	_preDeployState = NewObject<UPreDeploymentState>(this);
+
+	for (auto& operation : _allOperations)
+	{
+		_operationMap.Add(operation->GetOperationID(), operation);
+	}
+	for (auto& mission : _allMissions)
+	{
+		_missionMap.Add(mission->GetMissionID(), mission);
+	}
+	for (auto& objective : _allObjectives)
+	{
+		_objectiveMap.Add(objective->GetObjectiveID(), objective);
+	}
 }
 
 
@@ -65,16 +81,6 @@ TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 i
 	auto row = _stratagemTable->FindRow<FStratagemSlot>(*rowName, TEXT(""));
 	return *row->StratagemClass;
 }
-
-//void UCGameInstance::AddCurrency(ECurrencyType type, int32 amount)
-//{
-//	_playerCurrency.Add(type, amount);
-//}
-//
-//void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
-//{
-//	_playerCurrency._samples.AddSample(earnedSample);
-//}
 
 void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
 {

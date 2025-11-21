@@ -117,6 +117,7 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
     _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
 
 	CalculateMissionReward();
+	GI->AddRewardCurrency(_missionResult._totalReward);
 
     if (_resultWidgetClass)
     {
@@ -126,16 +127,12 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
         {
             resultWidget->AddToViewport();
             resultWidget->InitializeWidget(_missionResult);
+            resultWidget->_rewardFlowFinishedEvent.BindLambda([this]()
+                {
+                    UGameplayStatics::OpenLevel(this, FName("Lobby"));
+				});
         }
     }
-	GI->AddRewardCurrency(_missionResult._totalReward);
-
-    // 임시, 10초 후 로비로 자동 이동
-    FTimerHandle timerHandle;
-    GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
-        {
-            UGameplayStatics::OpenLevel(this, FName("Lobby"));
-        }, 10.0f, false);
 }
 
 void AMainGameMode::UpdateTimer()

@@ -17,12 +17,22 @@ class SGAPROJECTMAIN_API UMissionDataAsset : public UPrimaryDataAsset
 public:
 	bool IsOptionalObjectiveIDValid(FName objectiveID);
 	bool HasOptionalObjectives();
+
+	class UObjectiveDataAsset* GetMainObjective() { return _mainObjective; }	
+	TArray<class UObjectiveDataAsset*> GetOptionalObjectives() { return _optionalObjectives; }
+
 	FName GetMainObjectiveID();
+	FName GetMissionID() { return _missionID; }
+	FText GetMissionName() { return _missionName; }
+	FText GetMissionDesc() { return _missionDesc; }
 	float GetTimeLimitSeconds() { return _timeLimitSeconds; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
-	FName _missionName;
+	FName _missionID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
+	FText _missionName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
 	FText _missionDesc;

@@ -15,7 +15,10 @@ class SGAPROJECTMAIN_API UMissionResultSlotWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+    virtual void NativeConstruct() override;
 	void InitializeSlot(const struct FMissionResult& missionResult, int32 index);
+    void ShowRewardBox();
+	void HideRewardBox();
 
 protected:
     UPROPERTY(meta = (BindWidget))
@@ -34,6 +37,18 @@ protected:
     // 아이콘 박스
     UPROPERTY(meta = (BindWidget))
     class UHorizontalBox* _iconBox;
+
+	UPROPERTY(meta = (BindWidget))
+    class UImage* _icon1;
+	UPROPERTY(meta = (BindWidget))
+    class UImage* _icon2;
+	UPROPERTY(meta = (BindWidget))
+    class UImage* _icon3;
+	UPROPERTY(meta = (BindWidget))
+    class UImage* _icon4;
+
+	UPROPERTY()
+	TArray<class UImage*> _iconArray;
 
     // 시간 퍼센트 표시
     UPROPERTY(meta = (BindWidget))

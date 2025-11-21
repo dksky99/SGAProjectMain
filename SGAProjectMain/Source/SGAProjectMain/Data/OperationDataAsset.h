@@ -15,18 +15,21 @@ class SGAPROJECTMAIN_API UOperationDataAsset : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
+	FName GetOperationID() { return _operationID; }
+	FText GetOperationName() { return _operationName; }
+	FText GetOperationDesc() { return _operationDesc; }
 	TArray<class UMissionDataAsset*> GetMissions() { return _missions; }
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Planet Operation")
-	FName _operationName;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
+	FName _operationID;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Planet Operation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
+	FText _operationName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
 	FText _operationDesc;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Planet Operation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
 	TArray<class UMissionDataAsset*> _missions;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Planet Operation")
-	TArray<int32> _reward;
 };

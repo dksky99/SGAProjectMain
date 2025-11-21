@@ -27,4 +27,16 @@ protected:
 	class UBorder* _operationBox;
 	UPROPERTY(meta = (BindWidget))
 	class UBorder* _missionBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _operationNameText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _operationDescText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _missionNameText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _missionDescText;
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _missionIcon;
 };

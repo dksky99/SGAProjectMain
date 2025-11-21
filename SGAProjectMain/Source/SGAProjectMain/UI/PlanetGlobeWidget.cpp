@@ -2,8 +2,15 @@
 
 
 #include "PlanetGlobeWidget.h"
+#include "../Object/Map/PlanetOperationSite.h"
+#include "../Object/Map/PlanetMissionIcon.h"
+#include "../Data/OperationDataAsset.h"
+#include "../Data/MissionDataAsset.h"
+#include "../Data/ObjectiveDataAsset.h"
+#include "Components/TextBlock.h"
 #include "Components/Border.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/Image.h"
 
 void UPlanetGlobeWidget::EnterOperationMode()
 {
@@ -27,6 +34,11 @@ void UPlanetGlobeWidget::ShowOperation(bool visibility, APlanetOperationSite* si
 	}
 
 	if (!site) return;
+	if (auto operation = site->GetOperationData())
+	{
+		_operationNameText->SetText(operation->GetOperationName());
+		_operationDescText->SetText(operation->GetOperationDesc());
+	}
 
 	_operationBox->SetVisibility(ESlateVisibility::Visible);
 }
@@ -40,5 +52,12 @@ void UPlanetGlobeWidget::ShowMission(bool visibility, APlanetMissionIcon* icon)
 		return;
 	}
 	if (!icon) return;
+	if (auto mission = icon->GetMissionData())
+	{
+		_missionNameText->SetText(mission->GetMissionName());
+		_missionDescText->SetText(mission->GetMissionDesc());
+		if (auto mainObj = mission->GetMainObjective())
+			_missionIcon->SetBrushFromTexture(mainObj->GetObjectiveIcon());
+	}
 	_missionBox->SetVisibility(ESlateVisibility::Visible);
 }

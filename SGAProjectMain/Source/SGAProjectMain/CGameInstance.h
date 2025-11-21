@@ -62,13 +62,28 @@ public:
 	EGamePhase GetGamePhase() const { return _curGamePhase; }
 
 
-
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _stratagemTable;
+
+	// 작전 및 미션 데이터
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TArray<class UOperationDataAsset*> _allOperations;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TArray<class UMissionDataAsset*> _allMissions;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TArray<class UObjectiveDataAsset*> _allObjectives;
+
+	UPROPERTY()
+	TMap<FName, UOperationDataAsset*> _operationMap;
+	UPROPERTY()
+	TMap<FName, UMissionDataAsset*> _missionMap;
+	UPROPERTY()
+	TMap<FName, UObjectiveDataAsset*> _objectiveMap;
+
 
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;
@@ -78,11 +93,4 @@ private:
 	// 재화
 	UPROPERTY(VisibleAnywhere, Category = "Game/Currency")
 	FPlayerCurrency _playerCurrency;
-
-	//FSampleBundle _savedSample;
-
-	UPROPERTY()
-	int32 _credits = 0;
-
-	//UPROPERTY
 };
