@@ -275,15 +275,11 @@ void ACharacterBase::KnockDownRecovery()
 //{
 //	return -damageAmount;
 //}
-
 void ACharacterBase::CharacterToRagdoll()
 {
-
-	UE_LOG(LogTemp, Display, TEXT("CharacterToRagdoll CB : %s"),*this->GetName());
-
+	UE_LOG(LogTemp, Display, TEXT("CharacterToRagdoll CB : %s"), *this->GetName());
 
 	UCharacterMovementComponent* movementComponent = GetCharacterMovement();
-
 	if (movementComponent)
 	{
 		movementComponent->StopMovementImmediately();
@@ -291,45 +287,47 @@ void ACharacterBase::CharacterToRagdoll()
 	}
 
 	USkeletalMeshComponent* tempMesh = GetMesh();
-	if (tempMesh)
-	{
-		tempMesh->SetSimulatePhysics(true);
-		tempMesh->SetAllBodiesSimulatePhysics(true);
-		tempMesh->SetCollisionProfileName(TEXT("pawn"));
-
-		UPhysicsAsset* tempPhysicsAsset = tempMesh->GetPhysicsAsset();
-		if (tempPhysicsAsset)
-		{
-
-			for (UPhysicsConstraintTemplate* tempConstraintTemplate : tempPhysicsAsset->ConstraintSetup)
-			{
-				if (tempConstraintTemplate)
-				{
-
-					FConstraintInstance& tempConstraintInstance = tempConstraintTemplate->DefaultInstance;
-					tempConstraintInstance.SetLinearLimits(ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, 0.0f);
-
-				}
-			}
-		}
-	}
-
 	UCapsuleComponent* tempCapsule = GetCapsuleComponent();
-	if (tempCapsule)
-	{
-		tempCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
 
 	if (tempMesh && tempCapsule)
 	{
+		// 1. 메시 분리 (원래 월드 위치 유지)
 		tempMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+
+		// 2. 캡슐 콜리전 비활성화
+		tempCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// 3. 메시를 새로운 루트 컴포넌트로 설정
 		RootComponent = tempMesh;
 
+		// 4. 물리 시뮬레이션 활성화 (여기가 Full Simulation 시작 지점)
+		tempMesh->SetSimulatePhysics(true);
+		tempMesh->SetAllBodiesSimulatePhysics(true);
+		// *참고: 콜리전 프로파일은 "Ragdoll" 등으로 명확히 설정하는 것을 권장합니다.*
+		tempMesh->SetCollisionProfileName(TEXT("pawn"));
+
+		// 5. 캡슐을 메시 컴포넌트에 다시 어태치
 		tempCapsule->AttachToComponent(tempMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		tempCapsule->SetRelativeLocation(FVector(0, 0, 88));
 		tempCapsule->SetUsingAbsoluteRotation(true);
 	}
 
+	// 6. 물리 제약 조건(Constraints) 설정 (기존 로직 유지)
+	if (tempMesh)
+	{
+		UPhysicsAsset* tempPhysicsAsset = tempMesh->GetPhysicsAsset();
+		if (tempPhysicsAsset)
+		{
+			for (UPhysicsConstraintTemplate* tempConstraintTemplate : tempPhysicsAsset->ConstraintSetup)
+			{
+				if (tempConstraintTemplate)
+				{
+					FConstraintInstance& tempConstraintInstance = tempConstraintTemplate->DefaultInstance;
+					tempConstraintInstance.SetLinearLimits(ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, ELinearConstraintMotion::LCM_Free, 0.0f);
+				}
+			}
+		}
+	}
 }
 
 void ACharacterBase::KnockDown(float time)
@@ -344,49 +342,55 @@ void ACharacterBase::KnockDown(float time)
 
 void ACharacterBase::RecoverFromKnockDown()
 {
-
 	USkeletalMeshComponent* tempMesh = GetMesh();
 	UCapsuleComponent* tempCapsule = GetCapsuleComponent();
 
 	if (!tempMesh || !tempCapsule)
 		return;
 
-	// 1. 현재 위치 보정 (예: pelvis 본 기준)
-	const FVector pelvisLocation = tempMesh->GetBoneLocation(FName("pelvis"),EBoneSpaces::WorldSpace);
-	UE_LOG(LogTemp,Display,TEXT("Bone Loc : %f %f %f"),pelvisLocation.X, pelvisLocation.Y, pelvisLocation.Z)
-	
-	// 2. 메시 물리 비활성화
+	// 1. 현재 랙돌 메시의 펠비스 위치를 기준으로 목표 위치 계산
+	const FVector pelvisLocation = tempMesh->GetBoneLocation(FName("pelvis"), EBoneSpaces::WorldSpace);
+	UE_LOG(LogTemp, Display, TEXT("Bone Loc : %f %f %f"), pelvisLocation.X, pelvisLocation.Y, pelvisLocation.Z);
+
+	// 2. 물리 시뮬레이션 비활성화 및 메시 설정 복원
 	tempMesh->SetSimulatePhysics(false);
 	tempMesh->SetAllBodiesSimulatePhysics(false);
 	tempMesh->SetCollisionProfileName(TEXT("CharacterMesh")); // 기본 충돌 프로파일로 복원
 
-	// 3. 메시 재부착 (캡슐 기준)
-
-	tempCapsule->DetachFromParent();
+	// 3. 루트 컴포넌트를 캡슐로 변경
+	tempCapsule->DetachFromParent(); // 기존 로직
 	RootComponent = tempCapsule;
+
+	// 4. 캡슐 위치를 랙돌 위치 기준으로 순간 이동 (경고 해결 핵심)
+	// 캡슐의 위치 = 펠비스 위치 + 캡슐의 반 높이 (캐릭터를 서 있는 상태로 만듦)
+	FVector TargetActorLocation = pelvisLocation + FVector(0, 0, tempCapsule->GetUnscaledCapsuleHalfHeight());
+
+	// **TeleportPhysics 플래그를 사용하여 순간 이동을 엔진에 알립니다.**
+	SetActorLocation(
+		TargetActorLocation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics
+	);
+
+	// 5. 메시 재부착 및 상대 위치/회전 재설정
 	tempMesh->AttachToComponent(tempCapsule, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	tempMesh->SetRelativeLocation(FVector(0.f, 0.f, -tempCapsule->GetUnscaledCapsuleHalfHeight()));
-	tempMesh->SetWorldRotation(FRotator(0, -90, 0));
+	tempMesh->SetWorldRotation(FRotator(0, -90, 0)); // T-Pose 회전 복구
 
-	// 4. 캡슐 콜리전 복구
+	// 6. 캡슐 콜리전 복구
 	tempCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-	SetActorLocation(pelvisLocation + FVector(0, 0, tempCapsule->GetUnscaledCapsuleHalfHeight()));
-	// 5. 이동 컴포넌트 재활성화
+	// 7. 이동 컴포넌트 재활성화
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
 	{
 		MovementComponent->SetMovementMode(MOVE_Walking);
 	}
 
-	// 6. 애니메이션 갱신 재개
+	// 8. 애니메이션 갱신 재개
 	tempMesh->bPauseAnims = false;
 	tempMesh->bNoSkeletonUpdate = false;
-
-
-
-
 }
-
 void ACharacterBase::Dead()
 {
 	UE_LOG(LogTemp, Display, TEXT("Dead CB : %s"), *this->GetName());
@@ -809,7 +813,7 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		//데미지타입이 있다면 그것으로하고 없다면 기본클래스를 만들어 사용.
 		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())!=nullptr ?
 			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
-			Cast<UCDamageType>(UCDamageType::StaticClass());
+			Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
 
 		//상태이상부여가 걸려있다면 상태이상을 건다.
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)

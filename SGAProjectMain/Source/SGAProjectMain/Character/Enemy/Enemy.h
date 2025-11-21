@@ -49,6 +49,10 @@ public:
 
 	virtual void UnPossessed() override;
 
+	bool SetOwnController(AController* controller);
+	bool CombineController();
+
+	class AEnemyController* GetCachedController() { return _controller; }
 	// 시야감각 측에서 적을 찾아서 배틀상태로 변환.
 	virtual void FoundTarget(class ACharacterBase* target);
 
@@ -131,8 +135,12 @@ protected:
 	UPROPERTY()
 	EUnitState _unitState=EUnitState::Stay;
 
+
+
 	UPROPERTY()
-	TWeakObjectPtr<class AEnemySquad> _squad;
+	class AEnemyController* _controller;
+	UPROPERTY()
+	class AEnemySquad* _squad;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))

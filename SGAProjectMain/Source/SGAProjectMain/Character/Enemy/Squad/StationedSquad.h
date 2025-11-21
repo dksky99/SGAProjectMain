@@ -7,11 +7,10 @@
 #include "StationedSquad.generated.h"
 
 /**
- * 주둔 병력 :  이 부대는 생산기지에 있는 생산 건물 하나에 해당. 기본적으로 한번에 유지할 수있는 병력의 수는 등록된 전체 병력의 절반. 
- * 유닛당 사망시 2분의 쿨타임이있고
- * 부대는 활동중 병력의 절반 미만이 되면 5초에 하나씩 증원 한다. 한 부대당 병력의 수는 4~6마리 수준. 
- * 파괴시 더이상 생산되지 않음. : 결국 미션이 진행될수록 병력이 낭비되는 느낌이다 추후에 각 스쿼드는 
- * 해당된 유닛을 들고있는게아니라 통합매니저로부터 받아오는 형식으로 바꾸는것도 최적화를 위해 좋을것같기도 하다?
+ * 주둔 병력 :  주변에 헬다이버가 접근시 유닛을 쏟아낸다. 탐지는 활성화되있고 살아있는 헬다이버가 일정거리 내에 접근시 
+ * 주기가 느린 틱을 통해 해보도록하자.
+ * 그리고 하나의 주둔 스쿼드내에 여러 생산건물을 할당하여 생산건물은 이 풀내에서 유닛을 뽑아서소환하도록한다.
+ * 
  */
 UCLASS()
 class SGAPROJECTMAIN_API AStationedSquad : public AEnemySquad
@@ -30,6 +29,7 @@ public:
 
 protected:
 
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 protected:
 
 	FTimerHandle _GenerateTimer;

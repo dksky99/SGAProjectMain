@@ -71,6 +71,7 @@ void AEnemy::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
+    SetOwnController(NewController);
     //UE_LOG(LogTemp, Display, TEXT("%s PossesedBy :%s"), *(this->GetName()), *(NewController->GetName()));
 
 }
@@ -81,6 +82,26 @@ void AEnemy::UnPossessed()
 
     UE_LOG(LogTemp, Display, TEXT("%s UnPossessed"), *(this->GetName()));
 
+}
+
+bool AEnemy::SetOwnController(AController* controller)
+{
+    auto temp = Cast<AEnemyController>(controller);
+    if(temp==nullptr)
+        return false;
+    _controller = temp;
+    return true;
+}
+
+bool AEnemy::CombineController()
+{
+    if (_controller!=nullptr)
+    {
+
+        _controller->Possess(this);
+        return true;
+    }
+    return false;
 }
 
 void AEnemy::FoundTarget(ACharacterBase* target)

@@ -32,6 +32,11 @@ void ACPatrolPath::OnConstruction(const FTransform& transform)
 
 }
 
+FVector ACPatrolPath::GetStartPosition()
+{
+    return FVector();
+}
+
 // Called when the game starts or when spawned
 void ACPatrolPath::BeginPlay()
 {

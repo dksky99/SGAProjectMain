@@ -4,6 +4,7 @@
 #include "EnemyReinforceManager.h"
 #include "../Character/Enemy/Enemy.h"
 #include "../Character/Enemy/Squad/ReinforcementSquad.h"
+#include "EnemyPatrolManager.h"
 
 // Sets default values
 AEnemyReinforceManager::AEnemyReinforceManager()
@@ -68,4 +69,3 @@ AReinforcementSquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callP
 	UE_LOG(LogTemp, Error, TEXT("Call Fail"));
 	return nullptr;
 }
-
