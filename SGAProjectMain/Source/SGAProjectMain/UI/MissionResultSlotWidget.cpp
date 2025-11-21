@@ -60,11 +60,11 @@ void UMissionResultSlotWidget::InitializeSlot(const FMissionResult& missionResul
 		_titleText->SetText(FText::FromString("Main Objectives"));
 		_iconBox->SetVisibility(ESlateVisibility::Visible);
 
-		if (auto mainObj = missionResult._mission->GetMainObjective())
+		if (missionResult._mission)
 		{
-			_icon1->SetBrushFromTexture(mainObj->GetObjectiveIcon());
+			_icon1->SetBrushFromTexture(missionResult._mission->GetMissionIcon());
 			_icon1->SetVisibility(ESlateVisibility::Visible);
-			if (missionResult._isMainObjectiveCleared)
+			if (missionResult._isMissionCleared)
 				_icon1->SetOpacity(1.f);
 		}
 		break;

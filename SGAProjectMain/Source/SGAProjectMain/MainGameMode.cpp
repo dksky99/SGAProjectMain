@@ -13,6 +13,7 @@
 #include "Object/Map/TerminalConsole.h"
 #include "Game/EnemyReinforceManager.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
+#include "Data/OperationDataAsset.h"
 #include "Data/MissionDataAsset.h"
 #include "UI/MissionResultWidget.h"
 
@@ -51,9 +52,9 @@ void AMainGameMode::StartPlay()
 void AMainGameMode::OnObjectiveCleared(FName objectiveID)
 {
     // 메인 목표 클리어 시 탈출 가능
-    if (_missionProgress._curMission->GetMainObjectiveID() == objectiveID)
+    if (_missionProgress._curMission->GetMissionID() == objectiveID)
     {
-        _missionProgress._isMainObjectiveCleared = true;
+        _missionProgress._isMissionCleared = true;
         EnableExtraction();
         return;
 	}
@@ -77,7 +78,7 @@ void AMainGameMode::EnableExtraction()
     APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     if (player)
     {
-		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Avaliable"));
+		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Available"));
     }
 }
 
@@ -108,12 +109,13 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
     if (!GI) return;
 
 	auto preDeployState = GI->GetPreDeployState();
-    preDeployState->ApplyMissionResult(_missionProgress._isMainObjectiveCleared);
+    preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
     _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
 
+	_missionResult._operation = preDeployState->GetCurOperation();
     _missionResult._mission = _missionProgress._curMission;
     _missionResult._completedOptionalObjectives = _missionProgress._completedOptionalObjectives;
-    _missionResult._isMainObjectiveCleared = _missionProgress._isMainObjectiveCleared;
+    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
     _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
 
 	CalculateMissionReward();
@@ -154,20 +156,20 @@ void AMainGameMode::CalculateMissionReward()
 	// 메인 목표 클리어 보상
     FMissionReward mainReward;
     mainReward._category = ERewardCategory::MainObjective;
-    if (_missionProgress._isMainObjectiveCleared)
+    if (_missionProgress._isMissionCleared)
     {   
 		mainReward._experience = 100;
         mainReward._requisitionSlips = 500;
 
         // 메달은 메인 목표 성공 시에만 지급
-        if (_missionResult._clearedMissionNum == 1)
-            _missionResult._totalReward.Add(ECurrencyType::Medals, 3);
-		else if (_missionResult._clearedMissionNum == 2)
-            _missionResult._totalReward.Add(ECurrencyType::Medals, 5);
-		else if (_missionResult._clearedMissionNum == 3)
-            _missionResult._totalReward.Add(ECurrencyType::Medals, 8);
-        else
-            _missionResult._totalReward.Add(ECurrencyType::Medals, 0);
+        if (auto op = _missionResult._operation)
+        {
+            if (op->GetRewardMedals().IsValidIndex(_missionResult._clearedMissionNum - 1))
+            {
+                int32 medal = op->GetRewardMedals()[_missionResult._clearedMissionNum - 1];
+                _missionResult._totalReward.Add(ECurrencyType::Medals, medal);
+			}
+        }
 	}
     _missionResult._missionRewards.Add(mainReward);
 

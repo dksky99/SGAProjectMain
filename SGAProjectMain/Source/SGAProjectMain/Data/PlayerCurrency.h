@@ -77,4 +77,13 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
         }
         return 0;
     }
+
+    int32 GetSampleCount(ESampleType type) const
+    {
+        if (const int32* count = _samples._samples.Find(type))
+        {
+            return *count;
+        }
+        return 0;
+	}
 };

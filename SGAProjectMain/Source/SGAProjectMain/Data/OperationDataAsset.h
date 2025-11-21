@@ -19,6 +19,7 @@ public:
 	FText GetOperationName() { return _operationName; }
 	FText GetOperationDesc() { return _operationDesc; }
 	TArray<class UMissionDataAsset*> GetMissions() { return _missions; }
+	TArray<int32> GetRewardMedals() { return _rewardMedals; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
@@ -32,4 +33,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
 	TArray<class UMissionDataAsset*> _missions;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Operation")
+	TArray<int32> _rewardMedals; // 보상 메달
 };

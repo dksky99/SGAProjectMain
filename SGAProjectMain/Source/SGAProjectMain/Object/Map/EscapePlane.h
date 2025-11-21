@@ -50,6 +50,9 @@ protected:
 	UPROPERTY()
 	FTimerHandle _takeOffTimerHandle;
 
+	UPROPERTY()
+	TArray<class AHellDiver*> _extractedHellDivers;
+
 	bool _isLanding = true;
 	bool _isEscapeEnabled = false;
 };

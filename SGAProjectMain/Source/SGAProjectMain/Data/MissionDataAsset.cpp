@@ -25,7 +25,7 @@ bool UMissionDataAsset::HasOptionalObjectives()
 	return false;
 }
 
-FName UMissionDataAsset::GetMainObjectiveID()
-{
-	return _mainObjective ? _mainObjective->GetObjectiveID() : FName();
-}
+//FName UMissionDataAsset::GetMainObjectiveID()
+//{
+//	return _mainObjective ? _mainObjective->GetObjectiveID() : FName();
+//}

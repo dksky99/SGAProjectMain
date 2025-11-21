@@ -46,7 +46,6 @@ protected:
     class UImage* _icon3;
 	UPROPERTY(meta = (BindWidget))
     class UImage* _icon4;
-
 	UPROPERTY()
 	TArray<class UImage*> _iconArray;
 
@@ -56,8 +55,4 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* _percentText;
-
-    // 이미지 동적 생성용
-    UPROPERTY(EditDefaultsOnly, Category = "Game/UI")
-    TSubclassOf<class UImage> _iconWidgetClass;
 };

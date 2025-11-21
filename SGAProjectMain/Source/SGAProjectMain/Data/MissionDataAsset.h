@@ -18,13 +18,14 @@ public:
 	bool IsOptionalObjectiveIDValid(FName objectiveID);
 	bool HasOptionalObjectives();
 
-	class UObjectiveDataAsset* GetMainObjective() { return _mainObjective; }	
+	//class UObjectiveDataAsset* GetMainObjective() { return _mainObjective; }	
 	TArray<class UObjectiveDataAsset*> GetOptionalObjectives() { return _optionalObjectives; }
 
-	FName GetMainObjectiveID();
+	//FName GetMainObjectiveID();
 	FName GetMissionID() { return _missionID; }
 	FText GetMissionName() { return _missionName; }
 	FText GetMissionDesc() { return _missionDesc; }
+	class UTexture2D* GetMissionIcon() { return _missionIcon; }
 	float GetTimeLimitSeconds() { return _timeLimitSeconds; }
 	
 protected:
@@ -38,7 +39,10 @@ protected:
 	FText _missionDesc;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
-	class UObjectiveDataAsset* _mainObjective;
+	class UTexture2D* _missionIcon;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
+	//class UObjectiveDataAsset* _mainObjective;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Mission")
 	TArray<class UObjectiveDataAsset*> _optionalObjectives;
