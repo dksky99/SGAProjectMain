@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "../../CDamageType.h"
 #include "DropPod.generated.h"
 
 UCLASS()
@@ -53,7 +54,7 @@ protected:
 	class UProjectileMovementComponent* _projectile;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem/Droppod")
-	float _damage = 1000.f;
+	float _damage = 2500.0f;
 
 	// 중복 실행 방지
 	bool _isAlreadySpawned = false;

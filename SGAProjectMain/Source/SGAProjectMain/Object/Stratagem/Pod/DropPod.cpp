@@ -15,6 +15,7 @@
 #include "Engine/DamageEvents.h"
 
 #include "HellPodBase.h"
+#include "../Defensive/SentryTurret.h"
 #include "../../../SGAProjectMain.h"
 
 // Sets default values
@@ -68,8 +69,6 @@ void ADropPod::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiv
 
 void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
-
 	if (OtherActor && OtherComp)
 	{
 		const bool bIsHitBoxProfile = (OtherComp->GetCollisionProfileName() == FName(TEXT("HitBox")));
@@ -77,13 +76,15 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		if (bIsHitBoxProfile)
 		{
 			if (_damagedCharacters.Contains(OtherActor))
+			{
 				return;
+			}
 			_damagedCharacters.Add(OtherActor);
 
 			// 임팩트 좌표 폴백(스윕이 아닐 때를 대비)
 			const FVector impact =
 				(bFromSweep && SweepResult.bBlockingHit)
-				? FVector(SweepResult.ImpactPoint)  
+				? FVector(SweepResult.ImpactPoint)
 				: FVector(OtherComp ? OtherComp->GetComponentLocation() : GetActorLocation());
 
 			const FVector shotDirection = (impact - GetActorLocation()).GetSafeNormal();
@@ -102,15 +103,31 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 				hitInfo.bBlockingHit = false;
 			}
 
-			// 이후 사용
-			UGameplayStatics::ApplyPointDamage(
-				OtherActor,
-				_damage,
-				(impact - GetActorLocation()).GetSafeNormal(),
-				hitInfo,
+			FCDamageEvent damageEvent;
+
+			// FPointDamageEvent 기반 정보
+			damageEvent.HitInfo = hitInfo;
+			damageEvent.ShotDirection = shotDirection;
+
+			// 커스텀 필드
+			damageEvent.BaseDamage = _damage;
+			damageEvent.DurabilityDamage = 0;
+			damageEvent.DemolitionDamage = 0;
+			damageEvent.PenetrationLevel = 10;
+
+			damageEvent.IsExplosionDamage = false;
+			damageEvent.ColComp = OtherComp;
+
+			damageEvent.DamageTypeClass = UCDamageType::StaticClass();
+
+			const float finalDamage = static_cast<float>(damageEvent.BaseDamage);
+
+			OtherActor->TakeDamage(
+				finalDamage,
+				damageEvent,
 				GetInstigatorController(),
-				this,
-				UDamageType::StaticClass());
+				this
+			);
 		}
 	}
 }
