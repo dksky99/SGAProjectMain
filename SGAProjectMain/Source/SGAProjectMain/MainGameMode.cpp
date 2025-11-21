@@ -54,6 +54,8 @@ void AMainGameMode::OnObjectiveCleared(FName objectiveID)
     // 메인 목표 클리어 시 탈출 가능
     if (_missionProgress._curMission->GetMissionID() == objectiveID)
     {
+		_objectiveCompletedEvent.Broadcast(objectiveID);
+		_missionCompletedEvent.Broadcast();
         _missionProgress._isMissionCleared = true;
         EnableExtraction();
         return;
@@ -63,6 +65,7 @@ void AMainGameMode::OnObjectiveCleared(FName objectiveID)
         // 추가 목표 클리어 시 기록
         if (_missionProgress._curMission->IsOptionalObjectiveIDValid(objectiveID))
         {
+            _objectiveCompletedEvent.Broadcast(objectiveID);
             _missionProgress._completedOptionalObjectives.Add(objectiveID);
 		}
     }
@@ -74,12 +77,6 @@ void AMainGameMode::EnableExtraction()
     {
         _planeBeacon->SetInteractable(true); // 꺼져있던 비콘 활성화
 	}
-
-    APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (player)
-    {
-		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Available"));
-    }
 }
 
 void AMainGameMode::CallEscapePlane()

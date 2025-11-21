@@ -1693,11 +1693,6 @@ void APlayerCharacter::OpenMap()
 	}
 }
 
-void APlayerCharacter::AddMissionSlot(UTexture2D* texture, FString name)
-{
-	_missionWidget->AddMissionSlot(texture, name);
-}
-
 void APlayerCharacter::UnitUnable()
 {
 	Super::UnitUnable();

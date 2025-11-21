@@ -11,6 +11,9 @@
 /**
  * 
  */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnObjectiveCompleted, FName)
+DECLARE_MULTICAST_DELEGATE(FOnMissionCompleted)
+
 USTRUCT()
 struct FMissionProgress
 {
@@ -77,9 +80,7 @@ class SGAPROJECTMAIN_API AMainGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-
 	virtual void BeginPlay() override;
-
 	virtual void StartPlay() override;
 
 	void OnObjectiveCleared(FName objectiveID);
@@ -91,6 +92,9 @@ public:
 	class AHelldiverReinforceManager* GetHelldiverReinforceManager() { return _helldiverReinforceManager; }
 
 	bool IsTimeOver() const { return _remainingTime <= 0.f; }
+
+	FOnObjectiveCompleted _objectiveCompletedEvent;
+	FOnMissionCompleted _missionCompletedEvent;
 
 private:
 	void UpdateTimer(); 
@@ -115,9 +119,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Console")
 	class ADropPlaneBeacon* _planeBeacon;
-
-	UPROPERTY(EditAnywhere, Category = "Game/UI")
-	class UTexture2D* _planeMissionIcon; // 임시. 추후 삭제 예정
 
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;

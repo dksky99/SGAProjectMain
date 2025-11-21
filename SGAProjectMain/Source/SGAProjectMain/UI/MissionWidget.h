@@ -15,16 +15,22 @@ class SGAPROJECTMAIN_API UMissionWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void AddMissionSlot(UTexture2D* texture, FString name);
-	void ShowTempText();
+	virtual void NativeConstruct() override;
+	void AddMissionSlot(UTexture2D* texture, FText name, FName ID);
+	void SetMissionCompleted(FName ID);
+	void ShowMissionCompletedText();
+
 	
 protected:
 	UPROPERTY(meta = (BindWidget))
 	class UVerticalBox* _missionSlots;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* _tempText;
+	class UTextBlock* _completedText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class UMissionSlotWidget> _slotWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "Game/UI")
+	class UTexture2D* _planeMissionIcon;
 };
