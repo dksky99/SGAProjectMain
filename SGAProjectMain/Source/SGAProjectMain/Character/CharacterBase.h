@@ -10,6 +10,9 @@
 #include "GenericTeamAgentInterface.h"
 
 #include "../SGAProjectMain.h"
+
+#include "../Object/CDamageType.h"
+
 #include "CharacterBase.generated.h"
 
 
@@ -28,9 +31,27 @@ public:
 	ACharacterBase(const FObjectInitializer& ObjectInitializer);
 
 	void PostInitializeComponents() override;
+
+	static const TMap<FName, EBodyPart>& GetPartTagMap();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void InitUnit();
+
+	static const TMap<FName, EBodyPart> PartTagMap;
+
+	struct FCDamageEvent AttackDataToDamageEvent(class UUnitAttackDataAsset* attackData);
+
+	//각 파트에 파괴시 호출될 델리게이트를 추가하는 메소드
+	virtual void PartInit();
+
+	//즉사 함수다. 부위파괴시 즉사한다면 이함수를 호출하여 코어hp를 0으로 만들것이다.
+	void Critical();
+	//부위파괴시 사망해야하지만 몇초정도 유예기간을 받는 함수.추가체력을 받고 몇초에걸쳐 피해를 입다 사망하게된다.
+	virtual void TimeLimit() {}
+
+
 
 public:	
 	// Called every frame
@@ -133,7 +154,24 @@ public:
 	virtual void ActivateMeleeColision();
 	virtual void DeactivateMeleeColision();
 
+	//데미지이벤트에 기록된 컴포넌트로부터 어느 부위인지 뽑아내는 함수
+	EBodyPart GetHittedPart( const struct FCDamageEvent * DamageEvent);
+	//뽑아진 부위에서 캐릭터마다 판정이 다를 수있다 만약 특별한 파트 판정을 갖는유닛들은 이것을 오버라이드.
+	//기본적으로는 제일 첫번째 레이어를 가져오도록 해놨다. 판정이 필요하다면 switch문과 enum을 활용해 
+	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part, const UPrimitiveComponent* OverlappedComponent=nullptr, FVector hitLoc=FVector::ZeroVector);
 
+	//부위의 복구를 할떄 사용. 파괴되어 효과를 발동한게 있다면 복구할떄 이걸 오버라이드해서 복구.
+	virtual void RestoreParts() {}
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	// 약한 비틀거림. 헬다이버라면 잠시 조준점이 튀고 적이라면 맞는순간 이동속도가 초기화된다.
+	virtual void WeakStagger(float time);
+
+	// 강한 비틀거림. 헬다이버라면 넉다운이되고 밀치기 수치만큼 튕겨나간다. 적이라면 몽타주가 캔슬된다.
+	virtual void StrongStagger(float time);
+
+	void KnockBack(FVector dir);
 
 	//한번의 OnOff로 한 액터가 여러번의 타격을 방지.
 	bool CheckHitted(AActor* target);
@@ -146,7 +184,9 @@ public:
 	void HitRecovery();
 
 	class UUnitAttackDataAsset* GetCurAttackData() { return _curAttackData; }
-	
+
+
+	virtual float GetCurStateMoveSpeed() { return 0.0f; }
 
 public:
 	FReservedFunctionDelegate _reservedFunction;
@@ -193,6 +233,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
 	class UCharacterStateComponent* _stateComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
+	FName _unitID;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	FText _name;
 

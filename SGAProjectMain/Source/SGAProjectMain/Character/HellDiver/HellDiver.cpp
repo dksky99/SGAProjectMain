@@ -136,9 +136,11 @@ void AHellDiver::EquipGrenade()
 
     if (_curGrenade <= 0)
         return;
+    //사용전에 총을 돌려놓는다.
+    UnequipGun();
 
+    SaveLastState(3);
 	GetStateComponent()->SetWeaponState(EWeaponType::Grenade);
-
 	FActorSpawnParameters params;
 	params.Owner = this;
 	params.Instigator = this;
@@ -162,6 +164,7 @@ void AHellDiver::EquipStratagem()
 	if (!selectedStratagem)
 		return;
 
+    UnequipGun();
 	GetStateComponent()->SetWeaponState(EWeaponType::StratagemDevice);
 
 	FActorSpawnParameters params;
@@ -197,14 +200,18 @@ void AHellDiver::OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted)
 
             if (_grenadeChanged.IsBound())
                 _grenadeChanged.Broadcast(_curGrenade, _maxGrenade);
+		    //수류탄이라면 상태를 바꿀필요없다 그레네이드 상태에서 다시 그레네이드로 돌아가면 된다.
         }
 
 		if (_stratagemComponent) // 현재 장착한 스트라타젬 사용 쿨타임 갱신
 		{
 			_stratagemComponent->CommitStratagemUse();
+            //스트라타젬이라면 끝났을때 원래 상태로 돌아가야한다. 
+           
 		}
-
-		GetStateComponent()->SetWeaponState(EWeaponType::None);
+        //원상태로 돌린다 수류탄이라면 새로운 수류탄을 손에 쥐고 
+        //총이였다면 다시 그총을 들게되도록 한다.
+        BackupLastState();
 	}
 }
 
@@ -421,6 +428,9 @@ void AHellDiver::FinishProne()
 
 void AHellDiver::Rolling()
 {
+    //롤링을 할때 왼쪽으로가다가 롤링을하면 화면의 정면을바라보며 왼쪽으로 뛰어야한다
+    //즉 시전 직전에 액터가 키입력을 받은 바라본 방향을  바라보며 그상태로 엎드림상태로 되야한다.
+    // 하지만 그방향으로 엎드리게된다 이러면안된다. 방법을 찾아보자.
     if (this->CanJump() == false)
         return;
     if (_stateComponent->IsRolling())
@@ -536,9 +546,9 @@ void AHellDiver::SwitchGun(int32 index)
     prevGun->DeactivateGun();
     _invenComponent->PutBackWeapon(prevGun);
     OnPreSwitchGun(prevGun);
-    
     // 총 변경
     EquipGun(index); 
+    SaveLastState(index);
 
     // 현재 총 활성화
 	auto newGun = _invenComponent->GetEquippedGun();
@@ -558,6 +568,40 @@ void AHellDiver::SwitchGun(int32 index)
 AGunBase* AHellDiver::GetEquippedGun()
 {
     return _invenComponent->GetEquippedGun();
+}
+
+void AHellDiver::UnequipGun()
+{
+
+    // 이전 총 비활성화
+    auto prevGun = _invenComponent->GetEquippedGun();
+    prevGun->DeactivateGun();
+    _invenComponent->PutBackWeapon(prevGun);
+    OnPreSwitchGun(prevGun);
+}
+
+void AHellDiver::SaveLastState(int32 index)
+{
+    _lastState = index;
+
+}
+
+void AHellDiver::BackupLastState()
+{
+    switch (_lastState)
+    {
+    case 0:
+    case 1:
+    case 2:
+    {
+        SwitchGun(_lastState);
+    }
+    break;
+    case 3:
+    default:
+        EquipGrenade();
+        break;
+    }
 }
 
 void AHellDiver::StartFiring()
@@ -958,6 +1002,12 @@ void AHellDiver::RecoverFromDead()
     Super::RecoverFromDead();
     _stateComponent->SetLifeState(ELifeState::Alive);
     _isReadyToSpawn = true;
+}
+
+void AHellDiver::StrongStagger(float time)
+{
+    Super::StrongStagger(time);
+    KnockDown(time);
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

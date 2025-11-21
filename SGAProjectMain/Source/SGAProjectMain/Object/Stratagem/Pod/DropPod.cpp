@@ -15,15 +15,17 @@
 #include "Engine/DamageEvents.h"
 
 #include "HellPodBase.h"
+#include "../Defensive/SentryTurret.h"
 #include "../../../SGAProjectMain.h"
 
 // Sets default values
 ADropPod::ADropPod()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	_mesh->SetNotifyRigidBodyCollision(true);
 	_mesh->SetGenerateOverlapEvents(true);
 
 	RootComponent = _mesh;
@@ -43,6 +45,8 @@ void ADropPod::BeginPlay()
 
 	if (_mesh)
 	{
+		_mesh->OnComponentHit.AddDynamic(this, &ADropPod::OnHit);
+
 		_mesh->OnComponentBeginOverlap.AddDynamic(this, &ADropPod::OnBeginOverlap);
 
 		_mesh->SetNotifyRigidBodyCollision(true);
@@ -52,24 +56,19 @@ void ADropPod::BeginPlay()
 	
 }
 
-// Called every frame
-void ADropPod::Tick(float DeltaTime)
+void ADropPod::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Super::Tick(DeltaTime);
-}
-
-void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!_isAlreadySpawned && OtherComp && OtherComp->ComponentHasTag(FName("Ground")))
+	if (!_isAlreadySpawned && IsLandableSurface(OtherActor, OtherComp))
 	{
 		_isGrounded = true;
 		_isAlreadySpawned = true;
 
-		HandleGroundLanding(SweepResult.ImpactPoint);
-
-		//DestroySelf();
+		HandleGroundLanding(Hit.ImpactPoint);
 	}
+}
 
+void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
 	if (OtherActor && OtherComp)
 	{
 		const bool bIsHitBoxProfile = (OtherComp->GetCollisionProfileName() == FName(TEXT("HitBox")));
@@ -77,13 +76,15 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		if (bIsHitBoxProfile)
 		{
 			if (_damagedCharacters.Contains(OtherActor))
+			{
 				return;
+			}
 			_damagedCharacters.Add(OtherActor);
 
 			// 임팩트 좌표 폴백(스윕이 아닐 때를 대비)
 			const FVector impact =
 				(bFromSweep && SweepResult.bBlockingHit)
-				? FVector(SweepResult.ImpactPoint)  
+				? FVector(SweepResult.ImpactPoint)
 				: FVector(OtherComp ? OtherComp->GetComponentLocation() : GetActorLocation());
 
 			const FVector shotDirection = (impact - GetActorLocation()).GetSafeNormal();
@@ -102,17 +103,63 @@ void ADropPod::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 				hitInfo.bBlockingHit = false;
 			}
 
-			// 이후 사용
-			UGameplayStatics::ApplyPointDamage(
-				OtherActor,
-				_damage,
-				(impact - GetActorLocation()).GetSafeNormal(),
-				hitInfo,
+			FCDamageEvent damageEvent;
+
+			// FPointDamageEvent 기반 정보
+			damageEvent.HitInfo = hitInfo;
+			damageEvent.ShotDirection = shotDirection;
+
+			// 커스텀 필드
+			damageEvent.BaseDamage = _damage;
+			damageEvent.DurabilityDamage = 0;
+			damageEvent.DemolitionDamage = 0;
+			damageEvent.PenetrationLevel = 10;
+
+			damageEvent.IsExplosionDamage = false;
+			damageEvent.ColComp = OtherComp;
+
+			damageEvent.DamageTypeClass = UCDamageType::StaticClass();
+
+			const float finalDamage = static_cast<float>(damageEvent.BaseDamage);
+
+			OtherActor->TakeDamage(
+				finalDamage,
+				damageEvent,
 				GetInstigatorController(),
-				this,
-				UDamageType::StaticClass());
+				this
+			);
 		}
 	}
+}
+
+bool ADropPod::IsLandableSurface(AActor* OtherActor, UPrimitiveComponent* OtherComp)
+{
+	if (!OtherActor || !OtherComp)
+		return false;
+
+	// 캐릭터면 착지 불가
+	if (OtherActor->IsA<ACharacter>())
+		return false;
+
+	// 센트리면 착지 불가
+	if (OtherActor->IsA<ASentryTurret>())
+		return false;
+
+	// 이동 가능한 물체(아이템/소품 등)면 착지 불가
+	const UPrimitiveComponent* rootPrim = Cast<UPrimitiveComponent>(OtherActor->GetRootComponent());
+	const bool compSim = OtherComp->IsSimulatingPhysics();
+	const bool rootSim = (rootPrim && rootPrim->IsSimulatingPhysics());
+	const bool compMov = (OtherComp->Mobility == EComponentMobility::Movable);
+	const bool rootMov = (rootPrim && rootPrim->Mobility == EComponentMobility::Movable);
+	const ECollisionChannel objType = OtherComp->GetCollisionObjectType();
+
+	// WorldDynamic/PhysicsBody 이면서 물리 시뮬 또는 Movable이면 이동 가능 대상으로 간주
+	const bool isDynamic = (objType == ECC_WorldDynamic || objType == ECC_PhysicsBody);
+	if (isDynamic && (compSim || rootSim || compMov || rootMov))
+		return false;
+
+	// 나머지는 착지 가능
+	return true;
 }
 
 void ADropPod::LaunchOverlappedActors(const FVector& hitPoint)

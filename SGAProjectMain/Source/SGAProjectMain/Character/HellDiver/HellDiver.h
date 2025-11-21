@@ -65,6 +65,11 @@ public:
 	void SwitchGun(int32 index);
 	AGunBase* GetEquippedGun();
 
+	void UnequipGun();	//4번키나 스트라타젬을 입력 완료했을때 손에 쥐었던 장비를 기존의 슬룻에 전부 돌려놓는다.
+	
+	void SaveLastState(int32 index);
+	void BackupLastState();
+
 	void StartFiring();
 	void StopFiring();
 	void StartAiming();
@@ -112,6 +117,10 @@ public:
 	virtual void Dead() override;
 	virtual void AfterDead();
 	virtual void RecoverFromDead() override;
+
+
+	virtual void StrongStagger(float time) override;
+
 protected:
 
 	FTransform GetHandSocketTransform() const;
@@ -193,6 +202,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/StimPack")
 	class UStimPackComponent* _stimPackComponent;
 	
+
+	int32 _lastState = 0;
 
 	// 생성된 메쉬 저장용
 	UPROPERTY()

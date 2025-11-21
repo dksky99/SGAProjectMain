@@ -31,6 +31,7 @@ ABombProjectile::ABombProjectile()
 	_projectileMovement->bRotationFollowsVelocity = true;                   // 속도 벡터 방향으로 액터가 자동 회전하도록 설정합니다(낙하 방향을 주시).
 	_projectileMovement->bShouldBounce = false;                             // 지면/오브젝트 충돌 후 튀지 않도록(bounce 비활성) 설정합니다.
 	_projectileMovement->SetUpdatedComponent(_collisionComponent);			// 갱신 대상 지정
+	_projectileMovement->ProjectileGravityScale = 0.0f;						// 중력 off
 
 	// 폭발 컴포넌트(데미지/반경/이펙트 재생 담당)
 	_explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));  
