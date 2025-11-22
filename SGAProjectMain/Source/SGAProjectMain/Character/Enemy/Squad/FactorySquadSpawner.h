@@ -27,6 +27,11 @@ protected:
 
 	void CheckDistanceToTarget();
 
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	virtual void ProcessDamage(const struct FCDamageEvent* damageEvent);
+
+	void DestroyFactory();
 protected:
 
 
