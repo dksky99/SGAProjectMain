@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "EscapePlane.generated.h"
 
+// µ®∏Æ∞‘¿Ã∆Æ
+DECLARE_MULTICAST_DELEGATE(FHelldiverExtractDelegate);
+
 UCLASS()
 class SGAPROJECTMAIN_API AEscapePlane : public AActor
 {
@@ -19,14 +22,17 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+public:	
+	void EnableTriggerBox();
+	void StartTimerToTakeOff();
+
+	FHelldiverExtractDelegate _helldiverExtractEvent;
+
+protected:
 	UFUNCTION()
 	void OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	void EnableTriggerBox();
+	void TakeOff();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Game")
@@ -40,6 +46,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Game")
 	FVector _targetLocation;
+
+	UPROPERTY()
+	FTimerHandle _takeOffTimerHandle;
+
+	UPROPERTY()
+	TArray<class AHellDiver*> _extractedHellDivers;
 
 	bool _isLanding = true;
 	bool _isEscapeEnabled = false;

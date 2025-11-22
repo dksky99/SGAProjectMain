@@ -203,8 +203,6 @@ public:
 
 	void SetSceneCapturer(class ASceneCapturer* capturer) { _sceneCapturer = capturer; }
 	void OpenMap();
-	void AddMissionSlot(UTexture2D* texture, FString name); // 임시. 추후 삭제 예정
-
 
 	virtual void UnitUnable() override;
 	virtual void UnitRecoverFromUnable() override;

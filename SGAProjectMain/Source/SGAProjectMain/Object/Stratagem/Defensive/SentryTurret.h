@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GenericTeamAgentInterface.h"
+#include "../../../Data/GunProjectileDataAsset.h"
 #include "SentryTurret.generated.h"
 
 UCLASS()
@@ -24,9 +25,6 @@ public:
 	// -------------------------------
 	// 외부 호출 함수(간단)
 	// -------------------------------
-
-	// 외부에서 강제로 타깃을 지정
-	void SetTargetActor(AActor* target);
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Sentry")
 	void AIStartFire();
@@ -63,7 +61,10 @@ protected:
 	// 최단 각도 차 기반 총구 정렬 
 	bool IsAngleAligned(float currentDeg, float targetDeg, float toleranceDeg) const;
 	
-	// 발사 게이트/LOS
+	// 사격 가능 상태 확인/LOS
+	bool IsSentryReadyToFire();
+	bool IsTargetAttackable(class ACharacterBase* target) const;
+	bool HasAnyShootableEnemy();
 	void UpdateFireGate(float deltaSeconds);
 
 	// 발사/이펙트
@@ -110,9 +111,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	class USentryAnimInstance* _anim = nullptr;
 
+	// 센트리가 사용할 발사체 에셋 (총알 클래스 + 기본 프로젝타일 데이터)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	UGunProjectileDataAsset* _projectileDataAsset = nullptr;
+
 	// =========================================================
 	// 변수 묶음: 스펙/파라미터(사격/체력/사거리/탄 등)
 	// =========================================================
+
+	// 센트리 전용 데미지
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _sentryBaseDamage = 80.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
+	float _sentryVsDurableDamage = 15.0f;
+
+	// 총알 초기화용 데이터
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
+	FGunProjectileData _projectileData;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _fireInterval = 0.1f;
 
@@ -128,9 +145,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
 	float _curHp = 100.0f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	TSubclassOf<class AGunBulletBase> _bulletClass;
-
 	FTimerHandle _fireTimerHandle;
 
 	bool  _lastWantsFire = false;
@@ -139,7 +153,7 @@ protected:
 	// 변수 묶음: 타겟팅/조준(스펙)
 	// =========================================================
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Sentry")
-	AActor* _currentTarget = nullptr;
+	class ACharacterBase* _currentTarget = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Stratagem/Sentry")
 	float _yawSpeedDegPerSec = 360.0f;		// Yaw 회전속도(도/초)

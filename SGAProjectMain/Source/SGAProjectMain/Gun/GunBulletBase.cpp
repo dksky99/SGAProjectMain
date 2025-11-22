@@ -20,7 +20,7 @@ AGunBulletBase::AGunBulletBase()
     _collisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
     _collisionComp->SetNotifyRigidBodyCollision(true); // OnHit 이벤트에 필요
     _collisionComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    _collisionComp->SetCollisionResponseToAllChannels(ECR_Overlap);
+    //_collisionComp->SetCollisionResponseToAllChannels(ECR_Overlap);
     RootComponent = _collisionComp;
 
     // 이동 컴포넌트
@@ -112,10 +112,19 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         // Armor Value 계산
         int32 armorValue = SurfaceToAV(surface);
 
-        EHitOutcome outcome = CalculateHitOutcome(armorValue, SweepResult);
+        int32 ap = 0;
+        EHitOutcome outcome = CalculateHitOutcome(armorValue, SweepResult, ap);
 
         UE_LOG(LogTemp, Log, TEXT("PM=%s Surf=%d AV=%d"),
             PM ? *PM->GetName() : TEXT("None"), (int)surface, armorValue);
+
+        // 속도에 비례하는 최종 데미지
+        int32 finalBaseDamage = _projectileData._baseDamage
+            * (_projectileMovement->Velocity.Size() / _baseSpeed); 
+		int32 finalDurabilityDamage = _projectileData._vsDurableDamage
+			* (_projectileMovement->Velocity.Size() / _baseSpeed);
+
+        FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
 
         // 과관통이거나 도탄이 아닐 경우 총알 정지
         if (outcome != EHitOutcome::OverPenetrating && outcome != EHitOutcome::Ricochet)
@@ -125,27 +134,35 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
             _collisionComp->SetGenerateOverlapEvents(false);
         }
 
-        float damageMultiplier = 1.f;
-        if (outcome == EHitOutcome::Penetrate)      damageMultiplier = 0.65f;   // 관통 판정일 경우 데미지 65%
-        if (outcome == EHitOutcome::Ricochet)       damageMultiplier = 0.f;     // 도탄 판정일 경우 데미지 무효
+		// 커스텀 데미지 이벤트 생성
+		FCDamageEvent damageEvent;
 
-        float finalDamage = _projectileData._baseDamage
-            * (_projectileMovement->Velocity.Size() / _baseSpeed) // 속도에 비례하는 최종 데미지
-            * damageMultiplier;                                   // 관통 정도 반영
+		// FPointDamageEvent 기반 정보 세팅
+		damageEvent.HitInfo = SweepResult;
+		damageEvent.ShotDirection = shotDirection;
 
-        FVector shotDirection = _projectileMovement->Velocity.GetSafeNormal(); // 데미지 방향
+		// 일반 피해 / 내구 피해를 동일 값으로 두면,
+		// StatComponent에서 Durability 비율로 섞어도 최종 크기는 유지됩니다.
+		damageEvent.BaseDamage = finalBaseDamage;
+		damageEvent.DurabilityDamage = finalDurabilityDamage;
+		damageEvent.DemolitionDamage = 0;
+		damageEvent.PenetrationLevel = ap; 
 
-        UGameplayStatics::ApplyPointDamage(
-            OtherActor,                     // 데미지를 받을 액터
-            finalDamage,                    // 적용할 데미지 값
-            shotDirection,                  // 데미지가 들어온 방향 벡터
-            SweepResult,                    // 충돌 정보(FHitResult)
-            GetInstigatorController(),      // 데미지를 유발한 컨트롤러
-            this,                           // 데미지 발생 주체 액터
-            UDamageType::StaticClass()      // 사용할 데미지 타입 클래스
-        );
+		damageEvent.IsExplosionDamage = false;     // 총알은 폭발이 아님
+		damageEvent.ColComp = OtherComp;
 
-        UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %f"), finalDamage);
+		// 데미지 타입: 나중에 총알별 UCDamageType BP를 만들어서 바꿔주셔도 됩니다.
+		damageEvent.DamageTypeClass = UCDamageType::StaticClass();
+
+		// 실제 데미지 적용
+		OtherActor->TakeDamage(
+            finalBaseDamage,             // DamageAmount (이벤트/로그용)
+			damageEvent,                 // 커스텀 데미지 이벤트
+			GetInstigatorController(),   // 가해자 컨트롤러
+			this                         // 데미지 발생 주체 (총알)
+		);
+
+        UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %d"), finalBaseDamage);
 
         if (_bulletHitEvent.IsBound())
             _bulletHitEvent.Broadcast(outcome);
@@ -238,7 +255,7 @@ float AGunBulletBase::CalculateSpeedFalloffMultiplier(float distance)
     return 1.0f - falloff;
 }
 
-EHitOutcome AGunBulletBase::CalculateHitOutcome(int32 AV, const FHitResult& SweepResult)
+EHitOutcome AGunBulletBase::CalculateHitOutcome(int32 AV, const FHitResult& SweepResult, int32& AP)
 {
     FVector incidentVec = (-_projectileMovement->Velocity).GetSafeNormal(); // 입사 벡터
     FVector normalVec = SweepResult.ImpactNormal.GetSafeNormal(); // 노말 벡터
@@ -247,7 +264,6 @@ EHitOutcome AGunBulletBase::CalculateHitOutcome(int32 AV, const FHitResult& Swee
 
     // 입사각에 따른 관통력 정도
     FArmorPenetration armorPenetration = _projectileData._armorPenetration;
-    int32 AP = 0;
     if (IncidenceDeg < 25.f)            AP = armorPenetration._direct;   
     else if (IncidenceDeg < 60.f)       AP = armorPenetration._slightAngle;     
     else if (IncidenceDeg < 80.f)       AP = armorPenetration._largeAngle;    
@@ -315,7 +331,7 @@ int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
 {
     _projectileData = data;
-    _projectileMovement->InitialSpeed = data._initialSpeed * 100.f;
+    _projectileMovement->InitialSpeed = data._initialSpeed;// *100.f;
     _projectileMovement->MaxSpeed = data._initialSpeed * 100.f;
     _baseSpeed = _projectileMovement->InitialSpeed;
     _projectileMovement->ProjectileGravityScale = data._gravityScale * 0.01f;

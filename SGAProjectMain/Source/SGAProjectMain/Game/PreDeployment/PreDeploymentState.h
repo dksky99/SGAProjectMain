@@ -55,6 +55,9 @@ public:
 	bool IsOperationCleared();
 	bool IsOperationFailed();
 
+	int32 GetClearedMissionsNum();
+	TMap<UMissionDataAsset*, EMissionState> GetMissionStates() { return _missions; }
+
 private:
 	int32 _primaryGunID = 1;
 	int32 _secondaryGunID = 101;

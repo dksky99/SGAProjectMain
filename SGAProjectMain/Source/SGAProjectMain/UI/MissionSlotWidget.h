@@ -15,9 +15,10 @@ class SGAPROJECTMAIN_API UMissionSlotWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void InitializeSlot(UTexture2D* texture, FString name);
-
+	void InitializeSlot(UTexture2D* texture, FText name, FName ID);
 	void DeactivateSlot();
+
+	FName GetMissionID() const { return _missionID; }
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -28,4 +29,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _missionIcon;
+
+	UPROPERTY()
+	FName _missionID;
 };

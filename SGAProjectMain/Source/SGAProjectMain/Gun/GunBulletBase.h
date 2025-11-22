@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "../Data/GunDataTable.h"
 #include "../Data/GunProjectileDataAsset.h"
+#include "../Object/CDamageType.h"
 #include "GunBulletBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBulletHit, EHitOutcome, hitOutcome);
@@ -87,7 +88,7 @@ protected:
 	void Explode();
 
 	float CalculateSpeedFalloffMultiplier(float distance); // 총알 감속 계산
-	EHitOutcome CalculateHitOutcome(int32 AV, const FHitResult& SweepResult);
+	EHitOutcome CalculateHitOutcome(int32 AV, const FHitResult& SweepResult, int32& AP);
 	void ProcessHitOutcome(EHitOutcome outcome, const FHitResult& SweepResult);
 
 	int32 SurfaceToAV(EPhysicalSurface surface);

@@ -6,8 +6,11 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Game/PreDeployment/PreDeploymentState.h"
-#include "Data/GunDataTable.h"
 #include "Gun/GunBase.h"
+#include "Data/GunDataTable.h"
+#include "Data/OperationDataAsset.h"
+#include "Data/MissionDataAsset.h"
+#include "Data/ObjectiveDataAsset.h"
 
 #include "StratagemComponent.h"
 #include "Object/Stratagem/Stratagem.h"
@@ -250,9 +253,17 @@ TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 i
 	return *row->StratagemClass;
 }
 
-void UCGameInstance::AddEarnedSample(const FSampleBundle& earnedSample)
+void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
 {
-	_savedSample.AddSample(earnedSample);
+	_playerCurrency.AddCurrency(reward);
+}
+
+FSampleBundle UCGameInstance::GetSavedSample()
+{
+	if (!_playerCurrency._samples.IsEmpty())
+		return _playerCurrency._samples;
+
+	return FSampleBundle();
 }
 
 void UCGameInstance::InitializeUnitData()
