@@ -4,12 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Data/PlayerCurrency.h"
 #include "Object/Item/SampleResources.h"
 #include "Object/AbnormalityTable.h"
-
 #include "Character/UnitDataTable.h"
 #include "Character/StatComponent.h"
-
 #include "CGameInstance.generated.h"
 
 /**
@@ -107,8 +106,6 @@ class SGAPROJECTMAIN_API UCGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
-
-
 	UCGameInstance();
 	virtual void Init() override;
 
@@ -129,6 +126,11 @@ public:
 	TSubclassOf<class AStratagem> GetStratagemClassFromTable(int32 id);
 	class UDataTable* GetStratagemTable() { return _stratagemTable; }
 
+	// 재화
+	void AddRewardCurrency(const FPlayerCurrency& reward);
+	//void AddCurrency(ECurrencyType type, int32 amount = 1);
+	//void AddEarnedSample(const FSampleBundle& earnedSample);
+	FSampleBundle GetSavedSample();
 
 	//유닛
 	struct FUnitData GetUnitDataFromTable(int32 id);
@@ -148,11 +150,6 @@ public:
 
 
 
-
-	void AddEarnedSample(const FSampleBundle& earnedSample);
-	FSampleBundle GetSavedSample() { return _savedSample; }
-
-
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
 	void SetGamePhase(EGamePhase newPhase) { _curGamePhase = newPhase; }
@@ -166,12 +163,14 @@ protected:
 	//미리 데이터들을 캐싱
 	void CachingAbnormalityDataFromTable();
 	void CachingUnitDataFromTable();
+
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _stratagemTable;
+
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _unitTable;
@@ -193,14 +192,13 @@ private:
 
 
 
-	UPROPERTY(EditAnywhere, Category = "Sample")
-	FSampleBundle _savedSample;
-
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;
 
 	EGamePhase _curGamePhase = EGamePhase::None;
 
-	
 
+	// 재화
+	UPROPERTY(VisibleAnywhere, Category = "Game/Currency")
+	FPlayerCurrency _playerCurrency;
 };

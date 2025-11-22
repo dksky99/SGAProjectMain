@@ -13,7 +13,9 @@
 #include "Object/Map/TerminalConsole.h"
 #include "Game/EnemyReinforceManager.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
+#include "Data/OperationDataAsset.h"
 #include "Data/MissionDataAsset.h"
+#include "UI/MissionResultWidget.h"
 
 void AMainGameMode::BeginPlay()
 {
@@ -26,7 +28,10 @@ void AMainGameMode::BeginPlay()
 
     auto mission = GI->GetPreDeployState()->GetCurMission();
     if (mission)
+    {
         _missionProgress._curMission = mission;
+        _remainingTime = mission->GetTimeLimitSeconds();
+    }
 
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
@@ -40,14 +45,18 @@ void AMainGameMode::BeginPlay()
 void AMainGameMode::StartPlay()
 {
     Super::StartPlay();
+
+    GetWorldTimerManager().SetTimer(_missionTimerHandle, this, &AMainGameMode::UpdateTimer, 1.0f, true);
 }
 
 void AMainGameMode::OnObjectiveCleared(FName objectiveID)
 {
     // 메인 목표 클리어 시 탈출 가능
-    if (_missionProgress._curMission->GetMainObjectiveID() == objectiveID)
+    if (_missionProgress._curMission->GetMissionID() == objectiveID)
     {
-        _missionProgress._isMainObjectiveCleared = true;
+		_objectiveCompletedEvent.Broadcast(objectiveID);
+		_missionCompletedEvent.Broadcast();
+        _missionProgress._isMissionCleared = true;
         EnableExtraction();
         return;
 	}
@@ -56,6 +65,7 @@ void AMainGameMode::OnObjectiveCleared(FName objectiveID)
         // 추가 목표 클리어 시 기록
         if (_missionProgress._curMission->IsOptionalObjectiveIDValid(objectiveID))
         {
+            _objectiveCompletedEvent.Broadcast(objectiveID);
             _missionProgress._completedOptionalObjectives.Add(objectiveID);
 		}
     }
@@ -67,38 +77,136 @@ void AMainGameMode::EnableExtraction()
     {
         _planeBeacon->SetInteractable(true); // 꺼져있던 비콘 활성화
 	}
-
-    APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (player)
-    {
-		player->AddMissionSlot(_planeMissionIcon, FString("Extraction Avaliable"));
-    }
 }
 
 void AMainGameMode::CallEscapePlane()
 {
+	if (!_escapePlaneClass) return;
+
     UWorld* world = GetWorld();
     if (!world) return;
 
     FRotator rotation(0.f, 90.f, 0.f);
+
     AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, rotation);
+	escapePlane->_helldiverExtractEvent.AddLambda([this]()
+        {
+			_missionProgress._extractedHelldiversNum += 1;
+        });
+    _escapePlane = escapePlane;
 }
 
-void AMainGameMode::EndBattle(bool isCleared) // 게임이 끝났을 경우
+void AMainGameMode::EndBattle() // 게임이 끝났을 경우
 {
+	GetWorldTimerManager().ClearTimer(_missionTimerHandle);
+	float timeLimit = _missionProgress._curMission->GetTimeLimitSeconds();
+    _missionResult._remainingTimeRatio = FMath::Clamp(_remainingTime / timeLimit, 0.f, 1.f);
+
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
 
-    GI->GetPreDeployState()->ApplyMissionResult(isCleared);
+	auto preDeployState = GI->GetPreDeployState();
+    preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
+    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
 
-    APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    if (player)
+	_missionResult._operation = preDeployState->GetCurOperation();
+    _missionResult._mission = _missionProgress._curMission;
+    _missionResult._completedOptionalObjectives = _missionProgress._completedOptionalObjectives;
+    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
+    _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
+
+	CalculateMissionReward();
+	GI->AddRewardCurrency(_missionResult._totalReward);
+
+    if (_resultWidgetClass)
     {
-        FSampleBundle earnedSample = player->GetInvenComponent()->GetSampleBundle();
-        GI->AddEarnedSample(earnedSample); // 들고 있는 샘플 합산해서 저장
+        auto resultWidget = CreateWidget<UMissionResultWidget>(GetWorld(), _resultWidgetClass);
+
+        if (resultWidget)
+        {
+            resultWidget->AddToViewport();
+            resultWidget->InitializeWidget(_missionResult);
+            resultWidget->_rewardFlowFinishedEvent.BindLambda([this]()
+                {
+                    UGameplayStatics::OpenLevel(this, FName("Lobby"));
+				});
+        }
+    }
+}
+
+void AMainGameMode::UpdateTimer()
+{
+    if (_remainingTime <= 0.f)
+    {
+        GetWorldTimerManager().ClearTimer(_missionTimerHandle);
+
+        if (_escapePlane) _escapePlane->StartTimerToTakeOff();
+        else CallEscapePlane();
+        return;
     }
 
-    UGameplayStatics::OpenLevel(this, FName("Lobby")); // 레벨 이동
+	_remainingTime -= 1.f;
+}
 
-    UE_LOG(LogTemp, Log, TEXT("Move Level!"))
+void AMainGameMode::CalculateMissionReward()
+{
+	// 메인 목표 클리어 보상
+    FMissionReward mainReward;
+    mainReward._category = ERewardCategory::MainObjective;
+    if (_missionProgress._isMissionCleared)
+    {   
+		mainReward._experience = 100;
+        mainReward._requisitionSlips = 500;
+
+        // 메달은 메인 목표 성공 시에만 지급
+        if (auto op = _missionResult._operation)
+        {
+            if (op->GetRewardMedals().IsValidIndex(_missionResult._clearedMissionNum - 1))
+            {
+                int32 medal = op->GetRewardMedals()[_missionResult._clearedMissionNum - 1];
+                _missionResult._totalReward.Add(ECurrencyType::Medals, medal);
+			}
+        }
+	}
+    _missionResult._missionRewards.Add(mainReward);
+
+	// 추가 목표 클리어 보상
+	FMissionReward optionalReward;
+	optionalReward._category = ERewardCategory::OptionalObjectives;
+    optionalReward._experience = 50 * _missionProgress._completedOptionalObjectives.Num();
+    optionalReward._requisitionSlips = 200 * _missionProgress._completedOptionalObjectives.Num();
+    _missionResult._missionRewards.Add(optionalReward);
+
+	// 헬다이버 추출 보상
+    FMissionReward extractionReward;
+	extractionReward._category = ERewardCategory::HelldiversExtracted;
+    extractionReward._experience = 20 * _missionProgress._extractedHelldiversNum;
+    extractionReward._requisitionSlips = 50 * _missionProgress._extractedHelldiversNum;
+    _missionResult._missionRewards.Add(extractionReward);
+
+    // 남은 시간 보상
+    FMissionReward remainingTimeReward;
+	remainingTimeReward._category = ERewardCategory::MissionTimeRemaining;
+    remainingTimeReward._experience = 100 * _missionResult._remainingTimeRatio;
+    remainingTimeReward._requisitionSlips = 400 * _missionResult._remainingTimeRatio;
+    _missionResult._missionRewards.Add(remainingTimeReward);
+
+    // 탈출한 헬다이버가 있다면 샘플 획득
+    if (_missionProgress._extractedHelldiversNum > 0)
+    {
+        APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+        if (player)
+        {
+            FSampleBundle earnedSample = player->GetInvenComponent()->GetSampleBundle();
+            _missionResult._totalReward.AddSample(earnedSample);
+        }
+    }
+
+    for (const FMissionReward& reward : _missionResult._missionRewards)
+    {
+        if (reward._experience != 0)
+            _missionResult._totalReward.Add(ECurrencyType::Experience, reward._experience);
+        if (reward._requisitionSlips != 0)
+            _missionResult._totalReward.Add(ECurrencyType::RequisitionSlips, reward._requisitionSlips);
+    }
 }

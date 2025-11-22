@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GenericTeamAgentInterface.h"
+#include "../../../Data/GunProjectileDataAsset.h"
 #include "SentryTurret.generated.h"
 
 UCLASS()
@@ -62,7 +63,7 @@ protected:
 	
 	// 사격 가능 상태 확인/LOS
 	bool IsSentryReadyToFire();
-	bool IsTargetAttackable(ACharacterBase* target) const;
+	bool IsTargetAttackable(class ACharacterBase* target) const;
 	bool HasAnyShootableEnemy();
 	void UpdateFireGate(float deltaSeconds);
 

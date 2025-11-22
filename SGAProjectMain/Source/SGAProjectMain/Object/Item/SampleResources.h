@@ -26,14 +26,14 @@ struct FSampleBundle
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TMap<ESampleType, int32> _samples;
 
-    void Add(ESampleType Type, int32 Amount = 1)
+    void Add(ESampleType type, int32 amount = 1)
     {
-        _samples.FindOrAdd(Type) += Amount;
+        _samples.FindOrAdd(type) += amount;
     }
 
-    void AddSample(const FSampleBundle& Other)
+    void AddSample(const FSampleBundle& other)
     {
-        for (const auto& pair : Other._samples)
+        for (const auto& pair : other._samples)
         {
             Add(pair.Key, pair.Value);
         }
