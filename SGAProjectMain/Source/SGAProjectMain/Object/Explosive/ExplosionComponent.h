@@ -27,14 +27,14 @@ public:
 
 	// 폭발 실행 트리거 (외부에서 호출)
 	UFUNCTION(BlueprintCallable, Category = "Game/Explosion")
-	void Explode();
+	void Explode(FVector explosionCenter = FVector::ZeroVector, bool canDamageOwner = true);
 
 protected:
 	// 폭발 감지 및 이펙트 재생
-	void HandleExplosion();
+	void HandleExplosion(const FVector& centerLocation, bool canDamageOwner);
 
 	// 실제 폭발 데미지 감쇠
-	void ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps);
+	void ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps, const FVector& centerLocation, bool canDamageOwner);
 
 protected:
 	// 최대 데미지

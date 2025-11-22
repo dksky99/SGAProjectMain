@@ -39,19 +39,29 @@ void UExplosionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-void UExplosionComponent::Explode()
+void UExplosionComponent::Explode(FVector explosionCenter, bool canDamageOwner)
 {
-	HandleExplosion();
-}
+	if (!GetOwner())
+	{
+		return;
+	}
 
-void UExplosionComponent::HandleExplosion()
+	// 파라미터가 (0,0,0)이면 Owner 위치를 사용
+	const bool bUseOwnerLocation = explosionCenter.IsNearlyZero(1.0f);
+	const FVector centerLocation = bUseOwnerLocation
+		? GetOwner()->GetActorLocation()
+		: explosionCenter;
+
+	HandleExplosion(centerLocation, canDamageOwner);
+}
+void UExplosionComponent::HandleExplosion(const FVector& centerLocation, bool canDamageOwner)
 {
 	// 1) Overlap 검사
 	TArray<FOverlapResult> overlaps;
 	FCollisionQueryParams params(NAME_None, false, GetOwner());
 	bool bHit = GetWorld()->OverlapMultiByChannel(
 		overlaps,
-		GetOwner()->GetActorLocation(),
+		centerLocation,
 		FQuat::Identity,
 		ECC_GameDamage,
 		FCollisionShape::MakeSphere(_radius),
@@ -60,7 +70,7 @@ void UExplosionComponent::HandleExplosion()
 
 	if (bHit)
 	{
-		ApplyDamageToOverlaps(overlaps);
+		ApplyDamageToOverlaps(overlaps, centerLocation, canDamageOwner);
 	}
 
 	// 2) 이펙트 재생
@@ -69,15 +79,15 @@ void UExplosionComponent::HandleExplosion()
 		UGameplayStatics::SpawnEmitterAtLocation(
 			GetWorld(),
 			_effect,
-			GetOwner()->GetActorLocation()
+			centerLocation
 		);
 	}
 }
 
-void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps)
+void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Overlaps, const FVector& centerLocation, bool canDamageOwner)
 {
 	// 폭심지(폭발 중심)는 보통 이 컴포넌트를 가진 액터의 위치로 사용한다.
-	const FVector center = GetOwner()->GetActorLocation();
+	const FVector center = centerLocation;
 
 	for (const FOverlapResult& overlap : Overlaps)
 	{
@@ -86,6 +96,12 @@ void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Ov
 
 		// 액터나 컴포넌트가 유효하지 않으면 스킵
 		if (!IsValid(hitActor) || !IsValid(hitComp))
+		{
+			continue;
+		}
+
+		// 자기 자신에게 피해를 줄 것인가?
+		if (!canDamageOwner && hitActor == GetOwner())
 		{
 			continue;
 		}

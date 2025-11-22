@@ -809,7 +809,7 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		//데미지타입이 있다면 그것으로하고 없다면 기본클래스를 만들어 사용.
 		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())!=nullptr ?
 			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
-			Cast<UCDamageType>(UCDamageType::StaticClass());
+			Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
 
 		//상태이상부여가 걸려있다면 상태이상을 건다.
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
