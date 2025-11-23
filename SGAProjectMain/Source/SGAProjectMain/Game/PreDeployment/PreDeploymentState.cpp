@@ -2,11 +2,39 @@
 
 
 #include "PreDeploymentState.h"
+#include "../../CGameInstance.h"
+#include "../../CSaveGame.h"
 #include "../../Data/OperationDataAsset.h"
+#include "../../Data/MissionDataAsset.h"
 
 UPreDeploymentState::UPreDeploymentState()
 {
 	_stratagemIDs.Init(-1, 4);
+}
+
+void UPreDeploymentState::ApplySaveGameData(UCSaveGame* saveGame)
+{
+	ResetOperation();
+
+	if (!saveGame) return;
+
+	FName curOpID = saveGame->GetCurOperationID();
+	if (curOpID.IsNone()) return;
+	
+	auto GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (!GI) return;
+
+	auto opData = GI->GetOperationDataAsset(curOpID);
+	SetCurOperation(opData);
+
+	for (auto& pair : _missions)
+	{
+		UMissionDataAsset* mission = pair.Key;
+		if (saveGame->GetCompletedMissionIDs().Contains(mission->GetMissionID()))
+			_missions[mission] = EMissionState::Cleared;
+	}
+
+	_curMission = nullptr;
 }
 
 void UPreDeploymentState::SetGunID(int32 id)
@@ -54,16 +82,16 @@ void UPreDeploymentState::SetCurMission(UMissionDataAsset* mission)
 		_missionSelectedEvent.Broadcast(hasMission);
 }
 
-void UPreDeploymentState::ApplyMissionResult(bool isCleared)
+void UPreDeploymentState::ApplyMissionResult(UMissionDataAsset* mission, bool isCleared)
 {
-	if (!_curMission) return;
-	if (!_missions.Contains(_curMission)) return;
+	if (!mission) return;
+	if (!_missions.Contains(mission)) return;
 	EMissionState state = isCleared ? EMissionState::Cleared : EMissionState::Failed;
 	_missions[_curMission] = state;
 	_curMission = nullptr;
 }
 
-void UPreDeploymentState::ClearOperation()
+void UPreDeploymentState::ResetOperation()
 {
 	_curOperation = nullptr;
 	_curMission = nullptr;
@@ -90,6 +118,14 @@ bool UPreDeploymentState::IsOperationFailed()
 			return true;
 	}
 
+	return false;
+}
+
+bool UPreDeploymentState::IsMissionCleared(UMissionDataAsset* mission)
+{
+	if (_missions.Contains(mission))
+		return _missions[mission] == EMissionState::Cleared;
+	
 	return false;
 }
 
