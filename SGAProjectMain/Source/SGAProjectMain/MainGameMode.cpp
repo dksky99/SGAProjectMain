@@ -106,17 +106,20 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
     if (!GI) return;
 
 	auto preDeployState = GI->GetPreDeployState();
-    preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
-    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
+    //preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
 
 	_missionResult._operation = preDeployState->GetCurOperation();
     _missionResult._mission = _missionProgress._curMission;
     _missionResult._completedOptionalObjectives = _missionProgress._completedOptionalObjectives;
-    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
     _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
+    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
+    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
+    if (_missionProgress._isMissionCleared)
+        _missionResult._clearedMissionNum++;
 
 	CalculateMissionReward();
-	GI->AddRewardCurrency(_missionResult._totalReward);
+    GI->ApplyMissionResult(_missionResult);
+	//GI->AddRewardCurrency(_missionResult._totalReward);
 
     if (_resultWidgetClass)
     {

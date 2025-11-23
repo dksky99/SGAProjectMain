@@ -9,6 +9,7 @@
 #include "Components/TimelineComponent.h"
 #include "../../UI/PlanetGlobeWidget.h"
 #include "../../CGameInstance.h"
+#include "../../CSaveGame.h"
 #include "../../Game/PreDeployment/PreDeploymentState.h"
 #include "PlanetOperationSite.h"
 #include "PlanetSelectRing.h"
@@ -55,6 +56,7 @@ void AGalacticPlanetGlobe::BeginPlay()
     InitializeOperations();
 	
 	_playerController = GetWorld()->GetFirstPlayerController();
+    _playerViewTarget = _playerController->GetViewTarget();
     SetPlayerInputComponent();
 
     if (_ringClass)
@@ -89,6 +91,19 @@ void AGalacticPlanetGlobe::BeginPlay()
     {
 		_startBandLoc = _rotatingBand->GetRelativeLocation();
 		_targetBandLoc = _startBandLoc + FVector(0.f, 0.f, 200.f);
+    }
+
+	auto GI = Cast<UCGameInstance>(GetGameInstance());
+	if (!GI) return;
+
+    if (auto save = GI->GetCurrentSave())
+    {
+        // 현재 저장된 임무가 있으면 글로브 포커스 모드 진입
+        if (save->GetCurOperationID().IsValid())
+        {
+            auto opData = GI->GetOperationDataAsset(save->GetCurOperationID());
+            EnterFocusByOperation(opData);
+        }
     }
 }
 
@@ -157,20 +172,38 @@ void AGalacticPlanetGlobe::Tick(float DeltaTime)
 
 void AGalacticPlanetGlobe::Interact(AHellDiver* player)
 {
-	_isInteracting = !_isInteracting;
-    if (_isInteracting)
-        StartInteracting();
-    else
-        StopInteracting();
+    if (_isInteracting) return;
+
+	_isInteracting = true;
+    StartInteracting();
+}
+
+void AGalacticPlanetGlobe::EnterFocusByOperation(UOperationDataAsset* operation)
+{
+	if (!operation) return;
+
+    APlanetOperationSite* site = nullptr;
+
+    // 특정 임무를 들고있는 사이트 탐색
+    for (UChildActorComponent* opSiteComp : _operationSites)
+    {
+        APlanetOperationSite* opSite = Cast<APlanetOperationSite>(opSiteComp->GetChildActor());
+        if (opSite && opSite->GetOperationData() == operation)
+			site = opSite;
+    }
+
+    if (!site) return;
+    _curSite = site;
+    _curIcon = nullptr;
+
+	EnterFocus();
+	SetCameraView(EPlanetGlobeMode::None);
 }
 
 void AGalacticPlanetGlobe::StartInteracting()
 {
 	_isInteracting = true;
     _globeWidget->AddToViewport();
-
-	_playerViewTarget = _playerController->GetViewTarget();
-    SetCameraView(_mode);
 
     if (auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(_playerController->GetLocalPlayer()))
     { // IMC 교체
@@ -182,12 +215,16 @@ void AGalacticPlanetGlobe::StartInteracting()
 
     _ring->SetActorHiddenInGame(false);
 
-    if (_mode == EPlanetGlobeMode::Focus)
+	// 아이콘 선택까지 완전히 끝난 상태였다면 포커스 모드 형태로 진입
+    if (_mode == EPlanetGlobeMode::None)
     {
+        _mode = EPlanetGlobeMode::Focus;
         if (_exitTimeline && _timelineCurve)
             _exitTimeline->Reverse();
-		
     }
+
+    _playerViewTarget = _playerController->GetViewTarget();
+    SetCameraView(_mode);
 }
 
 void AGalacticPlanetGlobe::StopInteracting()
@@ -196,15 +233,9 @@ void AGalacticPlanetGlobe::StopInteracting()
     if (!GI) return;
 
     if (!_curSite || !_curIcon)
-    {
-        GI->GetPreDeployState()->SetCurOperation(nullptr);
-        GI->GetPreDeployState()->SetCurMission(nullptr);
-    }
+		GI->SetOperationAndMission(nullptr, nullptr);
     else
-    {
-        GI->GetPreDeployState()->SetCurOperation(_curSite->GetOperationData());
-        GI->GetPreDeployState()->SetCurMission(_curIcon->GetMissionData());
-    }
+		GI->SetOperationAndMission(_curSite->GetOperationData(), _curIcon->GetMissionData());
 
 	_isInteracting = false;
     _globeWidget->RemoveFromParent();
@@ -231,7 +262,8 @@ void AGalacticPlanetGlobe::EnterFocus()
     _ring->GetMesh()->SetGenerateOverlapEvents(false);
     _ring->AttachToComponent(_mesh, FAttachmentTransformRules::KeepWorldTransform); // 링이 글로브에 잠시 붙은 채로 회전하도록
 
-    _globeWidget->EnterMissionMode();
+	if (_globeWidget)
+        _globeWidget->EnterMissionMode();
 
     _curSite->ChangeToFocusMode();
     FVector siteLoc = _curSite->GetActorLocation(); // 선택한 지점 위치
@@ -291,11 +323,22 @@ void AGalacticPlanetGlobe::SelectMission()
 {
     if (!_curIcon || !_curSite) return;
 
+	auto GI = Cast<UCGameInstance>(GetGameInstance());
+	if (!GI) return;
+
+	auto mission = _curIcon->GetMissionData();
+	auto state = GI->GetPreDeployState();
+    if (!mission || !state) return;
+
+    if (state->IsMissionCleared(mission))
+		return; // 이미 클리어한 미션은 선택 불가
+
     if (_exitTimeline && _timelineCurve)
     {
         _exitTimeline->PlayFromStart();
     }
 
+	_mode = EPlanetGlobeMode::None;
     StopInteracting();
 }
 

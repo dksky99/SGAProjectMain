@@ -25,14 +25,18 @@
 #include "Character/StatComponent.h"
 #include "Character/UnitDataTable.h"
 
+#include "CSaveGame.h"
+
 void UCGameInstance::Init()
 {
 	Super::Init();
 
+	LoadGame();
 	_preDeployState = NewObject<UPreDeploymentState>(this);
 
 	CachingUnitDataFromTable();
 	CachingAbnormalityDataFromTable();
+	CachingOperationAndMissionData();
 	//유닛 데이터 초기화함수.
 	//InitializeUnitData();
 }
@@ -139,6 +143,22 @@ void UCGameInstance::CachingUnitDataFromTable()
 	UE_LOG(LogTemp, Display, TEXT("UnitData Init Num : %d "),_processedUnitDataMap.Num());
 }
 
+void UCGameInstance::CachingOperationAndMissionData()
+{
+	// OperationDataAsset 캐싱
+	for (UOperationDataAsset* operation : _operations)
+	{
+		if (operation)
+			_operationMap.Add(operation->GetOperationID(), operation);
+	}
+	// MissionDataAsset 캐싱
+	for (UMissionDataAsset* mission : _missions)
+	{
+		if (mission)
+			_missionMap.Add(mission->GetMissionID(), mission);
+	}
+}
+
 FUnitData UCGameInstance::GetUnitDataFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
@@ -239,6 +259,25 @@ const FCDamageEvent* UCGameInstance::GetAbnormalDamageEventData(EAbnormality sta
 		
 }
 
+void UCGameInstance::LoadGame()
+{
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("SaveSlot"), 0)) // 슬롯이 존재하면 불러오기
+		_curSaveGame = Cast<UCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("SaveSlot"), 0));
+	else // 존재하지 않으면 새로 생성
+	{
+		_curSaveGame = Cast<UCSaveGame>(UGameplayStatics::CreateSaveGameObject(UCSaveGame::StaticClass()));
+		// TODO : 기본 무기 지급
+		SaveGame();
+	}
+}
+
+void UCGameInstance::SaveGame()
+{
+	if (!_curSaveGame)
+		LoadGame();
+	UGameplayStatics::SaveGameToSlot(_curSaveGame, TEXT("SaveSlot"), 0);
+}
+
 FStratagemSlot UCGameInstance::GetStratagemSlotFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
@@ -255,15 +294,88 @@ TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 i
 
 void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
 {
-	_playerCurrency.AddCurrency(reward);
+	if (!_curSaveGame)
+		LoadGame();
+	_curSaveGame->GetPlayerCurrency().AddCurrency(reward);
+	SaveGame();
 }
 
 FSampleBundle UCGameInstance::GetSavedSample()
 {
-	if (!_playerCurrency._samples.IsEmpty())
-		return _playerCurrency._samples;
+	if (!_curSaveGame)
+		LoadGame();
+
+	FSampleBundle sampleBundle = _curSaveGame->GetPlayerCurrency()._samples;
+	if (!sampleBundle.IsEmpty())
+		return sampleBundle;
 
 	return FSampleBundle();
+}
+
+UOperationDataAsset* UCGameInstance::GetOperationDataAsset(FName operationID)
+{
+	if (UOperationDataAsset** operation = _operationMap.Find(operationID))
+		return *operation;
+	return nullptr;
+}
+
+UMissionDataAsset* UCGameInstance::GetMissionDataAsset(FName missionID)
+{
+	if (UMissionDataAsset** mission = _missionMap.Find(missionID))
+		return *mission;
+	return nullptr;
+}
+
+void UCGameInstance::SetOperationAndMission(UOperationDataAsset* operation, UMissionDataAsset* mission)
+{
+	if (!_preDeployState)
+		_preDeployState = NewObject<UPreDeploymentState>(this);
+
+	if (!_curSaveGame)
+		LoadGame();
+
+	// 저장은 작전 ID만
+	if (operation)
+		_curSaveGame->SetCurOperationID(operation->GetOperationID());
+	else
+		_curSaveGame->SetCurOperationID(NAME_None);
+
+	SaveGame();
+	_preDeployState->ApplySaveGameData(_curSaveGame);
+
+	// 해당 operation에 존재하는 미션인지 확인 후 설정
+	if (mission && !operation->GetMissions().Contains(mission))
+		mission = nullptr;
+	_preDeployState->SetCurMission(mission); 	// 미션은 state에 직접 설정
+}
+
+void UCGameInstance::ApplyMissionResult(const FMissionResult& missionResult)
+{
+	if (!_curSaveGame)
+		LoadGame();
+	if (!_preDeployState)
+		_preDeployState = NewObject<UPreDeploymentState>(this);
+
+	// 보상 적용
+	_curSaveGame->GetPlayerCurrency().AddCurrency(missionResult._totalReward);
+
+	if (missionResult._mission)
+	{
+		// 미션 결과 적용
+		_preDeployState->ApplyMissionResult(missionResult._mission, missionResult._isMissionCleared);
+		// 완료된 미션 ID 저장
+		if (missionResult._isMissionCleared)
+			_curSaveGame->AddCompletedMissionID(missionResult._mission->GetMissionID());
+	}
+
+	// 임무를 실패했거나 모든 임무를 클리어한 경우 작전 데이터 초기화
+	if (_preDeployState->IsOperationCleared() || _preDeployState->IsOperationFailed())
+	{
+		_curSaveGame->ResetOperationData();
+		_preDeployState->ResetOperation();
+	}
+
+	SaveGame();
 }
 
 void UCGameInstance::InitializeUnitData()

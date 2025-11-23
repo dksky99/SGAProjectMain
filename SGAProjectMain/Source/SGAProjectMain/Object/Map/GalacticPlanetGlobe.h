@@ -52,6 +52,9 @@ public:
 
 	virtual void Interact(class AHellDiver* player) override;
 
+	// 특정 임무를 가진 글로브로 전환
+	void EnterFocusByOperation(class UOperationDataAsset* operation);
+
 protected:
 	void StartInteracting();
 	void StopInteracting();

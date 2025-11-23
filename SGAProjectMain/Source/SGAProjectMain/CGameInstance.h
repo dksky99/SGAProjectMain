@@ -4,8 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Data/PlayerCurrency.h"
-#include "Object/Item/SampleResources.h"
+#include "Data/MissionResult.h"
 #include "Object/AbnormalityTable.h"
 #include "Character/UnitDataTable.h"
 #include "Character/StatComponent.h"
@@ -132,6 +131,12 @@ public:
 	//void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample();
 
+	// 임무 및 미션
+	class UOperationDataAsset* GetOperationDataAsset(FName operationID);
+	class UMissionDataAsset* GetMissionDataAsset(FName missionID);
+	void SetOperationAndMission(UOperationDataAsset* operation, UMissionDataAsset* mission);
+	void ApplyMissionResult(const FMissionResult& missionResult);
+
 	//유닛
 	struct FUnitData GetUnitDataFromTable(int32 id);
 	TSubclassOf<class ACharacterBase> GetUnitClassFromTable(int32 id);
@@ -147,7 +152,10 @@ public:
 	const FProcessedAbnormalityDefinitionData* GetProcessedAbnormalityDefinitionData(EAbnormality state);
 	const struct FCDamageEvent* GetAbnormalDamageEventData(EAbnormality state);
 
-
+	// 세이브
+	void LoadGame();
+	void SaveGame();
+	class UCSaveGame* GetCurrentSave() { return _curSaveGame; }
 
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
@@ -163,6 +171,7 @@ protected:
 	//미리 데이터들을 캐싱
 	void CachingAbnormalityDataFromTable();
 	void CachingUnitDataFromTable();
+	void CachingOperationAndMissionData();
 
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
@@ -171,6 +180,15 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _stratagemTable;
 
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TArray<class UOperationDataAsset*> _operations;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TArray<class UMissionDataAsset*> _missions;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, UOperationDataAsset*> _operationMap;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, UMissionDataAsset*> _missionMap;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _unitTable;
@@ -190,15 +208,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
 	TMap<EAbnormality, struct FCDamageEvent> _abnormalityDamageEvents;
 
-
+	UPROPERTY()
+	class UCSaveGame* _curSaveGame = nullptr;
 
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;
 
 	EGamePhase _curGamePhase = EGamePhase::None;
-
-
-	// 재화
-	UPROPERTY(VisibleAnywhere, Category = "Game/Currency")
-	FPlayerCurrency _playerCurrency;
 };
