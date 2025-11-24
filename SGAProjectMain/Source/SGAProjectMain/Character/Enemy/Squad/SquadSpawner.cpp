@@ -18,25 +18,33 @@ ASquadSpawner::ASquadSpawner()
 
 }
 
-void ASquadSpawner::ActivateSpawner(AEnemySquad* squad)
+void ASquadSpawner::ActivateSpawner(AEnemySquad* squad,FVector loc)
 {
+	SetActorLocation(loc);
 	if (squad != nullptr)
 		return;
-		_squad = squad;
+	_squad = squad;
+
+
+	_navInvokerComponent->SetActive(true, true);
 }
 
 void ASquadSpawner::DeactivateSpawner()
 {
 	_squad = nullptr;
+	_navInvokerComponent->SetActive(false, true);
 
 }
 
 void ASquadSpawner::CallRemainUnit()
 {
+	//만약 어떤이유로든 비활성화되어 스포너로부터 스쿼드가끊기면 멈춤.
+	if (_squad == nullptr)
+		return;
 	AEnemy* unit =_squad->CheckExtraUnit();
 
-	//남은 유닛이 없다.
-	if (unit == nullptr)
+	//남은 유닛이 없다.혹은 정해진 횟수 반복. 증원스쿼드라면 스쿼드의 전부를 쏟아낼것이고 주둔스쿼드라면 일정유닛만 소환할것.
+	if (unit == nullptr||_curSpawnCount==0)
 		return;
 	//위치 설정.
 	//컨트롤러 빙의
@@ -91,6 +99,10 @@ void ASquadSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ASquadSpawner::CallFinishAction()
+{
 }
 
 

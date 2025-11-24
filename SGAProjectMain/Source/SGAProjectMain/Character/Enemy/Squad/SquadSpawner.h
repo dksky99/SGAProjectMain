@@ -48,9 +48,9 @@ public:
 
 
 	//
-	void ActivateSpawner(class AEnemySquad* squad);
+	virtual void ActivateSpawner(class AEnemySquad* squad,FVector loc);
 
-	void DeactivateSpawner();
+	virtual void DeactivateSpawner();
 
 	// 스쿼드에 남아있는 병력을 부르는 함수. 하나씩 개별로 소환하기위해 사용. 
 	void CallRemainUnit();
@@ -60,10 +60,13 @@ public:
 	FVector GetSpawnPoint();
 	
 	void SpawnerCoolDownFinish();
+
+	bool IsActivatedSpawner() { return _squad != nullptr; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void CallFinishAction();
 	
 public:	
 
@@ -98,7 +101,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
 	int32 _maxSpawnCount = -1;
 
-	int32 _curSpawnCount = 0;
+	int32 _curSpawnCount = -1;
 
 	//스포너가 준비됬는지.
 	bool _spawnerReady = true;

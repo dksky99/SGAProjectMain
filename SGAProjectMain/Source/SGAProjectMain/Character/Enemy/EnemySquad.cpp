@@ -226,24 +226,36 @@ class AEnemy* AEnemySquad::CheckExtraUnit()
 
 	for (auto unit  : _unitPool)
 	{
-		if (IsActivatedUnit(unit))
+		if (unit->IsReadyToSpawn())
 		{
-			continue;
+			return unit;
 
 		}
-		if (unit->IsReadyToSpawn())
-			return unit;
 		
 	}
 
 	return nullptr;
 }
 
+bool AEnemySquad::IsCallableSquad()
+{
+	if(IsActivatedSquad())
+		return false;
+	
+}
+
 bool AEnemySquad::IsActivatedSquad()
 {
-	//활성화된 유닛수가 0개라면 비활성화상태
-	if(CheckActivateUnitCount()==0)
+	//유닛중 하나만이라도 활성화상태거나 죽어있는사태라면 소환이 불가하다.
+	//증원부대만 사용. 
+
+	if (_unitPool.IsEmpty())
 		return false;
+	for (auto unit : _unitPool)
+	{
+		if(unit->IsReadyToSpawn()==false)
+			return false;
+	}
 	return true;
 }
 
@@ -254,11 +266,11 @@ int32 AEnemySquad::CheckActivateUnitCount()
 	{
 		if (IsActivatedUnit(unit))
 		{
-			continue;
+
+			count++;
 
 		}
 		
-		count++;
 		
 	}
 
@@ -269,10 +281,9 @@ int32 AEnemySquad::CheckActivateUnitCount()
 bool AEnemySquad::IsActivatedUnit(class AEnemy* unit)
 {
 	//유닛의 폰이 컨트롤러가 있거나 IsDead상태라면 활성화된 유닛.
-	if (unit->GetController() != nullptr||unit->GetStatComponent()->IsDead()==true)
-		return false;
+	
 
-	return true;
+	return unit->IsReadyToSpawn();
 }
 
 bool AEnemySquad::IsAliveUnit(AEnemy* unit)

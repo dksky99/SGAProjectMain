@@ -5,7 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "EnemyMissionEnemyCallManager.generated.h"
+/*
+	여기서 주둔지의 팩토리와 스쿼드를 연결해줄 예정이다.
 
+
+
+*/
 UCLASS()
 class SGAPROJECTMAIN_API AEnemyMissionEnemyCallManager : public AActor
 {
@@ -22,5 +27,13 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
+	TMap<class AEnemySquad,>
+
+
+
 
 };

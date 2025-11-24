@@ -20,6 +20,8 @@ class SGAPROJECTMAIN_API AStationedSquad : public AEnemySquad
 public:
 	AStationedSquad();
 
+
+
 	virtual void BeginPlay() override;
 	UFUNCTION()
 	void RecieveDamage(float damage,float armorPen);

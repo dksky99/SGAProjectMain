@@ -74,8 +74,11 @@ public:
 	void ReturnUnitToPool(AEnemy* Enemy);
 	//자신에 속한 모든 병력을 풀로 되돌린다.
 	void DeactivateAllUnits();
-	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인.
+	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인. 주둔지에서 사용.
 	class AEnemy* CheckExtraUnit();
+
+	// 모든 유닛이 멀쩡히 있어서 소환가능한 스쿼드인지 확인.
+	bool IsCallableSquad();
 
 	//활성화된 스쿼드인지. 매니저쪽에서 이 스쿼드의 상태를 확인하기위한 함수다. 단 하나의 유닛이라도 활성화된 상태라면 활성화된 스쿼드로 본다.
 	bool IsActivatedSquad();

@@ -14,6 +14,9 @@
  * 팩토리스포너는 헬다이버가주변 일정범위 내에 도달하면 유닛을 소환하기시작한다.
  * 주기가 상당히 긴 틱방식으로 헬다이버의 접근을 확인토록하자. 플레이어의 컨트롤러를가져오는 기능을써보자. 
  * 거기서 GetPawn을 쓰면 그게 왠만하면 헬다이버일것이다.
+ * 
+ * 팩토리스포너는 처음 시작할떄 스쿼드하나에 여러 스포너가 할당되고 파괴될떄 스쿼드를 해제한다.
+
  */
 UCLASS()
 class SGAPROJECTMAIN_API AFactorySquadSpawner : public ASquadSpawner
@@ -22,8 +25,15 @@ class SGAPROJECTMAIN_API AFactorySquadSpawner : public ASquadSpawner
 public:
 	AFactorySquadSpawner();
 protected:
+
+	virtual void BeginPlay() override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+
+	virtual void ActivateSpawner(class AEnemySquad* squad, FVector loc) override;
+
+	virtual void DeactivateSpawner() override;
 
 	void CheckDistanceToTarget();
 
@@ -31,7 +41,13 @@ protected:
 
 	virtual void ProcessDamage(const struct FCDamageEvent* damageEvent);
 
+
+
 	void DestroyFactory();
+
+
+	virtual void CallFinishAction() override;
+
 protected:
 
 

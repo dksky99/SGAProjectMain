@@ -15,6 +15,8 @@ class SGAPROJECTMAIN_API AReinforceSquadSpawner : public ASquadSpawner
 	GENERATED_BODY()
 	
 
+protected:
 
+	virtual void CallFinishAction() override;
 
 };

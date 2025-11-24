@@ -23,21 +23,29 @@ protected:
 	//초기에 증원부대를 풀링.
 	virtual void Init();
 
+	class ASquadSpawner* GetExtraSpawner();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	//여분의 스쿼드를 증원받은곳에 호출
-	class AReinforcementSquad* GetExtraCallableSquad(FVector callPoint,AActor* target=nullptr);
+	class AEnemySquad* GetExtraCallableSquad(FVector callPoint,AActor* target=nullptr);
+
+	void SetSpawner(FVector callPoint, class AEnemySquad* squad, class ASquadSpawner* spawner);
 
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
-	TMap< TSubclassOf<class AReinforcementSquad>, int >_squadList;
+	TMap< TSubclassOf<class AEnemySquad>, int >_squadList;
 
 
 
 	UPROPERTY()
-	TArray<class AReinforcementSquad*> _squadPool;
+	TArray<class AEnemySquad*> _squadPool;
+
+
+	UPROPERTY()
+	TArray<class AReinforceSquadSpawner*> _spawnerPool;
 
 };

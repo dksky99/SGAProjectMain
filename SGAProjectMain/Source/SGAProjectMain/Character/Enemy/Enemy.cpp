@@ -73,13 +73,14 @@ void AEnemy::PossessedBy(AController* NewController)
 
     SetOwnController(NewController);
     //UE_LOG(LogTemp, Display, TEXT("%s PossesedBy :%s"), *(this->GetName()), *(NewController->GetName()));
-
+    _navInvokerComponent->SetActive(true, true);
 }
 
 void AEnemy::UnPossessed()
 {
     Super::UnPossessed();
 
+    _navInvokerComponent->SetActive(false, true);
     UE_LOG(LogTemp, Display, TEXT("%s UnPossessed"), *(this->GetName()));
 
 }

@@ -6,6 +6,7 @@
 #include "../../../Controller/EnemyController.h"
 #include "NavigationSystem.h"
 #include "SquadSpawner.h"
+#include "FactorySquadSpawner.h"
 AStationedSquad::AStationedSquad()
 {
 }

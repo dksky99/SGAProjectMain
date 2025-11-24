@@ -7,9 +7,14 @@
 AFactorySquadSpawner::AFactorySquadSpawner()
 {
 
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     PrimaryActorTick.TickInterval = 0.5f;
+}
+void AFactorySquadSpawner::BeginPlay()
+{
+
+    Super::BeginPlay();
 }
 void AFactorySquadSpawner::Tick(float DeltaTime)
 {
@@ -18,6 +23,19 @@ void AFactorySquadSpawner::Tick(float DeltaTime)
 
     CheckDistanceToTarget();
 
+}
+
+void AFactorySquadSpawner::ActivateSpawner(AEnemySquad* squad, FVector loc)
+{
+    Super::ActivateSpawner(squad, loc);
+    PrimaryActorTick.bCanEverTick = true;
+
+}
+
+void AFactorySquadSpawner::DeactivateSpawner()
+{
+    PrimaryActorTick.bCanEverTick = false;
+    Super::DeactivateSpawner();
 }
 
 void AFactorySquadSpawner::CheckDistanceToTarget()
@@ -81,7 +99,13 @@ void AFactorySquadSpawner::ProcessDamage(const FCDamageEvent* damageEvent)
         if (damageEvent->DemolitionDamage >= 40.f)
         {
             //ÆÄ±«
+
         }
     }
+   
+}
+
+void AFactorySquadSpawner::CallFinishAction()
+{
    
 }
