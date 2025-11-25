@@ -52,6 +52,8 @@ void AMainGameMode::StartPlay()
 void AMainGameMode::OnObjectiveCleared(FName objectiveID)
 {
     // 메인 목표 클리어 시 탈출 가능
+	if (!_missionProgress._curMission) return;
+
     if (_missionProgress._curMission->GetMissionID() == objectiveID)
     {
 		_objectiveCompletedEvent.Broadcast(objectiveID);
@@ -89,17 +91,14 @@ void AMainGameMode::CallEscapePlane()
     FRotator rotation(0.f, 90.f, 0.f);
 
     AEscapePlane* escapePlane = world->SpawnActor<AEscapePlane>(_escapePlaneClass, _planeSpawnLoc, rotation);
-	escapePlane->_helldiverExtractEvent.AddLambda([this]()
-        {
-			_missionProgress._extractedHelldiversNum += 1;
-        });
+	escapePlane->_helldiverExtractEvent.AddUObject(this, &AMainGameMode::OnHelldiverExtracted);
     _escapePlane = escapePlane;
 }
 
 void AMainGameMode::EndBattle() // 게임이 끝났을 경우
 {
 	GetWorldTimerManager().ClearTimer(_missionTimerHandle);
-
+   
     if (!_missionProgress._curMission) return;
 	float timeLimit = _missionProgress._curMission->GetTimeLimitSeconds();
     _missionResult._remainingTimeRatio = FMath::Clamp(_remainingTime / timeLimit, 0.f, 1.f);
@@ -108,17 +107,20 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
     if (!GI) return;
 
 	auto preDeployState = GI->GetPreDeployState();
-    preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
-    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
+    //preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
 
 	_missionResult._operation = preDeployState->GetCurOperation();
     _missionResult._mission = _missionProgress._curMission;
     _missionResult._completedOptionalObjectives = _missionProgress._completedOptionalObjectives;
-    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
     _missionResult._extractedHelldiversNum = _missionProgress._extractedHelldiversNum;
+    _missionResult._isMissionCleared = _missionProgress._isMissionCleared;
+    _missionResult._clearedMissionNum = preDeployState->GetClearedMissionsNum();
+    if (_missionProgress._isMissionCleared)
+        _missionResult._clearedMissionNum++;
 
 	CalculateMissionReward();
-	GI->AddRewardCurrency(_missionResult._totalReward);
+    GI->ApplyMissionResult(_missionResult);
+	//GI->AddRewardCurrency(_missionResult._totalReward);
 
     if (_resultWidgetClass)
     {
@@ -128,10 +130,7 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
         {
             resultWidget->AddToViewport();
             resultWidget->InitializeWidget(_missionResult);
-            resultWidget->_rewardFlowFinishedEvent.BindLambda([this]()
-                {
-                    UGameplayStatics::OpenLevel(this, FName("Lobby"));
-				});
+			resultWidget->_rewardFlowFinishedEvent.BindUObject(this, &AMainGameMode::OpenLobby);
         }
     }
 }
@@ -211,4 +210,14 @@ void AMainGameMode::CalculateMissionReward()
         if (reward._requisitionSlips != 0)
             _missionResult._totalReward.Add(ECurrencyType::RequisitionSlips, reward._requisitionSlips);
     }
+}
+
+void AMainGameMode::OnHelldiverExtracted()
+{
+    _missionProgress._extractedHelldiversNum += 1;
+}
+
+void AMainGameMode::OpenLobby()
+{
+	UGameplayStatics::OpenLevel(this, FName("Lobby"));
 }

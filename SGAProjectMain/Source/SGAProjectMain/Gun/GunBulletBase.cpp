@@ -9,6 +9,7 @@
 
 #include "../Data/GunDataTable.h"
 #include "../Object/Explosive/ExplosionComponent.h"
+#include "../Character/CharacterBase.h"
 #include "../SGAProjectMain.h"
 
 // Sets default values
@@ -75,7 +76,8 @@ void AGunBulletBase::Tick(float DeltaTime)
 			Explode();
         }
 
-        Destroy();
+        if (!IsActorBeingDestroyed() && !IsPendingKillPending())
+            Destroy();
         return;
     }
     
@@ -86,6 +88,9 @@ void AGunBulletBase::Tick(float DeltaTime)
 
 void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (IsActorBeingDestroyed() || IsPendingKillPending())
+        return;
+
     if (_isExploded) // 폭발했다면 OnHit 발생 안함
         return;
 
@@ -98,25 +103,27 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
             return; // 히트박스 콜리전만 공격
 
         // 피직스 머티리얼 가져오기
-        UPhysicalMaterial* PM = SweepResult.PhysMaterial.Get();
-        EPhysicalSurface surface = SurfaceType_Default;
-        if (!PM && OtherComp) // 비어있으면 타겟 컴포넌트의 BodyInstance에서 직접 가져오기
-        {
-            if (FBodyInstance* BI = OtherComp->GetBodyInstance())
-            {
-                PM = BI->GetSimplePhysicalMaterial(); // Override된 PM 받기
-                surface = PM->SurfaceType;
-            }
-        }
+        //UPhysicalMaterial* PM = SweepResult.PhysMaterial.Get();
+        //EPhysicalSurface surface = SurfaceType_Default;
+        //if (!PM && OtherComp) // 비어있으면 타겟 컴포넌트의 BodyInstance에서 직접 가져오기
+        //{
+        //    if (FBodyInstance* BI = OtherComp->GetBodyInstance())
+        //    {
+        //        PM = BI->GetSimplePhysicalMaterial(); // Override된 PM 받기
+        //        surface = PM->SurfaceType;
+        //    }
+        //}
 
         // Armor Value 계산
-        int32 armorValue = SurfaceToAV(surface);
+        //int32 armorValue = SurfaceToAV(surface);
+		int32 armorValue = 0;
+        if (auto character = Cast<ACharacterBase>(OtherActor))
+            armorValue = character->GetPartArmorValue(OtherComp);
 
         int32 ap = 0;
         EHitOutcome outcome = CalculateHitOutcome(armorValue, SweepResult, ap);
 
-        UE_LOG(LogTemp, Log, TEXT("PM=%s Surf=%d AV=%d"),
-            PM ? *PM->GetName() : TEXT("None"), (int)surface, armorValue);
+        UE_LOG(LogTemp, Log, TEXT("AV=%d"), armorValue);
 
         // 속도에 비례하는 최종 데미지
         int32 finalBaseDamage = _projectileData._baseDamage
@@ -173,7 +180,8 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         {
             _isExploded = true;
             Explode();
-            Destroy();
+            if (!IsActorBeingDestroyed() && !IsPendingKillPending())
+                Destroy();
         }
 
         ProcessHitOutcome(outcome, SweepResult);
@@ -184,6 +192,9 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+    if (IsActorBeingDestroyed() || IsPendingKillPending())
+        return;
+
     if (!OtherComp || _isExploded) return;
 
     _projectileMovement->StopMovementImmediately();
@@ -194,12 +205,14 @@ void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActo
         Explode();
     }
 
-    Destroy();
+    if (!IsActorBeingDestroyed() && !IsPendingKillPending())
+        Destroy();
 }
 
 void AGunBulletBase::Explode()
 {
-    _explosionComponent->Explode();
+    if (_explosionComponent)
+        _explosionComponent->Explode();
 
     //UGameplayStatics::ApplyRadialDamageWithFalloff(
     //    this,
@@ -326,6 +339,19 @@ int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
     case SurfaceType7: return 6; // AV6_TankII
     default:           return 0;
     }
+}
+
+void AGunBulletBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (_collisionComp)
+    {
+        _collisionComp->OnComponentBeginOverlap.RemoveAll(this);
+        _collisionComp->OnComponentHit.RemoveAll(this);
+    }
+
+    _hitComponents.Empty();
+
+    Super::EndPlay(EndPlayReason);
 }
 
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)

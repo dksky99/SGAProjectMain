@@ -27,8 +27,9 @@ class SGAPROJECTMAIN_API UPreDeploymentState : public UObject
 
 public:
 	UPreDeploymentState();
+	void ApplySaveGameData(class UCSaveGame* saveGame);
 
-	// 총 관련 초기화
+	// 총
 	void SetGunID(int32 id);
 
 	void SetPrimaryGunID(int32 id) { _primaryGunID = id; }
@@ -40,7 +41,7 @@ public:
 	void SetStratagemID(int32 index, int32 id);
 	TArray<int32> GetStratagemIDs() { return _stratagemIDs; }
 
-	// 작전 및 미션 관련 초기화 
+	// 임무 및 미션 
 	void SetCurOperation(class UOperationDataAsset* op);
 	class UOperationDataAsset* GetCurOperation() const { return _curOperation; }
 
@@ -49,11 +50,12 @@ public:
 
 	FOnMissionSelected _missionSelectedEvent;
 
-	void ApplyMissionResult(bool isCleared);
-	void ClearOperation();
+	void ApplyMissionResult(class UMissionDataAsset* mission, bool isCleared);
+	void ResetOperation();
 
 	bool IsOperationCleared();
 	bool IsOperationFailed();
+	bool IsMissionCleared(UMissionDataAsset* mission);
 
 	int32 GetClearedMissionsNum();
 	TMap<UMissionDataAsset*, EMissionState> GetMissionStates() { return _missions; }

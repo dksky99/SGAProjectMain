@@ -6,10 +6,13 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "CGameInstance.h"
+#include "CSaveGame.h"
 #include "Character/PlayerCharacter.h"
 #include "Character/HellDiver/HellDiverInvenComponent.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
 #include "Object/Map/PreDeploymentHellpod.h"
+#include "Object/Map/GalacticPlanetGlobe.h"
+#include "Data/OperationDataAsset.h"
 
 void ALobbyGameMode::BeginPlay()
 {
@@ -22,22 +25,27 @@ void ALobbyGameMode::BeginPlay()
 
     APlayerCharacter* player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     if (player)
-    {
         player->AddSample(GI->GetSavedSample());
-    }
 
 	auto state = GI->GetPreDeployState();
-    state->_missionSelectedEvent.AddUObject(this, &ALobbyGameMode::OnMissionSelected);
-    if (state->IsOperationCleared())
+	auto save = GI->GetCurrentSave();
+
+    if (state)
     {
-        // ¼º°ø UI ¶ç¿ì±â
-		state->ClearOperation();
+        state->_missionSelectedEvent.AddUObject(this, &ALobbyGameMode::OnMissionSelected);
+		state->ApplySaveGameData(save);
     }
-    else if (state->IsOperationFailed())
-    {
-        // ½ÇÆÐ UI ¶ç¿ì±â
-        state->ClearOperation();
-    }
+
+  //  if (state->IsOperationCleared())
+  //  {
+  //      // ¼º°ø UI ¶ç¿ì±â
+		//state->ResetOperation();
+  //  }
+  //  else if (state->IsOperationFailed())
+  //  {
+  //      // ½ÇÆÐ UI ¶ç¿ì±â
+  //      state->ResetOperation();
+  //  }
 
     // ¸Ê¿¡ Á¸ÀçÇÏ´Â ¸ðµç ÇïÆ÷µå Ä³½Ì
     for (TActorIterator<APreDeploymentHellpod> It(GetWorld()); It; ++It)
