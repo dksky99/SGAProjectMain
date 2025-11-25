@@ -40,7 +40,7 @@ public:
 	EStgSlotWgtState GetSlotState() { return _slotState; }
 
 private:
-	class UStratagemWidget* _parentWidget = nullptr;
+	TWeakObjectPtr<class UStratagemWidget> _parentWidget = nullptr;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* _stgNameText;

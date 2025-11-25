@@ -27,6 +27,7 @@ void UProjectileDamageComponent::DoFireShot(FVector fireLocation, FVector fireDi
 
 	AGunBulletBase* projectile = GetWorld()->SpawnActor<AGunBulletBase>(_projectileClass, fireLocation, fireRotation, spawnParams);
 	// 데미지 계산은 총알 쪽에서 이루어진다
+	if (!projectile) return;
 	projectile->InitializeProjectile(_projectileData);
 
 	if (auto gun = Cast<AGunBase>(GetOwner()))

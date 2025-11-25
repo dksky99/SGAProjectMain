@@ -110,13 +110,13 @@ struct FGunData : public FTableRowBase
 	FText _name = FText::FromString(TEXT("gun"));
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGunGripType _gripType; // 한손 혹은 두손
+	EGunGripType _gripType = EGunGripType::TwoHanded; // 한손 혹은 두손
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGunSlotType _slotType; // 어느 슬롯에 장착되는지
+	EGunSlotType _slotType = EGunSlotType::Primary; // 어느 슬롯에 장착되는지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGunCategory _category; // 총의 종류
+	EGunCategory _category = EGunCategory::AssaultRifle; // 총의 종류
 
 
 	// 데미지 요소
@@ -140,7 +140,7 @@ struct FGunData : public FTableRowBase
 	TSubclassOf<class AGunBulletBase> _projectileClass;*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UGunProjectileDataAsset* _projectileDataAsset;
+	class UGunProjectileDataAsset* _projectileDataAsset = nullptr;
 
 	// 발사 간격
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -152,7 +152,7 @@ struct FGunData : public FTableRowBase
 	TSubclassOf<class UGunAmmoComponent> _ammoComponentClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EReloadType _reloadType;	// 재장전 방식
+	EReloadType _reloadType = EReloadType::Magazine;	// 재장전 방식
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool _needAmmoBag = false;	// 재장전할 때 가방이 필요한지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -214,10 +214,10 @@ struct FGunData : public FTableRowBase
 
 	// UI
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _icon;
+	class UTexture2D* _icon = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UTexture2D* _previewImage;
+	class UTexture2D* _previewImage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText _desc;

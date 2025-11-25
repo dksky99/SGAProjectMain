@@ -20,8 +20,9 @@ public:
 	void SetMissionCompleted(FName ID);
 	void ShowMissionCompletedText();
 
-	
 protected:
+	void OnMissionCompleted();
+
 	UPROPERTY(meta = (BindWidget))
 	class UVerticalBox* _missionSlots;
 

@@ -188,6 +188,9 @@ public:
 
 	virtual float GetCurStateMoveSpeed() { return 0.0f; }
 
+	// 특정 파트가 어느정도의 AV를 갖는지 반환. 총알 쪽에서 사용하려고 만들었습니다
+	int32 GetPartArmorValue(class UPrimitiveComponent* ColComp);
+
 public:
 	FReservedFunctionDelegate _reservedFunction;
 	

@@ -87,7 +87,7 @@ void UPreDeploymentState::ApplyMissionResult(UMissionDataAsset* mission, bool is
 	if (!mission) return;
 	if (!_missions.Contains(mission)) return;
 	EMissionState state = isCleared ? EMissionState::Cleared : EMissionState::Failed;
-	_missions[_curMission] = state;
+	_missions[mission] = state;
 	_curMission = nullptr;
 }
 

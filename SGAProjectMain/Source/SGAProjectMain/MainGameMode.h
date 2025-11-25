@@ -51,9 +51,12 @@ public:
 	FOnObjectiveCompleted _objectiveCompletedEvent;
 	FOnMissionCompleted _missionCompletedEvent;
 
-private:
+protected:
 	void UpdateTimer(); 
 	void CalculateMissionReward();
+
+	void OnHelldiverExtracted();
+	void OpenLobby();
 
 	UPROPERTY()
 	FMissionProgress _missionProgress;

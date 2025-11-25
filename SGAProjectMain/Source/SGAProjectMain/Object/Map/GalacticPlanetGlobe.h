@@ -21,10 +21,10 @@ struct FOperationData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _latitude;
+	float _latitude = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _longitude;
+	float _longitude = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class APlanetOperationSite> OperationSiteClass;

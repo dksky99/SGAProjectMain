@@ -30,10 +30,7 @@ void UMissionWidget::NativeConstruct()
 	// 모든 mission(미션, 혹은 메인 목표)과 objective(목표)를 해당 클래스에서는 편의상 미션으로 통칭
 	// 미션 완료 이벤트 바인딩
 	GM->_objectiveCompletedEvent.AddUObject(this, &UMissionWidget::SetMissionCompleted); // 선택 목표(optional objective) 완료 이벤트
-	GM->_missionCompletedEvent.AddLambda([this]() // 메인 목표(mission) 완료 이벤트
-		{
-			AddMissionSlot(_planeMissionIcon, FText::FromString("Extraction Available"), FName("EscapePlaneMission"));
-		});
+	GM->_missionCompletedEvent.AddUObject(this, &UMissionWidget::OnMissionCompleted);       // 메인 목표(mission) 완료 이벤트
 
 	// 메인 목표(미션) 슬롯 추가
 	AddMissionSlot(mission->GetMissionIcon(), mission->GetMissionName(), mission->GetMissionID());
@@ -47,19 +44,6 @@ void UMissionWidget::NativeConstruct()
 
 void UMissionWidget::AddMissionSlot(UTexture2D* texture, FText text, FName ID)
 {
-	//int32 num = _missionSlots->GetChildrenCount();
-	//// 이미 슬롯이 하나 이상 존재할 경우
-	//if (num > 0)
-	//{
-	//	auto slot = _missionSlots->GetChildAt(num - 1);
-	//	if (auto missionSlot = Cast<UMissionSlotWidget>(slot))
-	//	{
-	//		missionSlot->DeactivateSlot();
-	//	}
-
-	//	ShowMissionCompletedText();
-	//}
-	//
 	auto slot = CreateWidget<UMissionSlotWidget>(this, _slotWidgetClass);
 	if (slot)
 	{
@@ -89,8 +73,14 @@ void UMissionWidget::ShowMissionCompletedText()
 	_completedText->SetVisibility(ESlateVisibility::Visible);
 
 	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(timerHandle,
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			_completedText->SetVisibility(ESlateVisibility::Collapsed);
-		}, 2.0f, false);
+		}), 2.0f, false);
+}
+
+void UMissionWidget::OnMissionCompleted()
+{
+	AddMissionSlot(_planeMissionIcon, FText::FromString("Extraction Available"), FName("EscapePlaneMission"));
 }

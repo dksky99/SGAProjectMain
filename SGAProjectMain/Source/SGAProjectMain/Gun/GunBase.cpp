@@ -501,6 +501,7 @@ FTransform AGunBase::GetLeftHandleTrans()
 
 void AGunBase::ShowHitMarker(EHitOutcome hitOutcome)
 {
-	_crosshair->ShowHitMarker(hitOutcome);
+	if (_crosshair)
+		_crosshair->ShowHitMarker(hitOutcome);
 }
 
