@@ -99,6 +99,8 @@ void AMainGameMode::CallEscapePlane()
 void AMainGameMode::EndBattle() // 게임이 끝났을 경우
 {
 	GetWorldTimerManager().ClearTimer(_missionTimerHandle);
+
+    if (!_missionProgress._curMission) return;
 	float timeLimit = _missionProgress._curMission->GetTimeLimitSeconds();
     _missionResult._remainingTimeRatio = FMath::Clamp(_remainingTime / timeLimit, 0.f, 1.f);
 

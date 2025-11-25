@@ -45,6 +45,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
 	float _deployDelay = 5.0f; // 투척 후 몇 초 뒤에 스폰
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
+	float _dropSpeed = 8000.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
 	bool _isAttackStratagem = false;
 
@@ -67,5 +70,3 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	UAnimMontage* _animMontage;
-
-};
