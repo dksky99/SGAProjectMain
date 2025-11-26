@@ -81,6 +81,7 @@ void AEnemySquad::UnitSpawnAct(class AEnemy* unit)
 		//소환 후 자신의 소환 위치 에서 일정 범위 내의 랜덤 위치로 이동.경계치를 5부여
 		break;
 	case ESquadState::Patrol:
+		unit->GetPatrol()->SetPatrolPath(_patrolPath);
 		//패트롤 패스를 부여.
 		break;
 	case ESquadState::Attack:
@@ -95,69 +96,77 @@ void AEnemySquad::UnitSpawnAct(class AEnemy* unit)
 }
 
 
-void AEnemySquad::Command_Search()
+void AEnemySquad::Command_Search(FVector targetLoc)
 {
+	_targetLoc = targetLoc;
+	
 	_squadState = ESquadState::Search;
 
 	for (auto unit : _unitPool)
 	{
 
-		if (IsActivatedUnit(unit))
-		{
-			unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
+		
+		unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
 
-		}
+		
 	}
 	
 }
 
-void AEnemySquad::Command_Stationed()
+void AEnemySquad::Command_Stationed(FVector targetLoc)
 {
-	//만약 패트롤 패스가 있다면 패트롤패스를 제거,
+	if (targetLoc != FVector::ZeroVector)
+		_targetLoc = targetLoc;
 	_squadState = ESquadState::Stationed;
 	for (auto unit : _unitPool)
 	{
 		
-		if (IsActivatedUnit(unit))
-		{
-			unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
+		unit->GetPatrol()->SetPatrolPath(nullptr);
+		//기지에서 소환된 유닛이 어찌해야할지 고민해야할듯하다. 
+		//기지에서 소환된 유닛은 패트롤패스를 지워 아무일없을때 그자리에서 대기한다. 
+		//소환된 유닛은 집결지로 지정된 장소에 모이며 미리 경계치를 부여받아 인근에서 소리가 들리면 바로 확인하러간다.
+		unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
 
-		}
+		
 	}
 }
 
-void AEnemySquad::Command_Patrol()
+void AEnemySquad::Command_Patrol(class ACPatrolPath* path)
 {
+	_patrolPath = path;
 	//가진 패트롤 패스를 넘김.
 	if (_patrolPath == nullptr)
+	{
 		Command_Stationed();
+		return;
+	}
 	_squadState = ESquadState::Patrol;
 	for (auto unit : _unitPool)
 	{
 
-		if (IsActivatedUnit(unit))
-		{
-			unit->GetPatrol()->SetPatrolPath(_patrolPath);
-
-		}
+		unit->GetPatrol()->SetPatrolPath(_patrolPath);
+		
 	}
 
 	
 }
 
-void AEnemySquad::Command_Attack()
+void AEnemySquad::Command_Attack(AActor* target)
 {
-	//
+	_target = target;
+	if(_target==nullptr)
+	{
+		Command_Stationed();
+		return;
+	}
 	_squadState = ESquadState::Attack;
 
 	for (auto unit : _unitPool)
 	{
 
-		if (IsActivatedUnit(unit))
-		{
-			unit->GetCachedController()->RecieveTarget(_target);
+		unit->GetCachedController()->RecieveTarget(_target);
 
-		}
+
 	}
 
 }
@@ -167,6 +176,7 @@ void AEnemySquad::Command_Deactivate()
 	_squadState = ESquadState::Deactivate;
 }
 
+//병력 복귀. 살아있는 병력은 다시 땅속으로 들어가 재호출을 기다린다. 이렇게되면 이미 죽은 병력만 다시 되살아나면 소환이 가능.
 void AEnemySquad::ReturnToSquad()
 {
 }
@@ -242,6 +252,7 @@ bool AEnemySquad::IsCallableSquad()
 	if(IsActivatedSquad())
 		return false;
 	
+	return true;
 }
 
 bool AEnemySquad::IsActivatedSquad()

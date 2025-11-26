@@ -50,6 +50,7 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     SetGenericTeamId(FGenericTeamId((int32)ETeamID::Enemy));
 
     GetCharacterMovement()->bUseRVOAvoidance = true;
+    GetCharacterMovement()->RotationRate.Yaw = 180.f;
     
 }
 

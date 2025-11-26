@@ -15,6 +15,56 @@ AEnemyReinforceManager::AEnemyReinforceManager()
 
 }
 
+bool AEnemyReinforceManager::TryReinforceCall(FVector callPoint, FVector targetPoint, AActor* target)
+{
+	UE_LOG(LogTemp, Display, TEXT("CallReinforcement : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
+
+	if(IsCallable()==false)
+		return false;
+	auto spawner = GetExtraSpawner();
+	if (spawner == nullptr)
+		return false;
+	auto squad = GetExtraCallableSquad();
+	if (squad == nullptr)
+		return false;
+
+	_callAbleCount -= 1;
+	_isCallable = false;
+	//목표위치를 지정해주고 명확한 타겟이있다면 목표를 정해줌.
+	squad->Command_Search(targetPoint);
+	if (target)
+		squad->Command_Attack(target);
+	SetSpawner(callPoint, squad, spawner);
+	
+	SetNextCallableTimer();
+	SetCallCountTimer();
+
+	return true;
+
+}
+
+bool AEnemyReinforceManager::TryMissionCall(FVector callPoint, FVector targetPoint, AActor* target)
+{
+	UE_LOG(LogTemp, Display, TEXT("TryMissionCall : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
+
+	//아무리 그래도 남는 스포너와 남는 스쿼드가 없으면 증원이 불가하다.
+	auto spawner = GetExtraSpawner();
+	if (spawner == nullptr)
+		return false;
+	auto squad = GetExtraCallableSquad();
+	if (squad == nullptr)
+		return false;
+
+	//목표위치를 지정해주고 명확한 타겟이있다면 목표를 정해줌.
+	squad->Command_Search(targetPoint);
+	if (target)
+		squad->Command_Attack(target);
+	SetSpawner(callPoint, squad, spawner);
+
+
+	return true;
+}
+
 // Called when the game starts or when spawned
 void AEnemyReinforceManager::BeginPlay()
 {
@@ -64,14 +114,9 @@ void AEnemyReinforceManager::Tick(float DeltaTime)
 
 }
 
-AEnemySquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint,AActor* target)
+AEnemySquad* AEnemyReinforceManager::GetExtraCallableSquad()
 {
-	UE_LOG(LogTemp, Display, TEXT("CallReinforcement : %f %f %f"), callPoint.X, callPoint.Y, callPoint.Z);
 	
-	auto spawner = GetExtraSpawner();
-	//여유가 되는 스포너가 있나
-	if (spawner == nullptr)
-		return nullptr;
 	for (auto& squad : _squadPool)
 	{
 		FVector recivePoint;
@@ -79,11 +124,9 @@ AEnemySquad* AEnemyReinforceManager::GetExtraCallableSquad(FVector callPoint,AAc
 		{
 			UE_LOG(LogTemp, Display, TEXT("Call Success"));
 			//호출하고 반환. 소환시도했는데 true면 이대로 끝 아니라면 continue로 다른 스쿼드 확인.
-			SetSpawner(recivePoint, squad, spawner);
 			
 			return squad;
 
-			continue;
 
 		}
 	}
@@ -100,4 +143,40 @@ void AEnemyReinforceManager::SetSpawner(FVector callPoint, AEnemySquad* squad, A
 
 
 
+}
+
+void AEnemyReinforceManager::SetNextCallableTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(_nextReinforceTimer, this, &AEnemyReinforceManager::SetReinforceCallable, _nextReinforceCallTime, false);
+
+}
+
+void AEnemyReinforceManager::SetCallCountTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(_callCountTimer, this, &AEnemyReinforceManager::AddCallableCount, _countAddTime, false);
+}
+
+void AEnemyReinforceManager::AddCallableCount()
+{
+	_callAbleCount = FMath::Max(_callAbleCount+1, _maxCallAbleCount);
+	if (_callAbleCount == _maxCallAbleCount)
+		return;
+
+	SetCallCountTimer();
+
+		
+	
+}
+
+void AEnemyReinforceManager::SetReinforceCallable()
+{
+	_isCallable = true;
+}
+
+bool AEnemyReinforceManager::IsCallable()
+{
+	//콜카운트가 0이면 증원이 불가.
+	if (_callAbleCount <= 0)
+		return false;
+	return _isCallable;
 }

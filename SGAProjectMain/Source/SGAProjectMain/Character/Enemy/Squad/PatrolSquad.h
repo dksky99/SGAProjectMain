@@ -20,11 +20,6 @@ public:
 
 protected:
 
-	TArray<class AEnemy*> _units;
-
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Patrol", meta = (AllowPrivateAccess = "true"))
-	class ACPatrolPath* _paths;
 
 	
 };

@@ -14,8 +14,12 @@ class SGAPROJECTMAIN_API AReinforceSquadSpawner : public ASquadSpawner
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void ActivateSpawner(class AEnemySquad* squad, FVector loc) override;
 
 protected:
+	//
+
 
 	virtual void CallFinishAction() override;
 

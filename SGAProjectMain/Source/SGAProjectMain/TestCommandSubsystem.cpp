@@ -190,6 +190,6 @@ void UTestCommandSubsystem::OnCallEnemyReinforce()
     ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
     if (!MyChar)return;
 
-    GM->GetEnemyReinforceManager()->GetExtraCallableSquad(MyChar->GetActorLocation());
+    GM->GetEnemyReinforceManager()->TryReinforceCall(MyChar->GetActorLocation(), MyChar->GetActorLocation());
     
 }

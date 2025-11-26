@@ -48,20 +48,21 @@ public:
 
 
 	//
-	virtual void ActivateSpawner(class AEnemySquad* squad,FVector loc);
+	virtual void ActivateSpawner(class AEnemySquad* squad,FVector loc = FVector::ZeroVector);
 
 	virtual void DeactivateSpawner();
 
 	// 스쿼드에 남아있는 병력을 부르는 함수. 하나씩 개별로 소환하기위해 사용. 
 	void CallRemainUnit();
 
-	void SpawnUnits();
 
 	FVector GetSpawnPoint();
 	
 	void SpawnerCoolDownFinish();
 
 	bool IsActivatedSpawner() { return _squad != nullptr; }
+	bool IsSpawnerReady() { return _spawnerReady; }
+	virtual void SpawnUnits();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -25,8 +25,23 @@ void AFactorySquadSpawner::Tick(float DeltaTime)
 
 }
 
+void AFactorySquadSpawner::SpawnUnits()
+{
+
+    if (_spawnerReady == false)
+        return;
+    _spawnerReady = false;
+    Super::SpawnUnits();
+
+    //한번 소환을 했다면 3분이후에 소환이 가능하다.
+    GetWorld()->GetTimerManager().SetTimer(_spawnerTimer, this, &ASquadSpawner::SpawnerCoolDownFinish, _spawnerCoolTime, false);
+}
+
 void AFactorySquadSpawner::ActivateSpawner(AEnemySquad* squad, FVector loc)
 {
+    //팩토리 스포너는 파괴되기전까지 계속유지되며 헬다이버의 위치가 스포너에 가까워지면 그에따라 소환을 시작해야한다.
+    //그러니 틱을켜서 헬다이버와의 거리를 직접 확인한다.
+    //팩토리는 2번째 매개변수가 의미가 없다.
     Super::ActivateSpawner(squad, loc);
     PrimaryActorTick.bCanEverTick = true;
 
@@ -35,6 +50,7 @@ void AFactorySquadSpawner::ActivateSpawner(AEnemySquad* squad, FVector loc)
 void AFactorySquadSpawner::DeactivateSpawner()
 {
     PrimaryActorTick.bCanEverTick = false;
+    _onFactoryDestroyed.Broadcast(_squad);
     Super::DeactivateSpawner();
 }
 
@@ -87,24 +103,32 @@ float AFactorySquadSpawner::TakeDamage(float DamageAmount, FDamageEvent const& D
 
 void AFactorySquadSpawner::ProcessDamage(const FCDamageEvent* damageEvent)
 {
+    //코어에 20이상의 철거를 가하거나
     if (damageEvent->ColComp->ComponentHasTag(TEXT("Core")))
     {
         if (damageEvent->DemolitionDamage >= 20.f)
         {
             //파괴
+            DestroyFactory();
         }
     }
+    //표면에 40이상의 철거를 가하거나.
     else
     {
         if (damageEvent->DemolitionDamage >= 40.f)
         {
             //파괴
+            DestroyFactory();
 
         }
     }
    
 }
 
+void AFactorySquadSpawner::DestroyFactory()
+{
+    DeactivateSpawner();
+}
 void AFactorySquadSpawner::CallFinishAction()
 {
    

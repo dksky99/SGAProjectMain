@@ -18,22 +18,30 @@
  * 팩토리스포너는 처음 시작할떄 스쿼드하나에 여러 스포너가 할당되고 파괴될떄 스쿼드를 해제한다.
 
  */
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFactoryDestroyed, const class AEnemySquad*, squad);
+
 UCLASS()
 class SGAPROJECTMAIN_API AFactorySquadSpawner : public ASquadSpawner
 {
 	GENERATED_BODY()
 public:
 	AFactorySquadSpawner();
+	virtual void ActivateSpawner(class AEnemySquad* squad, FVector loc = FVector::ZeroVector) override;
+
+	virtual void SpawnUnits() override;
+
+
+	virtual void DeactivateSpawner() override;
+
+	FOnFactoryDestroyed _onFactoryDestroyed;
 protected:
 
 	virtual void BeginPlay() override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
-	virtual void ActivateSpawner(class AEnemySquad* squad, FVector loc) override;
-
-	virtual void DeactivateSpawner() override;
 
 	void CheckDistanceToTarget();
 

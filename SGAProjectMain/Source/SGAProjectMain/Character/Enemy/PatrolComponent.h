@@ -35,6 +35,7 @@ public:
 
 	void SetPatrolPath(class ACPatrolPath* path);
 
+	bool HasPath() { return _path != nullptr; }
 
 protected:
 

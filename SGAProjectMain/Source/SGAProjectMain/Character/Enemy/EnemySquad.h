@@ -45,17 +45,17 @@ public:
 
 
 	void UnitSpawnAct(class AEnemy* unit);
-	// 이건 만들어놓고 어떻게 써야할지 모르겠다 놔두다 필요하면 쓰고 필요없으면 버리자
-	virtual void Command_Search();
+	// 이 스쿼드는 소환이되면 목표위치로 이동한다.
+	virtual void Command_Search(FVector targetLoc=FVector::ZeroVector);
 
 	// 이 스쿼드는 주둔 스쿼드 상태다. 병력들은 소환되고 그냥 주변에서 대기하며 전투를 기다린다. 
-	virtual void Command_Stationed();
+	virtual void Command_Stationed(FVector targetLoc = FVector::ZeroVector);
 
 	// 이 스쿼드는 정찰 스쿼드다. 소환되면 가지고있는 경로를따라 순찰시키도록해야한다.
-	virtual void Command_Patrol();
+	virtual void Command_Patrol(class ACPatrolPath* path=nullptr);
 
 	// 이 스쿼드는 증원 스쿼드다 그중에 타겟을 받았고 소환되자마자 경계치를 최대로 올리고 정해진 지점을 향해 공격을 시작한다.
-	virtual void Command_Attack();
+	virtual void Command_Attack(class AActor* target=nullptr);
 
 	// 스쿼드 비활성화. 이 스쿼드는 당장 목표가 사라졌다. 주둔 부대였다면 주둔지가 다 파괴되어 더이상 유닛을 뽑아낼 수 없고
 	// 증원스쿼드나 임무스쿼드 라면 이미 헬다이버를 격살하여 목표가 사라졌다. 

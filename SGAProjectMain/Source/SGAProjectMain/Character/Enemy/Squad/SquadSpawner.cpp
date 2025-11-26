@@ -20,13 +20,13 @@ ASquadSpawner::ASquadSpawner()
 
 void ASquadSpawner::ActivateSpawner(AEnemySquad* squad,FVector loc)
 {
-	SetActorLocation(loc);
-	if (squad != nullptr)
+	if (squad == nullptr)
 		return;
 	_squad = squad;
 
-
+	//스포너가 활성화되면 주변에 네비 영역이 설치되게 한다.
 	_navInvokerComponent->SetActive(true, true);
+
 }
 
 void ASquadSpawner::DeactivateSpawner()
@@ -57,17 +57,14 @@ void ASquadSpawner::CallRemainUnit()
 	
 
 
+	//한 유닛을 소환하고 다음유닛을 소환할떄 텀이 있다.
 	float interval = (float)(FMath::RandRange(_minSpawnInterval, _maxSpawnInterval));
 	GetWorld()->GetTimerManager().SetTimer(_spawnTimer, this, &ASquadSpawner::CallRemainUnit, interval, false);
 }
 
 void ASquadSpawner::SpawnUnits()
 {
-	if (_spawnerReady == false)
-		return;
-	_spawnerReady = false;
 	CallRemainUnit();
-	GetWorld()->GetTimerManager().SetTimer(_spawnerTimer, this, &ASquadSpawner::SpawnerCoolDownFinish, _spawnerCoolTime, false);
 	
 }
 

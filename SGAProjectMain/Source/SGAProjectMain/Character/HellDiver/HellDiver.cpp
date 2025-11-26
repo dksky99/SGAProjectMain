@@ -919,11 +919,6 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     return temp ;
 }
 
-FTransform AHellDiver::GetRightHandSocketTransform() const
-{
-
-    return GetMesh()->GetSocketTransform(TEXT("hand_r"),ERelativeTransformSpace::RTS_World );
-}
 
 FTransform AHellDiver::GetMuzzleTransform() const
 {
