@@ -64,18 +64,12 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
         _samples.AddSample(sample);
     }
 
-    int32 Get(ECurrencyType type)
+    void SubtractCurrency(const FPlayerCurrency& other)
     {
-        switch (type)
-        {
-        case ECurrencyType::Experience:
-            return _experience;
-        case ECurrencyType::RequisitionSlips:
-            return _requisitionSlips;
-        case ECurrencyType::Medals:
-            return _medals;
-        }
-        return 0;
+        _experience -= other._experience;
+        _requisitionSlips -= other._requisitionSlips;
+        _medals -= other._medals;
+		_samples.SubtractSample(other._samples);
     }
 
     int32 GetSampleCount(ESampleType type) const
@@ -85,5 +79,22 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
             return *count;
         }
         return 0;
+	}
+
+    bool CanAfford(const FPlayerCurrency& other) const
+    {
+        if (_requisitionSlips < other._requisitionSlips) return false;
+        if (_medals < other._medals)           return false;
+
+        for (const auto& pair : other._samples._samples)
+        {
+            const ESampleType type = pair.Key;
+            const int32 required = pair.Value;
+
+            const int32 have = GetSampleCount(type);
+            if (have < required)
+                return false;
+        }
+		return true;
 	}
 };

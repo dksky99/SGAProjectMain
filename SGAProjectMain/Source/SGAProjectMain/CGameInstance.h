@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Data/MissionResult.h"
+#include "Data/ShopItemTable.h"
 #include "Object/AbnormalityTable.h"
 #include "Character/UnitDataTable.h"
 #include "Character/StatComponent.h"
@@ -127,8 +128,6 @@ public:
 
 	// 재화
 	void AddRewardCurrency(const FPlayerCurrency& reward);
-	//void AddCurrency(ECurrencyType type, int32 amount = 1);
-	//void AddEarnedSample(const FSampleBundle& earnedSample);
 	FSampleBundle GetSavedSample();
 
 	// 임무 및 미션
@@ -157,6 +156,14 @@ public:
 	void SaveGame();
 	class UCSaveGame* GetCurrentSave() { return _curSaveGame; }
 
+	// 상점
+	bool IsShopItemPurchased(EShopType type, int32 id);
+	bool IsShopItemUnlockConditionMet(int32 condition);
+	bool CanAffordShopItem(FPlayerCurrency price);
+	bool TryPurchaseShopItem(EShopType type, int32 id);
+
+	struct FShopItemData GetShopItemFromTable(int32 itemID);
+	class UDataTable* GetShopItemTable() { return _shopItemTable; }
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
@@ -176,7 +183,6 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
-
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _stratagemTable;
 
@@ -204,12 +210,14 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
 	TMap<EAbnormality, FProcessedAbnormalityDefinitionData> _abnormalityDefinitions;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
 	TMap<EAbnormality, struct FCDamageEvent> _abnormalityDamageEvents;
 
 	UPROPERTY()
 	class UCSaveGame* _curSaveGame = nullptr;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _shopItemTable;
 
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;

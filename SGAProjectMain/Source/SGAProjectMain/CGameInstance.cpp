@@ -11,6 +11,7 @@
 #include "Data/OperationDataAsset.h"
 #include "Data/MissionDataAsset.h"
 #include "Data/ObjectiveDataAsset.h"
+#include "Data/ShopItemTable.h"
 
 #include "StratagemComponent.h"
 #include "Object/Stratagem/Stratagem.h"
@@ -296,7 +297,7 @@ void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
 {
 	if (!_curSaveGame)
 		LoadGame();
-	_curSaveGame->GetPlayerCurrency().AddCurrency(reward);
+	_curSaveGame->AddCurrency(reward);
 	SaveGame();
 }
 
@@ -357,7 +358,7 @@ void UCGameInstance::ApplyMissionResult(const FMissionResult& missionResult)
 		_preDeployState = NewObject<UPreDeploymentState>(this);
 
 	// 보상 적용
-	_curSaveGame->GetPlayerCurrency().AddCurrency(missionResult._totalReward);
+	_curSaveGame->AddCurrency(missionResult._totalReward);
 
 	if (missionResult._mission)
 	{
@@ -437,4 +438,55 @@ const FProcessedUnitData* UCGameInstance::GetProcessedUnitData(TSubclassOf<class
 	const FProcessedUnitData* FoundData = _processedUnitDataMap.Find(UnitID);
 
 	return FoundData;
+}
+
+bool UCGameInstance::IsShopItemPurchased(EShopType type, int32 id)
+{
+	if (!_curSaveGame)
+		LoadGame();
+	return _curSaveGame->IsShopItemPurchased(type, id);
+}
+
+bool UCGameInstance::IsShopItemUnlockConditionMet(int32 condition)
+{
+	return false;
+}
+
+bool UCGameInstance::CanAffordShopItem(FPlayerCurrency price)
+{
+	if (!_curSaveGame)
+		LoadGame();
+
+	return _curSaveGame->GetPlayerCurrency().CanAfford(price);
+}
+
+bool UCGameInstance::TryPurchaseShopItem(EShopType type, int32 id)
+{
+	if (!_curSaveGame)
+		LoadGame();
+
+	const FShopItemData itemData = GetShopItemFromTable(id);
+
+	if (IsShopItemPurchased(type, id))
+		return false; // 이미 구매한 아이템
+
+	if (!IsShopItemUnlockConditionMet(itemData._condition))
+		return false; // 해금 조건 미충족
+
+	if (!CanAffordShopItem(itemData._price))
+		return false; // 재화 부족
+
+	// 실제 차감 + 구매	처리
+	_curSaveGame->SubtractCurrency(itemData._price);
+	_curSaveGame->AddPurchasedShopItem(itemData._shopType, id);
+
+	SaveGame();
+	return true;
+}
+
+FShopItemData UCGameInstance::GetShopItemFromTable(int32 itemID)
+{
+	FString rowName = FString::FromInt(itemID);
+	auto row = _shopItemTable->FindRow<FShopItemData>(*rowName, TEXT(""));
+	return *row;
 }
