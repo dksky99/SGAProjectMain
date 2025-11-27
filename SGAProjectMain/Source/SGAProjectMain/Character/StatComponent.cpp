@@ -109,6 +109,10 @@ void UStatComponent::HandlePointDamage(AActor* DamagedActor, float Damage, ACont
 */
 void UStatComponent::ChangeHp(FUnitPartStat* part,float Amount)
 {
+
+	if (part == nullptr)
+		return;
+
 	//피해양과 영향력으로 코어에 들어가는 데미지를 정한다.
 	part->_curHP= FMath::Clamp(part->_curHP + Amount, 0.f, part->_partHP);
 	
@@ -125,17 +129,13 @@ void UStatComponent::ChangeHp(FUnitPartStat* part,float Amount)
 void UStatComponent::ChangeCoreHp(float Amount)
 {
 	FUnitPartStat* part = &(_partDatas[EBodyPart::Core].PartStats[0]);
-	part->_curHP = FMath::Clamp(part->_curHP + Amount, 0.f, part->_partHP);
+	if (part == nullptr)
+		return;
+	ChangeHp(part, Amount);
 
 	if (_coreHpChanged.IsBound())
 		_coreHpChanged.Broadcast((float)(part->_curHP));
-	if (part->_curHP <= 0.f)
-	{
-		//파트가 파괴됨. 몇몇 파트는 파괴될 시 사망하는 치명효과가 있음. 파트자체에 델리게이트를 달아보자. 그러면 파트가 파괴될떄 다양한 효과를 낼 수 있을거같다.
-		if (part->_onPartDestroyed.IsBound())
-			part->_onPartDestroyed.Broadcast();
-		
-	}
+	
 }
 
 void UStatComponent::StartRegen()

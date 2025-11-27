@@ -37,6 +37,9 @@ public:
 	void BurrowOut();
 	void BurrowReady() { _burrowReady = true; }
 
+protected:
+
+	virtual void PartInit() override;
 
 
 protected:

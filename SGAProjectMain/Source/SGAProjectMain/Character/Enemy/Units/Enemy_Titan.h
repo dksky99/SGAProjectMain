@@ -18,10 +18,25 @@ public:
 
 	AEnemy_Titan(const FObjectInitializer& ObjectInitializer);
 
+	virtual void AcidbagDestroyed() override;
 
 	virtual struct FUnitPartStat* GetHittedPartStat(EBodyPart part, const UPrimitiveComponent* OverlappedComponent, FVector hitLoc) override;
 
+	virtual void ResetUnit() override;
+protected:
 
+	void Titan_Bleeding();
+
+	virtual void PartInit() override;
+protected:
+
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Bleeding", meta = (AllowPrivateAccess = "true"))
+	float _additiveHP = 2000;
+
+
+	bool _isBleeding = false;
 
 
 };

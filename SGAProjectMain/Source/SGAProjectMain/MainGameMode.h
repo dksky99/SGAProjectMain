@@ -123,11 +123,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;
 
+
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AHelldiverReinforceManager> _helldiverReinforceManagerClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AEnemyReinforceManager* _enemyReinforceManager;
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AEnemyPatrolManager* _enemyPatrolManager;
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AEnemyGarrisonManager* _enemyGarrisonManager;
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AHelldiverReinforceManager* _helldiverReinforceManager;
 

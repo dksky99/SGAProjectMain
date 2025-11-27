@@ -11,6 +11,7 @@
 
 #include "../../CharacterAnimInstance.h"
 #include "../../CharacterStateComponent.h"
+#include "../../StatComponent.h"
 #include "../../../Data/UnitAttackDataAsset.h"
 
 
@@ -69,3 +70,23 @@ bool AEnemy_Hunter::TryDodge(AActor* target)
 
 
 }
+
+void AEnemy_Hunter::PartInit()
+{
+    ACharacterBase::PartInit();
+    if (_statComponent == nullptr)
+        return;
+    auto partDatas = _statComponent->GetPartDatas();
+
+    if (partDatas->IsEmpty())
+        return;
+    auto part = partDatas->Find(EBodyPart::Head);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Hunter::Critical);
+    }
+}
+
+

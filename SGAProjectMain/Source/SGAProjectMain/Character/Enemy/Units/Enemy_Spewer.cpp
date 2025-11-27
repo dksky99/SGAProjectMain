@@ -47,3 +47,51 @@ bool AEnemy_Spewer::TryNear(AActor* target)
 	return false;
 }
 
+void AEnemy_Spewer::PartInit()
+{
+	ACharacterBase::PartInit();
+	if (_statComponent == nullptr)
+		return;
+	auto partDatas = _statComponent->GetPartDatas();
+
+	if (partDatas->IsEmpty())
+		return;
+	auto part = partDatas->Find(EBodyPart::Head);
+	if (part)
+	{
+
+		if (part->PartStats.IsEmpty() == false)
+		{
+			//¸Ó¸®
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spewer::Critical);
+			if (part->PartStats.IsValidIndex(1))
+			{
+				//ÀÔ
+				part->PartStats[1]._onPartDestroyed.AddDynamic(this, &AEnemy_Spewer::Critical);
+			}
+		}
+		
+	}
+	part = partDatas->Find(EBodyPart::Torso);
+	if (part)
+	{
+		//µî
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spewer::Critical);
+	}
+	part = partDatas->Find(EBodyPart::Tail);
+	if (part)
+	{
+		//¾ûµ¢ÀÌ 
+		if (part->PartStats.IsEmpty() == false)
+		{
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spewer::AcidbagDestroyed);
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spewer::Critical);
+
+		}
+	}
+}
+
+
+
+

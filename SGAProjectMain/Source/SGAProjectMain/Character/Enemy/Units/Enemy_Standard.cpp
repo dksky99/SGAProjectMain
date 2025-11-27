@@ -5,6 +5,7 @@
 #include "Components/ShapeComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "../../CharacterStateComponent.h"
+#include "../../StatComponent.h"
 #include "../../CharacterAnimInstance.h"
 #include "../../../Data/UnitAttackDataAsset.h"
 #include "NavigationSystem.h"
@@ -84,8 +85,6 @@ bool AEnemy_Standard::TryCalling(AActor* target)
 {
 	if (target == nullptr)
 		return false;
-	if (_hasReinforceAuthority == false)
-		return false;
 
 	UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 	if (_callReinforce_Animation == nullptr)
@@ -99,7 +98,6 @@ bool AEnemy_Standard::TryCalling(AActor* target)
 		_reservedFunction.Unbind();
 	_reservedFunction.BindUObject(this, &AEnemy_Standard::CallingReinforce);
 	const float Duration = anim->PlayAnimMontage(_callReinforce_Animation);
-	_hasReinforceAuthority = false;
 	return true;
 }
 
@@ -215,6 +213,52 @@ void AEnemy_Standard::BurrowOut()
 	const float Duration = anim->PlayAnimMontage(_burrowOut_Animation);
 
 	GetWorld()->GetTimerManager().SetTimer(_burrowTimer, this, &AEnemy_Standard::BurrowReady, _burrowCoolDown, false);
+}
+
+void AEnemy_Standard::PartInit()
+{
+	ACharacterBase::PartInit();
+	if (_statComponent == nullptr)
+		return;
+	auto partDatas = _statComponent->GetPartDatas();
+
+	if (partDatas->IsEmpty())
+		return;
+	auto part = partDatas->Find(EBodyPart::Head);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::LeftArm);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::LeftLeg);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::RightArm);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::RightLeg);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
 }
 
 
