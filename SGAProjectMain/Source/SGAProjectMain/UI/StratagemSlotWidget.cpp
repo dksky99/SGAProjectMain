@@ -75,48 +75,35 @@ void UStratagemSlotWidget::SetSlotCooldownState(float remainingTime)
     GetWorld()->GetTimerManager().ClearTimer(_endCooldownHandle);
 
     // 카운트다운 시작 3초 후 자동 닫힘
-    GetWorld()->GetTimerManager().SetTimer(_startCooldownHandle, [this]()
+    GetWorld()->GetTimerManager().SetTimer(_startCooldownHandle, 
+        FTimerDelegate::CreateWeakLambda(this, [this]()
         {
             //_isShowingOperating = false;
             _isForcedShowing = false;
 
-            if (!_parentWidget->IsShowing())
+            if (_parentWidget.IsValid() && !_parentWidget->IsShowing())
                 _parentWidget->OpenWidget(false);
-        }, 3.f, false);
+        }), 3.f, false);
 
     if (remainingTime > 6.f)
     {
-        GetWorld()->GetTimerManager().SetTimer(_preEndCooldownHandle, [this]()
+        GetWorld()->GetTimerManager().SetTimer(_preEndCooldownHandle, 
+            FTimerDelegate::CreateWeakLambda(this, [this]()
             {
                 _isForcedShowing = true;
                 SetVisibility(ESlateVisibility::Visible);
 
-                GetWorld()->GetTimerManager().SetTimer(_endCooldownHandle, [this]()
+                GetWorld()->GetTimerManager().SetTimer(_endCooldownHandle, 
+                    FTimerDelegate::CreateWeakLambda(this, [this]()
                     {
                         ResetSlot();
                         _isForcedShowing = false;
 
-                        if (!_parentWidget->IsShowing())
+                        if (_parentWidget.IsValid() && !_parentWidget->IsShowing())
                             _parentWidget->OpenWidget(false);
-                    }, 6.f, false);
-            }, remainingTime - 6.f, false);
+                    }), 6.f, false);
+            }), remainingTime - 6.f, false);
     }
-
-    //if (minutes == 0 && seconds == 5 && _cooldownTimerHandle.IsValid()) // 5초 남았을 때 다시 표시
-    //{
-    //    this->SetVisibility(ESlateVisibility::Visible);
-    //    _isShowingCooldown = true;
-
-    //    GetWorld()->GetTimerManager().SetTimer(_cooldownTimerHandle, [this]()
-    //        {
-    //            ResetSlot();
-    //            _isShowingCooldown = false;
-
-    //            if (!_parentWidget->IsShowing())
-    //                _parentWidget->OpenWidget(false);
-    //            _cooldownTimerHandle.Invalidate();
-    //        }, 5.f, false);
-    //}
 }
 
 void UStratagemSlotWidget::SetSlotOpacity(float opacity)

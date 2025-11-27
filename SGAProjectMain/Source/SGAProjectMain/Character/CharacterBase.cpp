@@ -926,3 +926,25 @@ void ACharacterBase::HitRecovery()
 	ActionEnd();
 	//
 }
+
+int32 ACharacterBase::GetPartArmorValue(UPrimitiveComponent* ColComp)
+{
+	EBodyPart part = EBodyPart::Core;
+	if (_statComponent)
+	{
+		for (auto tag : ColComp->ComponentTags)
+		{
+
+			if (PartTagMap.Contains(tag))
+			{
+				part = PartTagMap[tag];
+				break;
+			}
+		}
+	}
+	
+	auto datas = _statComponent->GetPartData(part);
+	if (datas == nullptr) return 0;
+
+	return datas->PartStats[0]._partAV;
+}

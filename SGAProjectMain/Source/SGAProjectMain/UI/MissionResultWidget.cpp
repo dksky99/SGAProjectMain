@@ -76,11 +76,12 @@ void UMissionResultWidget::InitializeWidget(const FMissionResult& missionResult)
 	}
 
 	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, 
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			_curRewardIndex = 0;
 			GetWorld()->GetTimerManager().SetTimer(_rewardTimerHandle, this, &UMissionResultWidget::ShowRewardsSequentially, 0.5f, true);
-		}, 3.f, false);
+		}), 3.f, false);
 }
 
 void UMissionResultWidget::ShowRewardsSequentially()
@@ -89,11 +90,12 @@ void UMissionResultWidget::ShowRewardsSequentially()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(_rewardTimerHandle);
 		FTimerHandle timerHandle;
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, 
+			FTimerDelegate::CreateWeakLambda(this, [this]()
 			{
 				_curRewardIndex = 0;
 				GetWorld()->GetTimerManager().SetTimer(_rewardTimerHandle, this, &UMissionResultWidget::HideRewardsSequentially, 0.5f, true);
-			}, 2.f, false);
+			}), 2.f, false);
 		return;
 	}
 
@@ -123,10 +125,11 @@ void UMissionResultWidget::ShowTotalRewards()
 	_totalRequisitionText->SetText(FText::AsNumber(_missionResult._totalReward._requisitionSlips));
 
 	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, 
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			ShowOperationStatus();
-		}, 3.f, false);
+		}), 3.f, false);
 }
 
 void UMissionResultWidget::ShowOperationStatus()
@@ -176,10 +179,11 @@ void UMissionResultWidget::ShowOperationStatus()
 					_missionChecks[i]->SetVisibility(ESlateVisibility::Hidden);	// 미리 공간 차지한 채로 숨김
 					// 클리어된 미션은 2초 후에 체크 표시
 					FTimerHandle checkTimerHandle;
-					GetWorld()->GetTimerManager().SetTimer(checkTimerHandle, [this, i]()
+					GetWorld()->GetTimerManager().SetTimer(checkTimerHandle, 
+						FTimerDelegate::CreateWeakLambda(this, [this, i]()
 						{
 							_missionChecks[i]->SetVisibility(ESlateVisibility::Visible);
-						}, 2.f, false);
+						}), 2.f, false);
 				}
 			}
 
@@ -193,7 +197,8 @@ void UMissionResultWidget::ShowOperationStatus()
 	}
 
 	FTimerHandle bonusTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(bonusTimerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(bonusTimerHandle, 
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			for (int32 i = 0; i < _missionResult._clearedMissionNum; i++)
 			{
@@ -201,13 +206,14 @@ void UMissionResultWidget::ShowOperationStatus()
 				_bonusTexts[i]->SetColorAndOpacity(FSlateColor(FLinearColor::Green));
 				_bonusBoxes[i]->SetRenderOpacity(1.f);
 			}
-		}, 3.f, false);
+		}), 3.f, false);
 
 	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, 
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			ShowPayoutSummary();
-		}, 7.f, false);
+		}), 7.f, false);
 }
 
 void UMissionResultWidget::ShowPayoutSummary()
@@ -225,8 +231,9 @@ void UMissionResultWidget::ShowPayoutSummary()
 	_finalRequisitionText->SetText(FText::AsNumber(totalReward._requisitionSlips));
 
 	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]()
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, 
+		FTimerDelegate::CreateWeakLambda(this, [this]()
 		{
 			_rewardFlowFinishedEvent.ExecuteIfBound();
-		}, 5.f, false);
+		}), 5.f, false);
 }

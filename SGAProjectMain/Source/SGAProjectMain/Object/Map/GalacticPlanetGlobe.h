@@ -21,10 +21,10 @@ struct FOperationData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _latitude;
+	float _latitude = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _longitude;
+	float _longitude = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class APlanetOperationSite> OperationSiteClass;
@@ -51,6 +51,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void Interact(class AHellDiver* player) override;
+
+	// 특정 임무를 가진 글로브로 전환
+	void EnterFocusByOperation(class UOperationDataAsset* operation);
 
 protected:
 	void StartInteracting();

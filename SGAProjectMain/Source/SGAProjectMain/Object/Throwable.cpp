@@ -91,7 +91,7 @@ void AThrowable::Throw(FVector direction)
 		GetMesh()->IgnoreActorWhenMoving(_owner, true); // 소유자와 충돌무시 추가
 
 		FTimerHandle collisionRecoveryTimer;
-		GetWorldTimerManager().SetTimer(collisionRecoveryTimer, FTimerDelegate::CreateLambda([this]()
+		GetWorldTimerManager().SetTimer(collisionRecoveryTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
 			{
 				if (_owner && GetMesh())
 				{

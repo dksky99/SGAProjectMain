@@ -73,7 +73,7 @@ struct FCDamageEvent : public FPointDamageEvent
     bool IsExplosionDamage= false; // 폭발피해인지 : 폭발저항력떄문에 
 
     UPROPERTY()
-    UPrimitiveComponent* ColComp;
+    UPrimitiveComponent* ColComp = nullptr;
 };
 /**
  * 
