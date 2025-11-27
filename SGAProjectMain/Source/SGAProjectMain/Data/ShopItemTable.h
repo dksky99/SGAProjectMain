@@ -44,6 +44,9 @@ struct FShopItemData : public FTableRowBase
 	int32 _itemID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString _itemName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FPlayerCurrency _price;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -51,11 +54,7 @@ struct FShopItemData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EShopType _shopType = EShopType::None;
-};
 
-UCLASS()
-class SGAPROJECTMAIN_API UShopItemTable : public UObject
-{
-	GENERATED_BODY()
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* _itemImage = nullptr;
 };

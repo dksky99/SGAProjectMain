@@ -17,10 +17,22 @@ class SGAPROJECTMAIN_API UShopWidgetBase : public UUserWidget
 
 protected:
 	virtual void NativeConstruct() override;
+	void SetPlayerCurrencyDisplay(FPlayerCurrency _currency);
 	void OnSlotPicked(int32 itemID);
 	void PurchaseItem();
 
 public:
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _requisitionSlipText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _medalText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _commonSampleText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _rareSampleText;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _superSampleText;
+
 	UPROPERTY(meta = (BindWidget))
 	class UButton* _purchaseButton;
 
@@ -32,6 +44,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Game/Shop")
 	EShopType _shopType = EShopType::None;
+
+	TArray<class UShopSlotWidgetBase*> _shopSlots;
 
 	int32 _selectedItemID = -1;
 };

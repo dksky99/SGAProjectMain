@@ -313,6 +313,13 @@ FSampleBundle UCGameInstance::GetSavedSample()
 	return FSampleBundle();
 }
 
+FPlayerCurrency UCGameInstance::GetCurrentCurrency()
+{
+	if (!_curSaveGame)
+		LoadGame();
+	return _curSaveGame->GetPlayerCurrency();
+}
+
 UOperationDataAsset* UCGameInstance::GetOperationDataAsset(FName operationID)
 {
 	if (UOperationDataAsset** operation = _operationMap.Find(operationID))
@@ -465,7 +472,7 @@ bool UCGameInstance::TryPurchaseShopItem(EShopType type, int32 id)
 	if (!_curSaveGame)
 		LoadGame();
 
-	const FShopItemData itemData = GetShopItemFromTable(id);
+	const FShopItemData itemData = GetShopItemByID(id);
 
 	if (IsShopItemPurchased(type, id))
 		return false; // 이미 구매한 아이템
@@ -484,7 +491,7 @@ bool UCGameInstance::TryPurchaseShopItem(EShopType type, int32 id)
 	return true;
 }
 
-FShopItemData UCGameInstance::GetShopItemFromTable(int32 itemID)
+FShopItemData UCGameInstance::GetShopItemByID(int32 itemID)
 {
 	FString rowName = FString::FromInt(itemID);
 	auto row = _shopItemTable->FindRow<FShopItemData>(*rowName, TEXT(""));

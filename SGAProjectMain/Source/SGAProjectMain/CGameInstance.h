@@ -129,6 +129,7 @@ public:
 	// 재화
 	void AddRewardCurrency(const FPlayerCurrency& reward);
 	FSampleBundle GetSavedSample();
+	FPlayerCurrency GetCurrentCurrency();
 
 	// 임무 및 미션
 	class UOperationDataAsset* GetOperationDataAsset(FName operationID);
@@ -162,7 +163,7 @@ public:
 	bool CanAffordShopItem(FPlayerCurrency price);
 	bool TryPurchaseShopItem(EShopType type, int32 id);
 
-	struct FShopItemData GetShopItemFromTable(int32 itemID);
+	struct FShopItemData GetShopItemByID(int32 itemID);
 	class UDataTable* GetShopItemTable() { return _shopItemTable; }
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }

@@ -22,9 +22,17 @@ protected:
 	void HandlePick();
 
 public:
-	void InitializeSlot(struct FShopItemData* itemData);
+	void InitializeSlot(const struct FShopItemData& itemData);
 
 	FOnSlotPicked _slotPickedEvent;
+
+	int32 GetItemID() { return _itemID; }
+
+protected:
+	virtual void SetPurchased();
+	virtual void SetLocked();
+	virtual void SetAffordable();
+	virtual void SetUnaffordable();
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -38,6 +46,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _equipMark;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _text;
 
 	UPROPERTY(EditAnywhere)
 	int32 _itemID;
