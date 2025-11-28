@@ -24,11 +24,13 @@ void AEnemyPatrolManager::BeginPlay()
 	Init();
 
 
+
 }
 
 void AEnemyPatrolManager::Init()
 {
 
+	UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Init"));
 	FActorSpawnParameters param;
 	param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	for (auto pair : _squadList)
@@ -38,6 +40,7 @@ void AEnemyPatrolManager::Init()
 			auto temp = GetWorld()->SpawnActor< AEnemySquad>(pair.Key, FVector::ZeroVector, FRotator::ZeroRotator, param);
 			
 			_squadPool.Add(temp);
+			UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Squad"));
 		}
 	}
 	for (int i = 0; i < _squadPool.Num(); i++)
@@ -45,7 +48,9 @@ void AEnemyPatrolManager::Init()
 		AReinforceSquadSpawner* spawner= GetWorld()->SpawnActor< AReinforceSquadSpawner>(AReinforceSquadSpawner::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, param);
 
 		_spawners.Add(spawner);
+		UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Spawner"));
 	}
+
 
 }
 
@@ -70,8 +75,13 @@ void AEnemyPatrolManager::GetExtraCallableSquad()
 
 		//사용가능한 스쿼드
 		if (CheckRestoredSquad(squad, spawner))
+		{
 			DeploySquad(squad, spawner, _paths[i]);
 
+			UE_LOG(LogTemp, Display, TEXT("Try DeploySquad : %d "),i);
+		}
+
+		
 
 	}
 
@@ -95,6 +105,7 @@ bool AEnemyPatrolManager::DeploySquad(AEnemySquad* squad, class AReinforceSquadS
 	spawner->ActivateSpawner(squad, targetLoc);
 
 
+	UE_LOG(LogTemp, Display, TEXT("DeploySquad "));
 
 
 	return true;

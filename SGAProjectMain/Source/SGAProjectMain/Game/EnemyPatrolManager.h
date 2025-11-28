@@ -49,7 +49,7 @@ protected:
 	//패스, 스쿼드, 스포너 이 3개가 각각 하나씩 짝을이뤄 시작부터 끝까지 사용된다. 인터벌이 큰 틱을 통해 전멸한 스쿼드를 패스의 시작점에서 복구한다.
 	UPROPERTY()
 	TArray<class AEnemySquad*> _squadPool;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
 	TArray<class AReinforceSquadSpawner* > _spawners;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Units", meta = (AllowPrivateAccess = "true"))
 	TArray<class ACPatrolPath*> _paths;

@@ -83,6 +83,10 @@ public:
 	//활성화된 스쿼드인지. 매니저쪽에서 이 스쿼드의 상태를 확인하기위한 함수다. 단 하나의 유닛이라도 활성화된 상태라면 활성화된 스쿼드로 본다.
 	bool IsActivatedSquad();
 
+	bool CheckSquadReturn();
+
+	void SquadReturn();
+
 	//현재 활성화상태인 유닛의 수를 샌다.
 	int32 CheckActivateUnitCount();
 

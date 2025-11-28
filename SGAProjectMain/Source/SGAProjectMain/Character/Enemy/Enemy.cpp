@@ -345,6 +345,20 @@ void AEnemy::SetNormalMode()
 {
 }
 
+void AEnemy::TurningBack()
+{
+    //애니메이션이 마땅치 않다. 애니메이션이 있었다면 애니메이션이 다실행되고나서 호출헀을텐데
+    AController* CurrentController = GetController();
+    if (CurrentController)
+    {
+        CurrentController->UnPossess();
+    }
+    UnitDeactivate();
+
+    _isReadyToSpawn = true;
+
+}
+
 
 
 //float AEnemy::TakeDamage(float damageAmount, FDamageEvent const& damageEvent, AController* eventInstigator, AActor* damageCauser)

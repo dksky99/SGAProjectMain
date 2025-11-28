@@ -535,7 +535,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (_stateComponent->IsActionable() == false)
 		return;
-	if (_stateComponent->IsRolling() == false)
+	if (_stateComponent->IsRolling() )
 		return;
 	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{

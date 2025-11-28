@@ -103,6 +103,8 @@ public:
 	float GetMiddleRange() { return _middleRange; }
 	float GetFarRange() { return _farRange; }
 
+	void TurningBack();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;

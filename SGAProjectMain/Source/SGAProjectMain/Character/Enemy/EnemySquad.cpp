@@ -7,12 +7,15 @@
 #include "NavigationSystem.h"
 #include "../../Controller/EnemyController.h"
 #include "../StatComponent.h"
+#include "BehaviorControlComponent.h"
 
 // Sets default values
 AEnemySquad::AEnemySquad()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	//부대가 호출되고 10초단위로 부대를 복귀시킬지 확인한다. 탐색 혹은 공격 임무를받은 부대만 틱이 켜진다.
+	PrimaryActorTick.TickInterval = 10.f;
 	_rootComponent = CreateDefaultSubobject<USceneComponent>("RootComp");
 	RootComponent = _rootComponent;
 	
@@ -33,6 +36,11 @@ void AEnemySquad::BeginPlay()
 void AEnemySquad::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (CheckSquadReturn())
+	{
+
+		PrimaryActorTick.bCanEverTick = false;
+	}
 
 }
 
@@ -102,6 +110,7 @@ void AEnemySquad::Command_Search(FVector targetLoc)
 	
 	_squadState = ESquadState::Search;
 
+	PrimaryActorTick.bCanEverTick = true;
 	for (auto unit : _unitPool)
 	{
 
@@ -161,6 +170,7 @@ void AEnemySquad::Command_Attack(AActor* target)
 	}
 	_squadState = ESquadState::Attack;
 
+	PrimaryActorTick.bCanEverTick = true;
 	for (auto unit : _unitPool)
 	{
 
@@ -268,6 +278,45 @@ bool AEnemySquad::IsActivatedSquad()
 			return false;
 	}
 	return true;
+}
+
+bool AEnemySquad::CheckSquadReturn()
+{
+	//이부대는 증원부대로 
+	if (_squadState != ESquadState::Attack && _squadState != ESquadState::Search)
+	{
+		return false;
+	}
+
+	for (auto unit : _unitPool)
+	{
+		//사망했거나 호출되지않은유닛은 확인대상에서 제외한다.
+		if (unit->GetController() == nullptr)
+			continue;
+
+		if (unit->GetBehaviorControl()->GetCurUnitType() != EUnitState::Stay)
+			return false;
+	}
+	//모든유닛이 타겟을 잃고 평화상태에 들어갔다. 
+	SquadReturn();
+
+	return true;
+}
+
+void AEnemySquad::SquadReturn()
+{
+	for (auto unit : _unitPool)
+	{
+		//죽었으면 시체가유지되어야하니 복귀하지 아니한다.
+		if (unit->GetStatComponent()->IsDead())
+			continue;
+		//죽지않았지만 컨트롤러가 떨어져나간 유닛도 다시 부르지 않는다. 소환이 안된유닛일 가능성이있음.
+		if (unit->GetController() != nullptr)
+			continue;
+		unit->TurningBack();
+	}
+	//유닛들에게 전부 복귀 명령을 내렸으니 비활성화상태로 넘어간다.
+	Command_Deactivate();
 }
 
 int32 AEnemySquad::CheckActivateUnitCount()
