@@ -3,15 +3,32 @@
 
 #include "ShopWidgetBase.h"
 
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
+#include "Components/Border.h"
 #include "../CGameInstance.h"
 #include "ShopSlotWidgetBase.h"
+#include "PreDeployment/PreDeployDetailBase.h"
 
 void UShopWidgetBase::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+    InitializeWidget();
+
+	_purchaseButton->OnClicked.AddDynamic(this, &UShopWidgetBase::PurchaseItem);
+
+    if (auto* EIC = Cast<UEnhancedInputComponent>(GetOwningPlayer()->InputComponent))
+    {
+        EIC->BindAction(_escAction, ETriggerEvent::Started, this, &UShopWidgetBase::OnESC);
+    }
+}
+
+void UShopWidgetBase::InitializeWidget()
+{
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
     UDataTable* table = GI->GetShopItemTable();
 
@@ -23,17 +40,22 @@ void UShopWidgetBase::NativeConstruct()
         if (itemData->_shopType == _shopType)
         {
             UShopSlotWidgetBase* slot = CreateWidget<UShopSlotWidgetBase>(this, _slotClass);
-			int32 itemID = itemData->_itemID;
+            int32 itemID = itemData->_itemID;
             slot->InitializeSlot(*itemData);
             slot->_slotPickedEvent.AddUObject(this, &UShopWidgetBase::OnSlotPicked);
             _slotPanel->AddChild(slot);
-			_shopSlots.Add(slot);
+            _shopSlots.Add(slot);
         }
-	}
+    }
 
-	SetPlayerCurrencyDisplay(GI->GetCurrentCurrency());
+    SetPlayerCurrencyDisplay(GI->GetCurrentCurrency());
 
-	_purchaseButton->OnClicked.AddDynamic(this, &UShopWidgetBase::PurchaseItem);
+    _itemDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+
+    // 임시
+    FPlayerCurrency startingCurrency;
+    startingCurrency._requisitionSlips = 5000; // 시작 자금
+    GI->AddRewardCurrency(startingCurrency);
 }
 
 void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)
@@ -45,9 +67,80 @@ void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)
 	_superSampleText->SetText(FText::AsNumber(currency.GetSampleCount(ESampleType::Super)));
 }
 
-void UShopWidgetBase::OnSlotPicked(int32 itemID)
+void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
 {
-	_selectedItemID = itemID;
+	// 이전에 선택된 슬롯이 있으면 선택 해제
+    if (_selectedSlot)
+        _selectedSlot->SetSelected(false);
+
+    if (!slot)
+    {
+        _selectedSlot = nullptr;
+        _selectedItemID = -1;
+        _itemDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+        return;
+    }
+        
+	// 새로 선택된 슬롯 설정
+    _selectedSlot = slot;
+    _selectedItemID = slot->GetItemID();
+    slot->SetSelected(true);
+
+    _itemDetailPanel->SetVisibility(ESlateVisibility::Visible);
+    _itemDetailPanel->SetDetail(_selectedItemID);
+
+    if (auto scrollBox = Cast<UScrollBox>(_slotPanel))
+    {
+        scrollBox->ScrollWidgetIntoView(
+            slot,
+            true,
+            EDescendantScrollDestination::IntoView,
+            0.15f
+        );
+    }
+
+	auto GI = GetWorld()->GetGameInstance<UCGameInstance>();
+    if (!GI) return;
+
+	FPlayerCurrency price = GI->GetShopItemPriceByID(_shopType, _selectedItemID);
+    if (_shopType == EShopType::Stratagem)
+    {
+        FString priceString = FString::Printf(TEXT("%d"), price._requisitionSlips);
+        _priceText->SetText(FText::FromString(priceString));
+    }
+
+    if (GI->IsShopItemPurchased(_shopType, _selectedItemID))
+    {
+        _buttonBorder->SetBrushColor(FLinearColor::Green);
+        _buttonText->SetText(FText::FromString(TEXT("OWNED")));
+		//_buttonText->SetColorAndOpacity(FLinearColor::Green);
+        _purchaseButton->SetIsEnabled(false);
+        return;
+	}
+
+    if (!GI->IsShopItemUnlockConditionMet(GI->GetShopItemByID(_shopType, _selectedItemID)._condition))
+    {
+        _buttonBorder->SetBrushColor(FLinearColor::Red);
+        _buttonText->SetText(FText::FromString(TEXT("LOCKED")));
+		//_buttonText->SetColorAndOpacity(FLinearColor::Red);
+        _purchaseButton->SetIsEnabled(false);
+		return;
+    }
+
+    if (GI->CanAffordShopItem(price))
+    {
+        _buttonBorder->SetBrushColor(FLinearColor::Yellow);
+        _buttonText->SetText(FText::FromString(TEXT("PURCHASE")));
+        //_buttonText->SetColorAndOpacity(FLinearColor::Yellow);
+        _purchaseButton->SetIsEnabled(true);
+    }
+    else
+    {
+        _buttonBorder->SetBrushColor(FLinearColor::Red);
+        _buttonText->SetText(FText::FromString(TEXT("LOW FUNDS")));
+        //_buttonText->SetColorAndOpacity(FLinearColor::Red);
+        _purchaseButton->SetIsEnabled(false);
+	}
 }
 
 void UShopWidgetBase::PurchaseItem()
@@ -63,10 +156,28 @@ void UShopWidgetBase::PurchaseItem()
         // 구매 성공 시 슬롯 상태 갱신
         for (auto& slot : _shopSlots)
         {
-            auto data = GI->GetShopItemByID(slot->GetItemID());
+            auto data = GI->GetShopItemByID(_shopType, slot->GetItemID());
 			slot->InitializeSlot(data);
 		}
 		// 플레이어 재화 표시 갱신
 		SetPlayerCurrencyDisplay(GI->GetCurrentCurrency());
     }
+}
+
+void UShopWidgetBase::OnESC(const FInputActionValue& value)
+{
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC) return;
+
+    if (auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+    { // IMC 교체
+        subsystem->RemoveMappingContext(_widgetIMC);
+        subsystem->AddMappingContext(_gameIMC, 0);
+    }
+
+    FInputModeGameOnly mode;
+    PC->SetInputMode(mode);
+    PC->bShowMouseCursor = false;
+
+    RemoveFromParent();
 }

@@ -6,7 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "ShopSlotWidgetBase.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSlotPicked, int32 id);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSlotPicked, UShopSlotWidgetBase* slot);
 /**
  * 
  */
@@ -23,6 +23,7 @@ protected:
 
 public:
 	void InitializeSlot(const struct FShopItemData& itemData);
+	void SetSelected(bool selected);
 
 	FOnSlotPicked _slotPickedEvent;
 
@@ -51,5 +52,12 @@ protected:
 	class UTextBlock* _text;
 
 	UPROPERTY(EditAnywhere)
+	class UTexture2D* _lockedImage;
+	UPROPERTY(EditAnywhere)
+	class UTexture2D* _affordableImage;
+	UPROPERTY(EditAnywhere)
+	class UTexture2D* _purchasedImage;
+
+	float _selectedOpacity = 1.0f;
 	int32 _itemID;
 };

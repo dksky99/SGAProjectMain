@@ -263,11 +263,18 @@ const FCDamageEvent* UCGameInstance::GetAbnormalDamageEventData(EAbnormality sta
 void UCGameInstance::LoadGame()
 {
 	if (UGameplayStatics::DoesSaveGameExist(TEXT("SaveSlot"), 0)) // 슬롯이 존재하면 불러오기
+	{
 		_curSaveGame = Cast<UCSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("SaveSlot"), 0));
+		
+		SaveGame();
+	}
 	else // 존재하지 않으면 새로 생성
 	{
 		_curSaveGame = Cast<UCSaveGame>(UGameplayStatics::CreateSaveGameObject(UCSaveGame::StaticClass()));
-		// TODO : 기본 무기 지급
+		FPlayerCurrency startingCurrency;
+		startingCurrency._requisitionSlips = 5000; // 시작 자금
+		_curSaveGame->AddCurrency(startingCurrency);
+
 		SaveGame();
 	}
 }
@@ -456,7 +463,7 @@ bool UCGameInstance::IsShopItemPurchased(EShopType type, int32 id)
 
 bool UCGameInstance::IsShopItemUnlockConditionMet(int32 condition)
 {
-	return false;
+	return true; // 임시로 항상 해금된 것으로 처리
 }
 
 bool UCGameInstance::CanAffordShopItem(FPlayerCurrency price)
@@ -472,7 +479,7 @@ bool UCGameInstance::TryPurchaseShopItem(EShopType type, int32 id)
 	if (!_curSaveGame)
 		LoadGame();
 
-	const FShopItemData itemData = GetShopItemByID(id);
+	const FShopItemData itemData = GetShopItemByID(type, id);
 
 	if (IsShopItemPurchased(type, id))
 		return false; // 이미 구매한 아이템
@@ -491,9 +498,19 @@ bool UCGameInstance::TryPurchaseShopItem(EShopType type, int32 id)
 	return true;
 }
 
-FShopItemData UCGameInstance::GetShopItemByID(int32 itemID)
+FShopItemData UCGameInstance::GetShopItemByID(EShopType type, int32 id)
 {
-	FString rowName = FString::FromInt(itemID);
-	auto row = _shopItemTable->FindRow<FShopItemData>(*rowName, TEXT(""));
-	return *row;
+	for (auto& row : _shopItemTable->GetRowMap())
+	{
+		FShopItemData* itemData = (FShopItemData*)row.Value;
+		if (itemData && itemData->_itemID == id && itemData->_shopType == type)
+			return *itemData;
+	}
+	return FShopItemData();
+}
+
+FPlayerCurrency UCGameInstance::GetShopItemPriceByID(EShopType type, int32 id)
+{
+	FShopItemData itemData = GetShopItemByID(type, id);
+	return itemData._price;
 }

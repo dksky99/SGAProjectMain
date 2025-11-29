@@ -163,8 +163,9 @@ public:
 	bool CanAffordShopItem(FPlayerCurrency price);
 	bool TryPurchaseShopItem(EShopType type, int32 id);
 
-	struct FShopItemData GetShopItemByID(int32 itemID);
+	struct FShopItemData GetShopItemByID(EShopType type, int32 id);
 	class UDataTable* GetShopItemTable() { return _shopItemTable; }
+	struct FPlayerCurrency GetShopItemPriceByID(EShopType type, int32 id);
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 

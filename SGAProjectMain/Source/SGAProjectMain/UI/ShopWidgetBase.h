@@ -17,9 +17,15 @@ class SGAPROJECTMAIN_API UShopWidgetBase : public UUserWidget
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void InitializeWidget();
 	void SetPlayerCurrencyDisplay(FPlayerCurrency _currency);
-	void OnSlotPicked(int32 itemID);
+	void OnSlotPicked(class UShopSlotWidgetBase* slot);
+
+	UFUNCTION()
 	void PurchaseItem();
+
+	UFUNCTION()
+	void OnESC(const FInputActionValue& value);
 
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -34,10 +40,20 @@ public:
 	class UTextBlock* _superSampleText;
 
 	UPROPERTY(meta = (BindWidget))
+	class UBorder* _buttonBorder;
+	UPROPERTY(meta = (BindWidget))
 	class UButton* _purchaseButton;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _buttonText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _priceText;
 
 	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _slotPanel;
+
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployDetailBase* _itemDetailPanel;
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<class UShopSlotWidgetBase> _slotClass;
@@ -47,5 +63,14 @@ public:
 
 	TArray<class UShopSlotWidgetBase*> _shopSlots;
 
+	class UShopSlotWidgetBase* _selectedSlot = nullptr;
 	int32 _selectedItemID = -1;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Input")
+	class UInputAction* _escAction;
+
+	UPROPERTY(EditAnywhere, Category = "Game/IMC")
+	class UInputMappingContext* _gameIMC;
+	UPROPERTY(EditAnywhere, Category = "Game/IMC")
+	class UInputMappingContext* _widgetIMC;
 };

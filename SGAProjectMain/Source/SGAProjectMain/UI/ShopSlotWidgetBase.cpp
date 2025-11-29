@@ -20,7 +20,7 @@ void UShopSlotWidgetBase::NativeConstruct()
 void UShopSlotWidgetBase::HandlePick()
 {
 	if (_slotPickedEvent.IsBound())
-		_slotPickedEvent.Broadcast(_itemID);
+		_slotPickedEvent.Broadcast(this);
 }
 
 void UShopSlotWidgetBase::InitializeSlot(const FShopItemData& itemData)
@@ -68,18 +68,42 @@ void UShopSlotWidgetBase::InitializeSlot(const FShopItemData& itemData)
 	}
 }
 
+void UShopSlotWidgetBase::SetSelected(bool selected)
+{
+	FLinearColor color = selected ? FLinearColor::Yellow : FLinearColor::White;
+	_border->SetBrushColor(color);
+	float targetOpacity = selected ? 1.0f : _selectedOpacity;
+	this->SetRenderOpacity(targetOpacity);
+}
+
 void UShopSlotWidgetBase::SetPurchased()
 {
+	this->SetRenderOpacity(0.8f);
+	_selectedOpacity = 0.8f;
+	if (_equipMark && _purchasedImage)
+		_equipMark->SetBrushFromTexture(_purchasedImage);
 }
 
 void UShopSlotWidgetBase::SetLocked()
 {
+	this->SetRenderOpacity(0.5f);
+	_selectedOpacity = 0.5f;
+	if (_equipMark && _lockedImage)
+		_equipMark->SetBrushFromTexture(_lockedImage);
 }
 
 void UShopSlotWidgetBase::SetAffordable()
 {
+	this->SetRenderOpacity(1.0f);
+	_selectedOpacity = 1.0f;
+	if (_equipMark && _affordableImage)
+		_equipMark->SetBrushFromTexture(_affordableImage);
 }
 
 void UShopSlotWidgetBase::SetUnaffordable()
 {
+	this->SetRenderOpacity(0.5f);
+	_selectedOpacity = 0.5f;
+	if (_equipMark)
+		_equipMark->SetVisibility(ESlateVisibility::Hidden);
 }
