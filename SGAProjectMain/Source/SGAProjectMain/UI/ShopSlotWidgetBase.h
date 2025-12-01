@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "../Data/ShopItemTable.h"
 #include "ShopSlotWidgetBase.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSlotPicked, UShopSlotWidgetBase* slot);
@@ -28,6 +29,7 @@ public:
 	FOnSlotPicked _slotPickedEvent;
 
 	int32 GetItemID() { return _itemID; }
+	EShopType GetShopType() { return _shopType; }
 
 protected:
 	virtual void SetPurchased();
@@ -57,6 +59,9 @@ protected:
 	class UTexture2D* _affordableImage;
 	UPROPERTY(EditAnywhere)
 	class UTexture2D* _purchasedImage;
+
+	UPROPERTY()
+	EShopType _shopType = EShopType::None;
 
 	float _selectedOpacity = 1.0f;
 	int32 _itemID;

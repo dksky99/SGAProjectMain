@@ -32,25 +32,31 @@ void UShopWidgetBase::InitializeWidget()
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
     UDataTable* table = GI->GetShopItemTable();
 
-    _slotPanel->ClearChildren();
+    _gunSlotPanel->ClearChildren();
+	_stgSlotPanel->ClearChildren();
 
     for (auto& row : table->GetRowMap())
     {
         FShopItemData* itemData = (FShopItemData*)row.Value;
-        if (itemData->_shopType == _shopType)
+        //if (itemData->_shopType == _shopType)
         {
             UShopSlotWidgetBase* slot = CreateWidget<UShopSlotWidgetBase>(this, _slotClass);
             int32 itemID = itemData->_itemID;
             slot->InitializeSlot(*itemData);
             slot->_slotPickedEvent.AddUObject(this, &UShopWidgetBase::OnSlotPicked);
-            _slotPanel->AddChild(slot);
+
+            if (itemData->_shopType == EShopType::Stratagem)
+                _stgSlotPanel->AddChild(slot);
+            else if (itemData->_shopType == EShopType::Gun)
+				_gunSlotPanel->AddChild(slot);
             _shopSlots.Add(slot);
         }
     }
 
     SetPlayerCurrencyDisplay(GI->GetCurrentCurrency());
 
-    _itemDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+    _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+	_gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 
     // 임시
     FPlayerCurrency startingCurrency;
@@ -77,7 +83,8 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _selectedSlot = nullptr;
         _selectedItemID = -1;
-        _itemDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+        _gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+		_stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
         return;
     }
         
@@ -86,10 +93,28 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     _selectedItemID = slot->GetItemID();
     slot->SetSelected(true);
 
-    _itemDetailPanel->SetVisibility(ESlateVisibility::Visible);
-    _itemDetailPanel->SetDetail(_selectedItemID);
+	EShopType shopType = slot->GetShopType();
 
-    if (auto scrollBox = Cast<UScrollBox>(_slotPanel))
+    if (shopType == EShopType::Gun)
+    {
+        _slotText->SetText(FText::FromString(TEXT("Gun")));
+        _gunDetailPanel->SetVisibility(ESlateVisibility::Visible);
+        _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+		_gunDetailPanel->SetDetail(_selectedItemID);
+    }
+    else if (shopType == EShopType::Stratagem)
+    {
+        _slotText->SetText(FText::FromString(TEXT("Stratagem")));
+        _stgDetailPanel->SetVisibility(ESlateVisibility::Visible);
+        _gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+		_stgDetailPanel->SetDetail(_selectedItemID);
+    }
+    else
+    {
+        return;
+	}
+
+    /*if (auto scrollBox = Cast<UScrollBox>(_slotPanel))
     {
         scrollBox->ScrollWidgetIntoView(
             slot,
@@ -97,19 +122,24 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
             EDescendantScrollDestination::IntoView,
             0.15f
         );
-    }
+    }*/
 
 	auto GI = GetWorld()->GetGameInstance<UCGameInstance>();
     if (!GI) return;
 
-	FPlayerCurrency price = GI->GetShopItemPriceByID(_shopType, _selectedItemID);
-    if (_shopType == EShopType::Stratagem)
+	FPlayerCurrency price = GI->GetShopItemPriceByID(shopType, _selectedItemID);
+    if (shopType == EShopType::Stratagem)
     {
         FString priceString = FString::Printf(TEXT("%d"), price._requisitionSlips);
         _priceText->SetText(FText::FromString(priceString));
     }
+    else if (shopType == EShopType::Gun)
+    {
+        FString priceString = FString::Printf(TEXT("%d"), price._requisitionSlips);
+        _priceText->SetText(FText::FromString(priceString));
+	}
 
-    if (GI->IsShopItemPurchased(_shopType, _selectedItemID))
+    if (GI->IsShopItemPurchased(shopType, _selectedItemID))
     {
         _buttonBorder->SetBrushColor(FLinearColor::Green);
         _buttonText->SetText(FText::FromString(TEXT("OWNED")));
@@ -118,7 +148,7 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
         return;
 	}
 
-    if (!GI->IsShopItemUnlockConditionMet(GI->GetShopItemByID(_shopType, _selectedItemID)._condition))
+    if (!GI->IsShopItemUnlockConditionMet(GI->GetShopItemByID(shopType, _selectedItemID)._condition))
     {
         _buttonBorder->SetBrushColor(FLinearColor::Red);
         _buttonText->SetText(FText::FromString(TEXT("LOCKED")));
@@ -149,14 +179,18 @@ void UShopWidgetBase::PurchaseItem()
 		return;
 
 	auto GI = GetWorld()->GetGameInstance<UCGameInstance>();
-	bool success = GI->TryPurchaseShopItem(_shopType, _selectedItemID);
+	if (!GI) return;
+
+	EShopType shopType = _selectedSlot->GetShopType();
+	bool success = GI->TryPurchaseShopItem(shopType, _selectedItemID);
 
     if (success)
     {
         // 구매 성공 시 슬롯 상태 갱신
         for (auto& slot : _shopSlots)
         {
-            auto data = GI->GetShopItemByID(_shopType, slot->GetItemID());
+			shopType = slot->GetShopType();
+            auto data = GI->GetShopItemByID(shopType, slot->GetItemID());
 			slot->InitializeSlot(data);
 		}
 		// 플레이어 재화 표시 갱신

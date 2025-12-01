@@ -50,16 +50,24 @@ public:
 	class UTextBlock* _priceText;
 
 	UPROPERTY(meta = (BindWidget))
-	class UPanelWidget* _slotPanel;
+	class UPanelWidget* _stgSlotPanel;
+	UPROPERTY(meta = (BindWidget))
+	class UPanelWidget* _gunSlotPanel;
 
 	UPROPERTY(meta = (BindWidget))
-	class UPreDeployDetailBase* _itemDetailPanel;
+	class UTextBlock* _slotText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployDetailBase* _stgDetailPanel;
+	UPROPERTY(meta = (BindWidget))
+	class UPreDeployDetailBase* _gunDetailPanel;
+
 
 	UPROPERTY(EditAnywhere, Category = "Game/UI")
 	TSubclassOf<class UShopSlotWidgetBase> _slotClass;
 
-	UPROPERTY(EditAnywhere, Category = "Game/Shop")
-	EShopType _shopType = EShopType::None;
+	//UPROPERTY(EditAnywhere, Category = "Game/Shop")
+	//EShopType _shopType = EShopType::None;
 
 	TArray<class UShopSlotWidgetBase*> _shopSlots;
 

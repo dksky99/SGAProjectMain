@@ -26,18 +26,19 @@ void UShopSlotWidgetBase::HandlePick()
 void UShopSlotWidgetBase::InitializeSlot(const FShopItemData& itemData)
 {
 	_itemID = itemData._itemID;
+	_shopType = itemData._shopType;
 
 	if (_itemImage)
 		_itemImage->SetBrushFromTexture(itemData._itemImage);
 
 	if (_text)
 	{
-		if (itemData._shopType == EShopType::Gun) // 총일 경우 가격을 메달로 표시
-		{
-			FString priceString = FString::Printf(TEXT("Price: %d"), itemData._price._medals);
-			_text->SetText(FText::FromString(priceString));
-		}
-		if (itemData._shopType == EShopType::Stratagem) // 스트라타젬일 경우 이름 표시
+		//if (itemData._shopType == EShopType::Gun) // 총일 경우 가격을 메달로 표시
+		//{
+		//	FString priceString = FString::Printf(TEXT("Price: %d"), itemData._price._medals);
+		//	_text->SetText(FText::FromString(priceString));
+		//}
+		//if (itemData._shopType == EShopType::Stratagem) // 스트라타젬일 경우 이름 표시
 		{
 			_text->SetText(FText::FromString(itemData._itemName));
 		}
