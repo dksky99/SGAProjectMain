@@ -63,11 +63,14 @@ public:
 	bool IsActivatedSpawner() { return _squad != nullptr; }
 	bool IsSpawnerReady() { return _spawnerReady; }
 	virtual void SpawnUnits();
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void CallFinishAction();
+	
 	
 public:	
 
@@ -89,6 +92,10 @@ protected:
 	UPROPERTY()
 	class AEnemySquad* _squad=nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
+	USceneComponent* _root;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
+	USceneComponent* _spawnPoint;
 	//한번의 스폰 후 다음 스폰때까지 걸릴 텀
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
 	double _minSpawnInterval = 0.3f;
@@ -109,7 +116,7 @@ protected:
 
 	//병력의 소환될범위의 오차. 생산건물이라면 오차가 없어야할것이고 증원이나 정찰이라면 오차가 좀 커야 자연스러울것이다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))
-	float _callRadius = 0.f;
+	float _callRadius = 1000.f;
 
 	//소환되는 유닛의 yaw로테이션이 랜덤으로할것인가. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Spawn", meta = (AllowPrivateAccess = "true"))

@@ -34,7 +34,23 @@ void ACPatrolPath::OnConstruction(const FTransform& transform)
 
 FVector ACPatrolPath::GetStartPosition()
 {
-    return FVector();
+    FVector StartLocation;
+
+    if (_spline)
+    {
+        // 스플라인의 첫 번째 포인트(인덱스 0)의 월드 위치를 가져옵니다.
+        StartLocation = _spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
+
+        // 이제 StartLocation을 사용하여 유닛을 스폰할 수 있습니다.
+        // GetWorld()->SpawnActor<AEnemyUnit>(EnemyClass, StartLocation, FRotator::ZeroRotator);
+
+        UE_LOG(LogTemp, Warning, TEXT("스폰 시작 위치: %s"), *StartLocation.ToString());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("순찰 스플라인이 유효하지 않습니다."));
+    }
+    return StartLocation;
 }
 
 // Called when the game starts or when spawned

@@ -11,10 +11,17 @@
 ASquadSpawner::ASquadSpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+
 	PrimaryActorTick.bCanEverTick = false;
+
 	
 
 	_navInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
+	_root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(_root);
+	_spawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("SpawnPoint"));
+	_spawnPoint->SetupAttachment(RootComponent);
+	_spawnPoint->SetRelativeLocation(FVector::ZeroVector);
 
 }
 
@@ -40,19 +47,29 @@ void ASquadSpawner::CallRemainUnit()
 {
 	//만약 어떤이유로든 비활성화되어 스포너로부터 스쿼드가끊기면 멈춤.
 	if (_squad == nullptr)
+	{
+
+		UE_LOG(LogTemp, Display, TEXT("ASquadSpawner::CallRemainUnit None Squad"));
 		return;
+	}
 	AEnemy* unit =_squad->CheckExtraUnit();
 
 	//남은 유닛이 없다.혹은 정해진 횟수 반복. 증원스쿼드라면 스쿼드의 전부를 쏟아낼것이고 주둔스쿼드라면 일정유닛만 소환할것.
-	if (unit == nullptr||_curSpawnCount==0)
+	if (unit == nullptr || _curSpawnCount == 0)
+	{
+		CallFinishAction();
+		UE_LOG(LogTemp, Display, TEXT("Spawn RemainUnit Finish"));
 		return;
+	}
 	//위치 설정.
 	//컨트롤러 빙의
 	if (unit->CombineController())
 	{
-		unit->SetActorLocation(GetSpawnPoint(), false, nullptr, ETeleportType::TeleportPhysics);
+		unit->SetActorLocation(GetSpawnPoint(), false, nullptr, ETeleportType::None);
+		_squad->UnitSpawnAct(unit);
 		unit->Spawn();
 
+		UE_LOG(LogTemp, Display, TEXT("Spawn Unit Finish"));
 	}
 	
 
@@ -71,7 +88,7 @@ void ASquadSpawner::SpawnUnits()
 FVector ASquadSpawner::GetSpawnPoint()
 {
 
-	FVector pos = GetActorLocation();
+	FVector pos = _spawnPoint->GetComponentLocation();
 	//NavMesh 찾기
 	auto naviSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
 

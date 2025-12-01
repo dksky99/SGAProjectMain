@@ -118,14 +118,14 @@ void ACharacterBase::InitUnit()
 	if (data == nullptr)
 	{
 
-		UE_LOG(LogTemp, Error, TEXT("UnitDataInit Fail : Non data"));
+		UE_LOG(LogTemp, Error, TEXT("%s : UnitDataInit Fail : Non data"), *(GetName()));
 		return;
 	}
 
 
 	_statComponent->InitData(data);
 	_stateComp->InitData(data->_resistData);
-	UE_LOG(LogTemp, Display, TEXT("UnitDataInit Success"));
+	//UE_LOG(LogTemp, Display, TEXT("UnitDataInit Success"));
 }
 
 FCDamageEvent ACharacterBase::AttackDataToDamageEvent(UUnitAttackDataAsset* attackData)
@@ -468,6 +468,7 @@ void ACharacterBase::ResetUnit()
 {
 	_statComponent->Reset();
 	_stateComp->Reset();
+	
 	//RecoverFromKnockDown();
 
 	SetActorEnableCollision(true);

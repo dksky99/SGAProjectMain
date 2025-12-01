@@ -139,7 +139,7 @@ protected:
 
 
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
 	class AEnemyController* _controller;
 	UPROPERTY()
 	class AEnemySquad* _squad;
@@ -152,5 +152,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorTree* _behaviorTree;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	float _unitRVOWeight = 0.5f;
 
 };

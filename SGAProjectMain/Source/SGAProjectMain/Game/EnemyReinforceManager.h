@@ -28,6 +28,9 @@ public:
 	bool TryReinforceCall(FVector callPoint,FVector targetPoint,AActor* target=nullptr);
 
 	// 임무에 필요해서 증원을 한다면 증원 가능상태를 무시하고 증원을 부를 수있음.
+	// call point : 스포너가 설치될위치. 이위치를 중심으로 네비인보커를 설치하고 내비영역을 활성화해서 네비가 설치될수 있는 위치에 유닛들을 소환.
+	// targetPoint : 스포너에서 소환된 유닛이 탐색하게될 위치. 플레이어의 위치나 미션지역 핵심 건물 주변으로 설정\
+	// target : 명시적인 타겟. 소환되자마자 타겟을 쫓아감.
 	bool TryMissionCall(FVector callPoint,FVector targetPoint,AActor* target=nullptr);
 
 

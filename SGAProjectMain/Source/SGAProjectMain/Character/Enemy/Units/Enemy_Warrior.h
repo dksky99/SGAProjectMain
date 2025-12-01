@@ -29,6 +29,7 @@ public:
 
 protected:
 
+	UFUNCTION()
 	void Warrior_Bleeding();
 	void CalcBleedingDamage();
 	virtual void PartInit() override;

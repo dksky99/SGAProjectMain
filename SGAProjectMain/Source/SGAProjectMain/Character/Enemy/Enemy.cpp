@@ -75,6 +75,37 @@ void AEnemy::PossessedBy(AController* NewController)
     SetOwnController(NewController);
     //UE_LOG(LogTemp, Display, TEXT("%s PossesedBy :%s"), *(this->GetName()), *(NewController->GetName()));
     _navInvokerComponent->SetActive(true, true);
+
+    // 1. 무브먼트 컴포넌트 확인
+    UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (!MoveComp) return;
+
+    // 2. 컨트롤러로부터 팀 ID 가져오기
+    // (컨트롤러가 IGenericTeamAgentInterface를 상속받았다고 가정)
+    IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(NewController);
+    if (TeamAgent)
+    {
+        // 컨트롤러의 팀 ID 획득
+        uint8 TeamIndex = TeamAgent->GetGenericTeamId().GetId();
+
+        // 3. 비트마스크 변환 (0->1, 1->2 ...)
+        int32 MyGroupBit = 1 << TeamIndex;
+
+        // 4. RVO 설정 적용
+        MoveComp->SetAvoidanceEnabled(true);
+        MoveComp->SetAvoidanceGroup(MyGroupBit);   // 나는 이 팀이다
+        MoveComp->SetGroupsToAvoid(MyGroupBit);    // 나는 내 팀만 피한다 (적은 무시)
+
+        // 5. [핵심] 유닛별 고유 가중치 적용
+        // 이 코드가 Pawn에 있어야 하는 이유입니다.
+        MoveComp->AvoidanceWeight=_unitRVOWeight;
+
+        // (옵션) 자연스러운 이동을 위한 회전 설정
+        MoveComp->bOrientRotationToMovement = true;
+        bUseControllerRotationYaw = false;
+    }
+
+
 }
 
 void AEnemy::UnPossessed()
@@ -82,7 +113,6 @@ void AEnemy::UnPossessed()
     Super::UnPossessed();
 
     _navInvokerComponent->SetActive(false, true);
-    UE_LOG(LogTemp, Display, TEXT("%s UnPossessed"), *(this->GetName()));
 
 }
 
@@ -332,6 +362,8 @@ void AEnemy::SetInBattle()
     _unitState = EUnitState::InBattle;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 
+    bUseControllerRotationYaw = true;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
     RaiseAlert();
 
 }

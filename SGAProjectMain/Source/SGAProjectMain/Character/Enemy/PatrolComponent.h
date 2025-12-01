@@ -59,16 +59,16 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	int32 _index;
+	int32 _index=0;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	float _distance;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	bool _isReverse;
+	bool _isReverse=false;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	float _acceptanceRadius;	//변동이 생길떄 허용범위
+	float _acceptanceRadius=1000.f;	//변동이 생길떄 허용범위
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class ACPatrolPath* _path;

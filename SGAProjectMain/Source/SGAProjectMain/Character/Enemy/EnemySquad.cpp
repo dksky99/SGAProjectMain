@@ -60,19 +60,18 @@ void AEnemySquad::Init()
 			AEnemy* enemy = GetWorld()->SpawnActor<AEnemy>(enemyClass, FVector::ZeroVector, FRotator::ZeroRotator,param);
 			if (enemy)
 			{
-				UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
 				enemy->SpawnDefaultController();
 				
 				if (enemy->AddToSquad(this))
 				{
 					
 					_unitPool.Add(enemy);
-					UE_LOG(LogTemp, Display, TEXT("AddUnit"));
 
 				}
 			}
 		}
 	}
+	UE_LOG(LogTemp, Display, TEXT("%s Spawn %d Unit"),*(GetName()),_unitPool.Num());
 	DeactivateAllUnits();
 }
 
@@ -236,7 +235,7 @@ void AEnemySquad::DeactivateAllUnits()
 	for (auto unit : _unitPool)
 	{
 		
-			ReturnUnitToPool(unit);
+		ReturnUnitToPool(unit);
 
 	}
 }
@@ -248,6 +247,7 @@ class AEnemy* AEnemySquad::CheckExtraUnit()
 	{
 		if (unit->IsReadyToSpawn())
 		{
+			
 			return unit;
 
 		}
@@ -271,13 +271,13 @@ bool AEnemySquad::IsActivatedSquad()
 	//증원부대만 사용. 
 
 	if (_unitPool.IsEmpty())
-		return false;
+		return true;
 	for (auto unit : _unitPool)
 	{
 		if(unit->IsReadyToSpawn()==false)
-			return false;
+			return true;
 	}
-	return true;
+	return false;
 }
 
 bool AEnemySquad::CheckSquadReturn()

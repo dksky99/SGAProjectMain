@@ -47,6 +47,7 @@ protected:
 	virtual void PartInit();
 
 	//즉사 함수다. 부위파괴시 즉사한다면 이함수를 호출하여 코어hp를 0으로 만들것이다.
+	UFUNCTION()
 	void Critical();
 	//부위파괴시 사망해야하지만 몇초정도 유예기간을 받는 함수.추가체력을 받고 몇초에걸쳐 피해를 입다 사망하게된다.
 	virtual void TimeLimit() {}

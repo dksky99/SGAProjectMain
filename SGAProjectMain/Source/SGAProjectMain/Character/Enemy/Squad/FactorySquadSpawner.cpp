@@ -4,12 +4,20 @@
 #include "FactorySquadSpawner.h"
 #include "Kismet/GameplayStatics.h"
 #include "../../../Object/CDamageType.h"
-AFactorySquadSpawner::AFactorySquadSpawner()
+AFactorySquadSpawner::AFactorySquadSpawner():Super()
 {
 
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true; 
+
+    SetActorTickEnabled(false);
 
     PrimaryActorTick.TickInterval = 0.5f;
+    _callRadius = 0.0f;
+
+    _minSpawnInterval = 4.0f;
+    _maxSpawnInterval = 6.0f;
+
+    _maxSpawnCount = 4;
 }
 void AFactorySquadSpawner::BeginPlay()
 {
@@ -43,13 +51,16 @@ void AFactorySquadSpawner::ActivateSpawner(AEnemySquad* squad, FVector loc)
     //그러니 틱을켜서 헬다이버와의 거리를 직접 확인한다.
     //팩토리는 2번째 매개변수가 의미가 없다.
     Super::ActivateSpawner(squad, loc);
-    PrimaryActorTick.bCanEverTick = true;
+
+    SetActorTickEnabled(true);
+    UE_LOG(LogTemp, Display, TEXT("Factory Activate"));
 
 }
 
 void AFactorySquadSpawner::DeactivateSpawner()
 {
-    PrimaryActorTick.bCanEverTick = false;
+
+    SetActorTickEnabled(false);
     _onFactoryDestroyed.Broadcast(_squad);
     Super::DeactivateSpawner();
 }
@@ -59,7 +70,7 @@ void AFactorySquadSpawner::CheckDistanceToTarget()
     // 인덱스 0은 항상 첫 번째 로컬 플레이어입니다.
     APlayerController* PlayerController0 = UGameplayStatics::GetPlayerController(
         GetWorld(),
-        0 // 플레이어 인덱스 (0, 1, 2, ...)
+        0 
     );
 
     if (PlayerController0)
@@ -69,7 +80,11 @@ void AFactorySquadSpawner::CheckDistanceToTarget()
             return;
         float distance = GetDistanceTo(pawn);
         if (distance < _alertRange)
+        {
+
+            UE_LOG(LogTemp, Display, TEXT("Helldiver InRange"));
             SpawnUnits();
+        }
     }
 }
 

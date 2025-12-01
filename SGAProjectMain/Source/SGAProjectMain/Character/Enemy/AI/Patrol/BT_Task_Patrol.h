@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "BT_Task_Patrol.generated.h"
 
 /**
@@ -24,4 +25,15 @@ protected:
 
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory,
 		float DeltaSeconds) override;
+protected:
+	// **UFUNCTION:** 이동 완료/실패 시 AI 컨트롤러가 호출하는 함수
+	UFUNCTION()
+	void OnMoveCompletedHandler(FAIRequestID RequestID, EPathFollowingResult::Type Result);
+
+protected:
+
+	FVector _targetLocation=FVector::ZeroVector;
+
+	float  _acceptance=0.f;
+	bool _findSuccess=false;
 };

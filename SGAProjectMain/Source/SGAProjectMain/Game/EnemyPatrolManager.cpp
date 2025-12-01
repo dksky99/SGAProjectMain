@@ -40,17 +40,18 @@ void AEnemyPatrolManager::Init()
 			auto temp = GetWorld()->SpawnActor< AEnemySquad>(pair.Key, FVector::ZeroVector, FRotator::ZeroRotator, param);
 			
 			_squadPool.Add(temp);
-			UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Squad"));
 		}
 	}
+
+	UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Squad :%d"), _squadPool.Num());
 	for (int i = 0; i < _squadPool.Num(); i++)
 	{
 		AReinforceSquadSpawner* spawner= GetWorld()->SpawnActor< AReinforceSquadSpawner>(AReinforceSquadSpawner::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, param);
 
 		_spawners.Add(spawner);
-		UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Spawner"));
 	}
 
+	UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager Spawn_Spawner:%d"), _spawners.Num());
 
 }
 
@@ -65,13 +66,19 @@ void AEnemyPatrolManager::Tick(float DeltaTime)
 
 void AEnemyPatrolManager::GetExtraCallableSquad()
 {
+
+	UE_LOG(LogTemp, Display, TEXT("AEnemyPatrolManager::GetExtraCallableSquad %d "),_paths.Num());
 	for (int i = 0; i < _paths.Num(); i++)
 	{
 		auto squad = _squadPool.IsValidIndex(i) ? _squadPool[i]: nullptr;
 		auto spawner = _spawners.IsValidIndex(i) ? _spawners[i]: nullptr;
 		//패스에 맞는 스쿼드와 스포너 가 있는지 확인.
 		if (!squad || !spawner)
+		{
+
+			UE_LOG(LogTemp, Display, TEXT("Squad or Spawner Nullptr "));
 			continue;
+		}
 
 		//사용가능한 스쿼드
 		if (CheckRestoredSquad(squad, spawner))

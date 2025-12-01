@@ -32,7 +32,7 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	bool _isLoop;
+	bool _isLoop=false;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class USplineComponent* _spline;

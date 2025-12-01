@@ -77,6 +77,8 @@ public:
 	// 풀 안에 소환되지 않고 남은 유닛이 있는지 확인. 주둔지에서 사용.
 	class AEnemy* CheckExtraUnit();
 
+
+
 	// 모든 유닛이 멀쩡히 있어서 소환가능한 스쿼드인지 확인.
 	bool IsCallableSquad();
 

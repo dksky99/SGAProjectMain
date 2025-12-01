@@ -25,7 +25,7 @@ struct FGarrisonData
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Squad")
-	class AEnemySquad* Squad;
+	class AEnemySquad* Squad = nullptr;
 
 	// 2. 배열 (FString 배열, 예: 아이템 목록, 태그 등)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Squad")
@@ -33,7 +33,7 @@ public:
 
 	// 3. 좌표 (FVector, 3차원 위치나 방향)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Squad")
-	AActor* RellyPoint;
+	AActor* RellyPoint=nullptr;
 
 	void AddDestroyedCount() { _destroyedCount++; }
 
@@ -65,6 +65,7 @@ protected:
 
 	void InitGarrison();
 
+	UFUNCTION()
 	void CheckFactoryDestroyed(const class AEnemySquad* squad);
 	
 	void CheckMissionComplete(const FGarrisonData* const data);

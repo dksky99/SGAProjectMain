@@ -25,6 +25,7 @@ public:
 	virtual void ResetUnit() override;
 protected:
 
+	UFUNCTION()
 	void Titan_Bleeding();
 
 	virtual void PartInit() override;
