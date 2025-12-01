@@ -490,6 +490,11 @@ FRotator AGunBase::GetMuzzleRot()
 	return _gunMesh->GetSocketRotation(TEXT("Muzzle"));
 }
 
+FTransform AGunBase::GetMuzzleRelate()
+{
+	return  _gunMesh->GetSocketTransform(TEXT("Muzzle"), RTS_Component);
+}
+
 FTransform AGunBase::GetLeftHandleTrans()
 {
 	if(_gunMesh==nullptr)

@@ -67,6 +67,14 @@ void UTestCommandSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         ECVF_Cheat
     );
 
+    CallEnemyMissionReinforceDelegate = FConsoleCommandDelegate::CreateUObject(this, &UTestCommandSubsystem::OnCallEnemyMissionReinforce);
+    CallEnemyMissionReinforceCommand = IConsoleManager::Get().RegisterConsoleCommand(
+        TEXT("CallEnemyMissionReinforce"),
+        TEXT("자신의 위치에 적 증원을 소환합니다 미션버전."),
+        CallEnemyMissionReinforceDelegate,
+        ECVF_Cheat
+    );
+
 }
 
 void UTestCommandSubsystem::Deinitialize()
@@ -108,6 +116,12 @@ void UTestCommandSubsystem::Deinitialize()
         CallEnemyReinforceCommand = nullptr;
     }
 
+    if (CallEnemyMissionReinforceCommand)
+    {
+
+        IConsoleManager::Get().UnregisterConsoleObject(CallEnemyMissionReinforceCommand);
+        CallEnemyMissionReinforceCommand = nullptr;
+    }
 
     Super::Deinitialize();
 }
@@ -190,6 +204,25 @@ void UTestCommandSubsystem::OnCallEnemyReinforce()
     ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
     if (!MyChar)return;
 
-    GM->GetEnemyReinforceManager()->GetExtraCallableSquad(MyChar->GetActorLocation());
+    GM->GetEnemyReinforceManager()->TryReinforceCall(MyChar->GetActorLocation(), MyChar->GetActorLocation());
     
+}
+
+void UTestCommandSubsystem::OnCallEnemyMissionReinforce()
+{
+    UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);
+    if (!World) return;
+
+    AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+    if (!GM)return;
+    if (!GM->GetEnemyReinforceManager()) return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+    if (!PC) return;
+
+    ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
+    if (!MyChar)return;
+
+    GM->GetEnemyReinforceManager()->TryMissionCall(MyChar->GetActorLocation(), MyChar->GetActorLocation());
+
 }

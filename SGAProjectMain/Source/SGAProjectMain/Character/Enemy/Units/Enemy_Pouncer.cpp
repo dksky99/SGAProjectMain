@@ -11,6 +11,7 @@
 
 #include "../../CharacterAnimInstance.h"
 #include "../../CharacterStateComponent.h"
+#include "../../StatComponent.h"
 #include "../../../Data/UnitAttackDataAsset.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
@@ -18,6 +19,7 @@
 #include "NavigationSystem.h"
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Enemy_Spitter.h"
 
 AEnemy_Pouncer::AEnemy_Pouncer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -35,7 +37,8 @@ bool AEnemy_Pouncer::CheckAbleTryMiddle(AActor* target)
 {
     if (target == nullptr)
         return false;
-
+    if (_isJumpReady == false)
+        return false;
     if (UAIActingHelperLibrary::IsFacingTarget(GetActorForwardVector(), GetActorLocation(), target->GetActorLocation()))
         return true;
     return false;
@@ -72,6 +75,8 @@ bool AEnemy_Pouncer::JumpAttack(AActor* target)
 {
     if (target == nullptr)
         return false;
+    if (_isJumpReady == false)
+        return false;
     FVector targetLoc;
 
     FVector muzzleLocation = GetActorLocation();
@@ -104,12 +109,18 @@ bool AEnemy_Pouncer::JumpAttack(AActor* target)
     if (_stateComp->ActionBegin() == false)
         return false;
 
+    _isJumpReady = false;
+
     _curAttackData = _jumpAttackData;
     SetMeleeColisions(_jumpAttackData);
 
     GetCharacterMovement()->StopMovementImmediately();
     LaunchCharacter(direction * _jumpPower, true, true);
+
+    GetWorld()->GetTimerManager().SetTimer(_jumpTimer, this, &AEnemy_Pouncer::JumpReady, _jumpCooldown, false);
     const float Duration = anim->PlayAnimMontage(_jumpAttackData->Motion);
+
+
 
     return true;
 
@@ -247,4 +258,57 @@ bool AEnemy_Pouncer::CalculateLaunchDirectionWithTime(const FVector& Start, cons
 
     return true;
 }
+
+void AEnemy_Spitter::ResetUnit()
+{
+    Super::ResetUnit();
+    _isExplode = false;
+}
+
+void AEnemy_Pouncer::PartInit()
+{
+    ACharacterBase::PartInit();
+    if (_statComponent == nullptr)
+        return;
+    auto partDatas = _statComponent->GetPartDatas();
+
+    if (partDatas->IsEmpty())
+        return;
+    auto part = partDatas->Find(EBodyPart::Head);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Pouncer::Critical);
+    }
+    part = partDatas->Find(EBodyPart::LeftArm);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Pouncer::Critical);
+    }
+    part = partDatas->Find(EBodyPart::LeftLeg);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Pouncer::Critical);
+    }
+    part = partDatas->Find(EBodyPart::RightArm);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Pouncer::Critical);
+    }
+    part = partDatas->Find(EBodyPart::RightLeg);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Pouncer::Critical);
+    }
+}
+
 

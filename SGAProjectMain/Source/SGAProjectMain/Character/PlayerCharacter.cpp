@@ -535,6 +535,8 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (_stateComponent->IsActionable() == false)
 		return;
+	if (_stateComponent->IsRolling() )
+		return;
 	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{
 		if (gun->IsStationaryReload() && _stateComponent->IsReloading()) // 정지 재장전 중일 때는 이동 불가

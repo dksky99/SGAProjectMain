@@ -14,7 +14,9 @@ UCharacterStateComponent::UCharacterStateComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+
+	SetComponentTickEnabled(false);
 
 	// ...
 }
@@ -37,7 +39,7 @@ void UCharacterStateComponent::CheckTickOnOff()
 	if (_activeAbnormalitiesWeight != 0)
 		return;
 
-		PrimaryComponentTick.bCanEverTick = false;
+	SetComponentTickEnabled(false);
 
 }
 
@@ -98,8 +100,10 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 
 		//GetStatComponent()->ReceiveDirectDamage(damage);
 	//틱이 꺼져있으면 활성화.
-	if (PrimaryComponentTick.bCanEverTick == false)
-		PrimaryComponentTick.bCanEverTick = true;
+	if (!IsComponentTickEnabled()==false)
+	{
+		SetComponentTickEnabled(true);
+	}
 		
 
 	_activeAbnormalitiesWeight |= temp;
@@ -163,6 +167,7 @@ void UCharacterStateComponent::SubAbnormality(EAbnormalityState abnormality)
 	_activeAbnormalities &= ~temp;
 	bool curSlow = IsSlow();
 	bool curUnable = IsUnable();
+
 
 	if (prevSlow != curSlow || curSlow == false)
 	{
@@ -255,8 +260,11 @@ void UCharacterStateComponent::CalcAbnormalityTime(float deltaTime)
 	}
 
 	//_owner->GetStatComponent()->ReceiveDirectDamage(damage);
-	if(_activeAbnormalities==0)
-		PrimaryComponentTick.bCanEverTick = false;
+	if (_activeAbnormalities == 0)
+	{
+		PrimaryComponentTick.bCanEverTick = false; // (옵션, 명시적 설정)
+		SetComponentTickEnabled(false);
+	}
 }
 
 void UCharacterStateComponent::CalcAbnormalityWeight(float deltaTime)

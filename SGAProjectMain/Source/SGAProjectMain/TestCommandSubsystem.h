@@ -25,6 +25,7 @@ private:
     FConsoleCommandDelegate MoveMainGameDelegate;
     FConsoleCommandDelegate CallEscapePlaneDelegate;
     FConsoleCommandDelegate CallEnemyReinforceDelegate;
+    FConsoleCommandDelegate CallEnemyMissionReinforceDelegate;
 
     IConsoleObject* KillMeCommand;
     IConsoleObject* KnockDownCommand;
@@ -32,6 +33,7 @@ private:
     IConsoleObject* MoveMainGameCommand;
     IConsoleObject* CallEscapePlaneCommand;
     IConsoleObject* CallEnemyReinforceCommand;
+    IConsoleObject* CallEnemyMissionReinforceCommand;
 
     void OnKillMe();
     void OnSelfKnockDown();
@@ -39,4 +41,5 @@ private:
     void OnMoveMainGame();
     void OnCallEscapePlane();
     void OnCallEnemyReinforce();
+    void OnCallEnemyMissionReinforce();
 };

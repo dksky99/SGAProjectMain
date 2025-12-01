@@ -68,16 +68,16 @@ void UBT_Service_Enemy::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 
 	}
 
-	FVector location;
-	float acceptance;
-	if (selfRef->GetPatrol()->GetMoveTo(location,acceptance))
+	if (selfRef->GetPatrol()->HasPath())
 	{
 		behavior->ChangeUnitType(EUnitState::Patrol); 
 
 		return;
 	}
 	
-	// 그도 아니면
-	behavior->ChangeUnitType(EUnitState::Stay); // 일단 순찰을 해보거나
+
+	
+	// 가진 순찰경로도 없다면 그자리에서 대기.
+	behavior->ChangeUnitType(EUnitState::Stay); 
 	
 }

@@ -28,6 +28,9 @@ public:
 
 protected:
 
+	virtual void PartInit() override;
+protected:
+
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _dodgeMontage;

@@ -7,6 +7,18 @@
 #include "Components/TimelineComponent.h"
 #include "PatrolComponent.generated.h"
 
+/*
+	정찰의 로직.
+	1.패트롤 태스크가 실행. 
+	2. 패트롤컴포넌트로부터 다음 좌표를 얻어옴
+	- 패트롤컴포넌트는 패트롤패스의 스플라인으로부터 다음 경유지의 좌표를 가져옴.
+
+
+
+
+
+*/
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UPatrolComponent : public UActorComponent
@@ -23,6 +35,7 @@ public:
 
 	void SetPatrolPath(class ACPatrolPath* path);
 
+	bool HasPath() { return _path != nullptr; }
 
 protected:
 
@@ -46,16 +59,16 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	int32 _index;
+	int32 _index=0;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	float _distance;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	bool _isReverse;
+	bool _isReverse=false;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	float _acceptanceRadius;	//변동이 생길떄 허용범위
+	float _acceptanceRadius=1000.f;	//변동이 생길떄 허용범위
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class ACPatrolPath* _path;

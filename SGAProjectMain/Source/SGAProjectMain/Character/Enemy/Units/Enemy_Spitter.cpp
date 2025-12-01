@@ -10,6 +10,7 @@
 
 #include "../../CharacterAnimInstance.h"
 #include "../../CharacterStateComponent.h"
+#include "../../StatComponent.h"
 #include "../../../Data/UnitAttackDataAsset.h"
 #include "../../../Object/Explosive/ExplosionComponent.h"
 
@@ -40,6 +41,8 @@ bool AEnemy_Spitter::CheckAbleTryMiddle(AActor* target)
 {
 
     if (target == nullptr)
+        return false;
+    if (_isSpitReady == false)
         return false;
     if (UAIActingHelperLibrary::IsFacingTarget(GetActorForwardVector(), GetActorLocation(), target->GetActorLocation()))
         return true;
@@ -72,18 +75,19 @@ bool AEnemy_Spitter::TryFar(AActor* target)
 
 void AEnemy_Spitter::AcidbagDestroyed()
 {
+    if (_isExplode)
+        return;
+    _isExplode = true;
     _explosionComponent->Explode();
     
 }
 
-void AEnemy_Spitter::HeadDestroyed()
-{
-    //즉사
-}
 
 bool AEnemy_Spitter::Spit(AActor* target)
 {
     if (target == nullptr)
+        return false;
+    if (_isSpitReady == false)
         return false;
     FVector targetLoc;
 
@@ -144,4 +148,62 @@ void AEnemy_Spitter::SpitProjectile()
     spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn; // 겹치면 움직여서, 아니면 억지로라도 생성
 
     AGunBulletBase* projectile = GetWorld()->SpawnActor<AGunBulletBase>(_projectileClass, muzzleLocation, _spitDirection.Rotation(), spawnParams);
+    
+    _isSpitReady = false;
+    GetWorld()->GetTimerManager().SetTimer(_spitTimer, this, &AEnemy_Spitter::SpitReady, _spitCooldown, false);
+}
+
+
+
+void AEnemy_Spitter::PartInit()
+{
+    ACharacterBase::PartInit();
+    if (_statComponent == nullptr)
+        return;
+    auto partDatas = _statComponent->GetPartDatas();
+
+    if (partDatas->IsEmpty())
+        return;
+    auto part = partDatas->Find(EBodyPart::Core);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::AcidbagDestroyed);
+    }
+    part = partDatas->Find(EBodyPart::Head);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::Critical);
+    }
+    part = partDatas->Find(EBodyPart::LeftArm);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::Critical);
+    }
+    part = partDatas->Find(EBodyPart::LeftLeg);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::Critical);
+    }
+    part = partDatas->Find(EBodyPart::RightArm);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::Critical);
+    }
+    part = partDatas->Find(EBodyPart::RightLeg);
+    if (part)
+    {
+        //기본적인 사망효과.
+        if (part->PartStats.IsEmpty() == false)
+            part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Spitter::Critical);
+    }
 }

@@ -35,17 +35,28 @@ public:
 	bool CalculateLaunchDirection(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity);
 
 	bool CalculateLaunchDirectionWithTime(const FVector& Start, const FVector& Target, float Speed, FVector& OutLaunchVelocity, float& OutFlightTime);
+
+	void JumpReady() { _isJumpReady = true; }
+protected:
+
+	virtual void PartInit() override;
+
 protected:
 
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Jump", meta = (AllowPrivateAccess = "true"))
 	class UUnitAttackDataAsset* _jumpAttackData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Jump", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Jump", meta = (AllowPrivateAccess = "true"))
 	float _jumpPower=1000.f;
 
 
+	FTimerHandle _jumpTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Jump", meta = (AllowPrivateAccess = "true"))
+	float _jumpCooldown = 5.0f;
+
+	bool _isJumpReady = true;
 
 
 };

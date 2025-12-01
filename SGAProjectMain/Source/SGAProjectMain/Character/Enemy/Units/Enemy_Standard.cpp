@@ -5,6 +5,7 @@
 #include "Components/ShapeComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "../../CharacterStateComponent.h"
+#include "../../StatComponent.h"
 #include "../../CharacterAnimInstance.h"
 #include "../../../Data/UnitAttackDataAsset.h"
 #include "NavigationSystem.h"
@@ -12,6 +13,9 @@
 #include "../../../Helper/AIActingHelperLibrary.h"
 #include "../../../MainGameMode.h"
 #include "../../../Game/EnemyReinforceManager.h"
+#include "../../../Controller/EnemyController.h"
+#include "../BehaviorControlComponent.h"
+
 AEnemy_Standard::AEnemy_Standard(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
@@ -30,7 +34,11 @@ bool AEnemy_Standard::CheckAbleTryMiddle(AActor* target)
 {
 	if (target == nullptr)
 		return false;
-	if (_hasReinforceAuthority == false)
+
+	AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(this));
+	if (!GM)return false;
+	if (!GM->GetEnemyReinforceManager()) return false;
+	if (GM->GetEnemyReinforceManager()->IsCallable() == false)
 		return false;
 	return true;
 }
@@ -77,8 +85,6 @@ bool AEnemy_Standard::TryCalling(AActor* target)
 {
 	if (target == nullptr)
 		return false;
-	if (_hasReinforceAuthority == false)
-		return false;
 
 	UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 	if (_callReinforce_Animation == nullptr)
@@ -92,7 +98,6 @@ bool AEnemy_Standard::TryCalling(AActor* target)
 		_reservedFunction.Unbind();
 	_reservedFunction.BindUObject(this, &AEnemy_Standard::CallingReinforce);
 	const float Duration = anim->PlayAnimMontage(_callReinforce_Animation);
-	_hasReinforceAuthority = false;
 	return true;
 }
 
@@ -106,14 +111,25 @@ void AEnemy_Standard::CallingReinforce()
 	if (!GM)return;
 	if (!GM->GetEnemyReinforceManager()) return;
 
+	
+
 	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
 	if (!PC) return;
 
 	ACharacterBase* MyChar = Cast<ACharacterBase>(PC->GetPawn());
 	if (!MyChar)return;
 
+	
 
-	GM->GetEnemyReinforceManager()->GetExtraCallableSquad(MyChar->GetActorLocation());
+	if (!GetCachedController())return;
+	AActor* target=GetBehaviorControl()->GetTargetActor();
+	
+	FVector loc = target != nullptr ? target->GetActorLocation() : GetActorLocation();
+
+
+
+
+	GM->GetEnemyReinforceManager()->TryReinforceCall( MyChar->GetActorLocation(), loc,target);
 }
 
 
@@ -170,7 +186,7 @@ void  AEnemy_Standard::BurrowIn()
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
-
+	_burrowReady = false;
 	GetWorld()->GetTimerManager().SetTimer(_burrowTimer,this,&AEnemy_Standard::BurrowOut, _burrowOutDelay, false);
 
 }
@@ -195,6 +211,54 @@ void AEnemy_Standard::BurrowOut()
 		return ;
 	//이 버로우 들어가는 몽타주에는 액션앤드가 없다 
 	const float Duration = anim->PlayAnimMontage(_burrowOut_Animation);
+
+	GetWorld()->GetTimerManager().SetTimer(_burrowTimer, this, &AEnemy_Standard::BurrowReady, _burrowCoolDown, false);
+}
+
+void AEnemy_Standard::PartInit()
+{
+	ACharacterBase::PartInit();
+	if (_statComponent == nullptr)
+		return;
+	auto partDatas = _statComponent->GetPartDatas();
+
+	if (partDatas->IsEmpty())
+		return;
+	auto part = partDatas->Find(EBodyPart::Head);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::LeftArm);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::LeftLeg);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::RightArm);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
+	part = partDatas->Find(EBodyPart::RightLeg);
+	if (part)
+	{
+		//기본적인 사망효과.
+		if (part->PartStats.IsEmpty() == false)
+			part->PartStats[0]._onPartDestroyed.AddDynamic(this, &AEnemy_Standard::Critical);
+	}
 }
 
 

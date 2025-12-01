@@ -9,6 +9,7 @@
 /**
  * 기본형은 중거리에 상대에 다가가기위해 너무 멀리돌아가야하거나 갈수없는위치에있다면 땅파기로 적의 위치에 나타나는 기능을 가짐.
  * 공격방식은 두가지로 하나는 적에게하는 공격, 방해되는 장애물을 박살내는 공격(겸사겸사 피격시 피해)
+ * 콜링은 
  */
 UCLASS()
 class SGAPROJECTMAIN_API AEnemy_Standard : public AEnemy
@@ -34,26 +35,35 @@ public:
 	bool TryBurrow(AActor* target);
 	void BurrowIn();
 	void BurrowOut();
+	void BurrowReady() { _burrowReady = true; }
 
+protected:
+
+	virtual void PartInit() override;
 
 
 protected:
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Burrow", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _burrowOut_Animation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Burrow", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _burrowIn_Animation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Calling", meta = (AllowPrivateAccess = "true"))
 	class UAnimMontage* _callReinforce_Animation;
 	FVector _burrowOutLoc;
 	FTimerHandle _burrowTimer;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Burrow", meta = (AllowPrivateAccess = "true"))
 	float _burrowOutDelay = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Ability/Burrow", meta = (AllowPrivateAccess = "true"))
+	float _burrowCoolDown = 10.0f;
+
+	bool _burrowReady = true;
 
 	AActor* _enemyTarget=nullptr;
 
-	bool _hasReinforceAuthority=true;
+
 };

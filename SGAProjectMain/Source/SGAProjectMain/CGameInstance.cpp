@@ -401,7 +401,7 @@ void UCGameInstance::InitializeUnitData()
 	// 데이터 테이블 에셋이 유효한지 확인 (에디터에서 할당되었는지)
 	if (!IsValid(_unitTable) || !IsValid(_unitPartDefinitionTable))
 	{
-		UE_LOG(LogTemp, Error, TEXT("UMyGameInstance::InitializeUnitData: UnitDataTable or PartDefinitionTable is not valid!"));
+		UE_LOG(LogTemp, Error, TEXT("UCGameInstance::InitializeUnitData: UnitDataTable or PartDefinitionTable is not valid!"));
 		return;
 	}
 
