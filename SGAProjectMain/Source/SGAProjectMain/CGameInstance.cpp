@@ -286,6 +286,14 @@ void UCGameInstance::SaveGame()
 	UGameplayStatics::SaveGameToSlot(_curSaveGame, TEXT("SaveSlot"), 0);
 }
 
+TArray<struct FOwnedItem>& UCGameInstance::GetPurchasedShopItems()
+{
+	if (!_curSaveGame)
+		LoadGame();
+
+	return _curSaveGame->GetPurchasedShopItems();
+}
+
 FStratagemSlot UCGameInstance::GetStratagemSlotFromTable(int32 id)
 {
 	FString rowName = FString::FromInt(id);
@@ -300,10 +308,12 @@ TSubclassOf<class AStratagem> UCGameInstance::GetStratagemClassFromTable(int32 i
 	return *row->StratagemClass;
 }
 
-void UCGameInstance::AddRewardCurrency(const FPlayerCurrency& reward)
+void UCGameInstance::AddRewardCurrency(FPlayerCurrency reward)
 {
 	if (!_curSaveGame)
 		LoadGame();
+
+	int32 _curLevel = _curSaveGame->GetPlayerLevel();
 	_curSaveGame->AddCurrency(reward);
 	SaveGame();
 }

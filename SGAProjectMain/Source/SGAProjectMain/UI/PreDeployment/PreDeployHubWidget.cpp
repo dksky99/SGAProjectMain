@@ -18,7 +18,10 @@ void UPreDeployHubWidget::NativeOnInitialized()
 	_stgBtn->OnClicked.AddDynamic(this, &UPreDeployHubWidget::SwitchToStratagemPage);
 
 	UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
+	if (!GI) return;
+
 	auto state = GI->GetPreDeployState();
+
 	_primaryGunSlot->InitializeEntry(state->GetPrimaryGunID());
 	_secondaryGunSlot->InitializeEntry(state->GetSecondaryGunID());
 

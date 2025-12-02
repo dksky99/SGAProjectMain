@@ -34,6 +34,9 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
+	int32 _playerLevel; // 플레이어 레벨
+
+	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
 	FPlayerCurrency _playerCurrency; // 플레이어가 보유한 화폐 정보
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")

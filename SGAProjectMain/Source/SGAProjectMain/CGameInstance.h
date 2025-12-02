@@ -127,7 +127,7 @@ public:
 	class UDataTable* GetStratagemTable() { return _stratagemTable; }
 
 	// 재화
-	void AddRewardCurrency(const FPlayerCurrency& reward);
+	void AddRewardCurrency(FPlayerCurrency reward);
 	FSampleBundle GetSavedSample();
 	FPlayerCurrency GetCurrentCurrency();
 
@@ -156,6 +156,7 @@ public:
 	void LoadGame();
 	void SaveGame();
 	class UCSaveGame* GetCurrentSave() { return _curSaveGame; }
+	TArray<struct FOwnedItem>& GetPurchasedShopItems();
 
 	// 상점
 	bool IsShopItemPurchased(EShopType type, int32 id);
@@ -166,6 +167,8 @@ public:
 	struct FShopItemData GetShopItemByID(EShopType type, int32 id);
 	class UDataTable* GetShopItemTable() { return _shopItemTable; }
 	struct FPlayerCurrency GetShopItemPriceByID(EShopType type, int32 id);
+
+	// 경험치
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
