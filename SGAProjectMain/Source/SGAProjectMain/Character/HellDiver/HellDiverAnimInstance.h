@@ -86,7 +86,7 @@ protected:
 	class AGunBase* _curWeapon;
 
 
-
+	//알파가 1이면 조준 0이면 평범한 애니메이션
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _focusAlpha = 0.0f;
 
@@ -106,12 +106,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FTransform _muzzleTrans = FTransform();
 
+	//목표위치
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	FVector _targetPos = FVector();
+
+	//총구의 위치->총 메쉬의 루트로부터=오른손 소켓으로부터-> 오른손소캣트랜스폼에 이걸 곱하면 총구의 트랜스폼을 얻을수있다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FTransform _muzzleTrans_Relation = FTransform();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	FTransform _rightHand_WorldTrans = FTransform();
+
+	//조준보정 강도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _aimAlpha = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _angleLimit = 130.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float _interpSpeed = 0.5f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FVector _jointTargetLoc = FVector();
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	FVector _targetPos = FVector();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	uint8 _curEquipIndex=0;

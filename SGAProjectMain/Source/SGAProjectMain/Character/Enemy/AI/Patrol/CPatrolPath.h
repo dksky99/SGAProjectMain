@@ -19,6 +19,7 @@ public:
 
 	virtual void OnConstruction(const FTransform& transform) override;
 
+	FVector GetStartPosition();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -31,7 +32,7 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	bool _isLoop;
+	bool _isLoop=false;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class USplineComponent* _spline;

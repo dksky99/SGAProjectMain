@@ -13,6 +13,7 @@
  */
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnObjectiveCompleted, FName)
 DECLARE_MULTICAST_DELEGATE(FOnMissionCompleted)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerUpdated, float)
 
 USTRUCT()
 struct FMissionProgress
@@ -50,6 +51,7 @@ public:
 
 	FOnObjectiveCompleted _objectiveCompletedEvent;
 	FOnMissionCompleted _missionCompletedEvent;
+	FOnTimerUpdated _timerUpdatedEvent;
 
 protected:
 	void UpdateTimer(); 
@@ -81,11 +83,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AEnemyReinforceManager> _enemyReinforceManagerClass;
 
+
 	UPROPERTY(EditAnywhere, Category = "Game/GamePlay")
 	TSubclassOf<class AHelldiverReinforceManager> _helldiverReinforceManagerClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AEnemyReinforceManager* _enemyReinforceManager;
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AEnemyPatrolManager* _enemyPatrolManager;
+	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
+	class AEnemyGarrisonManager* _enemyGarrisonManager;
 	UPROPERTY(VisibleAnywhere, Category = "Game/EnemyReinforce")
 	class AHelldiverReinforceManager* _helldiverReinforceManager;
 

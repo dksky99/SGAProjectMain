@@ -11,19 +11,30 @@ void UPreDeployWeaponPanel::InitializePanel(UPreDeploymentState* state)
     Super::InitializePanel(state);
 
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
-    UDataTable* gunTable = GI->GetGunTable();
+    TArray<FOwnedItem>& purchasedItems = GI->GetPurchasedShopItems();
 
     // 무기 타입별로 총을 그룹화 (카테고리 & 총의 id)
     TMap<EGunCategory, TArray<int32>> groupedGuns;
-    for (auto& row : gunTable->GetRowMap()) // 모든 총 데이터를 불러오기
+    for (const FOwnedItem& item : purchasedItems)
     {
-        FGunData* gunData = (FGunData*)row.Value;
-        if (gunData->_slotType == _panelSlotType) // 특정 슬롯 타입에 해당하는 총만
+		if (item._type != EShopType::Gun) continue; // 총 아이템만 처리
+
+        int32 itemID = item._id;
+        FGunData gunData = GI->GetGunDataFromTable(itemID);
+        if (gunData._slotType == _panelSlotType) // 특정 슬롯 타입에 해당하는 총만
         {
-            int32 id = FCString::Atoi(*row.Key.ToString());
-            groupedGuns.FindOrAdd(gunData->_category).Add(id); // 카테고리별로 배열에 추가
+            groupedGuns.FindOrAdd(gunData._category).Add(itemID); // 카테고리별로 배열에 추가
         }
-    }
+	}
+    //for (auto& row : gunTable->GetRowMap()) // 모든 총 데이터를 불러오기
+    //{
+    //    FGunData* gunData = (FGunData*)row.Value;
+    //    if (gunData->_slotType == _panelSlotType) // 특정 슬롯 타입에 해당하는 총만
+    //    {
+    //        int32 id = FCString::Atoi(*row.Key.ToString());
+    //        groupedGuns.FindOrAdd(gunData->_category).Add(id); // 카테고리별로 배열에 추가
+    //    }
+    //}
 
     _sectionPanel->ClearChildren();
 

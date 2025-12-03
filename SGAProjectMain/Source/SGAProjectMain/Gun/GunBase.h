@@ -92,6 +92,7 @@ public:
 	FTransform GetMuzzleTrans();
 	FVector GetMuzzleLoc();
 	FRotator GetMuzzleRot();
+	FTransform GetMuzzleRelate();
 
 	FTransform GetLeftHandleTrans();
 

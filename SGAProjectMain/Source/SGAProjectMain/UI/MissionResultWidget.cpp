@@ -121,7 +121,7 @@ void UMissionResultWidget::ShowTotalRewards()
 	for (auto& slot : _rewardSlots)
 		slot->HideRewardBox();
 
-	_totalXpText->SetText(FText::AsNumber(_missionResult._totalReward._experience));
+	_totalXpText->SetText(FText::AsNumber(_missionResult._totalExperience));
 	_totalRequisitionText->SetText(FText::AsNumber(_missionResult._totalReward._requisitionSlips));
 
 	FTimerHandle timerHandle;
@@ -222,13 +222,14 @@ void UMissionResultWidget::ShowPayoutSummary()
 	_payoutPanel->SetVisibility(ESlateVisibility::Visible);
 	
 	const FPlayerCurrency& totalReward = _missionResult._totalReward;
+	const int32 totalXp = _missionResult._totalExperience;
 
 	_commonSampleText->SetText(FText::AsNumber(totalReward.GetSampleCount(ESampleType::Common)));
 	_rareSampleText->SetText(FText::AsNumber(totalReward.GetSampleCount(ESampleType::Rare)));
 	_superSampleText->SetText(FText::AsNumber(totalReward.GetSampleCount(ESampleType::Super)));
-	_finalXpText->SetText(FText::AsNumber(totalReward._experience));
 	_medalText->SetText(FText::AsNumber(totalReward._medals));
 	_finalRequisitionText->SetText(FText::AsNumber(totalReward._requisitionSlips));
+	_finalXpText->SetText(FText::AsNumber(totalXp));
 
 	FTimerHandle timerHandle;
 	GetWorld()->GetTimerManager().SetTimer(timerHandle, 

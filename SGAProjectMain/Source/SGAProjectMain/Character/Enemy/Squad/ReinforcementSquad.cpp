@@ -86,10 +86,10 @@ void AReinforcementSquad::CallUnit()
         return;
     }
     _spawnPoint->SetWorldLocation(GetCallPoint(GetActorLocation()));
-    SpawnUnit(extra);
+    //SpawnUnit(extra);
 
-    extra->Value->RecieveTargetLoc(MakeRandomLocation());
-    extra->Value->RecieveTarget(_target);
+    extra->GetCachedController()->RecieveTargetLoc(MakeRandomLocation());
+    extra->GetCachedController()->RecieveTarget(_target);
 
 
     float nextCall = FMath::FRandRange(_callingDelay_Min, _callingDelay_Max);
@@ -149,13 +149,11 @@ FVector AReinforcementSquad::GetCallPoint( FVector origin)
 void AReinforcementSquad::ReadyToCall()
 {
     _isReadyToCall = true;
-    for (auto& pairs : _unitPool)
+    for (auto unit : _unitPool)
     {
 
-        for (auto& pair : pairs.Value._units)
-        {
-            pair.Key->ReadyToSpawn();
-        }
+        unit->ReadyToSpawn();
+
 
 
     }

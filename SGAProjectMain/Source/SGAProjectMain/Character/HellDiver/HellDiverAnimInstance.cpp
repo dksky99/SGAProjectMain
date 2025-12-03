@@ -84,7 +84,6 @@ void UHellDiverAnimInstance::AnimNotify_Reload()
 
 void UHellDiverAnimInstance::AnimNotify_FootStep()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Footstep Notify"));
 	
 	if (!_hellDiver) return;
 	_hellDiver->MakeSound(_speed / _hellDiver->GetStatComponent()->GetDefaultSpeed(), "Footstep");

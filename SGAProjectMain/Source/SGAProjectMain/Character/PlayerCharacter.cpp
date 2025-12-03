@@ -37,6 +37,7 @@
 #include "../UI/SampleWidget.h"
 #include "../UI/MissionWidget.h"
 #include "../UI/InventoryWheelWidget.h"
+#include "../UI/MissionTimerWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -123,6 +124,8 @@ void APlayerCharacter::PostInitializeComponents()
 		_sampleWidget = CreateWidget<USampleWidget>(GetWorld(), _sampleWidgetClass);
 	if (_missionWidgetClass)
 		_missionWidget = CreateWidget<UMissionWidget>(GetWorld(), _missionWidgetClass);
+	if (_timerWidgetClass)
+		_timerWidget = CreateWidget<UMissionTimerWidget>(GetWorld(), _timerWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -199,6 +202,9 @@ void APlayerCharacter::BeginPlay()
 
 	if (_missionWidget)
 		_missionWidget->AddToViewport();
+
+	if (_timerWidget)
+		_timerWidget->AddToViewport();
 
 
 	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
@@ -536,6 +542,8 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	if (GetCharacterMovement()->IsFalling())
 		return;
 	if (_stateComponent->IsActionable() == false)
+		return;
+	if (_stateComponent->IsRolling() )
 		return;
 	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{

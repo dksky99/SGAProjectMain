@@ -123,6 +123,11 @@ public:
 
 protected:
 
+	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void UnPossessed() override;
+
+
 	FTransform GetHandSocketTransform() const;
 	FTransform GetEquip1SocketTransform() const;
 	FTransform GetEquip2SocketTransform() const;

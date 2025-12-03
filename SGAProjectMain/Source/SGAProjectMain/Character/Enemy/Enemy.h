@@ -49,6 +49,10 @@ public:
 
 	virtual void UnPossessed() override;
 
+	bool SetOwnController(AController* controller);
+	bool CombineController();
+
+	class AEnemyController* GetCachedController() { return _controller; }
 	// 시야감각 측에서 적을 찾아서 배틀상태로 변환.
 	virtual void FoundTarget(class ACharacterBase* target);
 
@@ -99,6 +103,8 @@ public:
 	float GetMiddleRange() { return _middleRange; }
 	float GetFarRange() { return _farRange; }
 
+	void TurningBack();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;
@@ -131,8 +137,12 @@ protected:
 	UPROPERTY()
 	EUnitState _unitState=EUnitState::Stay;
 
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	class AEnemyController* _controller;
 	UPROPERTY()
-	TWeakObjectPtr<class AEnemySquad> _squad;
+	class AEnemySquad* _squad;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
@@ -142,5 +152,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
 	class UBehaviorTree* _behaviorTree;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/AI", meta = (AllowPrivateAccess = "true"))
+	float _unitRVOWeight = 0.5f;
 
 };

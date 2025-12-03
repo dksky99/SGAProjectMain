@@ -6,12 +6,16 @@
 #include "PatrolComponent.h"
 #include "NavigationSystem.h"
 #include "../../Controller/EnemyController.h"
+#include "../StatComponent.h"
+#include "BehaviorControlComponent.h"
 
 // Sets default values
 AEnemySquad::AEnemySquad()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	//부대가 호출되고 10초단위로 부대를 복귀시킬지 확인한다. 탐색 혹은 공격 임무를받은 부대만 틱이 켜진다.
+	PrimaryActorTick.TickInterval = 10.f;
 	_rootComponent = CreateDefaultSubobject<USceneComponent>("RootComp");
 	RootComponent = _rootComponent;
 	
@@ -32,6 +36,11 @@ void AEnemySquad::BeginPlay()
 void AEnemySquad::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (CheckSquadReturn())
+	{
+
+		PrimaryActorTick.bCanEverTick = false;
+	}
 
 }
 
@@ -45,83 +54,45 @@ void AEnemySquad::Init()
 		TSubclassOf<AEnemy> enemyClass = unitPair.Key;
 		int32 count = unitPair.Value;
 		
-		FEnemyUnit& enemyArray = _unitPool.FindOrAdd(enemyClass);
 
-					UE_LOG(LogTemp, Display, TEXT("SpawnCount %d"),count);
 		for (int i = 0; i < count; ++i)
 		{
 			AEnemy* enemy = GetWorld()->SpawnActor<AEnemy>(enemyClass, FVector::ZeroVector, FRotator::ZeroRotator,param);
 			if (enemy)
 			{
-				UE_LOG(LogTemp, Display, TEXT("SpawnUnit"));
 				enemy->SpawnDefaultController();
-				AEnemyController* controller = Cast<AEnemyController>(enemy->GetController());
+				
 				if (enemy->AddToSquad(this))
 				{
 					
-					enemyArray._units.Add(enemy, controller);
-					UE_LOG(LogTemp, Display, TEXT("AddUnit"));
+					_unitPool.Add(enemy);
 
 				}
 			}
 		}
 	}
+	UE_LOG(LogTemp, Display, TEXT("%s Spawn %d Unit"),*(GetName()),_unitPool.Num());
 	DeactivateAllUnits();
 }
 
-void AEnemySquad::SpawnAllUnits()
-{
-
-	for (auto& pairs : _unitPool)
-	{
-		for (auto& pair : pairs.Value._units)
-		{
-			if (IsActivatedUnit(&pair))
-				continue;
-			if(pair.Key->IsReadyToSpawn())
-				SpawnUnit(&pair);
-		}
-	}
 
 
 
-
-}
-
-bool AEnemySquad::SpawnUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
-{
-	if (IsActivatedUnit(unit))
-		return false;
-	//위치 설정.
-	unit->Key->SetActorLocation(_spawnPoint->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
-	UE_LOG(LogTemp, Error, TEXT("SpawnPoint %f %f %f"), _spawnPoint->GetComponentLocation().X, _spawnPoint->GetComponentLocation().Y, _spawnPoint->GetComponentLocation().Z);
-	//UE_LOG(LogTemp, Error, TEXT("SpawnLoc %f %f %f"), unit->Key->GetActorLocation.X, unit->Key->GetActorLocation().Y, unit->Key->GetActorLocation().Z);
-	//컨트롤러 빙의
-	unit->Value->Possess(unit->Key);
-	//활성화
-
-	unit->Key->Spawn();
-
-//	UnitSpawnAct(unit);
-
-
-	return true;
-}
-
-void AEnemySquad::UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
+void AEnemySquad::UnitSpawnAct(class AEnemy* unit)
 {
 	switch (_squadState)
 	{
 	case ESquadState::Stationed:
 	case ESquadState::Search:
-		unit->Value->RecieveTargetLoc(_targetLoc);
+		unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
 		//소환 후 자신의 소환 위치 에서 일정 범위 내의 랜덤 위치로 이동.경계치를 5부여
 		break;
 	case ESquadState::Patrol:
+		unit->GetPatrol()->SetPatrolPath(_patrolPath);
 		//패트롤 패스를 부여.
 		break;
 	case ESquadState::Attack:
-		unit->Value->RecieveTarget(_target);
+		unit->GetCachedController()->RecieveTarget(_target);
 		//타겟을 부여
 		break;
 	case ESquadState::Deactivate:
@@ -132,89 +103,81 @@ void AEnemySquad::UnitSpawnAct(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class
 }
 
 
-void AEnemySquad::Command_Search()
+void AEnemySquad::Command_Search(FVector targetLoc)
 {
+	_targetLoc = targetLoc;
+	
 	_squadState = ESquadState::Search;
-	for (auto& PoolPair : _unitPool)
+
+	PrimaryActorTick.bCanEverTick = true;
+	for (auto unit : _unitPool)
 	{
-		for (auto& pair : PoolPair.Value._units)
-		{
-			if (IsActivatedUnit(&pair))
-			{
 
-				pair.Value->RecieveTargetLoc(_targetLoc);
+		
+		unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
 
-			}
-
-
-
-		}
+		
 	}
+	
 }
 
-void AEnemySquad::Command_Stationed()
+void AEnemySquad::Command_Stationed(FVector targetLoc)
 {
-	//만약 패트롤 패스가 있다면 패트롤패스를 제거,
+	if (targetLoc != FVector::ZeroVector)
+		_targetLoc = targetLoc;
 	_squadState = ESquadState::Stationed;
-	for (auto& PoolPair : _unitPool)
+	for (auto unit : _unitPool)
 	{
-		for (auto& pair : PoolPair.Value._units)
-		{
-			if (IsActivatedUnit(&pair))
-			{
-				pair.Value->RecieveTargetLoc(_targetLoc);
+		
+		unit->GetPatrol()->SetPatrolPath(nullptr);
+		//기지에서 소환된 유닛이 어찌해야할지 고민해야할듯하다. 
+		//기지에서 소환된 유닛은 패트롤패스를 지워 아무일없을때 그자리에서 대기한다. 
+		//소환된 유닛은 집결지로 지정된 장소에 모이며 미리 경계치를 부여받아 인근에서 소리가 들리면 바로 확인하러간다.
+		unit->GetCachedController()->RecieveTargetLoc(_targetLoc);
 
-			}
-
-
-
-		}
+		
 	}
 }
 
-void AEnemySquad::Command_Patrol()
+void AEnemySquad::Command_Patrol(class ACPatrolPath* path)
 {
+	_patrolPath = path;
 	//가진 패트롤 패스를 넘김.
 	if (_patrolPath == nullptr)
-		Command_Stationed();
-	_squadState = ESquadState::Patrol;
-	for (auto& PoolPair : _unitPool)
 	{
-		for (auto& pair : PoolPair.Value._units)
-		{
-			if (IsActivatedUnit(&pair))
-			{
-
-				pair.Key->GetPatrol()->SetPatrolPath(_patrolPath);
-
-			}
-
-
-
-		}
+		Command_Stationed();
+		return;
 	}
+	_squadState = ESquadState::Patrol;
+	for (auto unit : _unitPool)
+	{
+
+		unit->GetPatrol()->SetPatrolPath(_patrolPath);
+		
+	}
+
+	
 }
 
-void AEnemySquad::Command_Attack()
+void AEnemySquad::Command_Attack(AActor* target)
 {
-	//
+	_target = target;
+	if(_target==nullptr)
+	{
+		Command_Stationed();
+		return;
+	}
 	_squadState = ESquadState::Attack;
 
-	for (auto& PoolPair : _unitPool)
+	PrimaryActorTick.bCanEverTick = true;
+	for (auto unit : _unitPool)
 	{
-		for (auto& pair : PoolPair.Value._units)
-		{
-			if (IsActivatedUnit(&pair))
-			{
 
-				pair.Value->RecieveTarget(_target);
-
-			}
+		unit->GetCachedController()->RecieveTarget(_target);
 
 
-
-		}
 	}
+
 }
 
 void AEnemySquad::Command_Deactivate()
@@ -222,19 +185,24 @@ void AEnemySquad::Command_Deactivate()
 	_squadState = ESquadState::Deactivate;
 }
 
-TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
+//병력 복귀. 살아있는 병력은 다시 땅속으로 들어가 재호출을 기다린다. 이렇게되면 이미 죽은 병력만 다시 되살아나면 소환이 가능.
+void AEnemySquad::ReturnToSquad()
 {
-	if (!_unitPool.Contains(EnemyClass)) return nullptr;
+}
 
-	auto& Pool = _unitPool[EnemyClass]._units;
-	for (auto& Enemy : Pool)
+AEnemy* AEnemySquad::GetUnitFromPool(TSubclassOf<AEnemy> EnemyClass)
+{
+
+	for (auto Enemy : _unitPool)
 	{
-		if (!IsActivatedUnit(&Enemy)) // 비활성화 상태인 경우
+		if (Enemy->GetClass() != EnemyClass)
+			continue;
+		if (!IsActivatedUnit(Enemy)) // 비활성화 상태인 경우
 		{
-			SpawnUnit(&Enemy);
+			//SpawnUnit(Enemy);
 
 
-			return &Enemy;
+			return Enemy;
 		}
 	}
 	return nullptr; // 사용 가능한 유닛 없음
@@ -264,66 +232,125 @@ void AEnemySquad::ReturnUnitToPool(AEnemy* enemy)
 
 void AEnemySquad::DeactivateAllUnits()
 {
-	for (auto& PoolPair : _unitPool)
+	for (auto unit : _unitPool)
 	{
-		for (auto&  pair : PoolPair.Value._units)
-		{
-			
-			ReturnUnitToPool(pair.Key);
+		
+		ReturnUnitToPool(unit);
 
-
-
-		}
 	}
 }
 
-TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* AEnemySquad::CheckExtraUnit()
+class AEnemy* AEnemySquad::CheckExtraUnit()
 {
 
-	for (auto& pairs : _unitPool)
+	for (auto unit  : _unitPool)
 	{
-		for (auto& pair : pairs.Value._units)
+		if (unit->IsReadyToSpawn())
 		{
-			if (IsActivatedUnit(&pair))
-			{
-				continue;
+			
+			return unit;
 
-			}
-			if (pair.Key->IsReadyToSpawn())
-				return &pair;
 		}
+		
 	}
 
 	return nullptr;
 }
 
+bool AEnemySquad::IsCallableSquad()
+{
+	if(IsActivatedSquad())
+		return false;
+	
+	return true;
+}
+
+bool AEnemySquad::IsActivatedSquad()
+{
+	//유닛중 하나만이라도 활성화상태거나 죽어있는사태라면 소환이 불가하다.
+	//증원부대만 사용. 
+
+	if (_unitPool.IsEmpty())
+		return true;
+	for (auto unit : _unitPool)
+	{
+		if(unit->IsReadyToSpawn()==false)
+			return true;
+	}
+	return false;
+}
+
+bool AEnemySquad::CheckSquadReturn()
+{
+	//이부대는 증원부대로 
+	if (_squadState != ESquadState::Attack && _squadState != ESquadState::Search)
+	{
+		return false;
+	}
+
+	for (auto unit : _unitPool)
+	{
+		//사망했거나 호출되지않은유닛은 확인대상에서 제외한다.
+		if (unit->GetController() == nullptr)
+			continue;
+
+		if (unit->GetBehaviorControl()->GetCurUnitType() != EUnitState::Stay)
+			return false;
+	}
+	//모든유닛이 타겟을 잃고 평화상태에 들어갔다. 
+	SquadReturn();
+
+	return true;
+}
+
+void AEnemySquad::SquadReturn()
+{
+	for (auto unit : _unitPool)
+	{
+		//죽었으면 시체가유지되어야하니 복귀하지 아니한다.
+		if (unit->GetStatComponent()->IsDead())
+			continue;
+		//죽지않았지만 컨트롤러가 떨어져나간 유닛도 다시 부르지 않는다. 소환이 안된유닛일 가능성이있음.
+		if (unit->GetController() != nullptr)
+			continue;
+		unit->TurningBack();
+	}
+	//유닛들에게 전부 복귀 명령을 내렸으니 비활성화상태로 넘어간다.
+	Command_Deactivate();
+}
+
 int32 AEnemySquad::CheckActivateUnitCount()
 {
 	int32 count = 0;
-	for (auto& pairs : _unitPool)
+	for (auto unit : _unitPool)
 	{
-		for (auto& pair : pairs.Value._units)
+		if (IsActivatedUnit(unit))
 		{
-			if (IsActivatedUnit(&pair))
-			{
-				continue;
 
-			}
-			
 			count++;
+
 		}
+		
+		
 	}
 
 
 	return count;
 }
 
-bool AEnemySquad::IsActivatedUnit(TPair< TObjectPtr<class AEnemy>, TObjectPtr<class AEnemyController>>* unit)
+bool AEnemySquad::IsActivatedUnit(class AEnemy* unit)
 {
-	//유닛의 폰이 컨트롤러가 없거나 컨트롤러가 폰이 없다면 그건 해제되어있는 상태. 
-	if (unit->Key->GetController() == nullptr || unit->Value->GetPawn() == nullptr)
-		return false;
+	//유닛의 폰이 컨트롤러가 있거나 IsDead상태라면 활성화된 유닛.
+	
 
+	return unit->IsReadyToSpawn();
+}
+
+bool AEnemySquad::IsAliveUnit(AEnemy* unit)
+{
+	//살아있는 유닛은 컨트롤러가 붙어있으면 살아있는 유닛. 
+	if (unit->GetController() == nullptr)
+		return false;
 	return true;
 }
 

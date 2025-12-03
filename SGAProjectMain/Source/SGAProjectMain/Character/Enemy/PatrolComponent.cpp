@@ -22,7 +22,11 @@ bool UPatrolComponent::GetMoveTo(FVector& OutLocation, float& OutAcceptanceRadiu
 	OutLocation = FVector::ZeroVector; //일단 초기화
 	OutAcceptanceRadius = _acceptanceRadius;
 
-	if (_path == nullptr)return false;
+	if (_path == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Non Path"));
+		return false;
+	}
 
 	//경로에서 지정한 경유지에 있는 트랜스폼 정보를 가져오기
 	OutLocation = _path->GetSpline()->GetLocationAtSplinePoint(_index, ESplineCoordinateSpace::World);
@@ -39,38 +43,43 @@ void UPatrolComponent::UpdateNextIndex()
 
 	int32 count = _path->GetSpline()->GetNumberOfSplinePoints();
 
+	//정방향
 	if (_isReverse == false)
 	{
+		//인덱스가 최대치보다 작을떈 추가되는 방향으로
 		if (_index < count - 1)
 		{
 			_index++;
 			return;
 		}
 
+		//만약끝에 도달했고 이게 마치 원처럼 끝과 시작점이 맡물렸다면 다음 인덱스는 0
 		if (_path->GetSpline()->IsClosedLoop())
 		{
 			_index = 0;
 			return;
 		}
-
+		//끝에 도달했고 선형이라면 이전 지점으로 돌아감.
 		_index = count - 2;
+		//방향을 역전. 다음노드를 찾을떄 이 쪽으로 안올것
 		_isReverse = !_isReverse;
 
 	}
 	else
 	{
+		//인덱스가 0보다 클땐 내려가는쪽으로.
 		if (_index > 0)
 		{
 			_index--;
 			return;
 		}
-
+		//
 		if (_path->GetSpline()->IsClosedLoop())
 		{
 			_index = count-1;
 			return;
 		}
-
+		
 		_index = 1;
 		_isReverse = !_isReverse;
 
@@ -83,9 +92,10 @@ void UPatrolComponent::UpdateNextIndex()
 
 void UPatrolComponent::SetPatrolPath(ACPatrolPath* path)
 {
-	if (path == nullptr)
+	if (path != _path)
 	{
 
+		_index = 0;
 	}
 	_path = path;
 }
@@ -96,30 +106,30 @@ void UPatrolComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (patrolCurve)
-	{
-		FOnTimelineEvent TimelineFinishedDelegate;
-		FOnTimelineFloat TimelineUpdateDelegate;
-
-		TimelineUpdateDelegate.BindUFunction(this, FName("OnTimelineUpdate"));
-		TimelineFinishedDelegate.BindUFunction(this, FName("OnTimelineFinished"));
-
-
-		patrolTimeline.AddInterpFloat(
-			patrolCurve,
-			TimelineUpdateDelegate
-		);
-		patrolTimeline.SetTimelineFinishedFunc(
-			TimelineFinishedDelegate
-		);
-
-
-		float minT, maxT;
-
-		patrolCurve->GetTimeRange(minT,maxT);
-
-		patrolTimeline.SetTimelineLength(maxT);
-	}
+	//if (patrolCurve)
+	//{
+	//	FOnTimelineEvent TimelineFinishedDelegate;
+	//	FOnTimelineFloat TimelineUpdateDelegate;
+	//
+	//	TimelineUpdateDelegate.BindUFunction(this, FName("OnTimelineUpdate"));
+	//	TimelineFinishedDelegate.BindUFunction(this, FName("OnTimelineFinished"));
+	//
+	//
+	//	patrolTimeline.AddInterpFloat(
+	//		patrolCurve,
+	//		TimelineUpdateDelegate
+	//	);
+	//	patrolTimeline.SetTimelineFinishedFunc(
+	//		TimelineFinishedDelegate
+	//	);
+	//
+	//
+	//	float minT, maxT;
+	//
+	//	patrolCurve->GetTimeRange(minT,maxT);
+	//
+	//	patrolTimeline.SetTimelineLength(maxT);
+	//}
 
 	// ...
 	
@@ -131,7 +141,7 @@ void UPatrolComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	patrolTimeline.TickTimeline(DeltaTime);
+	//patrolTimeline.TickTimeline(DeltaTime);
 	// ...
 }
 

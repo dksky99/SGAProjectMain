@@ -12,6 +12,8 @@
 #include "Object/Map/DropPlaneBeacon.h"
 #include "Object/Map/TerminalConsole.h"
 #include "Game/EnemyReinforceManager.h"
+#include "Game/EnemyPatrolManager.h"
+#include "Game/EnemyGarrisonManager.h"
 #include "Game/PreDeployment/PreDeploymentState.h"
 #include "Data/OperationDataAsset.h"
 #include "Data/MissionDataAsset.h"
@@ -36,10 +38,31 @@ void AMainGameMode::BeginPlay()
     if(_enemyReinforceManagerClass)
         _enemyReinforceManager = GetWorld()->SpawnActor<AEnemyReinforceManager>(_enemyReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
+   
     if (_helldiverReinforceManagerClass)
         _helldiverReinforceManager = GetWorld()->SpawnActor<AHelldiverReinforceManager>(_helldiverReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 
     _planeBeacon = Cast<ADropPlaneBeacon>(UGameplayStatics::GetActorOfClass(this, ADropPlaneBeacon::StaticClass()));
+    
+    
+    //맵의 매니저들 찾기.
+    UWorld* World = GetWorld();
+    if (!World) return;
+    TArray<AActor*> FoundActors;
+
+
+    UGameplayStatics::GetAllActorsOfClass(World, AEnemyPatrolManager::StaticClass(), FoundActors);
+    if (FoundActors.Num() > 0)
+    {
+        _enemyPatrolManager = Cast<AEnemyPatrolManager>(FoundActors[0]);
+    }
+
+    FoundActors.Empty();
+    UGameplayStatics::GetAllActorsOfClass(World, AEnemyGarrisonManager::StaticClass(), FoundActors);
+    if (FoundActors.Num() > 0)
+    {
+        _enemyGarrisonManager = Cast<AEnemyGarrisonManager>(FoundActors[0]);
+    }
 }
 
 void AMainGameMode::StartPlay()
@@ -147,6 +170,8 @@ void AMainGameMode::UpdateTimer()
     }
 
 	_remainingTime -= 1.f;
+
+	_timerUpdatedEvent.Broadcast(_remainingTime);
 }
 
 void AMainGameMode::CalculateMissionReward()
@@ -206,7 +231,7 @@ void AMainGameMode::CalculateMissionReward()
     for (const FMissionReward& reward : _missionResult._missionRewards)
     {
         if (reward._experience != 0)
-            _missionResult._totalReward.Add(ECurrencyType::Experience, reward._experience);
+			_missionResult._totalExperience += reward._experience;
         if (reward._requisitionSlips != 0)
             _missionResult._totalReward.Add(ECurrencyType::RequisitionSlips, reward._requisitionSlips);
     }

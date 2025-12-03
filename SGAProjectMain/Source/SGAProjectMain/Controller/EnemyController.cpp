@@ -32,9 +32,9 @@ AEnemyController::AEnemyController()
 
     _sightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
 
-    _sightConfig->SightRadius = 1000.f;
-    _sightConfig->LoseSightRadius = 1200.f;
-    _sightConfig->PeripheralVisionAngleDegrees = 120.f;
+    _sightConfig->SightRadius = 1500.f  ;
+    _sightConfig->LoseSightRadius = 2000.f;
+    _sightConfig->PeripheralVisionAngleDegrees = 160.f;
 
     //_sightConfig->SetMaxAge(5.f);
     //_sightConfig->AutoSuccessRangeFromLastSeenLocation = -1.f;
@@ -48,7 +48,7 @@ AEnemyController::AEnemyController()
 
 
     _hearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Config"));
-    _hearingConfig->HearingRange = 500.f;
+    _hearingConfig->HearingRange = 700.f;
     _hearingConfig->SetMaxAge(3.f);
 
     _hearingConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -98,16 +98,12 @@ void AEnemyController::OnPossess(APawn* InPawn)
         if (RunBehaviorTree(_behaviorTree))
         {
 
-            UE_LOG(LogTemp, Error, TEXT("BT_Success"));
-
-            UE_LOG(LogTemp, Display, TEXT("%s Use BehaviourTree :%s"), *(this->GetName()), *(_behaviorTree->GetName()));
-            UE_LOG(LogTemp, Display, TEXT("%s Use BlackBoard :%s"), *(this->GetName()), *(_blackBoard->GetName()));
             
         }
         else
         {
 
-            UE_LOG(LogTemp, Error, TEXT("BT_Failed"));
+            UE_LOG(LogTemp, Error, TEXT("%s :  BT_Failed"),*(InPawn->GetName()));
         }
 
 
@@ -116,7 +112,7 @@ void AEnemyController::OnPossess(APawn* InPawn)
     else
     {
 
-        UE_LOG(LogTemp, Error, TEXT("BB_Failed"));
+        UE_LOG(LogTemp, Error, TEXT("%s :  BB_Failed"), *(InPawn->GetName()));
     }
 }
 
@@ -221,7 +217,7 @@ void AEnemyController::HandleSensedSight(AActor* Actor)
         return;
 
     _curTarget = Actor;
-    UE_LOG(LogTemp, Display, TEXT("Hostile Target Acquired by Sight: %s"), *Actor->GetName());
+    //UE_LOG(LogTemp, Display, TEXT("Hostile Target Acquired by Sight: %s"), *Actor->GetName());
    
 }
 void AEnemyController::HandleSensedHearing(FVector directionHeared)

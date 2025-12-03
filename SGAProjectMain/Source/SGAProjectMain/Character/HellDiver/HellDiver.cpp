@@ -919,6 +919,7 @@ FTransform AHellDiver::GetLeftHandSocketTransform() const
     return temp ;
 }
 
+
 FTransform AHellDiver::GetMuzzleTransform() const
 {
     auto equippedGun = _invenComponent->GetEquippedGun();
@@ -1008,6 +1009,38 @@ void AHellDiver::StrongStagger(float time)
 {
     Super::StrongStagger(time);
     KnockDown(time);
+}
+
+void AHellDiver::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+    UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    if (MoveComp)
+    {
+
+        IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(NewController);
+        if (TeamAgent)
+        {
+
+            uint8 TeamIndex = TeamAgent->GetGenericTeamId().GetId();
+            // 1. RVO 활성화
+            MoveComp->SetAvoidanceEnabled(true);
+
+            // 2. 플레이어 팀 (Team 0) RVO 그룹 등록
+            MoveComp->SetAvoidanceGroup(1 << TeamIndex); // 플레이어 그룹 (Bit 1)
+
+            // 3. 나는 누구도 피하지 않는다 (인간의 입력대로 움직인다)
+            MoveComp->SetGroupsToAvoid(0);
+
+            // 4. 내가 길을 막았을 때 AI가 나를 잘 피하도록 가중치 설정
+            MoveComp->AvoidanceWeight = 1.0f;
+        }
+    }
+}
+
+void AHellDiver::UnPossessed()
+{
+    Super::UnPossessed();
 }
 
 FTransform  AHellDiver::GetHandSocketTransform() const

@@ -24,4 +24,11 @@ public:
 
 	virtual bool CheckAbleTryNear(AActor* target) override;
 	virtual bool TryNear(AActor* target)   override;
+
+protected:
+
+	virtual void PartInit() override;
+protected:
+
+
 };

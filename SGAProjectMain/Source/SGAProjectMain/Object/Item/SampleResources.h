@@ -31,6 +31,14 @@ struct FSampleBundle
         _samples.FindOrAdd(type) += amount;
     }
 
+    void Subtract(ESampleType type, int32 amount = 1)
+    {
+        if (_samples.Contains(type))
+        {
+            _samples[type] -= amount;
+        }
+	}
+
     void AddSample(const FSampleBundle& other)
     {
         for (const auto& pair : other._samples)
@@ -38,6 +46,14 @@ struct FSampleBundle
             Add(pair.Key, pair.Value);
         }
     }
+
+    void SubtractSample(const FSampleBundle& other)
+    {
+        for (const auto& pair : other._samples)
+        {
+            Subtract(pair.Key, pair.Value);
+		}
+	}
 
     bool IsEmpty() const
     {
