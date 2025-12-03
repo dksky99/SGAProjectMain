@@ -17,22 +17,7 @@ void ABombardmentController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 피격 중심은 컨트롤러 스폰 위치(= 신호기 위치)
-	_impactCenter = GetActorLocation();
-
-	// 오너 참조
-	_owner = GetOwner();
-
-	// RNG 초기화
-	if (_seed != 0)
-	{
-		_rng.Initialize(_seed);
-	}
-
-	_waveIdx = 0;
-	_shellIdxInWave = 0;
-
-	SpawnNextWave();
+	
 }
 
 void ABombardmentController::SpawnNextWave()
@@ -115,5 +100,83 @@ FVector ABombardmentController::SampleTargetLocation() const
 	const float r = _rng.FRandRange(0.0f, _scatterRadius);
 	const float th = _rng.FRandRange(0.0f, 2.0f * PI);
 	return _impactCenter + FVector(FMath::Cos(th) * r, FMath::Sin(th) * r, 0.0f);
+}
+
+void ABombardmentController::InitializeBombardment(float startDelay)
+{
+	// 피격 중심은 컨트롤러 스폰 위치(= 신호기 위치)
+	_impactCenter = GetActorLocation();
+
+	// 오너 참조
+	_owner = GetOwner();
+
+	// RNG 초기화
+	if (_seed != 0)
+	{
+		_rng.Initialize(_seed);
+	}
+
+	_waveIdx = 0;
+	_shellIdxInWave = 0;
+
+	_startDelay = FMath::Max(startDelay, 0.0f);
+
+	FTimerHandle startTimer;
+	// _startDelay 후에 첫 웨이브 시작
+	GetWorldTimerManager().SetTimer(
+		startTimer,
+		this,
+		&ABombardmentController::SpawnNextWave,
+		_startDelay,
+		false
+	);
+}
+
+float ABombardmentController::GetEstimatedFirstImpactDelay() const
+{
+	// 웨이브나 포탄 수가 0이면 폭격이 일어나지 않으므로 0.0f 반환
+	if (_waveCount <= 0 || _shellsPerWave <= 0)
+	{
+		return 0.0f;
+	}
+
+	const float speed = FMath::Max(_dropSpeed, KINDA_SMALL_NUMBER);
+
+	// 첫 번째 포탄 스폰 시점 = BeginPlay 기준 _startDelay + _intraWaveInterval 후
+	const float firstShellSpawnDelay = _startDelay + _intraWaveInterval;
+
+	// 스폰 위치: (0, 0, _dropHeight)
+	const FVector spawnLocation = FVector(0.0f, 0.0f, _dropHeight);
+
+	// 도착 지점: 폭격 중심(_impactCenter) 근처라고 보고, 중심까지 거리로 근사
+	const FVector impactLocation = _impactCenter;
+
+	// 스폰 위치 → 폭격 중심까지 실제 이동 거리
+	const float travelDistance = FVector::Dist(spawnLocation, impactLocation);
+	const float dropTime = travelDistance / speed;
+
+	// BeginPlay 기준 첫 탄 도착까지 = 스폰 딜레이 + 이동 시간
+	return firstShellSpawnDelay + dropTime;
+}
+
+float ABombardmentController::GetEstimatedBombardDuration() const
+{
+	// 웨이브나 포탄 수가 0이면 폭격이 일어나지 않으므로 0.0f 반환
+	if (_waveCount <= 0 || _shellsPerWave <= 0)
+	{
+		return 0.0f;
+	}
+
+	const int32 waves = FMath::Max(_waveCount, 0);
+	const int32 shellsPerWaveMinusOne = FMath::Max(_shellsPerWave - 1, 0);
+	const int32 wavesMinusOne = FMath::Max(_waveCount - 1, 0);
+
+	const float intraWaveTimeTotal =
+		static_cast<float>(waves) * static_cast<float>(shellsPerWaveMinusOne) * _intraWaveInterval;
+	const float interWaveTimeTotal =
+		static_cast<float>(wavesMinusOne) * _waveInterval;
+
+	// 첫 탄 도착 이후 → 마지막 탄 도착까지 걸리는 시간
+	return intraWaveTimeTotal + interWaveTimeTotal;
 }
 
