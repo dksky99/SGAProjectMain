@@ -12,7 +12,6 @@
 UENUM(BlueprintType)
 enum class ECurrencyType : uint8
 {
-    Experience,
     RequisitionSlips,
     Medals
 };
@@ -22,8 +21,8 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-    int32 _experience = 0;
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+    //int32 _experience = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
     int32 _requisitionSlips = 0;
@@ -39,9 +38,6 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
     {
         switch (type)
         {
-        case ECurrencyType::Experience:
-            _experience += amount;
-            break;
         case ECurrencyType::RequisitionSlips:
             _requisitionSlips += amount;
             break;
@@ -53,7 +49,6 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
 
     void AddCurrency(const FPlayerCurrency& other)
     {
-        _experience += other._experience;
         _requisitionSlips += other._requisitionSlips;
         _medals += other._medals;
         _samples.AddSample(other._samples);
@@ -66,7 +61,6 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
 
     void SubtractCurrency(const FPlayerCurrency& other)
     {
-        _experience -= other._experience;
         _requisitionSlips -= other._requisitionSlips;
         _medals -= other._medals;
 		_samples.SubtractSample(other._samples);

@@ -314,6 +314,7 @@ void UCGameInstance::AddRewardCurrency(FPlayerCurrency reward)
 		LoadGame();
 
 	int32 _curLevel = _curSaveGame->GetPlayerLevel();
+
 	_curSaveGame->AddCurrency(reward);
 	SaveGame();
 }
@@ -383,6 +384,9 @@ void UCGameInstance::ApplyMissionResult(const FMissionResult& missionResult)
 
 	// 보상 적용
 	_curSaveGame->AddCurrency(missionResult._totalReward);
+
+	// 경험치 적용
+	AddExperience(missionResult._totalExperience);
 
 	if (missionResult._mission)
 	{
@@ -523,4 +527,36 @@ FPlayerCurrency UCGameInstance::GetShopItemPriceByID(EShopType type, int32 id)
 {
 	FShopItemData itemData = GetShopItemByID(type, id);
 	return itemData._price;
+}
+
+void UCGameInstance::AddExperience(int32 amount)
+{
+	if (amount <= 0)
+		return;
+
+	if (!_curSaveGame)
+		LoadGame();
+
+	int32 curLevel = _curSaveGame->GetPlayerLevel();
+	int32 curExp = _curSaveGame->GetPlayerExperience();
+	curExp += amount;
+
+	// 레벨업 처리
+	while (curExp >= GetExpToNextLevel(curLevel))
+	{
+		curExp -= GetExpToNextLevel(curLevel);
+		curLevel++;
+	}
+
+	_curSaveGame->SetPlayerLevel(curLevel);
+	_curSaveGame->SetPlayerExperience(curExp);
+
+	SaveGame();
+}
+
+int32 UCGameInstance::GetExpToNextLevel(int32 curLevel)
+{
+	int32 baseExp = 500;
+	int32 expPerLevel = 100;
+	return baseExp + (curLevel - 1) * expPerLevel;
 }

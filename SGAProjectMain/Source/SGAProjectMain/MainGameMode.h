@@ -13,6 +13,7 @@
  */
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnObjectiveCompleted, FName)
 DECLARE_MULTICAST_DELEGATE(FOnMissionCompleted)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerUpdated, float)
 
 USTRUCT()
 struct FMissionProgress
@@ -50,6 +51,7 @@ public:
 
 	FOnObjectiveCompleted _objectiveCompletedEvent;
 	FOnMissionCompleted _missionCompletedEvent;
+	FOnTimerUpdated _timerUpdatedEvent;
 
 protected:
 	void UpdateTimer(); 

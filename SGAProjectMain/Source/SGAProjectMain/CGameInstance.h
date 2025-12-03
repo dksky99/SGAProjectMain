@@ -169,6 +169,8 @@ public:
 	struct FPlayerCurrency GetShopItemPriceByID(EShopType type, int32 id);
 
 	// °æÇèÄ¡
+	void AddExperience(int32 amount);
+	int32 GetExpToNextLevel(int32 curLevel);
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
