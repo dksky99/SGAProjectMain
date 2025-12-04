@@ -101,8 +101,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_aimOffset_.X = 0.0f;
 	_aimOffset_.Y = 0.0f;
 
-	_lastAimTargetFrame = -1; // 유효하지 않은 프레임 번호로 시작
-	_cachedAimTarget = FVector::ZeroVector;
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -218,6 +216,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	auto statComponent = GetStatComponent();
 
 	FindBestItem();
+
+	_cachedCenterLoc= GetCenterLoc();
 
 	if (_stratagemComponent && _stratagemWidget)
 	{
@@ -1275,7 +1275,7 @@ void APlayerCharacter::CalcPitch()
 	//본의 정면 벡터를 가져옴.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
 	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
+	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+aimFwd*50.f, 50.0f, FColor::Green, false, 0.1f, 0, 2.0f);
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+ controlForward *50.f, 50.0f, FColor::Yellow, false, 0.1f, 0, 2.0f);
 	//기준이 될 선.
@@ -1333,7 +1333,7 @@ void APlayerCharacter::CalcYaw()
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
 	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
+	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
 	//기준이 될 선.
 	FVector charForward = aimFwd;
 	controlForward=controlForward.GetSafeNormal();
@@ -1496,14 +1496,7 @@ void APlayerCharacter::UpdateCameraOcclusion()
 FVector APlayerCharacter::GetCenterLoc()
 {
 
-	//UE_LOG(LogTemp, Error, TEXT("%d %d"), _lastAimTargetFrame, GFrameCounter);
-	// GFrameCounter는 현재 엔진의 프레임 번호입니다.
-	if (_lastAimTargetFrame == GFrameCounter)
-	{
-		// 1. 이번 프레임에 이미 계산했습니다. 캐시된 값을 반환합니다.
-		// UE_LOG(LogTemp, Warning, TEXT("Returning Cached Aim Target")); // (디버깅용)
-		return _cachedAimTarget;
-	}
+	
 
 
 
@@ -1583,12 +1576,8 @@ FVector APlayerCharacter::GetCenterLoc()
 
 	}
 
-	//UE_LOG(LogTemp, Display, TEXT("Center Loc: %f %f %f"), AimTarget.X, AimTarget.Y, AimTarget.Z);
-	_cachedAimTarget = AimTarget;
-	_lastAimTargetFrame = GFrameCounter;
 
-	// 4. 새로 계산된 값을 반환합니다.
-	return _cachedAimTarget;
+	return AimTarget;
 
 }
 bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir) 
@@ -1603,7 +1592,7 @@ bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir)
 }
 FVector APlayerCharacter::GetTargetLoc()
 {
-	return GetCenterLoc();
+	return _cachedCenterLoc;
 }
 void APlayerCharacter::ViewTurnBack()
 {

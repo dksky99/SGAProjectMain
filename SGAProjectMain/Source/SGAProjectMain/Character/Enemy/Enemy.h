@@ -105,6 +105,9 @@ public:
 
 	void TurningBack();
 
+
+	virtual FVector GetTargetLoc() override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/UI", meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* _hpBarWidget;

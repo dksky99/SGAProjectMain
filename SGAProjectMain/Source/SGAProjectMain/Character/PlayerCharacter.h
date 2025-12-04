@@ -367,6 +367,8 @@ protected:
 	// 위젯 -> 지도보기
 	bool _isDraggingMap = false;
 
+	FVector _cachedCenterLoc = FVector::ZeroVector;
+
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere; // 아이템 감지 범위
@@ -383,10 +385,5 @@ protected:
 	UPROPERTY()
 	ATerminalConsole* _curTerminal;
 
-
-	uint64 _lastAimTargetFrame = 0;
-
-	// 캐시된 조준점 위치
-	FVector _cachedAimTarget;
 
 };

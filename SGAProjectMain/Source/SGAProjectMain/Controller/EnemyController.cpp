@@ -62,7 +62,7 @@ AEnemyController::AEnemyController()
     PerceptionComponent->ConfigureSense(*_damageSenseConfig);
 
 
-    TeamId = FGenericTeamId(1);
+    TeamId = FGenericTeamId((uint8)(ETeamID::Enemy));
 
     PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyController::OnTargetDetected);
     PerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AEnemyController::PerceptionUpdated);
@@ -164,10 +164,6 @@ void AEnemyController::ResetController()
 void AEnemyController::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 {
 
-
-
-
-
     if (Stimulus.WasSuccessfullySensed())
     {
         UE_LOG(LogTemp, Warning, TEXT("적 감지: %s"), *Actor->GetName());
@@ -217,7 +213,7 @@ void AEnemyController::HandleSensedSight(AActor* Actor)
         return;
 
     _curTarget = Actor;
-    //UE_LOG(LogTemp, Display, TEXT("Hostile Target Acquired by Sight: %s"), *Actor->GetName());
+    UE_LOG(LogTemp, Display, TEXT("Hostile Target Acquired by Sight: %s"), *Actor->GetName());
    
 }
 void AEnemyController::HandleSensedHearing(FVector directionHeared)
@@ -474,6 +470,35 @@ void AEnemyController::RecieveTargetLoc(FVector targetLoc)
     _lastSensedLoc = targetLoc;
 }
 
+ETeamAttitude::Type AEnemyController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+    const APawn* OtherPawn = Cast<const APawn>(&Other);
+    if (OtherPawn == nullptr)
+    {
+        return ETeamAttitude::Neutral;
+    }
+
+    // 2. 상대방이 나와 같은 'IGenericTeamAgentInterface'를 상속받은 AI(Enemy)인지 확인
+    auto OtherTeamAgent = Cast<const IGenericTeamAgentInterface>(&Other);
+    if (OtherTeamAgent && OtherTeamAgent->GetGenericTeamId() == TeamId)
+    {
+        // 나와 팀 ID가 같다면 '아군(Friendly)' -> 퍼셉션 필터에서 걸러짐
+        return ETeamAttitude::Friendly;
+    }
+
+    // 3. 상대방이 플레이어(ITargetable 인터페이스를 가진 대상)라면 '적대적(Hostile)'
+    // 주의: 플레이어 캐릭터 클래스가 ITargetable을 상속받고 있어야 합니다.
+    auto Targetable = Cast<const ITargetable>(&Other);
+    if (Targetable && Targetable->IsTargetable()) // 필요하다면 IsTargetable 체크
+    {
+        // 플레이어는 적으로 간주 -> 퍼셉션이 감지함
+        return ETeamAttitude::Hostile;
+    }
+
+    // 그 외는 중립
+    return ETeamAttitude::Neutral;
+}
+
 bool AEnemyController::CheckTargetable(AActor* target)
 {
 
@@ -487,6 +512,10 @@ bool AEnemyController::CheckTargetable(AActor* target)
     // 관계가 '적대적(Hostile)'일 경우에만 타겟으로 설정합니다.
     if (Attitude != ETeamAttitude::Hostile)
         return false;
+
+    AEnemy* enemy = Cast<AEnemy>(target);
+    if (enemy)
+        return false;
     //타겟어블 계승한 클래스가아니면 false
     ITargetable* targetable = Cast<ITargetable>(target);
     if (targetable == nullptr)
@@ -495,8 +524,5 @@ bool AEnemyController::CheckTargetable(AActor* target)
     if (targetable->IsTargetable() == false)
         return false;
     //아군 AI유닛이 없는 이상황엔 Enemy를 계승하면 전부 같은 편 타겟에서 제외
-    AEnemy* enemy = Cast<AEnemy>(target);
-    if (enemy)
-        return false;
     return true;
 }

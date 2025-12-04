@@ -50,6 +50,7 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_isAiming= _hellDiver->GetStateComponent()->IsAiming();
 			
 			_muzzleTrans = _hellDiver->GetMuzzleTransform();
+			_muzzleTrans_Relation = _hellDiver->GetMuzzleTransform_Relative();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
 			_targetPos = _hellDiver->GetTargetLoc();
@@ -255,7 +256,7 @@ void UHellDiverAnimInstance::GetAimOffset(float deltaTime)
 		CalcAimYaw(deltaTime);
 		CalcAimPitch(deltaTime);
 
-		float interpSpeed = 20.f;
+		float interpSpeed = 50.f;
 
 		_addYaw = FMath::FInterpTo(prevAddYaw, _addYaw, deltaTime,interpSpeed );
 		_addPitch = FMath::FInterpTo(prevAddPitch, _addPitch, deltaTime, interpSpeed);
@@ -361,14 +362,14 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 
 	float dot = FVector::DotProduct(charForward, controlForward);
-	if (dot > 0.99999f) return;
+	if (dot > 0.9999f) return;
 
 	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
 	float signedAngle =  FMath::Sign(directionSign);
 
-	_addPitch += signedAngle * 100.f * (1.15 - dot) * (1.15 - dot);
+	_addPitch += signedAngle * 100.f * (1.1 - dot) * (1.1 - dot);
 	_addPitch = FMath::Clamp(_addPitch, -45.f, 45.f);
 }
 
@@ -397,13 +398,13 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
 
 	float dot = FVector::DotProduct(charForward, controlForward);
-	if (dot > 0.99999f) return;
+	if (dot > 0.9999f) return;
 
 	float angleInDegree = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f)));
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
 	float directionSign = FVector::DotProduct(crossProduct, spineUp);
 	float signedAngle =  FMath::Sign(directionSign);
 
-	_addYaw += signedAngle * 100.f * (1.15 - dot) * (1.15 - dot);
+	_addYaw += signedAngle * 100.f * (1.1 - dot) * (1.1 - dot);
 	_addYaw = FMath::Clamp(_addYaw, -45.f, 45.f);
 }

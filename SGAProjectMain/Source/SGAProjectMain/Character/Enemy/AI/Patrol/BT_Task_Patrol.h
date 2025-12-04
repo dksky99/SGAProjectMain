@@ -36,4 +36,6 @@ protected:
 
 	float  _acceptance=0.f;
 	bool _findSuccess=false;
+
+	TWeakObjectPtr<UBehaviorTreeComponent> _ownerComp;
 };

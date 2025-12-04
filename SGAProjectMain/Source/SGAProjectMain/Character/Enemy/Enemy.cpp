@@ -27,6 +27,7 @@
 #include "BehaviorControlComponent.h"
 
 #include "NavigationInvokerComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
@@ -46,10 +47,10 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
     //Tile Generation Radius(타일 생성 반경) : NavMesh를 생성할 플레이어 주변의 반경을 설정합니다. (예 : 5000 또는 10000 cm)
     //
     //    Tile Removal Radius
-    _navInvokerComponent->SetGenerationRadii(2500  ,4000);
+    _navInvokerComponent->SetGenerationRadii(5000    ,6000);
     SetGenericTeamId(FGenericTeamId((int32)ETeamID::Enemy));
 
-    GetCharacterMovement()->bUseRVOAvoidance = true;
+    //GetCharacterMovement()->bUseRVOAvoidance = false;
     GetCharacterMovement()->RotationRate.Yaw = 180.f;
     
 }
@@ -66,6 +67,30 @@ void AEnemy::BeginPlay()
        // _statComponent->_enemyHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
         _statComponent->_coreHpChanged.AddUObject(hpBar, &UDummyHpBar::SetHp);
     }
+
+    //UCapsuleComponent* Capsule = GetCapsuleComponent();
+    //if (!Capsule) return;
+    //
+    //// 2. 캐릭터 무브먼트 컴포넌트 유효성 확인
+    //UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+    //if (!MoveComp) return;
+    //
+    //
+    //// 3. 캡슐 반지름(Half-Height)을 가져옵니다.
+    //// 참고: CapsuleRadius가 횡방향(X, Y) 크기를 나타냅니다.
+    //float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
+
+    // 4. 새로운 회피 반경 계산
+    // 캡슐 반지름에 설정된 배율(Multiplier)을 곱하여 최종 RVO 반경을 설정합니다.
+    // 예: 캡슐 반지름 50cm * 2.0 = RVO 반경 100cm
+    //float NewAvoidanceRadius = CapsuleRadius * 2.0f;
+
+
+    // 5. UCharacterMovementComponent에 RVO 값 설정
+    // Avoidance Consideration Radius는 주변 유닛을 인지하는 반경입니다.
+    //MoveComp->AvoidanceConsiderationRadius = NewAvoidanceRadius;
+
+
 }
 
 void AEnemy::PossessedBy(AController* NewController)
@@ -92,19 +117,17 @@ void AEnemy::PossessedBy(AController* NewController)
         int32 MyGroupBit = 1 << TeamIndex;
 
         // 4. RVO 설정 적용
-        MoveComp->SetAvoidanceEnabled(true);
-        MoveComp->SetAvoidanceGroup(MyGroupBit);   // 나는 이 팀이다
-        MoveComp->SetGroupsToAvoid(MyGroupBit);    // 나는 내 팀만 피한다 (적은 무시)
-
-        // 5. [핵심] 유닛별 고유 가중치 적용
-        // 이 코드가 Pawn에 있어야 하는 이유입니다.
-        MoveComp->AvoidanceWeight=_unitRVOWeight;
-
+        //MoveComp->SetAvoidanceEnabled(true);
+       // MoveComp->SetAvoidanceGroup(MyGroupBit);   // 나는 이 팀이다
+       // MoveComp->SetGroupsToAvoid(MyGroupBit);    // 나는 내 팀만 피한다 (적은 무시)
+       //
+       // MoveComp->AvoidanceWeight=_unitRVOWeight;
+       //
         // (옵션) 자연스러운 이동을 위한 회전 설정
-        MoveComp->bOrientRotationToMovement = true;
-        bUseControllerRotationYaw = false;
     }
 
+    MoveComp->bOrientRotationToMovement = true;
+    MoveComp->bUseControllerDesiredRotation = false;
 
 }
 
@@ -362,7 +385,7 @@ void AEnemy::SetInBattle()
     _unitState = EUnitState::InBattle;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 
-    bUseControllerRotationYaw = true;
+    GetCharacterMovement()->bUseControllerDesiredRotation = true;
     GetCharacterMovement()->bOrientRotationToMovement = false;
     RaiseAlert();
 
@@ -389,6 +412,19 @@ void AEnemy::TurningBack()
 
     _isReadyToSpawn = true;
 
+}
+
+FVector AEnemy::GetTargetLoc()
+{
+    auto target = _behaviorControlComponent->GetTargetActor();
+    if (target)
+    {
+        return target->GetActorLocation();
+    }
+
+    
+    
+    return GetActorLocation() + GetActorForwardVector() * 500.f;
 }
 
 

@@ -145,10 +145,7 @@ AActor* UBehaviorControlComponent::GetTargetActor()
 
 void UBehaviorControlComponent::SetTargetActor(AActor* target)
 {
-	if (target == nullptr)
-		return;
-	ITargetable* temp = Cast<ITargetable>(target);
-	if(temp)
+
 		_ownerController->GetBlackboardComponent()->SetValueAsObject(targetKey, target);
 }
 
