@@ -32,8 +32,8 @@ public:
 	bool IsShopItemPurchased(EShopType type, int32 id);
 	TArray<struct FOwnedItem>& GetPurchasedShopItems() { return _purchasedShopItems; }
 
-	int32 GetPlayerLevel() const { return _playerLevel; }
-	int32 GetPlayerExperience() const { return _playerExp; }
+	const int32 GetPlayerLevel() const { return _playerLevel; }
+	const int32 GetPlayerExperience() const { return _playerExp; }
 	void SetPlayerLevel(int32 newLevel) { _playerLevel = newLevel; }
 	void SetPlayerExperience(int32 newExp) { _playerExp = newExp; }
 

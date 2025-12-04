@@ -38,6 +38,7 @@
 #include "../UI/MissionWidget.h"
 #include "../UI/InventoryWheelWidget.h"
 #include "../UI/MissionTimerWidget.h"
+#include "../UI/PlayerStatusWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -126,6 +127,8 @@ void APlayerCharacter::PostInitializeComponents()
 		_missionWidget = CreateWidget<UMissionWidget>(GetWorld(), _missionWidgetClass);
 	if (_timerWidgetClass)
 		_timerWidget = CreateWidget<UMissionTimerWidget>(GetWorld(), _timerWidgetClass);
+	if (_playerStatusWidgetClass)
+		_playerStatusWidget = CreateWidget<UPlayerStatusWidget>(GetWorld(), _playerStatusWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -199,12 +202,12 @@ void APlayerCharacter::BeginPlay()
 
 	if (_sampleWidget)
 		_sampleWidget->AddToViewport();
-
 	if (_missionWidget)
 		_missionWidget->AddToViewport();
-
 	if (_timerWidget)
 		_timerWidget->AddToViewport();
+	if (_playerStatusWidget)
+		_playerStatusWidget->AddToViewport();
 
 
 	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
