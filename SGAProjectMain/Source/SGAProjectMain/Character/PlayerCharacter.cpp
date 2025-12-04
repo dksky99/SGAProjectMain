@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "PlayerCharacter.h"
@@ -103,7 +103,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_aimOffset_.X = 0.0f;
 	_aimOffset_.Y = 0.0f;
 
-	_lastAimTargetFrame = -1; // À¯È¿ÇÏÁö ¾ÊÀº ÇÁ·¹ÀÓ ¹øÈ£·Î ½ÃÀÛ
+	_lastAimTargetFrame = -1; // ìœ íš¨í•˜ì§€ ì•Šì€ í”„ë ˆì„ ë²ˆí˜¸ë¡œ ì‹œì‘
 	_cachedAimTarget = FVector::ZeroVector;
 }
 
@@ -165,7 +165,7 @@ void APlayerCharacter::BeginPlay()
 		_minimapWidget->AddToViewport();
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 
-		// ¿ùµå¿¡¼­ ¾ÀÄ¸ÃÄ·¯ Ã£±â
+		// ì›”ë“œì—ì„œ ì”¬ìº¡ì³ëŸ¬ ì°¾ê¸°
 		for (TActorIterator<ASceneCapturer> IT(GetWorld());IT; ++IT)
 		{
 			ASceneCapturer* sceneCapturer = *IT;
@@ -216,7 +216,7 @@ void APlayerCharacter::BeginPlay()
 	//if (_sceneUIClass)
 	//	UI->GetOrShowSceneUI(_sceneUIClass);
 
-	// ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ ½ÇÇà (¸ğµç ¾×ÅÍ »ı¼º ¿Ï·á ÈÄ)
+	// ë‹¤ìŒ í”„ë ˆì„ì— ì‹¤í–‰ (ëª¨ë“  ì•¡í„° ìƒì„± ì™„ë£Œ í›„)
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::CheckInitialOverlaps);
 }
 
@@ -244,13 +244,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		if (_staminaBarWidget->GetVisibility() == ESlateVisibility::Visible)
 		{
-			// ÇöÀç ´Ş¸®´Â »óÅÂ°¡ ¾Æ´Ï°í ½ºÅÂ¹Ì³ª°¡ ²Ë Â÷ÀÖÀ¸¸é
+			// í˜„ì¬ ë‹¬ë¦¬ëŠ” ìƒíƒœê°€ ì•„ë‹ˆê³  ìŠ¤íƒœë¯¸ë‚˜ê°€ ê½‰ ì°¨ìˆìœ¼ë©´
 			if (_stateComponent->GetCharacterState() != ECharacterState::Sprinting && statComponent->IsMaxStamina())
 			{
-				_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // À§Á¬ °¨Ãß±â
+				_staminaBarWidget->SetVisibility(ESlateVisibility::Hidden); // ìœ„ì ¯ ê°ì¶”ê¸°
 			}
 		}
 	}
+
+	UpdateStratagemEtaUI();
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -283,9 +285,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		enhancedInputComponent->BindAction(_weapon2ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon2);
 		enhancedInputComponent->BindAction(_weapon3ChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchWeapon3);
 		enhancedInputComponent->BindAction(_grenadeAction, ETriggerEvent::Triggered, this, &AHellDiver::EquipGrenade);
-		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode); // ¸¶¿ì½º ÈÙ ¾Æ·¡·Î
-		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode); // ¸¶¿ì½º ÈÙ À§·Î
-		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView); // ¸¶¿ì½º ÈÙ ´©¸§
+		enhancedInputComponent->BindAction(_lightChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeLightMode); // ë§ˆìš°ìŠ¤ íœ  ì•„ë˜ë¡œ
+		enhancedInputComponent->BindAction(_scopeChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::TryChangeScopeMode); // ë§ˆìš°ìŠ¤ íœ  ìœ„ë¡œ
+		enhancedInputComponent->BindAction(_aimChangeAction, ETriggerEvent::Started, this, &APlayerCharacter::ChangeAimingView); // ë§ˆìš°ìŠ¤ íœ  ëˆ„ë¦„
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BeginStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataInputModeAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndStratagemInputMode);
 		enhancedInputComponent->BindAction(_strataWAction, ETriggerEvent::Started, this, &APlayerCharacter::OnStrataKeyW);
@@ -323,7 +325,7 @@ void APlayerCharacter::UnPossessed()
 FRotator APlayerCharacter::Focusing()
 {
 
-	//ÇÃ·¹ÀÌ¾î ÄÁÆ®·Ñ·¯¿¡¼­ ½ºÅ©¸°¿¡¼­ ¿ùµåÁÂÇ¥¹Ş±â 
+	//í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ì—ì„œ ìŠ¤í¬ë¦°ì—ì„œ ì›”ë“œì¢Œí‘œë°›ê¸° 
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	if (pc == nullptr)
 	{
@@ -331,7 +333,7 @@ FRotator APlayerCharacter::Focusing()
 		return Focusing_Legacy();
 	}
 	
-	//»óÅÂ¿¡ µû¶ó ±âÁØÀÌ µÇ´Â º»À» ¹Ù²ã¾ßÇÔ.
+	//ìƒíƒœì— ë”°ë¼ ê¸°ì¤€ì´ ë˜ëŠ” ë³¸ì„ ë°”ê¿”ì•¼í•¨.
 	FTransform SpineTransform; 
 	switch (_stateComponent->GetWeaponState())
 	{
@@ -364,29 +366,29 @@ FRotator APlayerCharacter::Focusing()
 		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
 	}
 
-	// 1. È­¸éÀÇ Á¤Áß¾Ó ÁÂÇ¥ ±¸ÇÏ±â
+	// 1. í™”ë©´ì˜ ì •ì¤‘ì•™ ì¢Œí‘œ êµ¬í•˜ê¸°
 	int32 ViewportSizeX, ViewportSizeY;
 	pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
 	float ScreenCenterX = (float)ViewportSizeX / 2.f;
 	float ScreenCenterY = (float)ViewportSizeY / 2.f;
 
 	FVector AimTarget;
-	// 2. È­¸é ÁÂÇ¥¸¦ ¿ùµå ¹æÇâÀ¸·Î º¯È¯
+	// 2. í™”ë©´ ì¢Œí‘œë¥¼ ì›”ë“œ ë°©í–¥ìœ¼ë¡œ ë³€í™˜
 	FVector WorldLocation, WorldDirection;
 	if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
 	{
 
-		// 3. ¶óÀÎ Æ®·¹ÀÌ½º¸¦ Á¤Áß¾Ó ¹æÇâÀ¸·Î ½ô
+		// 3. ë¼ì¸ íŠ¸ë ˆì´ìŠ¤ë¥¼ ì •ì¤‘ì•™ ë°©í–¥ìœ¼ë¡œ ì¨
 		FVector TraceEnd = WorldLocation + WorldDirection * 10000;
 		FHitResult HitResult;
 
 		FCollisionQueryParams Params;
 		Params.bReturnPhysicalMaterial = false;
-		Params.AddIgnoredActor(this); // ÀÚ±â ÀÚ½Å ¹«½Ã
+		Params.AddIgnoredActor(this); // ìê¸° ìì‹  ë¬´ì‹œ
 
 		if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
 		{
-			// 4. ¸íÁß ½Ã ¡æ Ãæµ¹ ÁöÁ¡ ¹İÈ¯
+			// 4. ëª…ì¤‘ ì‹œ â†’ ì¶©ëŒ ì§€ì  ë°˜í™˜
 			AimTarget= HitResult.ImpactPoint;
 			//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
 		}
@@ -395,7 +397,7 @@ FRotator APlayerCharacter::Focusing()
 
 			AimTarget= TraceEnd;
 		}
-		// 5. ¹Ì¸íÁß ½Ã ¡æ ³¡ ÁöÁ¡ ¹İÈ¯
+		// 5. ë¯¸ëª…ì¤‘ ì‹œ â†’ ë ì§€ì  ë°˜í™˜
 	}
 	else
 	{
@@ -408,27 +410,27 @@ FRotator APlayerCharacter::Focusing()
 	FVector SpineUp = SpineTransform.GetRotation().GetUpVector();
 	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
 
-	// ÁÂ¿ì(Yaw) ÇÊ¿ä¼º ÆÇ´Ü
+	// ì¢Œìš°(Yaw) í•„ìš”ì„± íŒë‹¨
 	FVector SpineFwdFlat = FVector::VectorPlaneProject(SpineFwd, SpineUp).GetSafeNormal();
 	FVector TargetDirFlat = FVector::VectorPlaneProject(TargetDirection, SpineUp).GetSafeNormal();
 	float YawDot = FVector::DotProduct(SpineFwdFlat, TargetDirFlat);
 	bool bNeedsYaw = YawDot < 0.999f;
 
-	// »óÇÏ(Pitch) ÇÊ¿ä¼º ÆÇ´Ü
+	// ìƒí•˜(Pitch) í•„ìš”ì„± íŒë‹¨
 	FVector SpineRight = SpineTransform.GetRotation().GetRightVector();
 	FVector SpineFwdNoYaw = FVector::VectorPlaneProject(SpineFwd, SpineRight).GetSafeNormal();
 	FVector TargetDirNoYaw = FVector::VectorPlaneProject(TargetDirection, SpineRight).GetSafeNormal();
 	float PitchDot = FVector::DotProduct(SpineFwdNoYaw, TargetDirNoYaw);
 	bool bNeedsPitch = PitchDot < 0.999f;
 
-	// ÀüÃ¼ È¸Àü ÆÇ´Ü (RollÀº ¿©ÀüÈ÷ À¯¿ë)
+	// ì „ì²´ íšŒì „ íŒë‹¨ (Rollì€ ì—¬ì „íˆ ìœ ìš©)
 	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection);
 	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
 	float RotationDir = FVector::DotProduct(CrossValue, SpineUp);
 
 	FRotator ResultRot = FRotator::ZeroRotator;
 
-	if (DotValue > 0.999f) // °ÅÀÇ ÀÏÄ¡ÇÏ¸é ±»ÀÌ È¸ÀüÇÏÁö ¾ÊÀ½
+	if (DotValue > 0.999f) // ê±°ì˜ ì¼ì¹˜í•˜ë©´ êµ³ì´ íšŒì „í•˜ì§€ ì•ŠìŒ
 	{
 		return FRotator::ZeroRotator;
 	}
@@ -452,7 +454,7 @@ FRotator APlayerCharacter::Focusing()
 
 FRotator APlayerCharacter::Focusing_Legacy()
 {
-	//»óÅÂ¿¡ µû¶ó ±âÁØÀÌ µÇ´Â º»À» ¹Ù²ã¾ßÇÔ.
+	//ìƒíƒœì— ë”°ë¼ ê¸°ì¤€ì´ ë˜ëŠ” ë³¸ì„ ë°”ê¿”ì•¼í•¨.
 	FTransform SpineTransform;
 	switch (_stateComponent->GetWeaponState())
 	{
@@ -484,7 +486,7 @@ FRotator APlayerCharacter::Focusing_Legacy()
 		CameraLoc = GetCurCamera()->GetComponentLocation();
 		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
 	}
-	//ÇÃ·¹ÀÌ¾î ÄÁÆ®·Ñ·¯¿¡¼­ ½ºÅ©¸°¿¡¼­ ¿ùµåÁÂÇ¥¹Ş±â 
+	//í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ì—ì„œ ìŠ¤í¬ë¦°ì—ì„œ ì›”ë“œì¢Œí‘œë°›ê¸° 
 
 
 	FVector AimTarget = CameraLoc + CameraForward * 10000.f;
@@ -492,27 +494,27 @@ FRotator APlayerCharacter::Focusing_Legacy()
 	FVector SpineUp = SpineTransform.GetRotation().GetUpVector();
 	FVector TargetDirection = (AimTarget - SpineLoc).GetSafeNormal();
 
-	// ÁÂ¿ì(Yaw) ÇÊ¿ä¼º ÆÇ´Ü
+	// ì¢Œìš°(Yaw) í•„ìš”ì„± íŒë‹¨
 	FVector SpineFwdFlat = FVector::VectorPlaneProject(SpineFwd, SpineUp).GetSafeNormal();
 	FVector TargetDirFlat = FVector::VectorPlaneProject(TargetDirection, SpineUp).GetSafeNormal();
 	float YawDot = FVector::DotProduct(SpineFwdFlat, TargetDirFlat);
 	bool bNeedsYaw = YawDot < 0.999f;
 
-	// »óÇÏ(Pitch) ÇÊ¿ä¼º ÆÇ´Ü
+	// ìƒí•˜(Pitch) í•„ìš”ì„± íŒë‹¨
 	FVector SpineRight = SpineTransform.GetRotation().GetRightVector();
 	FVector SpineFwdNoYaw = FVector::VectorPlaneProject(SpineFwd, SpineRight).GetSafeNormal();
 	FVector TargetDirNoYaw = FVector::VectorPlaneProject(TargetDirection, SpineRight).GetSafeNormal();
 	float PitchDot = FVector::DotProduct(SpineFwdNoYaw, TargetDirNoYaw);
 	bool bNeedsPitch = PitchDot < 0.999f;
 
-	// ÀüÃ¼ È¸Àü ÆÇ´Ü (RollÀº ¿©ÀüÈ÷ À¯¿ë)
+	// ì „ì²´ íšŒì „ íŒë‹¨ (Rollì€ ì—¬ì „íˆ ìœ ìš©)
 	float DotValue = FVector::DotProduct(SpineFwd, TargetDirection);
 	FVector CrossValue = FVector::CrossProduct(SpineFwd, TargetDirection);
 	float RotationDir = FVector::DotProduct(CrossValue, SpineUp);
 
 	FRotator ResultRot = FRotator::ZeroRotator;
 
-	if (DotValue > 0.999f) // °ÅÀÇ ÀÏÄ¡ÇÏ¸é ±»ÀÌ È¸ÀüÇÏÁö ¾ÊÀ½
+	if (DotValue > 0.999f) // ê±°ì˜ ì¼ì¹˜í•˜ë©´ êµ³ì´ íšŒì „í•˜ì§€ ì•ŠìŒ
 	{
 		return FRotator::ZeroRotator;
 	}
@@ -536,9 +538,9 @@ FRotator APlayerCharacter::Focusing_Legacy()
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
-	if (_stateComponent->GetActionState() == EActionState::Stratagem)// ½ºÆ®¶óÅ¸ÁªÀÔ·Â ¸ğµå¿¡¼­´Â µ¿ÀÛ¾ÈÇÔ
+	if (_stateComponent->GetActionState() == EActionState::Stratagem)// ìŠ¤íŠ¸ë¼íƒ€ì ¬ì…ë ¥ ëª¨ë“œì—ì„œëŠ” ë™ì‘ì•ˆí•¨
 		return;
-	if (_stateComponent->GetActionState() == EActionState::InterActing) // »óÈ£ÀÛ¿ë ÁßÀÏ ¶§ µ¿ÀÛ ¾È ÇÔ
+	if (_stateComponent->GetActionState() == EActionState::InterActing) // ìƒí˜¸ì‘ìš© ì¤‘ì¼ ë•Œ ë™ì‘ ì•ˆ í•¨
 		return;
 	if (GetCharacterMovement()->IsFalling())
 		return;
@@ -548,7 +550,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{
-		if (gun->IsStationaryReload() && _stateComponent->IsReloading()) // Á¤Áö ÀçÀåÀü ÁßÀÏ ¶§´Â ÀÌµ¿ ºÒ°¡
+		if (gun->IsStationaryReload() && _stateComponent->IsReloading()) // ì •ì§€ ì¬ì¥ì „ ì¤‘ì¼ ë•ŒëŠ” ì´ë™ ë¶ˆê°€
 			return;
 	}
 	FVector2D moveVector = value.Get<FVector2D>();
@@ -567,10 +569,10 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 
 
 		//FVector MoveDirection = FVector(moveVector.X, moveVector.Y, 0.0f);
-		////XÃà ÀÌµ¿¹æÇâÀ¸·Î Ä³¸¯ÅÍ¸¦È¸ÀüÇÏ±âÀ§ÇÑ È¸Àü ¸ÅÆ®¸¯½º °è»ê½Ä. 
+		////Xì¶• ì´ë™ë°©í–¥ìœ¼ë¡œ ìºë¦­í„°ë¥¼íšŒì „í•˜ê¸°ìœ„í•œ íšŒì „ ë§¤íŠ¸ë¦­ìŠ¤ ê³„ì‚°ì‹. 
 		//GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
 		//
-		////ÀÌµ¿
+		////ì´ë™
 		//AddMovementInput(MoveDirection, 1);
 	}
 	//else
@@ -578,7 +580,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 	//	UE_LOG(LogTemp, Display, TEXT("MoveFinish"));
 	//	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	//	GetCharacterMovement()->bOrientRotationToMovement = false;
-	//	// ¸ØÃß´Â °æ¿ì
+	//	// ë©ˆì¶”ëŠ” ê²½ìš°
 	//	_vertical = 0.0f;
 	//	_horizontal = 0.0f;
 	//
@@ -597,7 +599,7 @@ void APlayerCharacter::MoveFinish(const FInputActionValue& value)
 	{
 
 		ViewTurnBack();
-		// ¸ØÃß´Â °æ¿ì
+		// ë©ˆì¶”ëŠ” ê²½ìš°
 
 	}
 }
@@ -630,7 +632,7 @@ void APlayerCharacter::Look(const FInputActionValue& value)
 
 		}
 		const bool bIsMoving = GetVelocity().Size2D() > 1.0f;
-		DefaultLook(); // ¸ØÃèÀ» ¶§ ¡¾90µµ ³Ñ´Â È¸Àü Ã³¸®
+		DefaultLook(); // ë©ˆì·„ì„ ë•Œ Â±90ë„ ë„˜ëŠ” íšŒì „ ì²˜ë¦¬
 		
 	}
 }
@@ -665,12 +667,12 @@ void APlayerCharacter::TryPakour(const FInputActionValue& value)
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
-	if (_stateComponent->IsCheckingMap()) // Áöµµ¸¦ º¸°íÀÖ´Â »óÅÂÀÌ°í
+	if (_stateComponent->IsCheckingMap()) // ì§€ë„ë¥¼ ë³´ê³ ìˆëŠ” ìƒíƒœì´ê³ 
 	{
-		if (_sceneCapturer->PingOnMap()) // ÇÎÀ» ÂïÀ» ¼ö ÀÖ´Â »óÅÂ¶ó¸é
-			return; // ¾Æ·¡ºÎºĞ ÀüºÎ ½ÇÇà ¾È ÇÔ
+		if (_sceneCapturer->PingOnMap()) // í•‘ì„ ì°ì„ ìˆ˜ ìˆëŠ” ìƒíƒœë¼ë©´
+			return; // ì•„ë˜ë¶€ë¶„ ì „ë¶€ ì‹¤í–‰ ì•ˆ í•¨
 
-		// ÇÎÀ» ÂïÀ» ¼ö ¾ø´Ù¸é ¸ÊÀ» ´İ°í ´ÙÀ½ Çàµ¿
+		// í•‘ì„ ì°ì„ ìˆ˜ ì—†ë‹¤ë©´ ë§µì„ ë‹«ê³  ë‹¤ìŒ í–‰ë™
 		_stateComponent->SetCheckingMap(false);
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
@@ -1047,13 +1049,13 @@ void APlayerCharacter::TryMelee(const FInputActionValue& value)
 void APlayerCharacter::SetDefaultVIew()
 {
 
-	//Æù¿¡ °üÇÑ ¼³Á¤
+	//í°ì— ê´€í•œ ì„¤ì •
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
 
-	//Ä³¸¯ÅÍ ¹«ºê¸ÕÆ® ¼³Á¤
+	//ìºë¦­í„° ë¬´ë¸Œë¨¼íŠ¸ ì„¤ì •
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->RotationRate = FRotator(0, 360, 0);
@@ -1086,7 +1088,7 @@ void APlayerCharacter::InitView()
 {
 
 
-	//Ä«¸Ş¶ó
+	//ì¹´ë©”ë¼
 	if (_defaultControl != nullptr)
 	{
 		_tpsSpringArm->bUsePawnControlRotation = _defaultControl->bUsePawnContolRotation;
@@ -1096,7 +1098,7 @@ void APlayerCharacter::InitView()
 		_tpsSpringArm->bInheritRoll = _defaultControl->bInheritRoll;
 
 	}
-	//Ä«¸Ş¶ó
+	//ì¹´ë©”ë¼
 	if (_tpsControl != nullptr)
 	{
 		_tpsZoomSpringArm->bUsePawnControlRotation = _tpsControl->bUsePawnContolRotation;
@@ -1106,7 +1108,7 @@ void APlayerCharacter::InitView()
 		_tpsZoomSpringArm->bInheritRoll = _tpsControl->bInheritRoll;
 
 	}
-	//1ÀÎÄª
+	//1ì¸ì¹­
 	if (_fpsControl != nullptr)
 	{
 		_fpsSpringArm->bUsePawnControlRotation =	_fpsControl->bUsePawnContolRotation;
@@ -1146,13 +1148,13 @@ void APlayerCharacter::SetTPSView()
 void APlayerCharacter::SetViewData(const UPlayerControlDataAsset* characterControlData)
 {
 
-	//Æù¿¡ °üÇÑ ¼³Á¤
+	//í°ì— ê´€í•œ ì„¤ì •
 	bUseControllerRotationPitch = characterControlData->bUseControlRotationPitch;
 	bUseControllerRotationYaw = characterControlData->bUseControlRotationYaw;
 	bUseControllerRotationRoll = characterControlData->bUseControlRotationRoll;
 
 
-	//Ä³¸¯ÅÍ ¹«ºê¸ÕÆ® ¼³Á¤
+	//ìºë¦­í„° ë¬´ë¸Œë¨¼íŠ¸ ì„¤ì •
 	GetCharacterMovement()->bOrientRotationToMovement = characterControlData->bOrientRotationToMovement;
 	GetCharacterMovement()->bUseControllerDesiredRotation = characterControlData->bUseControllerDesiredRotation;
 	GetCharacterMovement()->RotationRate = characterControlData->RotationRate;
@@ -1213,7 +1215,7 @@ void APlayerCharacter::DefaultMove(FVector2D moveVector)
 void APlayerCharacter::MovingLook()
 {
 	const FVector velocity = GetVelocity();
-	if (velocity.Size2D() < 1.0f) return; // ¸ØÃç ÀÖÀ¸¸é È¸Àü ¾È ÇÔ
+	if (velocity.Size2D() < 1.0f) return; // ë©ˆì¶° ìˆìœ¼ë©´ íšŒì „ ì•ˆ í•¨
 
 	const FRotator controlRot = Controller->GetControlRotation();
 	const FRotator yawRotation(0, controlRot.Yaw, 0);
@@ -1221,13 +1223,13 @@ void APlayerCharacter::MovingLook()
 	const FVector forward = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
 	const FVector right = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
 
-	// ÇöÀç ÀÔ·Â º¤ÅÍ ¹æÇâÀ¸·Î ÀÌµ¿ ¹æÇâ °áÁ¤
+	// í˜„ì¬ ì…ë ¥ ë²¡í„° ë°©í–¥ìœ¼ë¡œ ì´ë™ ë°©í–¥ ê²°ì •
 	FVector moveDir = forward * _vertical + right * _horizontal;
 
 	if (!moveDir.IsNearlyZero())
 	{
 		FRotator moveRot = moveDir.Rotation();
-		SetActorRotation(FRotator(0.f, moveRot.Yaw, 0.f)); // Áï½Ã È¸Àü
+		SetActorRotation(FRotator(0.f, moveRot.Yaw, 0.f)); // ì¦‰ì‹œ íšŒì „
 	}
 }
 void APlayerCharacter::DefaultLook()
@@ -1269,29 +1271,29 @@ void APlayerCharacter::DefaultLook()
 
 void APlayerCharacter::CalcPitch()
 {
-	//¸Ş½ÃÀÇ ¹æÇâÀ» ¸í¹éÈ÷ ÇØÁÙ Ã´ÃßÀÇ À­ÂÊ Ãà°ú ¿À¸¥Á· ÃàÀ» ±âÁØÀ¸·Î »ï´Â´Ù.
+	//ë©”ì‹œì˜ ë°©í–¥ì„ ëª…ë°±íˆ í•´ì¤„ ì²™ì¶”ì˜ ìœ—ìª½ ì¶•ê³¼ ì˜¤ë¥¸ì¡± ì¶•ì„ ê¸°ì¤€ìœ¼ë¡œ ì‚¼ëŠ”ë‹¤.
 	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
-	//°¢ÀÚ ¸Ş½Ã¿¡¼­ ½ÇÁ¦ °¢¹æÇâÀÇ ÃàÀ» È®ÀÎ.
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // Ä³¸¯ÅÍ »ó¹æ
+	//ê°ì ë©”ì‹œì—ì„œ ì‹¤ì œ ê°ë°©í–¥ì˜ ì¶•ì„ í™•ì¸.
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // ìºë¦­í„° ìƒë°©
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
 
-	//Á¶ÁØÁ¡°ú °¡Àå °¡±õ°í ¿µÇâÀÌ Å« º». 
+	//ì¡°ì¤€ì ê³¼ ê°€ì¥ ê°€ê¹ê³  ì˜í–¥ì´ í° ë³¸. 
 	FTransform aimTransform = GetMesh()->GetSocketTransform(TEXT("spine_03"), RTS_World);
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
-	//º»ÀÇ Á¤¸é º¤ÅÍ¸¦ °¡Á®¿È.
+	//ë³¸ì˜ ì •ë©´ ë²¡í„°ë¥¼ ê°€ì ¸ì˜´.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
-	//ºñ±³ÇÒ ¹æÇâ. ÄÁÆ®·Ñ·¯ÀÇ ¹æÇâÀÌ³ª Á¶ÁØ¼±.
+	//ë¹„êµí•  ë°©í–¥. ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ë°©í–¥ì´ë‚˜ ì¡°ì¤€ì„ .
 	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+aimFwd*50.f, 50.0f, FColor::Green, false, 0.1f, 0, 2.0f);
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+ controlForward *50.f, 50.0f, FColor::Yellow, false, 0.1f, 0, 2.0f);
-	//±âÁØÀÌ µÉ ¼±.
+	//ê¸°ì¤€ì´ ë  ì„ .
 	FVector charForward = aimFwd;
 	controlForward = controlForward.GetSafeNormal();
 	charForward = charForward.GetSafeNormal();
-	// µÎ ¼±À» ±âÁØÀÌµÇ´Â ÃàÀ» ¹ı¼±À¸·ÎÇÏ´Â Æò¸é¿¡ Åõ¿µ.
+	// ë‘ ì„ ì„ ê¸°ì¤€ì´ë˜ëŠ” ì¶•ì„ ë²•ì„ ìœ¼ë¡œí•˜ëŠ” í‰ë©´ì— íˆ¬ì˜.
 	charForward= FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
 	controlForward= FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
 	
@@ -1299,22 +1301,22 @@ void APlayerCharacter::CalcPitch()
 
 	DrawDebugLine(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation() + controlForward * 500.f, FColor::Yellow, false, 0.1f, 0, 2.0f);
 	
-	//µÎ ¼±ÀÇ ³»ÀûÀ¸·Î ÀÏÄ¡ÇÏ´ÂÁ¤µµ¸¦ È®ÀÎ.
+	//ë‘ ì„ ì˜ ë‚´ì ìœ¼ë¡œ ì¼ì¹˜í•˜ëŠ”ì •ë„ë¥¼ í™•ì¸.
 	float dot = FVector::DotProduct(charForward, controlForward);
-	//¶óµğ¾ÈÀ¸·Î º¯È¯
+	//ë¼ë””ì•ˆìœ¼ë¡œ ë³€í™˜
 	float angleInRadians = FMath::Acos(FMath::Clamp(dot, -1.0f, 1.0f));
-	//°¢µµ·Î º¯È¯
+	//ê°ë„ë¡œ ë³€í™˜
 	float angleInDegree = FMath::RadiansToDegrees(angleInRadians);
 
-	//µÑÀ» ¿ÜÀû.
+	//ë‘˜ì„ ì™¸ì .
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
 
-	// ¿ÜÀû °á°ú º¤ÅÍ¿Í Æò¸éÀÇ ¹ı¼±(spineUp)À» ³»ÀûÇÏ¿© ¹æÇâÀ» È®ÀÎÇÕ´Ï´Ù. ¿ÜÀû°á°ú¿ÍÀÇ ³»ÀûÀÌ´Ï ÀÏÄ¡ÇÏ°Å³ª ¹İ´ë¹æÇâÀÌ°Å³ª µÑÁßÇÏ³ª°¡ ³ª¿È.
+	// ì™¸ì  ê²°ê³¼ ë²¡í„°ì™€ í‰ë©´ì˜ ë²•ì„ (spineUp)ì„ ë‚´ì í•˜ì—¬ ë°©í–¥ì„ í™•ì¸í•©ë‹ˆë‹¤. ì™¸ì ê²°ê³¼ì™€ì˜ ë‚´ì ì´ë‹ˆ ì¼ì¹˜í•˜ê±°ë‚˜ ë°˜ëŒ€ë°©í–¥ì´ê±°ë‚˜ ë‘˜ì¤‘í•˜ë‚˜ê°€ ë‚˜ì˜´.
 	
 	float directionSign = FVector::DotProduct(crossProduct, spineRight);
 
-	// --- 3. ÃÖÁ¾ ºÎÈ£ ÀÖ´Â °¢µµ °è»ê ---
-	// DirectionSignÀÌ ¾ç¼öÀÌ¸é ¿À¸¥ÂÊ(+), À½¼öÀÌ¸é ¿ŞÂÊ(-)ÀÔ´Ï´Ù.
+	// --- 3. ìµœì¢… ë¶€í˜¸ ìˆëŠ” ê°ë„ ê³„ì‚° ---
+	// DirectionSignì´ ì–‘ìˆ˜ì´ë©´ ì˜¤ë¥¸ìª½(+), ìŒìˆ˜ì´ë©´ ì™¼ìª½(-)ì…ë‹ˆë‹¤.
 	float signedAngle = angleInDegree * FMath::Sign(directionSign);
 
 	_pitch = signedAngle;
@@ -1326,24 +1328,24 @@ void APlayerCharacter::CalcPitch()
 void APlayerCharacter::CalcYaw()
 {
 
-	//¸Ş½ÃÀÇ ¹æÇâÀ» ¸í¹éÈ÷ ÇØÁÙ Ã´ÃßÀÇ À­ÂÊ Ãà°ú ¿À¸¥Á· ÃàÀ» ±âÁØÀ¸·Î »ï´Â´Ù.
+	//ë©”ì‹œì˜ ë°©í–¥ì„ ëª…ë°±íˆ í•´ì¤„ ì²™ì¶”ì˜ ìœ—ìª½ ì¶•ê³¼ ì˜¤ë¥¸ì¡± ì¶•ì„ ê¸°ì¤€ìœ¼ë¡œ ì‚¼ëŠ”ë‹¤.
 	FTransform spineTransform = GetMesh()->GetSocketTransform(TEXT("spine_01"), RTS_World);
-	//°¢ÀÚ ¸Ş½Ã¿¡¼­ ½ÇÁ¦ °¢¹æÇâÀÇ ÃàÀ» È®ÀÎ.
-	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // Ä³¸¯ÅÍ »ó¹æ
+	//ê°ì ë©”ì‹œì—ì„œ ì‹¤ì œ ê°ë°©í–¥ì˜ ì¶•ì„ í™•ì¸.
+	FVector spineUp = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal(); // ìºë¦­í„° ìƒë°©
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::Z).GetSafeNormal();
 	FVector spineFwd = spineTransform.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
 
-	//Á¶ÁØÁ¡°ú °¡Àå °¡±õ°í ¿µÇâÀÌ Å« º». 
+	//ì¡°ì¤€ì ê³¼ ê°€ì¥ ê°€ê¹ê³  ì˜í–¥ì´ í° ë³¸. 
 	FTransform aimTransform = GetMesh()->GetSocketTransform(TEXT("spine_03"), RTS_World);
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
-	//º»ÀÇ Á¤¸é º¤ÅÍ¸¦ °¡Á®¿È.
+	//ë³¸ì˜ ì •ë©´ ë²¡í„°ë¥¼ ê°€ì ¸ì˜´.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	//ºñ±³ÇÒ ¹æÇâ. ÄÁÆ®·Ñ·¯ÀÇ ¹æÇâÀÌ³ª Á¶ÁØ¼±.
+	//ë¹„êµí•  ë°©í–¥. ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ë°©í–¥ì´ë‚˜ ì¡°ì¤€ì„ .
 	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
-	//±âÁØÀÌ µÉ ¼±.
+	//ê¸°ì¤€ì´ ë  ì„ .
 	FVector charForward = aimFwd;
 	controlForward=controlForward.GetSafeNormal();
 	charForward=charForward.GetSafeNormal();
@@ -1351,7 +1353,7 @@ void APlayerCharacter::CalcYaw()
 
 	UE_LOG(LogTemp, Display, TEXT("charForward : %f %f %f"), charForward.X, charForward.Y, charForward.Z);
 
-	// µÎ ¼±À» ±âÁØÀÌµÇ´Â ÃàÀ» ¹ı¼±À¸·ÎÇÏ´Â Æò¸é¿¡ Åõ¿µ.
+	// ë‘ ì„ ì„ ê¸°ì¤€ì´ë˜ëŠ” ì¶•ì„ ë²•ì„ ìœ¼ë¡œí•˜ëŠ” í‰ë©´ì— íˆ¬ì˜.
 	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
 
@@ -1364,11 +1366,11 @@ void APlayerCharacter::CalcYaw()
 
 	FVector crossProduct = FVector::CrossProduct(charForward, controlForward);
 
-	// ¿ÜÀû °á°ú º¤ÅÍ¿Í Æò¸éÀÇ ¹ı¼±(spineUp)À» ³»ÀûÇÏ¿© ¹æÇâÀ» È®ÀÎÇÕ´Ï´Ù.
+	// ì™¸ì  ê²°ê³¼ ë²¡í„°ì™€ í‰ë©´ì˜ ë²•ì„ (spineUp)ì„ ë‚´ì í•˜ì—¬ ë°©í–¥ì„ í™•ì¸í•©ë‹ˆë‹¤.
 	float directionSign = FVector::DotProduct(crossProduct, spineUp);
 
-	// --- 3. ÃÖÁ¾ ºÎÈ£ ÀÖ´Â °¢µµ °è»ê ---
-	// DirectionSignÀÌ ¾ç¼öÀÌ¸é ¿À¸¥ÂÊ(+), À½¼öÀÌ¸é ¿ŞÂÊ(-)ÀÔ´Ï´Ù.
+	// --- 3. ìµœì¢… ë¶€í˜¸ ìˆëŠ” ê°ë„ ê³„ì‚° ---
+	// DirectionSignì´ ì–‘ìˆ˜ì´ë©´ ì˜¤ë¥¸ìª½(+), ìŒìˆ˜ì´ë©´ ì™¼ìª½(-)ì…ë‹ˆë‹¤.
 	float signedAngle = angleInDegree * FMath::Sign(directionSign);
 
 
@@ -1464,7 +1466,7 @@ UChildActorComponent* APlayerCharacter::GetCurCamera()
 void APlayerCharacter::UpdateCameraOcclusion()
 {
 	FVector CameraLocation = _camera->GetComponentLocation(); // or CustomCamera
-	FVector HeadLocation = GetMesh()->GetSocketLocation("head") + FVector(0, 0, 10.f); // Áß½É ÁöÁ¡
+	FVector HeadLocation = GetMesh()->GetSocketLocation("head") + FVector(0, 0, 10.f); // ì¤‘ì‹¬ ì§€ì 
 
 	TArray<FHitResult> Hits;
 	FCollisionQueryParams Params;
@@ -1478,25 +1480,25 @@ void APlayerCharacter::UpdateCameraOcclusion()
 		Params
 	);
 
-	// ¼û±æ ÄÄÆ÷³ÍÆ® Ã³¸®
+	// ìˆ¨ê¸¸ ì»´í¬ë„ŒíŠ¸ ì²˜ë¦¬
 	for (const FHitResult& Hit : Hits)
 	{
 		if (UPrimitiveComponent* Comp = Hit.GetComponent())
 		{
 			if (!_fadedComponents.Contains(Comp))
 			{
-				Comp->SetRenderCustomDepth(true); // ¶Ç´Â Åõ¸í ¸ÓÆ¼¸®¾ó·Î ±³Ã¼
+				Comp->SetRenderCustomDepth(true); // ë˜ëŠ” íˆ¬ëª… ë¨¸í‹°ë¦¬ì–¼ë¡œ êµì²´
 				_fadedComponents.Add(Comp);
 			}
 		}
 	}
 
-	// ÀÌÀü ÇÁ·¹ÀÓ¿¡ ÀÖ¾úÁö¸¸ Áö±İÀº ¾ø´Â ¡æ º¹¿ø
+	// ì´ì „ í”„ë ˆì„ì— ìˆì—ˆì§€ë§Œ ì§€ê¸ˆì€ ì—†ëŠ” â†’ ë³µì›
 	for (int32 i = _fadedComponents.Num() - 1; i >= 0; --i)
 	{
 		if (!Hits.ContainsByPredicate([&](const FHitResult& Hit) { return Hit.GetComponent() == _fadedComponents[i]; }))
 		{
-			_fadedComponents[i]->SetRenderCustomDepth(false); // ¶Ç´Â ¿ø·¡ ¸ÓÆ¼¸®¾ó·Î º¹¿ø
+			_fadedComponents[i]->SetRenderCustomDepth(false); // ë˜ëŠ” ì›ë˜ ë¨¸í‹°ë¦¬ì–¼ë¡œ ë³µì›
 			_fadedComponents.RemoveAt(i);
 		}
 	}
@@ -1506,17 +1508,17 @@ FVector APlayerCharacter::GetCenterLoc()
 {
 
 	//UE_LOG(LogTemp, Error, TEXT("%d %d"), _lastAimTargetFrame, GFrameCounter);
-	// GFrameCounter´Â ÇöÀç ¿£ÁøÀÇ ÇÁ·¹ÀÓ ¹øÈ£ÀÔ´Ï´Ù.
+	// GFrameCounterëŠ” í˜„ì¬ ì—”ì§„ì˜ í”„ë ˆì„ ë²ˆí˜¸ì…ë‹ˆë‹¤.
 	if (_lastAimTargetFrame == GFrameCounter)
 	{
-		// 1. ÀÌ¹ø ÇÁ·¹ÀÓ¿¡ ÀÌ¹Ì °è»êÇß½À´Ï´Ù. Ä³½ÃµÈ °ªÀ» ¹İÈ¯ÇÕ´Ï´Ù.
-		// UE_LOG(LogTemp, Warning, TEXT("Returning Cached Aim Target")); // (µğ¹ö±ë¿ë)
+		// 1. ì´ë²ˆ í”„ë ˆì„ì— ì´ë¯¸ ê³„ì‚°í–ˆìŠµë‹ˆë‹¤. ìºì‹œëœ ê°’ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
+		// UE_LOG(LogTemp, Warning, TEXT("Returning Cached Aim Target")); // (ë””ë²„ê¹…ìš©)
 		return _cachedAimTarget;
 	}
 
 
 
-	//ÇÃ·¹ÀÌ¾î ÄÁÆ®·Ñ·¯¿¡¼­ ½ºÅ©¸°¿¡¼­ ¿ùµåÁÂÇ¥¹Ş±â 
+	//í”Œë ˆì´ì–´ ì»¨íŠ¸ë¡¤ëŸ¬ì—ì„œ ìŠ¤í¬ë¦°ì—ì„œ ì›”ë“œì¢Œí‘œë°›ê¸° 
 	APlayerController* pc = Cast<APlayerController>(GetController());
 	FVector CameraLoc, CameraForward;
 	FVector AimTarget;
@@ -1527,17 +1529,17 @@ FVector APlayerCharacter::GetCenterLoc()
 		CameraLoc = GetCurCamera()->GetComponentLocation();
 		CameraForward = GetCurCamera()->GetComponentRotation().Vector().GetSafeNormal();
 
-		// 3. ¶óÀÎ Æ®·¹ÀÌ½º¸¦ Á¤Áß¾Ó ¹æÇâÀ¸·Î ½ô
+		// 3. ë¼ì¸ íŠ¸ë ˆì´ìŠ¤ë¥¼ ì •ì¤‘ì•™ ë°©í–¥ìœ¼ë¡œ ì¨
 		FVector TraceEnd = CameraLoc + CameraForward * traceRange;
 		FHitResult HitResult;
 
 		FCollisionQueryParams Params;
 		Params.bReturnPhysicalMaterial = false;
-		Params.AddIgnoredActor(this); // ÀÚ±â ÀÚ½Å ¹«½Ã
+		Params.AddIgnoredActor(this); // ìê¸° ìì‹  ë¬´ì‹œ
 
 		if (GetWorld()->LineTraceSingleByChannel(HitResult, CameraLoc, TraceEnd, ECC_Visibility, Params))
 		{
-			// 4. ¸íÁß ½Ã ¡æ Ãæµ¹ ÁöÁ¡ ¹İÈ¯
+			// 4. ëª…ì¤‘ ì‹œ â†’ ì¶©ëŒ ì§€ì  ë°˜í™˜
 			AimTarget = HitResult.ImpactPoint;
 			//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
 		}
@@ -1553,28 +1555,28 @@ FVector APlayerCharacter::GetCenterLoc()
 		CameraLoc = pc->PlayerCameraManager->GetCameraLocation();
 		CameraForward = pc->PlayerCameraManager->GetCameraRotation().Vector().GetSafeNormal();
 
-		// 1. È­¸éÀÇ Á¤Áß¾Ó ÁÂÇ¥ ±¸ÇÏ±â
+		// 1. í™”ë©´ì˜ ì •ì¤‘ì•™ ì¢Œí‘œ êµ¬í•˜ê¸°
 		int32 ViewportSizeX, ViewportSizeY;
 		pc->GetViewportSize(ViewportSizeX, ViewportSizeY);
 		float ScreenCenterX = (float)ViewportSizeX / 2.f;
 		float ScreenCenterY = (float)ViewportSizeY / 2.f;
 
-		// 2. È­¸é ÁÂÇ¥¸¦ ¿ùµå ¹æÇâÀ¸·Î º¯È¯
+		// 2. í™”ë©´ ì¢Œí‘œë¥¼ ì›”ë“œ ë°©í–¥ìœ¼ë¡œ ë³€í™˜
 		FVector WorldLocation, WorldDirection;
 		if (pc->DeprojectScreenPositionToWorld(ScreenCenterX, ScreenCenterY, WorldLocation, WorldDirection))
 		{
 
-			// 3. ¶óÀÎ Æ®·¹ÀÌ½º¸¦ Á¤Áß¾Ó ¹æÇâÀ¸·Î ½ô
+			// 3. ë¼ì¸ íŠ¸ë ˆì´ìŠ¤ë¥¼ ì •ì¤‘ì•™ ë°©í–¥ìœ¼ë¡œ ì¨
 			FVector TraceEnd = WorldLocation + WorldDirection * traceRange;
 			FHitResult HitResult;
 
 			FCollisionQueryParams Params;
 			Params.bReturnPhysicalMaterial = false;
-			Params.AddIgnoredActor(this); // ÀÚ±â ÀÚ½Å ¹«½Ã
+			Params.AddIgnoredActor(this); // ìê¸° ìì‹  ë¬´ì‹œ
 
 			if (pc->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_Visibility, Params))
 			{
-				// 4. ¸íÁß ½Ã ¡æ Ãæµ¹ ÁöÁ¡ ¹İÈ¯
+				// 4. ëª…ì¤‘ ì‹œ â†’ ì¶©ëŒ ì§€ì  ë°˜í™˜
 				AimTarget = HitResult.ImpactPoint;
 				//UE_LOG(LogTemp, Display, TEXT("NotLegacy"));
 			}
@@ -1583,7 +1585,7 @@ FVector APlayerCharacter::GetCenterLoc()
 
 				AimTarget = TraceEnd;
 			}
-			// 5. ¹Ì¸íÁß ½Ã ¡æ ³¡ ÁöÁ¡ ¹İÈ¯
+			// 5. ë¯¸ëª…ì¤‘ ì‹œ â†’ ë ì§€ì  ë°˜í™˜
 		}
 		else
 		{
@@ -1596,7 +1598,7 @@ FVector APlayerCharacter::GetCenterLoc()
 	_cachedAimTarget = AimTarget;
 	_lastAimTargetFrame = GFrameCounter;
 
-	// 4. »õ·Î °è»êµÈ °ªÀ» ¹İÈ¯ÇÕ´Ï´Ù.
+	// 4. ìƒˆë¡œ ê³„ì‚°ëœ ê°’ì„ ë°˜í™˜í•©ë‹ˆë‹¤.
 	return _cachedAimTarget;
 
 }
@@ -1620,7 +1622,7 @@ void APlayerCharacter::ViewTurnBack()
 	AddActorWorldRotation(FRotator(0, 1, 0));
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	// ¸ØÃß´Â °æ¿ì
+	// ë©ˆì¶”ëŠ” ê²½ìš°
 	_isViewTurnCenter = true;
 }
 void APlayerCharacter::SetStandingCollisionCamera()
@@ -1632,7 +1634,7 @@ void APlayerCharacter::SetStandingCollisionCamera()
 	LatentInfo.CallbackTarget = this;
 	LatentInfo.ExecutionFunction = NAME_None;
 	LatentInfo.Linkage = 0;
-	LatentInfo.UUID = __LINE__; // À¯´ÏÅ©ÇÑ ID
+	LatentInfo.UUID = __LINE__; // ìœ ë‹ˆí¬í•œ ID
 
 	UKismetSystemLibrary::MoveComponentTo(
 		_cameraRoot,
@@ -1654,7 +1656,7 @@ void APlayerCharacter::SetCrouchingCollisionCamera()
 	LatentInfo.CallbackTarget = this;
 	LatentInfo.ExecutionFunction = NAME_None;
 	LatentInfo.Linkage = 0;
-	LatentInfo.UUID = __LINE__; // À¯´ÏÅ©ÇÑ ID
+	LatentInfo.UUID = __LINE__; // ìœ ë‹ˆí¬í•œ ID
 
 	UKismetSystemLibrary::MoveComponentTo(
 		_cameraRoot,
@@ -1674,7 +1676,7 @@ void APlayerCharacter::SetProningCollisionCamera()
 	LatentInfo.CallbackTarget = this;
 	LatentInfo.ExecutionFunction = NAME_None;
 	LatentInfo.Linkage = 0;
-	LatentInfo.UUID = __LINE__; // À¯´ÏÅ©ÇÑ ID
+	LatentInfo.UUID = __LINE__; // ìœ ë‹ˆí¬í•œ ID
 
 	UKismetSystemLibrary::MoveComponentTo(
 		_cameraRoot,
@@ -1689,7 +1691,7 @@ void APlayerCharacter::SetProningCollisionCamera()
 
 void APlayerCharacter::OpenMap()
 {
-	if (_stateComponent->IsCheckingMap()) // ¸ÊÀ» º¸°íÀÖÀ» °æ¿ì
+	if (_stateComponent->IsCheckingMap()) // ë§µì„ ë³´ê³ ìˆì„ ê²½ìš°
 	{
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
 		_stateComponent->SetCheckingMap(false);
@@ -1697,7 +1699,7 @@ void APlayerCharacter::OpenMap()
 		_sceneCapturer->ResetMap();
 		_minimapWidget->ResetMap();
 	}
-	else // ¸ÊÀÌ ´İÇôÀÖÀ» °æ¿ì
+	else // ë§µì´ ë‹«í˜€ìˆì„ ê²½ìš°
 	{
 		_minimapWidget->SetVisibility(ESlateVisibility::Visible);
 		_stateComponent->SetCheckingMap(true);
@@ -1739,6 +1741,127 @@ void APlayerCharacter::OnPostSwitchGun(AGunBase* newGun)
 
 	if (_gunWidget)
 		_gunWidget->SetGun(newGun->GetGunData()._icon);
+}
+
+void APlayerCharacter::UpdateStratagemEtaUI()
+{
+	UWorld* world = GetWorld();
+	if (!world)
+	{
+		return;
+	}
+
+	APlayerController* pc = Cast<APlayerController>(GetController());
+	if (!pc)
+	{
+		return;
+	}
+
+	// ì¹´ë©”ë¼ ìœ„ì¹˜ / íšŒì „
+	FVector cameraLoc;
+	FRotator cameraRot;
+	pc->GetPlayerViewPoint(cameraLoc, cameraRot);
+
+	// í™”ë©´ í¬ê¸° / í™”ë©´ ì¤‘ì•™ ìŠ¤í¬ë¦° ì¢Œí‘œ
+	int32 viewportX = 0;
+	int32 viewportY = 0;
+	pc->GetViewportSize(viewportX, viewportY);
+
+	const FVector2D screenCenter(
+		static_cast<float>(viewportX) * 0.5f,
+		static_cast<float>(viewportY) * 0.5f
+	);
+
+	// í™”ë©´ ì¤‘ì•™ì´ ê°€ë¦¬í‚¤ëŠ” ì›”ë“œ ìœ„ì¹˜ (ì—ì„ ë†’ì´ì™€ ë¹„êµìš©)
+	const FVector aimPoint = GetCenterLoc();
+
+	// "ìŠ¤íŠ¸ë¼íƒ€ì ¬ì„ ë³´ê³  ìˆë‹¤"ë¡œ ì¸ì •í•  ìµœëŒ€ ê°€ë¡œ ê±°ë¦¬ (í”½ì…€ ê¸°ì¤€)
+	const float maxScreenDistanceX = 40.0f; // íŠœë‹ìš©
+
+	AStratagem* bestStratagem = nullptr;
+	FVector2D bestScreenPos(0.0f, 0.0f);
+	float bestScore = 0.0f;
+	bool hasBest = false;
+
+	// 1ì°¨ ë£¨í”„: "í™”ë©´ ì¤‘ì•™ì— ê°€ì¥ ê°€ê¹Œìš´" ìŠ¤íŠ¸ë¼íƒ€ì ¬ ì°¾ê¸° (ìŠ¤í¬ë¦° ê¸°ì¤€)
+	for (TActorIterator<AStratagem> it(world); it; ++it)
+	{
+		AStratagem* stratagem = *it;
+		if (!IsValid(stratagem))
+		{
+			continue;
+		}
+
+		// ETA ê³„ì‚°ì´ ì•„ì§ ì•ˆ ëê±°ë‚˜ ì´ë¯¸ ëë‚œ ìŠ¤íŠ¸ë¼íƒ€ì ¬ì€ ë¬´ì‹œ
+		if (!stratagem->IsEtaReady() || stratagem->GetImpactRemain() <= 0.0f)
+		{
+			continue;
+		}
+
+		// ìŠ¤íŠ¸ë¼íƒ€ì ¬ë³´ë‹¤ ì•„ë˜ìª½ì„ ë³´ê³  ìˆë‹¤ë©´ ë¬´ì‹œ (ë¹›ê¸°ë‘¥ì´ ì•ˆ ë³´ì´ëŠ” ìƒí™©)
+		if (stratagem->GetActorLocation().Z > aimPoint.Z)
+		{
+			continue;
+		}
+
+		// ì›”ë“œ â†’ ìŠ¤í¬ë¦° ì¢Œí‘œ
+		FVector2D screenPos(0.0f, 0.0f);
+		if (!pc->ProjectWorldLocationToScreen(stratagem->GetActorLocation(), screenPos))
+		{
+			continue;
+		}
+
+		// í™”ë©´ ì¤‘ì•™ê³¼ì˜ ê°€ë¡œ ê±°ë¦¬
+		const float dx = screenPos.X - screenCenter.X;
+		const float absDx = FMath::Abs(dx);
+
+		// ì¼ì • ê±°ë¦¬ ë°–ì— ìˆìœ¼ë©´ "ë³´ê³  ìˆëŠ” ìŠ¤íŠ¸ë¼íƒ€ì ¬" í›„ë³´ì—ì„œ íƒˆë½
+		if (absDx > maxScreenDistanceX)
+		{
+			continue;
+		}
+
+		// ì—¬ê¸°ê¹Œì§€ ì™”ìœ¼ë©´ "ì—ì„ ê·¼ì²˜ì— ìˆëŠ” ìŠ¤íŠ¸ë¼íƒ€ì ¬"ì´ë¯€ë¡œ
+		// ì´ì œ ê·¸ ì¤‘ì—ì„œ ê°€ì¥ ì¤‘ì•™ì— ê°€ê¹Œìš´ ë†ˆì„ ê³ ë¥¸ë‹¤.
+		const float score = absDx;
+
+		if (!hasBest || score < bestScore)
+		{
+			hasBest = true;
+			bestScore = score;
+			bestStratagem = stratagem;
+			bestScreenPos = screenPos;
+		}
+	}
+
+	// 2ì°¨ ë£¨í”„: ì „ë¶€ ìˆ¨ê¸°ê¸°
+	for (TActorIterator<AStratagem> it(world); it; ++it)
+	{
+		if (AStratagem* stratagem = *it)
+		{
+			stratagem->HideEta();
+		}
+	}
+
+	// í›„ë³´ ì¤‘ì— "ë³´ê³  ìˆë‹¤ê³  ì¸ì •í•  ë§Œí•œ" ìŠ¤íŠ¸ë¼íƒ€ì ¬ì´ í•˜ë‚˜ë„ ì—†ìœ¼ë©´ ì¢…ë£Œ
+	if (!hasBest || !IsValid(bestStratagem))
+	{
+		return;
+	}
+
+	// ë‚¨ì€ ETA ì´ˆ (ì†Œìˆ˜ì  ë²„ë¦¼)
+	const int32 etaSec = FMath::Max(0, FMath::FloorToInt(bestStratagem->GetImpactRemain()));
+
+	// ìœ„ì ¯ì´ ìµœì¢…ì ìœ¼ë¡œ ë– ì•¼ í•  ìŠ¤í¬ë¦° ì¢Œí‘œ
+	//  - X: ìŠ¤íŠ¸ë¼íƒ€ì ¬ì˜ ìŠ¤í¬ë¦° X
+	//  - Y: í™”ë©´ ì¤‘ì•™ ë†’ì´ (ì›í•˜ì‹œë©´ screenCenter.Y - N ìœ¼ë¡œ ì¡°ê¸ˆ ì˜¬ë ¤ë„ ë¨)
+	const float etaX = bestScreenPos.X;
+	const float etaY = screenCenter.Y -25;
+
+	const FVector2D etaScreenPos(etaX, etaY);
+
+	// ì„ íƒëœ ìŠ¤íŠ¸ë¼íƒ€ì ¬ì—ê²Œ "ìµœì¢… ìŠ¤í¬ë¦° ì¢Œí‘œ + ETA ê°’" ì „ë‹¬
+	bestStratagem->ShowEtaAtScreenPosition(etaScreenPos, etaSec, pc);
 }
 
 void APlayerCharacter::InitWeapon()
@@ -1868,7 +1991,7 @@ void APlayerCharacter::EndStratagemInputMode(const FInputActionValue& value)
 	if (_stateComponent->GetActionState() == EActionState::Stratagem)
 	{
 		_stateComponent->SetActionState(EActionState::None);
-		_stratagemInputBuffer.Empty(); // Á¶ÇÕ ÃÊ±âÈ­
+		_stratagemInputBuffer.Empty(); // ì¡°í•© ì´ˆê¸°í™”
 	}
 
 	_stratagemWidget->OpenWidget(false);
@@ -1887,7 +2010,7 @@ void APlayerCharacter::OnStrataKeyW(const FInputActionValue& value)
 
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 	{
-		if (!_curTerminal) // ÇöÀç Á¶ÀÛ ÁßÀÎ ÄÜ¼ÖÀÌ ¾ø´Ù¸é -> ¿À·ù
+		if (!_curTerminal) // í˜„ì¬ ì¡°ì‘ ì¤‘ì¸ ì½˜ì†”ì´ ì—†ë‹¤ë©´ -> ì˜¤ë¥˜
 		{
 			EndTerminalInputMode();
 			return;
@@ -1908,7 +2031,7 @@ void APlayerCharacter::OnStrataKeyA(const FInputActionValue& value)
 
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 	{
-		if (!_curTerminal) // ÇöÀç Á¶ÀÛ ÁßÀÎ ÄÜ¼ÖÀÌ ¾ø´Ù¸é -> ¿À·ù
+		if (!_curTerminal) // í˜„ì¬ ì¡°ì‘ ì¤‘ì¸ ì½˜ì†”ì´ ì—†ë‹¤ë©´ -> ì˜¤ë¥˜
 		{
 			EndTerminalInputMode();
 			return;
@@ -1929,7 +2052,7 @@ void APlayerCharacter::OnStrataKeyS(const FInputActionValue& value)
 
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 	{
-		if (!_curTerminal) // ÇöÀç Á¶ÀÛ ÁßÀÎ ÄÜ¼ÖÀÌ ¾ø´Ù¸é -> ¿À·ù
+		if (!_curTerminal) // í˜„ì¬ ì¡°ì‘ ì¤‘ì¸ ì½˜ì†”ì´ ì—†ë‹¤ë©´ -> ì˜¤ë¥˜
 		{
 			EndTerminalInputMode();
 			return;
@@ -1950,7 +2073,7 @@ void APlayerCharacter::OnStrataKeyD(const FInputActionValue& value)
 
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 	{
-		if (!_curTerminal) // ÇöÀç Á¶ÀÛ ÁßÀÎ ÄÜ¼ÖÀÌ ¾ø´Ù¸é -> ¿À·ù
+		if (!_curTerminal) // í˜„ì¬ ì¡°ì‘ ì¤‘ì¸ ì½˜ì†”ì´ ì—†ë‹¤ë©´ -> ì˜¤ë¥˜
 		{
 			EndTerminalInputMode();
 			return;
@@ -1981,7 +2104,7 @@ void APlayerCharacter::CheckStratagemInputCombo()
 		const AStratagem* CDO = stratagemClass->GetDefaultObject<AStratagem>();
 		const TArray<FKey>& combo = CDO->GetInputSequence();
 
-		// ¿ÏÀü ÀÏÄ¡ ¡æ Àåºñ
+		// ì™„ì „ ì¼ì¹˜ â†’ ì¥ë¹„
 		if (_stratagemInputBuffer == combo)
 		{
 			_stratagemComponent->SelectStratagem(i);
@@ -1991,14 +2114,14 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 			if (_stateComponent->GetActionState() == EActionState::Stratagem)
 			{
-				//ÀÌÀü»óÅÂ·Î µ¹¸±ÇÊ¿ä°¡ ÀÖ´Ù. ÀÌÀü»óÅÂ¸¦ ÀúÀåÇÒ ¹æ¹ıÀ» Ã£¾Æº¸ÀÚ.
+				//ì´ì „ìƒíƒœë¡œ ëŒë¦´í•„ìš”ê°€ ìˆë‹¤. ì´ì „ìƒíƒœë¥¼ ì €ì¥í•  ë°©ë²•ì„ ì°¾ì•„ë³´ì.
 				_stateComponent->SetActionState(EActionState::None);
 			}
 			_stratagemWidget->SetWidgetOperatingState(i);
 			return;
 		}
 
-		// »ç¿ë °¡´ÉÇÑ ½ºÆ®¶óÅ¸ÁªÀÌ ÀÖ´ÂÁö È®ÀÎ
+		// ì‚¬ìš© ê°€ëŠ¥í•œ ìŠ¤íŠ¸ë¼íƒ€ì ¬ì´ ìˆëŠ”ì§€ í™•ì¸
 		if (_stratagemInputBuffer.Num() <= combo.Num())
 		{
 			bool bPrefixMatch = true;
@@ -2021,7 +2144,7 @@ void APlayerCharacter::CheckStratagemInputCombo()
 
 	if (!bIsPrefixMatch)
 	{
-		_stratagemInputBuffer.Empty(); // Á¶ÇÕ ÃÊ±âÈ­
+		_stratagemInputBuffer.Empty(); // ì¡°í•© ì´ˆê¸°í™”
 		_stratagemWidget->OpenWidget(false);
 	}
 }
@@ -2095,7 +2218,7 @@ void APlayerCharacter::OnItemNonInteractable(UPrimitiveComponent* OverlappedComp
 
 void APlayerCharacter::CheckInitialOverlaps()
 {
-	// °¨Áö °¡´É ¹üÀ§ Ã¼Å©
+	// ê°ì§€ ê°€ëŠ¥ ë²”ìœ„ ì²´í¬
 	TArray<AActor*> detectedOverlaps;
 	_itemDetectionSphere->GetOverlappingActors(detectedOverlaps, AInteractable::StaticClass());
 
@@ -2108,7 +2231,7 @@ void APlayerCharacter::CheckInitialOverlaps()
 		}
 	}
 
-	// »óÈ£ÀÛ¿ë °¡´É ¹üÀ§ Ã¼Å©
+	// ìƒí˜¸ì‘ìš© ê°€ëŠ¥ ë²”ìœ„ ì²´í¬
 	TArray<AActor*> interactableOverlaps;
 	_itemInteractionSphere->GetOverlappingActors(interactableOverlaps, AInteractable::StaticClass());
 
@@ -2123,21 +2246,21 @@ void APlayerCharacter::CheckInitialOverlaps()
 
 void APlayerCharacter::FindBestItem()
 {
-	// ¿ø·¡´Â ÀÌ ¹æ¹ıÀ» »ç¿ëÇÏ¿´À¸³ª, ÇÔ¼ö°¡ Æ½¿¡¼­ ½ÇÇàµÇ´Â °ÍÀ¸·Î º¯°æµÇ¸é¼­, ¼º´ÉÀ» À§ÇØ ¹æ½ÄÀ» Á¶±İ ¼öÁ¤
+	// ì›ë˜ëŠ” ì´ ë°©ë²•ì„ ì‚¬ìš©í•˜ì˜€ìœ¼ë‚˜, í•¨ìˆ˜ê°€ í‹±ì—ì„œ ì‹¤í–‰ë˜ëŠ” ê²ƒìœ¼ë¡œ ë³€ê²½ë˜ë©´ì„œ, ì„±ëŠ¥ì„ ìœ„í•´ ë°©ì‹ì„ ì¡°ê¸ˆ ìˆ˜ì •
 	//TArray<AActor*> overlapped;
 	//_itemDetectionSphere->GetOverlappingActors(overlapped, AInteractable::StaticClass());
 
-	// Å°¸¦ ´©¸¦ ¶§¸¶´Ù GetOverlappingActors()¸¦ ½ÇÇàÇÏ´Â ´ë½Å,
-	// ¾ÆÀÌÅÛÀÌ °¨ÁöµÉ ¶§¸¶´Ù µ¨¸®°ÔÀÌÆ®·Î ¹è¿­¿¡ Ãß°¡µÇ°í, ±× ¹è¿­À» °Ë»çÇÏ´Â ¹æ½Ä
+	// í‚¤ë¥¼ ëˆ„ë¥¼ ë•Œë§ˆë‹¤ GetOverlappingActors()ë¥¼ ì‹¤í–‰í•˜ëŠ” ëŒ€ì‹ ,
+	// ì•„ì´í…œì´ ê°ì§€ë  ë•Œë§ˆë‹¤ ë¸ë¦¬ê²Œì´íŠ¸ë¡œ ë°°ì—´ì— ì¶”ê°€ë˜ê³ , ê·¸ ë°°ì—´ì„ ê²€ì‚¬í•˜ëŠ” ë°©ì‹
 
-	//0) ¸¸¾à °ãÄ£ ¾ÆÀÌÅÛÀÌ ¾øÀ¸¸é
+	//0) ë§Œì•½ ê²¹ì¹œ ì•„ì´í…œì´ ì—†ìœ¼ë©´
 	if (_interactableItems.Num() == 0)
 	{
-		_bestItem = nullptr; // »óÈ£ÀÛ¿ë ºÒ°¡´É
+		_bestItem = nullptr; // ìƒí˜¸ì‘ìš© ë¶ˆê°€ëŠ¥
 		return;
 	}
 
-	// 1) ¿ÏÀüÈ÷ °ãÄ£ ¾ÆÀÌÅÛ(È¤Àº °ÅÀÇ µ¿ÀÏ À§Ä¡)¿¡ ´ëÇØ¼­´Â ¹Ù·Î ÇÈ¾÷
+	// 1) ì™„ì „íˆ ê²¹ì¹œ ì•„ì´í…œ(í˜¹ì€ ê±°ì˜ ë™ì¼ ìœ„ì¹˜)ì— ëŒ€í•´ì„œëŠ” ë°”ë¡œ í”½ì—…
 	for (auto item : _interactableItems)
 	{
 		/*AInteractable* item = Cast<AInteractable>(actor);
@@ -2149,19 +2272,19 @@ void APlayerCharacter::FindBestItem()
 			_bestItem = item;
 			_bestItem->ShowKeyButtonMark();
 
-			if (prevBestItem != _bestItem) // ¸¸¾à º£½ºÆ® ¾ÆÀÌÅÛÀÌ ¹Ù²î¾ú´Ù¸é UI °»½Å
+			if (prevBestItem != _bestItem) // ë§Œì•½ ë² ìŠ¤íŠ¸ ì•„ì´í…œì´ ë°”ë€Œì—ˆë‹¤ë©´ UI ê°±ì‹ 
 			{
-				if (prevBestItem && _interactableItems.Contains(prevBestItem)) // ¾ÆÁ÷µµ »óÈ£ÀÛ¿ëÀÌ °¡´ÉÇÑ °æ¿ì¶ó¸é
-					prevBestItem->ShowDefaultMark(); // ´Ù½Ã ÀÏ¹İ »óÈ£ÀÛ¿ë ¸¶Å©·Î
+				if (prevBestItem && _interactableItems.Contains(prevBestItem)) // ì•„ì§ë„ ìƒí˜¸ì‘ìš©ì´ ê°€ëŠ¥í•œ ê²½ìš°ë¼ë©´
+					prevBestItem->ShowDefaultMark(); // ë‹¤ì‹œ ì¼ë°˜ ìƒí˜¸ì‘ìš© ë§ˆí¬ë¡œ
 			}
 
-			return;  // °¡Àå ¸ÕÀú ¹ß°ßµÈ °ãÄ£ ¾ÆÀÌÅÛ¸¸ ÀúÀå
+			return;  // ê°€ì¥ ë¨¼ì € ë°œê²¬ëœ ê²¹ì¹œ ì•„ì´í…œë§Œ ì €ì¥
 		}
 	}
 
-	// 2) °ãÄ¡Áö ¾ÊÀº ¾ÆÀÌÅÛµé¿¡ ´ëÇØ ±âÁ¸ ½ºÄÚ¾î ·ÎÁ÷ ½ÇÇà
-	//AInteractable* bestItem = nullptr; // ÃÖÁ¾ ¼±ÅÃÇÒ ¾ÆÀÌÅÛ Æ÷ÀÎÅÍ
-	float bestScore = -1.0f; // ºñ±³¿ë ½ºÄÚ¾î(Å¬¼ö·Ï ¿ì¼±)
+	// 2) ê²¹ì¹˜ì§€ ì•Šì€ ì•„ì´í…œë“¤ì— ëŒ€í•´ ê¸°ì¡´ ìŠ¤ì½”ì–´ ë¡œì§ ì‹¤í–‰
+	//AInteractable* bestItem = nullptr; // ìµœì¢… ì„ íƒí•  ì•„ì´í…œ í¬ì¸í„°
+	float bestScore = -1.0f; // ë¹„êµìš© ìŠ¤ì½”ì–´(í´ìˆ˜ë¡ ìš°ì„ )
 	const FVector forward = GetActorForwardVector().GetSafeNormal();
 	const FVector playerLoc = GetActorLocation();
 
@@ -2173,7 +2296,7 @@ void APlayerCharacter::FindBestItem()
 		float dist = toItem.Size();
 
 		FVector dir = toItem / dist;
-		// ÇÃ·¹ÀÌ¾îÀÇ Àü¹æ º¤ÅÍ¿Í ¾ÆÀÌÅÛ ¹æÇâ º¤ÅÍÀÇ ³»Àû °è»ê
+		// í”Œë ˆì´ì–´ì˜ ì „ë°© ë²¡í„°ì™€ ì•„ì´í…œ ë°©í–¥ ë²¡í„°ì˜ ë‚´ì  ê³„ì‚°
 		float forwardDot = FVector::DotProduct(forward, dir);
 		float score = (forwardDot > 0.0f) ? (forwardDot / dist) : 0.0f;
 
@@ -2325,7 +2448,7 @@ void APlayerCharacter::TryChangeLightMode(const FInputActionValue& value)
 {
 	if (_stateComponent->IsCheckingMap())
 	{
-		_sceneCapturer->ChangeOrthoWidth(false); // ¸¶¿ì½º ÈÙ ´Ù¿î -> Ãà¼Ò
+		_sceneCapturer->ChangeOrthoWidth(false); // ë§ˆìš°ìŠ¤ íœ  ë‹¤ìš´ -> ì¶•ì†Œ
 		return;
 	}
 
@@ -2355,7 +2478,7 @@ void APlayerCharacter::TryChangeScopeMode(const FInputActionValue& value)
 {
 	if (_stateComponent->IsCheckingMap())
 	{
-		_sceneCapturer->ChangeOrthoWidth(true); // ¸¶¿ì½º ÈÙ ¾÷ -> È®´ë
+		_sceneCapturer->ChangeOrthoWidth(true); // ë§ˆìš°ìŠ¤ íœ  ì—… -> í™•ëŒ€
 		return;
 	}
 

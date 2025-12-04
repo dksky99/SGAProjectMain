@@ -212,7 +212,10 @@ protected:
 	void OnPreSwitchGun(AGunBase* prevGun) override;
 	void OnPostSwitchGun(AGunBase* newGun) override;
 
+	// 화면 중앙 기준으로 가장 잘 보이는 스트라타젬 하나에 ETA UI 표시
+	void UpdateStratagemEtaUI();
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _moveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
