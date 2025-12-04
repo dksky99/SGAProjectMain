@@ -14,6 +14,18 @@ class SGAPROJECTMAIN_API ABombardmentController : public AActor
 public:
 	ABombardmentController();
 
+public:
+	// 컨트롤러 세팅
+	void InitializeBombardment(float startDelay);
+
+	// BeginPlay 기준 첫 탄 지면 도달까지
+	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Bombard")
+	float GetEstimatedFirstImpactDelay() const;
+
+	// 폭격 지속 시간
+	UFUNCTION(BlueprintCallable, Category = "Game/Stratagem/Bombard")
+	float GetEstimatedBombardDuration() const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -27,11 +39,14 @@ protected:
 	// 랜덤 산포 타깃 샘플링(피격 중심 기준)
 	FVector SampleTargetLocation() const;
 
-
 protected:
 	// 떨어뜨릴 액터(포탄 또는 드롭 포드)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")
 	TSubclassOf<AActor> _projectileClass;
+
+	// 첫 웨이브 까지의 시간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")
+	float _startDelay;
 
 	// 한 웨이브당 투하 개수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem/Bombard")

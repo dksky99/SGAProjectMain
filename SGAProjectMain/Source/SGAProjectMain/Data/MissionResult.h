@@ -52,4 +52,5 @@ struct FMissionResult
 	TArray<FMissionReward> _missionRewards;
 	UPROPERTY()
 	FPlayerCurrency _totalReward;
+	int32 _totalExperience = 0;
 };

@@ -12,7 +12,6 @@
 UENUM(BlueprintType)
 enum class ECurrencyType : uint8
 {
-    Experience,
     RequisitionSlips,
     Medals
 };
@@ -22,8 +21,8 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-    int32 _experience = 0;
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+    //int32 _experience = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
     int32 _requisitionSlips = 0;
@@ -39,9 +38,6 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
     {
         switch (type)
         {
-        case ECurrencyType::Experience:
-            _experience += amount;
-            break;
         case ECurrencyType::RequisitionSlips:
             _requisitionSlips += amount;
             break;
@@ -53,7 +49,6 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
 
     void AddCurrency(const FPlayerCurrency& other)
     {
-        _experience += other._experience;
         _requisitionSlips += other._requisitionSlips;
         _medals += other._medals;
         _samples.AddSample(other._samples);
@@ -64,18 +59,11 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
         _samples.AddSample(sample);
     }
 
-    int32 Get(ECurrencyType type)
+    void SubtractCurrency(const FPlayerCurrency& other)
     {
-        switch (type)
-        {
-        case ECurrencyType::Experience:
-            return _experience;
-        case ECurrencyType::RequisitionSlips:
-            return _requisitionSlips;
-        case ECurrencyType::Medals:
-            return _medals;
-        }
-        return 0;
+        _requisitionSlips -= other._requisitionSlips;
+        _medals -= other._medals;
+		_samples.SubtractSample(other._samples);
     }
 
     int32 GetSampleCount(ESampleType type) const
@@ -85,5 +73,22 @@ struct SGAPROJECTMAIN_API FPlayerCurrency
             return *count;
         }
         return 0;
+	}
+
+    bool CanAfford(const FPlayerCurrency& other) const
+    {
+        if (_requisitionSlips < other._requisitionSlips) return false;
+        if (_medals < other._medals)           return false;
+
+        for (const auto& pair : other._samples._samples)
+        {
+            const ESampleType type = pair.Key;
+            const int32 required = pair.Value;
+
+            const int32 have = GetSampleCount(type);
+            if (have < required)
+                return false;
+        }
+		return true;
 	}
 };

@@ -170,6 +170,8 @@ void AMainGameMode::UpdateTimer()
     }
 
 	_remainingTime -= 1.f;
+
+	_timerUpdatedEvent.Broadcast(_remainingTime);
 }
 
 void AMainGameMode::CalculateMissionReward()
@@ -229,7 +231,7 @@ void AMainGameMode::CalculateMissionReward()
     for (const FMissionReward& reward : _missionResult._missionRewards)
     {
         if (reward._experience != 0)
-            _missionResult._totalReward.Add(ECurrencyType::Experience, reward._experience);
+			_missionResult._totalExperience += reward._experience;
         if (reward._requisitionSlips != 0)
             _missionResult._totalReward.Add(ECurrencyType::RequisitionSlips, reward._requisitionSlips);
     }

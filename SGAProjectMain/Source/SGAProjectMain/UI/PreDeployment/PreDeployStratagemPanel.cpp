@@ -15,19 +15,29 @@ void UPreDeployStratagemPanel::InitializePanel(UPreDeploymentState* state)
     Super::InitializePanel(state);
 
     UCGameInstance* GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
-    UDataTable* stgTable = GI->GetStratagemTable();
+    //UDataTable* stgTable = GI->GetStratagemTable();
+    TArray<FOwnedItem>& purchasedItems = GI->GetPurchasedShopItems();
 
     // 무기 타입별로 스트라타젬을 그룹화 (카테고리 & id)
     TMap<EStratagemType, TArray<int32>> groupedStgs;
-    for (auto& row : stgTable->GetRowMap()) // 모든 스트라타젬 데이터를 불러오기
-    {
-        FStratagemSlot* stgSlot = (FStratagemSlot*)row.Value;
-        TSubclassOf<AStratagem> stgClass = stgSlot->StratagemClass;
-        const AStratagem* stg = stgClass->GetDefaultObject<AStratagem>();
+    for (const FOwnedItem& item : purchasedItems)
+	{
+        if (item._type != EShopType::Stratagem) continue; // 스트라타젬 아이템만 처리
+        int32 itemID = item._id;
+        TSubclassOf<AStratagem> stgClass = GI->GetStratagemClassFromTable(itemID);
+		const AStratagem* stg = stgClass->GetDefaultObject<AStratagem>();
+        groupedStgs.FindOrAdd(stg->GetStgType()).Add(itemID); // 카테고리별로 배열에 추가
+	}
 
-        int32 id = FCString::Atoi(*row.Key.ToString());
-		groupedStgs.FindOrAdd(stg->GetStgType()).Add(id); // 카테고리별로 배열에 추가
-    }
+  //  for (auto& row : stgTable->GetRowMap()) // 모든 스트라타젬 데이터를 불러오기
+  //  {
+  //      FStratagemSlot* stgSlot = (FStratagemSlot*)row.Value;
+  //      TSubclassOf<AStratagem> stgClass = stgSlot->StratagemClass;
+  //      const AStratagem* stg = stgClass->GetDefaultObject<AStratagem>();
+
+  //      int32 id = FCString::Atoi(*row.Key.ToString());
+		//groupedStgs.FindOrAdd(stg->GetStgType()).Add(id); // 카테고리별로 배열에 추가
+  //  }
 
     int32 sectionIndex = 0;
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Data/MissionResult.h"
+#include "Data/ShopItemTable.h"
 #include "Object/AbnormalityTable.h"
 #include "Character/UnitDataTable.h"
 #include "Character/StatComponent.h"
@@ -126,10 +127,9 @@ public:
 	class UDataTable* GetStratagemTable() { return _stratagemTable; }
 
 	// 재화
-	void AddRewardCurrency(const FPlayerCurrency& reward);
-	//void AddCurrency(ECurrencyType type, int32 amount = 1);
-	//void AddEarnedSample(const FSampleBundle& earnedSample);
+	void AddRewardCurrency(FPlayerCurrency reward);
 	FSampleBundle GetSavedSample();
+	FPlayerCurrency GetCurrentCurrency();
 
 	// 임무 및 미션
 	class UOperationDataAsset* GetOperationDataAsset(FName operationID);
@@ -156,7 +156,21 @@ public:
 	void LoadGame();
 	void SaveGame();
 	class UCSaveGame* GetCurrentSave() { return _curSaveGame; }
+	TArray<struct FOwnedItem>& GetPurchasedShopItems();
 
+	// 상점
+	bool IsShopItemPurchased(EShopType type, int32 id);
+	bool IsShopItemUnlockConditionMet(int32 condition);
+	bool CanAffordShopItem(FPlayerCurrency price);
+	bool TryPurchaseShopItem(EShopType type, int32 id);
+
+	struct FShopItemData GetShopItemByID(EShopType type, int32 id);
+	class UDataTable* GetShopItemTable() { return _shopItemTable; }
+	struct FPlayerCurrency GetShopItemPriceByID(EShopType type, int32 id);
+
+	// 경험치
+	void AddExperience(int32 amount);
+	int32 GetExpToNextLevel(int32 curLevel);
 
 	class UPreDeploymentState* GetPreDeployState() { return _preDeployState; }
 
@@ -176,7 +190,6 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _gunTable;
-
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UDataTable* _stratagemTable;
 
@@ -204,12 +217,14 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
 	TMap<EAbnormality, FProcessedAbnormalityDefinitionData> _abnormalityDefinitions;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game Data", meta = (AllowPrivateAccess = "true"))
 	TMap<EAbnormality, struct FCDamageEvent> _abnormalityDamageEvents;
 
 	UPROPERTY()
 	class UCSaveGame* _curSaveGame = nullptr;
+
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	class UDataTable* _shopItemTable;
 
 	UPROPERTY()
 	UPreDeploymentState* _preDeployState;

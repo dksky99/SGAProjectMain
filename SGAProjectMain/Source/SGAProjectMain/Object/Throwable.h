@@ -29,7 +29,7 @@ public:
 	virtual void OnLifeTimeExpired(); // 수명 만료
 
 	USkeletalMeshComponent* GetMesh() const { return _mesh; }
-	void DestroySelf();
+	virtual void DestroySelf();
 
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp,AActor* OtherActor,	UPrimitiveComponent* OtherComp,	FVector NormalImpulse, const FHitResult& Hit);
