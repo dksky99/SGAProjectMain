@@ -24,6 +24,9 @@ struct FStratagemSlot : public FTableRowBase
 
 	UPROPERTY(EditAnywhere)
 	FText Description;
+
+	UPROPERTY(EditAnywhere)
+	UTexture2D* PreviewImage = nullptr;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
