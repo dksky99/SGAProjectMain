@@ -212,7 +212,10 @@ protected:
 	void OnPreSwitchGun(AGunBase* prevGun) override;
 	void OnPostSwitchGun(AGunBase* newGun) override;
 
+	// 화면 중앙 기준으로 가장 잘 보이는 스트라타젬 하나에 ETA UI 표시
+	void UpdateStratagemEtaUI();
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* _moveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Input", meta = (AllowPrivateAccess = "true"))
@@ -375,6 +378,8 @@ protected:
 	// 위젯 -> 지도보기
 	bool _isDraggingMap = false;
 
+	FVector _cachedCenterLoc = FVector::ZeroVector;
+
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere; // 아이템 감지 범위
@@ -391,10 +396,5 @@ protected:
 	UPROPERTY()
 	ATerminalConsole* _curTerminal;
 
-
-	uint64 _lastAimTargetFrame = 0;
-
-	// 캐시된 조준점 위치
-	FVector _cachedAimTarget;
 
 };

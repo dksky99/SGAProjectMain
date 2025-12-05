@@ -206,6 +206,14 @@ bool UCharacterStateComponent::ActionBegin()
 {
 	if (_isActing)
 		return false;
+
+	UCharacterMovementComponent* MoveComp = _owner->GetCharacterMovement();
+	if (MoveComp)
+	{
+
+		MoveComp->SetAvoidanceEnabled(false);
+	}
+
 	_isActing = true;
 	return true;
 }

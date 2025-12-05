@@ -109,7 +109,7 @@ void AThrowable::Throw(FVector direction)
 
 	_projectileMovement->Velocity = direction * power;
 
-	GetWorldTimerManager().SetTimer(_destroyTimerHandle, this, &AThrowable::OnLifeTimeExpired, _lifeTime, false);
+	//GetWorldTimerManager().SetTimer(_destroyTimerHandle, this, &AThrowable::OnLifeTimeExpired, _lifeTime, false);
 
 }
 

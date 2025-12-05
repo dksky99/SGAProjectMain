@@ -108,6 +108,7 @@ public:
 
 	FTransform GetLeftHandSocketTransform() const;
 	FTransform GetMuzzleTransform() const;
+	FTransform GetMuzzleTransform_Relative() const;
 	FVector GetJointTargetLocation() { return _jointTargetLoc; }
 
 	FGrenadeChanged _grenadeChanged;

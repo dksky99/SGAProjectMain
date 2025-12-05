@@ -58,11 +58,11 @@ bool UStatComponent::IsDead()
 {
 	if (_partDatas.IsEmpty())
 	{
-		return false;
+		return true;
 	}
 	if (_partDatas[EBodyPart::Core].PartStats.IsValidIndex(0)==false)
 	{
-		return false;
+		return true;
 	}
 	if (_partDatas[EBodyPart::Core].PartStats[0]._curHP <=0)
 	{

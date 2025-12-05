@@ -611,6 +611,8 @@ void ACharacterBase::OnDeath_Handler()
 
 bool ACharacterBase::IsTargetable() const
 {
+	if (GetController() == nullptr)
+		return false;
 	return _statComponent->IsDead()==false;
 }
 
@@ -700,7 +702,12 @@ void ACharacterBase::ActionEnd()
 	if (_reservedFunction.IsBound())
 		_reservedFunction.Unbind();
 
-	
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (MoveComp)
+	{
+
+		MoveComp->SetAvoidanceEnabled(false);
+	}
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{

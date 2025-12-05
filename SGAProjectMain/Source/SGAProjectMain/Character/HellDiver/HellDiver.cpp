@@ -932,6 +932,21 @@ FTransform AHellDiver::GetMuzzleTransform() const
     return temp;
 }
 
+FTransform AHellDiver::GetMuzzleTransform_Relative() const
+{
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (equippedGun == nullptr)
+    {
+        return GetActorTransform(); // fallback
+    }
+    FTransform muzzle = equippedGun->GetMesh()->GetSocketTransform(TEXT("Muzzle"),RTS_World);
+
+    FTransform weaponRoot = equippedGun->GetMesh()->GetSocketTransform(TEXT("root"),RTS_World);
+    FTransform temp = muzzle.GetRelativeTransform(weaponRoot);
+    return temp;
+}
+
 void AHellDiver::KnockDown(float time)
 {
     Super::KnockDown();
