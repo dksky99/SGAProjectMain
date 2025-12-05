@@ -102,6 +102,7 @@ bool UHellDiverAnimInstance::MoveStateChanged(FString curState)
 	_currentMoveState = curState;
 	if (_moveChanged.IsBound())
 	{
+		//상태 변화가 생겼을떄 브로드캐스트
 		_moveChanged.Broadcast(curState);
 	}
 	return true;

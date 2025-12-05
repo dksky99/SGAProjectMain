@@ -1588,13 +1588,11 @@ FVector APlayerCharacter::GetCenterLoc()
 }
 bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir) 
 {
-	return Super::GetTargetLook(loc, dir);
-	//loc = GetActorLocation();
-	//const FVector temp = GetTargetLoc();
-	//dir = temp - loc;
-	//
-	//
-	//return true;
+	
+	loc = GetActorLocation();
+	dir = _cachedCenterLoc - loc;
+
+	return true;
 }
 FVector APlayerCharacter::GetTargetLoc()
 {

@@ -69,7 +69,7 @@ void AHellDiver::BeginPlay()
     auto anim = Cast<UHellDiverAnimInstance>(GetMesh()->GetAnimInstance());
     if (anim != nullptr)
     {
-      
+        //상태 변화가 있을시 호출되는 함수를 바인드.
         anim->_moveChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::MoveChangeFinish);
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
@@ -752,7 +752,6 @@ void AHellDiver::Landed(const FHitResult& Hit)
        {
                 FinishRolling();
 
-                KnockDown();
 
            
 

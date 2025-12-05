@@ -31,6 +31,7 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	//현재 애니메이션 변환 상태를 확인.
 	void GetCurrentMoveNode();
 
 	UFUNCTION()
