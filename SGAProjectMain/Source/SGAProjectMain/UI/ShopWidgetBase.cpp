@@ -57,11 +57,6 @@ void UShopWidgetBase::InitializeWidget()
 
     _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 	_gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
-
-    // 임시
-    FPlayerCurrency startingCurrency;
-    startingCurrency._requisitionSlips = 5000; // 시작 자금
-    GI->AddRewardCurrency(startingCurrency);
 }
 
 void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)

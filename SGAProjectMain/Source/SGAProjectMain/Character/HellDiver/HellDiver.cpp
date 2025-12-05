@@ -102,7 +102,7 @@ void AHellDiver::Tick(float DeltaTime)
     }
     else
     {
-        if (!_isSprintCoolTime) // 달리기 중단 후 3초가 지나야 스테미너 회복 시작
+        if (!_isSprintCoolTime) // 달리기 중단 후 2초가 지나야 스테미너 회복 시작
             statComponent->RecoverStamina(DeltaTime);
     }
 }
@@ -394,7 +394,7 @@ void AHellDiver::FinishSprint()
     GetWorld()->GetTimerManager().SetTimer(_sprintCooldownHandle, [this]()
         {
             _isSprintCoolTime = false;
-        }, 3.f, false); // 3초 후 쿨타임 종료
+        }, 2.f, false); // 2초 후 쿨타임 종료
 }
 
 void AHellDiver::StartCrouch()

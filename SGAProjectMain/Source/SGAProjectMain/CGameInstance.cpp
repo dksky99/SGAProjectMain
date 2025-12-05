@@ -272,8 +272,10 @@ void UCGameInstance::LoadGame()
 	{
 		_curSaveGame = Cast<UCSaveGame>(UGameplayStatics::CreateSaveGameObject(UCSaveGame::StaticClass()));
 		FPlayerCurrency startingCurrency;
-		startingCurrency._requisitionSlips = 5000; // 시작 자금
+		startingCurrency._requisitionSlips = 50000; // 시작 자금
 		_curSaveGame->AddCurrency(startingCurrency);
+		_curSaveGame->AddPurchasedShopItem(EShopType::Gun, 1); // 기본 총기 지급
+		_curSaveGame->AddPurchasedShopItem(EShopType::Gun, 101); // 기본 총기 지급
 
 		SaveGame();
 	}

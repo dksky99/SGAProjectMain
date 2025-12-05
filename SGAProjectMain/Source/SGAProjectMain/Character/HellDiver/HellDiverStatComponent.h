@@ -48,8 +48,8 @@ protected:
 
 	float _power = 1000.0f;
 
-	float _maxStamina = 100.0f;
-	float _curStamina = 100.0f;
+	float _maxStamina = 300.0f;
+	float _curStamina = 300.0f;
 
 
 };

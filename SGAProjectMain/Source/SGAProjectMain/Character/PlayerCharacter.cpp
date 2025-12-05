@@ -1854,7 +1854,7 @@ void APlayerCharacter::InitWeapon()
 
 	auto equippedGun = _invenComponent->GetEquippedGun();
 
-	if (_gunWidget)
+	if (IsLocallyControlled() && _gunWidget)
 	{
 		equippedGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		equippedGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);

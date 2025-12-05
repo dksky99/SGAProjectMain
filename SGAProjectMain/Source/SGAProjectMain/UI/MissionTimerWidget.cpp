@@ -25,6 +25,6 @@ void UMissionTimerWidget::HandleTimerUpdated(float remainingTime)
     const int32 minutes = (remain % 3600) / 60;
     const int32 seconds = remain % 60;
 
-    FString TimeString = FString::Printf(TEXT("T- %02d:%02d"), minutes, seconds);
+    FString TimeString = FString::Printf(TEXT("%02d:%02d"), minutes, seconds);
     _timerText->SetText(FText::FromString(TimeString));
 }
