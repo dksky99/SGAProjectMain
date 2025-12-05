@@ -44,7 +44,7 @@ FUnitPartStat* AEnemy_Titan::GetHittedPartStat(EBodyPart part, const UPrimitiveC
         }
     }
     break;
-    //²¿¸®´Â À§·Î ¾ûµ¢ÀÌÀå°©, ¾Æ·¡·Î ´ãÁó³¶°ú ±×¼Ó¿¡ ³»ÀåÀÌÀÖµû.
+    //²¿¸®´Â À§·Î ¾ûµ¢ÀÌÀå°©, ¾Æ·¡·Î ´ãÁó³¶°ú ±×¼Ó¿¡ ³»ÀåÀÌÀÖ´Ù
 	case EBodyPart::Tail:
 	{
 		FVector location = OverlappedComponent->GetComponentLocation();

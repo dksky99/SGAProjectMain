@@ -80,4 +80,6 @@ protected:
 
 	bool _isExplode = false;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Attack", meta = (AllowPrivateAccess = "true"))
+	FName _muzzleName=TEXT("attach_acid_spray_socket");
 };

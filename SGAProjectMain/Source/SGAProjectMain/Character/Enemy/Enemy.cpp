@@ -52,6 +52,8 @@ AEnemy::AEnemy(const FObjectInitializer& ObjectInitializer)
 
     //GetCharacterMovement()->bUseRVOAvoidance = false;
     GetCharacterMovement()->RotationRate.Yaw = 180.f;
+    bUseControllerRotationYaw = false;
+
     
 }
 
@@ -364,6 +366,8 @@ void AEnemy::SetStay()
 void AEnemy::SetPatrol()
 {
     _unitState = EUnitState::Patrol;
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
+    GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 }
 
@@ -371,6 +375,8 @@ void AEnemy::SetWeak_Alert()
 {
     _unitState = EUnitState::Weak_Alert;
 
+    GetCharacterMovement()->bUseControllerDesiredRotation = true;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
     GetCharacterMovement()->MaxWalkSpeed = _statComponent->GetDefaultSpeed();
 }
 
