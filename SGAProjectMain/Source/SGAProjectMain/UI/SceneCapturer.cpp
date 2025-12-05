@@ -52,8 +52,8 @@ void ASceneCapturer::Tick(float DeltaTime)
 		_playerController->GetInputMouseDelta(delta.X, delta.Y);
 
 		FVector cursorLocation = _cursorActor->GetActorLocation();
-		cursorLocation.X += delta.Y * 15.f;
-		cursorLocation.Y += delta.X * 15.f;
+		cursorLocation.X += delta.Y * 200.f;
+		cursorLocation.Y += delta.X * 200.f;
 	
 		// 맵 안에서만 이동
 		cursorLocation.X = FMath::Clamp(cursorLocation.X, 0.f, _maxMapSize.X);
