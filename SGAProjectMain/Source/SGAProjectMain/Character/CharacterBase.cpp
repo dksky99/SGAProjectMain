@@ -648,7 +648,6 @@ void ACharacterBase::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 		event.ShotDirection = SweepResult.ImpactNormal;
 		event.ColComp = OtherComp;
 		
-		
 
 
 
@@ -831,7 +830,7 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 		EBodyPart part = GetHittedPart(CustomEvent);
 
-		FUnitPartStat* partStat= GetHittedPartStat(part);
+		FUnitPartStat* partStat= GetHittedPartStat(part,CustomEvent->ColComp,CustomEvent->HitInfo.ImpactPoint);
 		//만약 파트가 폭발피해에 면역이라면 대신 코어가 맞도록하자
 		if (partStat->_partExplosionImmunity == 1.f && CustomEvent->IsExplosionDamage == true)
 		{
