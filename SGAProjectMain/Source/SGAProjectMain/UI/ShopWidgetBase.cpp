@@ -57,11 +57,6 @@ void UShopWidgetBase::InitializeWidget()
 
     _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 	_gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
-
-    // 임시
-    FPlayerCurrency startingCurrency;
-    startingCurrency._requisitionSlips = 5000; // 시작 자금
-    GI->AddRewardCurrency(startingCurrency);
 }
 
 void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)
@@ -143,7 +138,6 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Green);
         _buttonText->SetText(FText::FromString(TEXT("OWNED")));
-		//_buttonText->SetColorAndOpacity(FLinearColor::Green);
         _purchaseButton->SetIsEnabled(false);
         return;
 	}
@@ -152,7 +146,6 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Red);
         _buttonText->SetText(FText::FromString(TEXT("LOCKED")));
-		//_buttonText->SetColorAndOpacity(FLinearColor::Red);
         _purchaseButton->SetIsEnabled(false);
 		return;
     }
@@ -161,14 +154,12 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Yellow);
         _buttonText->SetText(FText::FromString(TEXT("PURCHASE")));
-        //_buttonText->SetColorAndOpacity(FLinearColor::Yellow);
         _purchaseButton->SetIsEnabled(true);
     }
     else
     {
         _buttonBorder->SetBrushColor(FLinearColor::Red);
         _buttonText->SetText(FText::FromString(TEXT("LOW FUNDS")));
-        //_buttonText->SetColorAndOpacity(FLinearColor::Red);
         _purchaseButton->SetIsEnabled(false);
 	}
 }

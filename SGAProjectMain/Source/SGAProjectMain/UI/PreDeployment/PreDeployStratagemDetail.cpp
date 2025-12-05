@@ -5,6 +5,7 @@
 
 #include "../../Object/Stratagem/Stratagem.h"
 #include "../../StratagemComponent.h"
+#include "Components/Image.h"
 
 void UPreDeployStratagemDetail::SetDetail(int32 id)
 {
@@ -27,4 +28,6 @@ void UPreDeployStratagemDetail::SetDetail(int32 id)
 
 	_cooldownText->SetText(FText::AsNumber(slot.Cooldown));
 	_callInTimeText->SetText(FText::AsNumber(stg->GetDeployDelay()));
+
+	_previewImage->SetBrushFromTexture(slot.PreviewImage);
 }
