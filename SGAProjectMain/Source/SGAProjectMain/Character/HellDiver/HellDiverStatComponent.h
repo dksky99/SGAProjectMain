@@ -16,6 +16,8 @@ UCLASS()
 class SGAPROJECTMAIN_API UHellDiverStatComponent : public UStatComponent
 {
 	GENERATED_BODY()
+	
+	void BeginPlay() override;
 public:
 
 
@@ -37,18 +39,20 @@ public:
 	FStaminaChanged _staminaChanged;
 
 protected:
-
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _defaultSpeed = 500.0f;
-
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _sprintSpeed = 700.0f;
-
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _crouchSpeed = 300.0f;
-
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _proneSpeed = 200.0f;
-
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _power = 1000.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Game/Stat")
 	float _maxStamina = 300.0f;
+
 	float _curStamina = 300.0f;
 
 

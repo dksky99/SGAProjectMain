@@ -87,9 +87,11 @@ private:
 	ACharacter* _player;
 
 	bool _isDraggingCursor = false;
-	//FVector2D _lastMousePos;
 
+	UPROPERTY(EditAnywhere, Category = "Game")
+	float _dragSensitivity = 200.f; // 드래그 감도
 
+	UPROPERTY(EditAnywhere, Category = "Game")
 	float _fixedHeight = 500.f; // z축 위치
 
 	// 맵 확대
@@ -98,6 +100,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Game") // 맵 확대 단계
 	TArray<float> _orthoWidthLevel = { 500.f, 1500.f, 3000.f };
+
+	UPROPERTY(EditAnywhere, Category = "Game")
+	FVector2D _mapMinPos = { 0.f, 0.f };
+
+	UPROPERTY(EditAnywhere, Category = "Game")
+	FVector2D _mapMaxPos = { 0.f, 0.f };
 
 	int32 _orthoWidthLevelIndex = 1;
 	float _targetOrthoWidth = 1500.f;

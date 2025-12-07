@@ -72,8 +72,10 @@ void ASceneCapturer::Tick(float DeltaTime)
 	float halfWidth = curOrthoWidth * 0.5f;
 
 	// 일정 범위 내에서는 타겟 액터를 따라다니고, 맵 가장자리에서는 타겟 액터만 이동
-	float clampedX = FMath::Clamp(targetLocation.X, halfWidth, _maxMapSize.X - halfWidth);
-	float clampedY = FMath::Clamp(targetLocation.Y, halfWidth, _maxMapSize.Y - halfWidth);
+	float clampedX = FMath::Clamp(targetLocation.X, _mapMinPos.X + halfWidth, _mapMaxPos.X - halfWidth);
+	float clampedY = FMath::Clamp(targetLocation.Y, _mapMinPos.Y + halfWidth, _mapMaxPos.Y - halfWidth);
+	/*float clampedX = FMath::Clamp(targetLocation.X, halfWidth, _maxMapSize.X - halfWidth);
+	float clampedY = FMath::Clamp(targetLocation.Y, halfWidth, _maxMapSize.Y - halfWidth);*/
 
 	FVector newLocation = FVector(clampedX, clampedY, _fixedHeight); // 위에서 아래로
 	SetActorLocation(newLocation);
