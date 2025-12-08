@@ -162,22 +162,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		_minimapWidget->AddToViewport();
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
-
-		// 월드에서 씬캡쳐러 찾기
-		for (TActorIterator<ASceneCapturer> IT(GetWorld());IT; ++IT)
-		{
-			ASceneCapturer* sceneCapturer = *IT;
-			if (sceneCapturer)
-			{
-				_sceneCapturer = sceneCapturer;
-				
-				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
-				
-				break;
-			}
-		}
 	}
 
 	if (_staminaBarWidget)
@@ -188,16 +172,7 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	if (_compassWidget)
-	{
 		_compassWidget->AddToViewport();
-
-		if (_sceneCapturer)
-		{
-			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
-			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
-		}
-	}
-
 	if (_sampleWidget)
 		_sampleWidget->AddToViewport();
 	if (_missionWidget)
@@ -216,6 +191,7 @@ void APlayerCharacter::BeginPlay()
 
 	// 다음 프레임에 실행 (모든 액터 생성 완료 후)
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::CheckInitialOverlaps);
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::FindSceneCapturer);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -2222,6 +2198,37 @@ void APlayerCharacter::CheckInitialOverlaps()
 		if (AInteractable* item = Cast<AInteractable>(actor))
 		{
 			_interactableItems.AddUnique(item);
+		}
+	}
+}
+
+void APlayerCharacter::FindSceneCapturer()
+{
+	if (_minimapWidget)
+	{
+		// 월드에서 씬캡쳐러 찾기
+		for (TActorIterator<ASceneCapturer> IT(GetWorld()); IT; ++IT)
+		{
+			ASceneCapturer* sceneCapturer = *IT;
+			if (sceneCapturer)
+			{
+				_sceneCapturer = sceneCapturer;
+
+				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+
+				break;
+			}
+		}
+	}
+
+	if (_compassWidget)
+	{
+		if (_sceneCapturer)
+		{
+			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
 		}
 	}
 }

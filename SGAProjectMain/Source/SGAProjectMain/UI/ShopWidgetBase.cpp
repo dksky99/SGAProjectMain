@@ -57,6 +57,8 @@ void UShopWidgetBase::InitializeWidget()
 
     _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 	_gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
+
+    OnSlotPicked(_shopSlots[0]);
 }
 
 void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)
@@ -109,15 +111,15 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
         return;
 	}
 
-    /*if (auto scrollBox = Cast<UScrollBox>(_slotPanel))
+    if (_scrollBox)
     {
-        scrollBox->ScrollWidgetIntoView(
+        _scrollBox->ScrollWidgetIntoView(
             slot,
             true,
             EDescendantScrollDestination::IntoView,
             0.15f
         );
-    }*/
+    }
 
 	auto GI = GetWorld()->GetGameInstance<UCGameInstance>();
     if (!GI) return;

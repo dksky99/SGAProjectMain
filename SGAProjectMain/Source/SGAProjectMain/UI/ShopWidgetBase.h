@@ -50,6 +50,8 @@ public:
 	class UTextBlock* _priceText;
 
 	UPROPERTY(meta = (BindWidget))
+	class UScrollBox* _scrollBox;
+	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _stgSlotPanel;
 	UPROPERTY(meta = (BindWidget))
 	class UPanelWidget* _gunSlotPanel;

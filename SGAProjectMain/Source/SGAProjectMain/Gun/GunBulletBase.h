@@ -43,6 +43,8 @@ protected:
 
 	int32 SurfaceToAV(EPhysicalSurface surface);
 
+	void PlayImpactEffect(const FHitResult& HitResult);
+
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
@@ -54,6 +56,9 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Game/GunData")
 	FGunProjectileData _projectileData;
+
+	UPROPERTY(EditAnywhere, Category = "Game/Effect")
+	UParticleSystem* _effect = nullptr;
 
     UPROPERTY(VisibleAnywhere)
     class USphereComponent* _collisionComp;

@@ -141,6 +141,7 @@ public:
 	void OnItemNonInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 	
 	void CheckInitialOverlaps(); // BeginPlay() 에서만
+	void FindSceneCapturer(); // BeginPlay() 에서만
 	void FindBestItem();
 
 

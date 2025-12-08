@@ -4,6 +4,7 @@
 #include "GunBulletBase.h"
 
 #include "Components/SphereComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -156,6 +157,8 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 			this                         // 데미지 발생 주체 (총알)
 		);
 
+		PlayImpactEffect(SweepResult);
+
         UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %d"), finalBaseDamage);
 
         if (_bulletHitEvent.IsBound())
@@ -203,6 +206,8 @@ void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActo
         GetInstigatorController(),
         this
     );
+
+	PlayImpactEffect(Hit);
     
     if (_projectileData._type == EGunProjectileType::Explosive)
     {
@@ -343,6 +348,19 @@ int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
     case SurfaceType6: return 5; // AV5_TankI
     case SurfaceType7: return 6; // AV6_TankII
     default:           return 0;
+    }
+}
+
+void AGunBulletBase::PlayImpactEffect(const FHitResult& HitResult)
+{
+    if (_effect)
+    {
+        UParticleSystemComponent* PSC =
+            UGameplayStatics::SpawnEmitterAtLocation(
+            GetWorld(),
+            _effect,
+			HitResult.ImpactPoint
+        );
     }
 }
 
