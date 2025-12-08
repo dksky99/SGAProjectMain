@@ -167,7 +167,7 @@ void ACharacterBase::Critical()
 {
 	auto main = _statComponent->GetCoreStat();
 
-	_statComponent->ChangeHp(main, (float)(main->_partHP));
+	_statComponent->ChangeHp(main, (float)(-main->_partHP));
 	
 }
 
@@ -765,7 +765,10 @@ EBodyPart ACharacterBase::GetHittedPart(const FCDamageEvent* DamageEvent)
 	{
 		
 		auto HitComponent = DamageEvent->ColComp;
+		if(HitComponent)
 		{
+
+			
 
 			for (auto tag : HitComponent->ComponentTags)
 			{
@@ -822,6 +825,8 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
 			Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
 
+		if (CustomEvent == nullptr)
+			return 0.0f;
 		//상태이상부여가 걸려있다면 상태이상을 건다.
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
 			_stateComp->AddAbnormality(CustomDamageType->_abnormalityType);

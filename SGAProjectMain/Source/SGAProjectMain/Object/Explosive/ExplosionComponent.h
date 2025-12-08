@@ -41,6 +41,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Explosion")
 	float _damage = 100.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Explosion")
+	float _demolitionDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Explosion")
+	float _penetrationLevel = 0.f;
+
 	// ¹Ý°æ
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Explosion")
 	float _radius = 300.0f;

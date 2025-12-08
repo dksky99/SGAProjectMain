@@ -107,10 +107,10 @@ void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Ov
 		}
 
 		// 히트박스가 아닌 콜리전이라면 스킵 (예: HitBox 태그로 구분한다고 가정)
-		if (!hitComp->ComponentTags.Contains("HitBox"))
-		{
-			continue;
-		}
+		//if (!hitComp->ComponentTags.Contains("HitBox"))
+		//{
+		//	continue;
+		//}
 				
 		// 폭심지와 콜리전 위치 사이 거리로 피해 비율 계산
 		const FVector colliderLoc = hitComp->GetComponentLocation();
@@ -140,9 +140,9 @@ void UExplosionComponent::ApplyDamageToOverlaps(const TArray<FOverlapResult>& Ov
 		// 폭발이 주는 실제 피해량을 BaseDamage로 전달
 		damageEvent.BaseDamage = static_cast<int32>(actualDmg);
 		// 필요하면 여기서 내구 피해/철거 피해를 따로 설정할 수 있다.
-		damageEvent.DurabilityDamage = 0;
-		damageEvent.DemolitionDamage = 0;
-		damageEvent.PenetrationLevel = 0;
+		damageEvent.DurabilityDamage = static_cast<int32>(actualDmg);
+		damageEvent.DemolitionDamage = static_cast<int32>(_demolitionDamage);
+		damageEvent.PenetrationLevel = static_cast<int32>(_penetrationLevel);
 
 		// 폭발 피해 플래그와 이번에 맞은 콜리전 컴포넌트 설정
 		damageEvent.IsExplosionDamage = true;
