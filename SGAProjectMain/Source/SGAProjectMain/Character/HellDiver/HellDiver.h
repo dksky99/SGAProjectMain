@@ -29,7 +29,8 @@ public:
 	// ≈ı√¥π∞
 	void EquipGrenade();
 	void EquipStratagem();
-	void OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted);
+
+	void OnThrowReleased();
 	void StartThrowPreview();
 	void StopThrowPreview();
 	UFUNCTION()

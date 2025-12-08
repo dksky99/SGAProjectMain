@@ -199,7 +199,10 @@ void UHellDiverInvenComponent::DropSample()
 void UHellDiverInvenComponent::PutBackWeapon(AGunBase* gun)
 {
 	gun->SetActorHiddenInGame(false);
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
 
+	// 2. 액터 분리 실행
+	gun->DetachFromActor(DetachRules);
 	switch (gun->GetGunData()._slotType)
 	{
 	case EGunSlotType::Primary:
