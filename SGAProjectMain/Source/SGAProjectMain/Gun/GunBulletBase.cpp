@@ -30,7 +30,6 @@ AGunBulletBase::AGunBulletBase()
     _projectileMovement->MaxSpeed = _projectileData._initialSpeed * 100.f;
     _projectileMovement->bRotationFollowsVelocity = true;
     _projectileMovement->SetUpdatedComponent(_collisionComp);
-    _projectileMovement->ProjectileGravityScale = _projectileData._gravityScale * 0.01f;
 
     // 폭발 컴포넌트
     _explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));
@@ -138,8 +137,10 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 		// StatComponent에서 Durability 비율로 섞어도 최종 크기는 유지됩니다.
 		damageEvent.BaseDamage = finalBaseDamage;
 		damageEvent.DurabilityDamage = finalDurabilityDamage;
-		damageEvent.DemolitionDamage = 0;
+		damageEvent.DemolitionDamage = _projectileData._demolitionDamage;
 		damageEvent.PenetrationLevel = ap; 
+		damageEvent.Stagger = _projectileData._stagger;
+		damageEvent.PushForce = _projectileData._pushForce;
 
 		damageEvent.IsExplosionDamage = false;     // 총알은 폭발이 아님
 		damageEvent.ColComp = OtherComp;
@@ -361,10 +362,9 @@ void AGunBulletBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
 {
     _projectileData = data;
-    _projectileMovement->InitialSpeed = data._initialSpeed;// *100.f;
+    _projectileMovement->InitialSpeed = data._initialSpeed * 100.f;
     _projectileMovement->MaxSpeed = data._initialSpeed * 100.f;
     _baseSpeed = _projectileMovement->InitialSpeed;
-    _projectileMovement->ProjectileGravityScale = data._gravityScale * 0.01f;
     _prevLoc = GetActorLocation();
 }
 
