@@ -24,6 +24,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	void FindSceneCapturer();
+
 	UPROPERTY(EditAnywhere, Category = "Game/Gun")
 	TObjectPtr<UStaticMeshComponent> _mesh;
 

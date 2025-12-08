@@ -21,15 +21,7 @@ void AMinimapIconActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	for (TActorIterator<ASceneCapturer> IT(GetWorld()); IT; ++IT)
-	{
-		ASceneCapturer* sceneCapturer = *IT;
-		if (sceneCapturer)
-		{
-			_sceneCapturer = sceneCapturer;
-			break;
-		}
-	}
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AMinimapIconActor::FindSceneCapturer);
 }
 
 // Called every frame
@@ -43,6 +35,19 @@ void AMinimapIconActor::Tick(float DeltaTime)
 		float baseWidth = 512.0f;
 		float scale = orthoWidth / baseWidth;
 		_mesh->SetWorldScale3D(FVector(scale));
+	}
+}
+
+void AMinimapIconActor::FindSceneCapturer()
+{
+	for (TActorIterator<ASceneCapturer> IT(GetWorld()); IT; ++IT)
+	{
+		ASceneCapturer* sceneCapturer = *IT;
+		if (sceneCapturer)
+		{
+			_sceneCapturer = sceneCapturer;
+			break;
+		}
 	}
 }
 
