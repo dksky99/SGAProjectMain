@@ -131,6 +131,7 @@ UHellDiverInvenComponent* AHellDiver::GetInvenComponent()
 
 void AHellDiver::EquipGrenade()
 {
+    
 	if (_heldThrowable || !_grenadeClass)
 		return; // 이미 들고있다
 
@@ -181,7 +182,7 @@ void AHellDiver::EquipStratagem()
 
 }
 
-void AHellDiver::OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted)
+void AHellDiver::OnThrowReleased()
 {
 	if (_heldThrowable)
 	{
@@ -533,6 +534,13 @@ void AHellDiver::SwitchGun(int32 index)
     if (_stateComponent->IsReloading())
         _invenComponent->GetEquippedGun()->CancelReload();
 
+    if (_heldThrowable)
+    {
+        _heldThrowable->Destroy();
+        _heldThrowable = nullptr;
+    
+    }
+
     // 현재 상태 저장 후
     bool wasAiming = _stateComponent->IsAiming();
     bool wasFiring = _stateComponent->IsFiring();
@@ -863,6 +871,9 @@ FRotator AHellDiver::Focusing()
 
 void AHellDiver::Throwing()
 {
+    if (_stateComp->ActionBegin() == false)
+        return;
+    
     if (!_throwingMontage) return;
     if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
     {
@@ -873,11 +884,11 @@ void AHellDiver::Throwing()
         if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_throwingMontage))
         {
 
-            // 델리게이트 중복 방지
-            MontageInstance->OnMontageEnded.Unbind();
 
-            // 델리게이트 바인딩
-            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::OnThrowReleased);
+            if (_reservedFunction.IsBound())
+                _reservedFunction.Unbind();
+            _reservedFunction.BindUObject(this, &AHellDiver::OnThrowReleased);
+
 
             UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_throwingMontage->GetName());
         }

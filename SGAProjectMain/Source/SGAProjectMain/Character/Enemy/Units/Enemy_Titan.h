@@ -7,7 +7,7 @@
 #include "Enemy_Titan.generated.h"
 
 /**
- * 
+ * maw_muzzle
  */
 UCLASS()
 class SGAPROJECTMAIN_API AEnemy_Titan : public AEnemy_Spewer
