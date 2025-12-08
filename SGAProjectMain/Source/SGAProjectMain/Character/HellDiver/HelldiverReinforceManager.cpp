@@ -7,6 +7,8 @@
 
 #include "../../Object/Stratagem/Pod/HellDiverDroppodInput.h"
 #include "../../Object/Stratagem/Pod/HellDiverDropPod.h"
+
+#include "../../MainGameMode.h"
 #include "../PlayerCharacter.h"
 
 AHelldiverReinforceManager::AHelldiverReinforceManager()
@@ -37,7 +39,13 @@ void AHelldiverReinforceManager::BeginPlay()
 void AHelldiverReinforceManager::ReinforceHelldiver(const FVector& deathPoint)
 {
 	// 보강 가능 여부 확인
-	if (_remainReinforceBudget <= 0) return;
+	if (_remainReinforceBudget <= 0)
+	{
+		AMainGameMode* GM = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if (GM)
+			GM->EndBattle();
+		return;
+	}
 
 	// 대기 중 컨트롤러 획득(없으면 복귀)
 	AController* controller = nullptr;
