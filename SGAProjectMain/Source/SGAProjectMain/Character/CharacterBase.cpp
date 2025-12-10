@@ -812,7 +812,14 @@ FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part, const UPrimitiv
 
 float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-
+	UAISense_Damage::ReportDamageEvent(
+		GetWorld(),                                // 월드 컨텍스트
+		this,                                      // 데미지 입은 액터 (나 자신)
+		EventInstigator ? EventInstigator->GetPawn() : DamageCauser, // 가해자 (Instigator가 컨트롤러라면 폰을 가져옴)
+		DamageAmount,                              // 데미지 양
+		DamageCauser ? DamageCauser->GetActorLocation() : GetActorLocation(), // 가해자의 위치 (추정)
+		GetActorLocation()                         // 타격 위치 (정확한 히트 위치를 모를 경우 내 위치)
+	);
 	//커스텀 데미지이벤트. 이곳에 피해를 입은 부위와 일반피해, 내구피해, 철거력, 관통력 등을 가져올 수 있다.그리고 상태이상을 유발한다면 얼마나가중할지도 포함된다.
 	if (DamageEvent.GetTypeID() == FCDamageEvent::ClassID)
 	{

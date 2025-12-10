@@ -741,43 +741,80 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
     float zVelocity = GetCharacterMovement()->Velocity.Z;
 
+    float defaultStagger = 5.f;
+    float defaultDamage = 10.f;
     UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
     
+    //롤링중이라면 거의 평지에서 뛰었다면 평범하게 끝나고 아니라면 낮은 높이에서도 높은 충격을 입는다.
     if (_stateComponent->IsRolling())
     {
+        //이정도는 피해조차 입지않는다.
+        if (zVelocity < -200.f)
+        {
+            // 땅에부딪히고 조금있다 롤링상태 해제
+            GetWorld()->GetTimerManager().SetTimer(
+                _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
+            );
 
-        // 일정 시간 후 복구
-        GetWorld()->GetTimerManager().SetTimer(
-            _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
-        );
+            return;
+        }
+        
 
     }
-
-    if (zVelocity < -1200.f)
+    //스탠딩 혹은 스프린트 상태에서만 랜딩모션이 있음 나머지는 바로 녹다운.
+    else if(_stateComponent->GetCharacterState() == ECharacterState::Standing || _stateComponent->GetCharacterState() == ECharacterState::Sprinting)
     {
-       
-       if (_stateComponent->IsRolling())
-       {
-                FinishRolling();
+        //이정도높이에선 녹다운이된다. 
+        if (zVelocity < -1200.f)
+        {
 
 
-           
+
 
         }
-        else
+        else if (zVelocity < -600.f)
+        {
             HardLanding();
+        }
 
+        else if (zVelocity < -200.f)
+        {
+            //피해를 안입고 그냥 가벼운 착지.
+            SoftLanding();
+            return;
+        }
     }
-    else if (zVelocity < -600.f)
+    else
     {
-        
-        SoftLanding();
+        // 달리는상태가아니라면  비틀거림을 3배로 받음.
+        defaultStagger *= 3;
     }
 
-    else if (zVelocity < -200.f)
-    {
-        // 일반 착지
-    }
+
+    //피해를 입지 않을경우를 제외하면 낙하한 속도에 따라 피해를 입음. 가속 200당 10
+
+    int32 calcStagger = (int32)(defaultStagger * zVelocity/200.f);
+    int32 calcDamage = (int32)(defaultDamage * zVelocity / 200.f);
+
+    FCDamageEvent event;
+
+
+    event.BaseDamage = calcDamage;
+    event.DemolitionDamage = 0;
+    event.DurabilityDamage = calcDamage;
+    event.PenetrationLevel = 10;
+    event.Stagger = calcStagger;
+    event.PushForce = 0;
+    event.IsExplosionDamage = false;
+
+    event.HitInfo = Hit;
+    event.ShotDirection = Hit.ImpactNormal;
+   
+
+    TakeDamage(0, event, nullptr, nullptr);
+
+    
+    
 
 }
 
@@ -785,12 +822,6 @@ void AHellDiver::SoftLanding()
 {
     if (!_softLandingMontage) return;
 
-    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
-    {
-        KnockDown();
-    }
-    else
-    {
 
         if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
         {
@@ -800,7 +831,6 @@ void AHellDiver::SoftLanding()
             // 재생 후 인스턴스 가져오기
             if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_softLandingMontage))
             {
-                _stateComponent->BeShocked();
                 // 델리게이트 중복 방지
                 MontageInstance->OnMontageEnded.Unbind();
 
@@ -815,16 +845,13 @@ void AHellDiver::SoftLanding()
             }
 
         }
-    }
+    
 }
 
 void AHellDiver::HardLanding()
 {
     if (!_hardLandingMontage) return;
-    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
-    {
-        KnockDown();
-    }
+    
     else
     {
 
@@ -837,7 +864,6 @@ void AHellDiver::HardLanding()
             // 재생 후 인스턴스 가져오기
             if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_hardLandingMontage))
             {
-                _stateComponent->BeShocked();
 
                 // 델리게이트 중복 방지
                 MontageInstance->OnMontageEnded.Unbind();
@@ -858,7 +884,7 @@ void AHellDiver::HardLanding()
 
 void AHellDiver::FinishLanding(UAnimMontage* Montage, bool bInterrupted)
 {
-    _stateComponent->RecoveryShocked();
+    //_stateComponent->RecoveryShocked();
 }
 
 FRotator AHellDiver::Focusing()
