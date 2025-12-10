@@ -783,6 +783,8 @@ void AHellDiver::Landed(const FHitResult& Hit)
             SoftLanding();
             return;
         }
+        else
+            return;
     }
     else
     {
@@ -793,8 +795,8 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
     //피해를 입지 않을경우를 제외하면 낙하한 속도에 따라 피해를 입음. 가속 200당 10
 
-    int32 calcStagger = (int32)(defaultStagger * zVelocity/200.f);
-    int32 calcDamage = (int32)(defaultDamage * zVelocity / 200.f);
+    int32 calcStagger = (int32)(-defaultStagger * zVelocity/200.f);
+    int32 calcDamage = (int32)(-defaultDamage * zVelocity / 200.f);
 
     FCDamageEvent event;
 

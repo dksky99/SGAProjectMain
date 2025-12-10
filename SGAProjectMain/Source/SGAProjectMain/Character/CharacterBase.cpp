@@ -231,7 +231,6 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 	float zVelocity = GetCharacterMovement()->Velocity.Z;
 
-	UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
 
 	if (zVelocity < -1200.f)
 	{
@@ -828,12 +827,22 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		const FCDamageEvent* CustomEvent = static_cast<const FCDamageEvent*>(&DamageEvent);
 		//데미지타입을 가져온다 여기에는 피해의 속성과 이것이 추가적인상태이상수치를 유발하는지 여부를 가져온다.
 		//데미지타입이 있다면 그것으로하고 없다면 기본클래스를 만들어 사용.
-		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())!=nullptr ?
-			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
-			Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
+		
 
 		if (CustomEvent == nullptr)
 			return 0.0f;
+		const UCDamageType* CustomDamageType = nullptr;
+		if (CustomEvent->DamageTypeClass != nullptr)
+		{
+
+			CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject());
+		}
+		if (CustomDamageType == nullptr)
+		{
+			CustomDamageType = Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
+		}
+		
+
 		//상태이상부여가 걸려있다면 상태이상을 건다.
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
 			_stateComp->AddAbnormality(CustomDamageType->_abnormalityType);
