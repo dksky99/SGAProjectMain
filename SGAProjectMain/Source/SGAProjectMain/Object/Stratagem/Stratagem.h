@@ -94,10 +94,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
 	float _bombardRemain = 0.0f;
 
-	// 공격형 여부
-	UPROPERTY(EditAnywhere, Category = "Game/Stratagem")
-	bool _isAttackStratagem = false;
-
 	// 입력 시퀀스
 	UPROPERTY(EditDefaultsOnly, Category = "Game/Stratagem")
 	TArray<FKey> _inputSequence;

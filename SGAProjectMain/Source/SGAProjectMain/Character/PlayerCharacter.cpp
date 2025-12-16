@@ -1861,6 +1861,23 @@ void APlayerCharacter::UpdateStratagemEtaUI()
 	bestStratagem->ShowEtaAtScreenPosition(etaScreenPos, etaSec, pc);
 }
 
+void APlayerCharacter::ExecuteEagleRearm(int32 slotIndex)
+{
+	if (!_stratagemComponent)
+		return;
+
+	// 이글을 한 번도 사용한 적이 없으면 재무장할 필요가 없음
+	if (!_stratagemComponent->HasUsedAnyEagleAmmo())
+		return;
+
+	// 재무장 슬롯 자체가 쿨이면 사용 불가
+	if (_stratagemComponent->IsStratagemOnCooldown(slotIndex))
+		return;
+
+	// 이글 계열 탄수 전부 회복 + 재무장 관련 그룹 쿨 처리
+	_stratagemComponent->ApplyEagleRearm();
+}
+
 void APlayerCharacter::InitWeapon()
 {
 	Super::InitWeapon();
@@ -2101,20 +2118,32 @@ void APlayerCharacter::CheckStratagemInputCombo()
 		const AStratagem* CDO = stratagemClass->GetDefaultObject<AStratagem>();
 		const TArray<FKey>& combo = CDO->GetInputSequence();
 
-		// 완전 일치 → 장비
+		// 완전 일치
 		if (_stratagemInputBuffer == combo)
 		{
-			_stratagemComponent->SelectStratagem(i);
-			EquipStratagem();
+			static const FName eagleRearmID(TEXT("EagleRearm"));
+
+			// 이 슬롯이 이글 재무장인가?
+			if (slots[i].StratagemID == eagleRearmID)
+			{
+				// 투척/장비로 안 넘기고, 재무장 전용 로직으로 바로 처리
+				ExecuteEagleRearm(i);
+			}
+			else
+			{
+				// 기존 스트라타젬: 선택 + 장비
+				_stratagemComponent->SelectStratagem(i);
+				EquipStratagem();
+				_stratagemWidget->SetWidgetOperatingState(i);
+			}
 
 			_stratagemInputBuffer.Empty();
 
 			if (_stateComponent->GetActionState() == EActionState::Stratagem)
 			{
-				//이전상태로 돌릴필요가 있다. 이전상태를 저장할 방법을 찾아보자.
 				_stateComponent->SetActionState(EActionState::None);
 			}
-			_stratagemWidget->SetWidgetOperatingState(i);
+
 			return;
 		}
 
