@@ -41,8 +41,6 @@ void AMainGameMode::BeginPlay()
    
     if (_helldiverReinforceManagerClass)
         _helldiverReinforceManager = GetWorld()->SpawnActor<AHelldiverReinforceManager>(_helldiverReinforceManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
-
-    _planeBeacon = Cast<ADropPlaneBeacon>(UGameplayStatics::GetActorOfClass(this, ADropPlaneBeacon::StaticClass()));
     
     
     //맵의 매니저들 찾기.
@@ -68,6 +66,8 @@ void AMainGameMode::BeginPlay()
 void AMainGameMode::StartPlay()
 {
     Super::StartPlay();
+
+    _planeBeacon = Cast<ADropPlaneBeacon>(UGameplayStatics::GetActorOfClass(this, ADropPlaneBeacon::StaticClass()));
 
     GetWorldTimerManager().SetTimer(_missionTimerHandle, this, &AMainGameMode::UpdateTimer, 1.0f, true);
 }

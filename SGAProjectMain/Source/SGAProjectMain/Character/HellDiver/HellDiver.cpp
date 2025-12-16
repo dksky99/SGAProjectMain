@@ -69,7 +69,7 @@ void AHellDiver::BeginPlay()
     auto anim = Cast<UHellDiverAnimInstance>(GetMesh()->GetAnimInstance());
     if (anim != nullptr)
     {
-      
+        //상태 변화가 있을시 호출되는 함수를 바인드.
         anim->_moveChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::MoveChangeFinish);
         anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
@@ -102,7 +102,7 @@ void AHellDiver::Tick(float DeltaTime)
     }
     else
     {
-        if (!_isSprintCoolTime) // 달리기 중단 후 3초가 지나야 스테미너 회복 시작
+        if (!_isSprintCoolTime) // 달리기 중단 후 2초가 지나야 스테미너 회복 시작
             statComponent->RecoverStamina(DeltaTime);
     }
 }
@@ -131,6 +131,7 @@ UHellDiverInvenComponent* AHellDiver::GetInvenComponent()
 
 void AHellDiver::EquipGrenade()
 {
+    
 	if (_heldThrowable || !_grenadeClass)
 		return; // 이미 들고있다
 
@@ -181,7 +182,7 @@ void AHellDiver::EquipStratagem()
 
 }
 
-void AHellDiver::OnThrowReleased(class UAnimMontage* Montage, bool bInterrupted)
+void AHellDiver::OnThrowReleased()
 {
 	if (_heldThrowable)
 	{
@@ -394,7 +395,7 @@ void AHellDiver::FinishSprint()
     GetWorld()->GetTimerManager().SetTimer(_sprintCooldownHandle, [this]()
         {
             _isSprintCoolTime = false;
-        }, 3.f, false); // 3초 후 쿨타임 종료
+        }, 2.f, false); // 2초 후 쿨타임 종료
 }
 
 void AHellDiver::StartCrouch()
@@ -532,6 +533,13 @@ void AHellDiver::SwitchGun(int32 index)
     // 바꿀 수 있다면 장전 중단
     if (_stateComponent->IsReloading())
         _invenComponent->GetEquippedGun()->CancelReload();
+
+    if (_heldThrowable)
+    {
+        _heldThrowable->Destroy();
+        _heldThrowable = nullptr;
+    
+    }
 
     // 현재 상태 저장 후
     bool wasAiming = _stateComponent->IsAiming();
@@ -733,44 +741,82 @@ void AHellDiver::Landed(const FHitResult& Hit)
 
     float zVelocity = GetCharacterMovement()->Velocity.Z;
 
+    float defaultStagger = 5.f;
+    float defaultDamage = 10.f;
     UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
     
+    //롤링중이라면 거의 평지에서 뛰었다면 평범하게 끝나고 아니라면 낮은 높이에서도 높은 충격을 입는다.
     if (_stateComponent->IsRolling())
     {
+        //이정도는 피해조차 입지않는다.
+        if (zVelocity < -200.f)
+        {
+            // 땅에부딪히고 조금있다 롤링상태 해제
+            GetWorld()->GetTimerManager().SetTimer(
+                _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
+            );
 
-        // 일정 시간 후 복구
-        GetWorld()->GetTimerManager().SetTimer(
-            _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
-        );
+            return;
+        }
+        
 
     }
-
-    if (zVelocity < -1200.f)
+    //스탠딩 혹은 스프린트 상태에서만 랜딩모션이 있음 나머지는 바로 녹다운.
+    else if(_stateComponent->GetCharacterState() == ECharacterState::Standing || _stateComponent->GetCharacterState() == ECharacterState::Sprinting)
     {
-       
-       if (_stateComponent->IsRolling())
-       {
-                FinishRolling();
+        //이정도높이에선 녹다운이된다. 
+        if (zVelocity < -1200.f)
+        {
 
-                KnockDown();
 
-           
+
 
         }
-        else
+        else if (zVelocity < -600.f)
+        {
             HardLanding();
+        }
 
+        else if (zVelocity < -200.f)
+        {
+            //피해를 안입고 그냥 가벼운 착지.
+            SoftLanding();
+            return;
+        }
+        else
+            return;
     }
-    else if (zVelocity < -600.f)
+    else
     {
-        
-        SoftLanding();
+        // 달리는상태가아니라면  비틀거림을 3배로 받음.
+        defaultStagger *= 3;
     }
 
-    else if (zVelocity < -200.f)
-    {
-        // 일반 착지
-    }
+
+    //피해를 입지 않을경우를 제외하면 낙하한 속도에 따라 피해를 입음. 가속 200당 10
+
+    int32 calcStagger = (int32)(-defaultStagger * zVelocity/200.f);
+    int32 calcDamage = (int32)(-defaultDamage * zVelocity / 200.f);
+
+    FCDamageEvent event;
+
+
+    event.BaseDamage = calcDamage;
+    event.DemolitionDamage = 0;
+    event.DurabilityDamage = calcDamage;
+    event.PenetrationLevel = 10;
+    event.Stagger = calcStagger;
+    event.PushForce = 0;
+    event.IsExplosionDamage = false;
+
+    event.HitInfo = Hit;
+    event.ShotDirection = Hit.ImpactNormal;
+   
+
+    TakeDamage(0, event, nullptr, nullptr);
+
+    
+    
 
 }
 
@@ -778,12 +824,6 @@ void AHellDiver::SoftLanding()
 {
     if (!_softLandingMontage) return;
 
-    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
-    {
-        KnockDown();
-    }
-    else
-    {
 
         if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
         {
@@ -793,7 +833,6 @@ void AHellDiver::SoftLanding()
             // 재생 후 인스턴스 가져오기
             if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_softLandingMontage))
             {
-                _stateComponent->BeShocked();
                 // 델리게이트 중복 방지
                 MontageInstance->OnMontageEnded.Unbind();
 
@@ -808,16 +847,13 @@ void AHellDiver::SoftLanding()
             }
 
         }
-    }
+    
 }
 
 void AHellDiver::HardLanding()
 {
     if (!_hardLandingMontage) return;
-    if (_stateComponent->GetCharacterState() != ECharacterState::Standing || _stateComponent->GetCharacterState() != ECharacterState::Sprinting)
-    {
-        KnockDown();
-    }
+    
     else
     {
 
@@ -830,7 +866,6 @@ void AHellDiver::HardLanding()
             // 재생 후 인스턴스 가져오기
             if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_hardLandingMontage))
             {
-                _stateComponent->BeShocked();
 
                 // 델리게이트 중복 방지
                 MontageInstance->OnMontageEnded.Unbind();
@@ -851,7 +886,7 @@ void AHellDiver::HardLanding()
 
 void AHellDiver::FinishLanding(UAnimMontage* Montage, bool bInterrupted)
 {
-    _stateComponent->RecoveryShocked();
+    //_stateComponent->RecoveryShocked();
 }
 
 FRotator AHellDiver::Focusing()
@@ -864,6 +899,9 @@ FRotator AHellDiver::Focusing()
 
 void AHellDiver::Throwing()
 {
+    if (_stateComp->ActionBegin() == false)
+        return;
+    
     if (!_throwingMontage) return;
     if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()))
     {
@@ -874,11 +912,11 @@ void AHellDiver::Throwing()
         if (FAnimMontageInstance* MontageInstance = animInstance->GetActiveInstanceForMontage(_throwingMontage))
         {
 
-            // 델리게이트 중복 방지
-            MontageInstance->OnMontageEnded.Unbind();
 
-            // 델리게이트 바인딩
-            MontageInstance->OnMontageEnded.BindUObject(this, &AHellDiver::OnThrowReleased);
+            if (_reservedFunction.IsBound())
+                _reservedFunction.Unbind();
+            _reservedFunction.BindUObject(this, &AHellDiver::OnThrowReleased);
+
 
             UE_LOG(LogTemp, Error, TEXT("Success to get MontageInstance for %s"), *_throwingMontage->GetName());
         }
@@ -929,6 +967,21 @@ FTransform AHellDiver::GetMuzzleTransform() const
         return GetActorTransform(); // fallback
     }
     FTransform temp = equippedGun->GetMuzzleTrans();
+    return temp;
+}
+
+FTransform AHellDiver::GetMuzzleTransform_Relative() const
+{
+    auto equippedGun = _invenComponent->GetEquippedGun();
+
+    if (equippedGun == nullptr)
+    {
+        return GetActorTransform(); // fallback
+    }
+    FTransform muzzle = equippedGun->GetMesh()->GetSocketTransform(TEXT("Muzzle"),RTS_World);
+
+    FTransform weaponRoot = equippedGun->GetMesh()->GetSocketTransform(TEXT("root"),RTS_World);
+    FTransform temp = muzzle.GetRelativeTransform(weaponRoot);
     return temp;
 }
 

@@ -35,32 +35,26 @@ void ABroadcastTower::Tick(float DeltaTime)
 
 float ABroadcastTower::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-    const FPointDamageEvent* PointEvent = nullptr;
+    FHitResult hitInfo;
+    FVector impulseDir;
+    DamageEvent.GetBestHitInfo(this, DamageCauser, hitInfo, impulseDir);
 
-    if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
-        PointEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
-    
+    FVector impactPoint = hitInfo.ImpactPoint;
 
-    FVector ImpactPoint = GetActorLocation(); // 기본값
-    if (PointEvent)
-    {
-        ImpactPoint = PointEvent->HitInfo.ImpactPoint;
-    }
-
-    if (DamageAmount >= 5000.f)
+    if (DamageAmount >= 3000.f)
     {
         // 파괴 필드 스폰
         FActorSpawnParameters Params;
         ADestructFieldActor* FieldActor = GetWorld()->SpawnActor<ADestructFieldActor>(
             ADestructFieldActor::StaticClass(),
-            ImpactPoint,
+            impactPoint,
             FRotator::ZeroRotator,
             Params
         );
 
         if (FieldActor)
         {
-            FieldActor->ActivateField(ImpactPoint);
+            FieldActor->ActivateField(impactPoint);
         }
 
         UWorld* World = GEngine->GetWorldFromContextObjectChecked(this);

@@ -23,4 +23,7 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* _callInTimeText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* _previewImage;
 };

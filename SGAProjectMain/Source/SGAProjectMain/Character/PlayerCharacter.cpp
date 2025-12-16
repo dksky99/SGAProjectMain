@@ -38,6 +38,7 @@
 #include "../UI/MissionWidget.h"
 #include "../UI/InventoryWheelWidget.h"
 #include "../UI/MissionTimerWidget.h"
+#include "../UI/PlayerStatusWidget.h"
 
 #include "../Object/Explosive/Grenade/TimedGrenadeBase.h"
 #include "../Object/Stratagem/Stratagem.h"
@@ -102,8 +103,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer):
 	_aimOffset_.X = 0.0f;
 	_aimOffset_.Y = 0.0f;
 
-	_lastAimTargetFrame = -1; // 유효하지 않은 프레임 번호로 시작
-	_cachedAimTarget = FVector::ZeroVector;
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -126,6 +125,8 @@ void APlayerCharacter::PostInitializeComponents()
 		_missionWidget = CreateWidget<UMissionWidget>(GetWorld(), _missionWidgetClass);
 	if (_timerWidgetClass)
 		_timerWidget = CreateWidget<UMissionTimerWidget>(GetWorld(), _timerWidgetClass);
+	if (_playerStatusWidgetClass)
+		_playerStatusWidget = CreateWidget<UPlayerStatusWidget>(GetWorld(), _playerStatusWidgetClass);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -161,22 +162,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		_minimapWidget->AddToViewport();
 		_minimapWidget->SetVisibility(ESlateVisibility::Hidden);
-
-		// 월드에서 씬캡쳐러 찾기
-		for (TActorIterator<ASceneCapturer> IT(GetWorld());IT; ++IT)
-		{
-			ASceneCapturer* sceneCapturer = *IT;
-			if (sceneCapturer)
-			{
-				_sceneCapturer = sceneCapturer;
-				
-				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
-				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
-				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
-				
-				break;
-			}
-		}
 	}
 
 	if (_staminaBarWidget)
@@ -187,24 +172,15 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	if (_compassWidget)
-	{
 		_compassWidget->AddToViewport();
-
-		if (_sceneCapturer)
-		{
-			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
-			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
-		}
-	}
-
 	if (_sampleWidget)
 		_sampleWidget->AddToViewport();
-
 	if (_missionWidget)
 		_missionWidget->AddToViewport();
-
 	if (_timerWidget)
 		_timerWidget->AddToViewport();
+	if (_playerStatusWidget)
+		_playerStatusWidget->AddToViewport();
 
 
 	UAIPerceptionSystem::GetCurrent(GetWorld())->UnregisterSource(*this);
@@ -215,6 +191,7 @@ void APlayerCharacter::BeginPlay()
 
 	// 다음 프레임에 실행 (모든 액터 생성 완료 후)
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::CheckInitialOverlaps);
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::FindSceneCapturer);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -224,6 +201,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	auto statComponent = GetStatComponent();
 
 	FindBestItem();
+
+	_cachedCenterLoc= GetCenterLoc();
 
 	if (_stratagemComponent && _stratagemWidget)
 	{
@@ -1282,8 +1261,7 @@ void APlayerCharacter::CalcPitch()
 	temp.SetLocation(aimTransform.GetLocation());
 	//본의 정면 벡터를 가져옴.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
-	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
+	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+aimFwd*50.f, 50.0f, FColor::Green, false, 0.1f, 0, 2.0f);
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+ controlForward *50.f, 50.0f, FColor::Yellow, false, 0.1f, 0, 2.0f);
 	//기준이 될 선.
@@ -1340,9 +1318,7 @@ void APlayerCharacter::CalcYaw()
 	//본의 정면 벡터를 가져옴.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	//비교할 방향. 컨트롤러의 방향이나 조준선.
-	FVector controlForward = GetCenterLoc() - aimTransform.GetLocation();
-	//기준이 될 선.
+	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
 	FVector charForward = aimFwd;
 	controlForward=controlForward.GetSafeNormal();
 	charForward=charForward.GetSafeNormal();
@@ -1504,15 +1480,6 @@ void APlayerCharacter::UpdateCameraOcclusion()
 FVector APlayerCharacter::GetCenterLoc()
 {
 
-	//UE_LOG(LogTemp, Error, TEXT("%d %d"), _lastAimTargetFrame, GFrameCounter);
-	// GFrameCounter는 현재 엔진의 프레임 번호입니다.
-	if (_lastAimTargetFrame == GFrameCounter)
-	{
-		// 1. 이번 프레임에 이미 계산했습니다. 캐시된 값을 반환합니다.
-		// UE_LOG(LogTemp, Warning, TEXT("Returning Cached Aim Target")); // (디버깅용)
-		return _cachedAimTarget;
-	}
-
 
 
 	//플레이어 컨트롤러에서 스크린에서 월드좌표받기 
@@ -1591,27 +1558,21 @@ FVector APlayerCharacter::GetCenterLoc()
 
 	}
 
-	//UE_LOG(LogTemp, Display, TEXT("Center Loc: %f %f %f"), AimTarget.X, AimTarget.Y, AimTarget.Z);
-	_cachedAimTarget = AimTarget;
-	_lastAimTargetFrame = GFrameCounter;
 
-	// 4. 새로 계산된 값을 반환합니다.
-	return _cachedAimTarget;
+	return AimTarget;
 
 }
 bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir) 
 {
-	return Super::GetTargetLook(loc, dir);
-	//loc = GetActorLocation();
-	//const FVector temp = GetTargetLoc();
-	//dir = temp - loc;
-	//
-	//
-	//return true;
+	
+	loc = GetActorLocation();
+	dir = _cachedCenterLoc - loc;
+
+	return true;
 }
 FVector APlayerCharacter::GetTargetLoc()
 {
-	return GetCenterLoc();
+	return _cachedCenterLoc;
 }
 void APlayerCharacter::ViewTurnBack()
 {
@@ -1884,7 +1845,7 @@ void APlayerCharacter::InitWeapon()
 
 	auto equippedGun = _invenComponent->GetEquippedGun();
 
-	if (_gunWidget)
+	if (IsLocallyControlled() && _gunWidget)
 	{
 		equippedGun->GetAmmoComponent()->_ammoChanged.AddUObject(_gunWidget, &UGunWidget::SetAmmo);
 		equippedGun->GetAmmoComponent()->_spareChanged.AddUObject(_gunWidget, &UGunWidget::SetSpare);
@@ -2266,6 +2227,37 @@ void APlayerCharacter::CheckInitialOverlaps()
 		if (AInteractable* item = Cast<AInteractable>(actor))
 		{
 			_interactableItems.AddUnique(item);
+		}
+	}
+}
+
+void APlayerCharacter::FindSceneCapturer()
+{
+	if (_minimapWidget)
+	{
+		// 월드에서 씬캡쳐러 찾기
+		for (TActorIterator<ASceneCapturer> IT(GetWorld()); IT; ++IT)
+		{
+			ASceneCapturer* sceneCapturer = *IT;
+			if (sceneCapturer)
+			{
+				_sceneCapturer = sceneCapturer;
+
+				_sceneCapturer->_cursorUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetCursorText);
+				_sceneCapturer->_pingRelativeUpdateEvent.AddUObject(_minimapWidget, &UMiniMapWidget::SetPingImage);
+				_sceneCapturer->_pingOnOffEvent.AddUObject(_minimapWidget, &UMiniMapWidget::ShowPingImage);
+
+				break;
+			}
+		}
+	}
+
+	if (_compassWidget)
+	{
+		if (_sceneCapturer)
+		{
+			_sceneCapturer->_pingLocationUpdateEvent.AddUObject(_compassWidget, &UCompassWidget::SetPingLocation);
+			_sceneCapturer->_pingOnOffEvent.AddUObject(_compassWidget, &UCompassWidget::ShowPingImage);
 		}
 	}
 }

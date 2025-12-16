@@ -103,6 +103,7 @@ void ATerminalConsole::ActivateTerminalConsole()
 {
 	_player->BeginTerminalInputMode(this);
 	
+	// 캐릭터 특정 위치에 고정
 	H_CharacterLoc::SetCharacterToGround(_player, _playerAnchor, GetWorld());
 	ChangeCameraView(true);
 	

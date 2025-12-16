@@ -39,13 +39,16 @@ UCLASS()
 class SGAPROJECTMAIN_API AEnemyController : public AAIController
 {
 	GENERATED_BODY()
-public:
-	AEnemyController();
+protected:
+
 	//컨트롤러가 폰에 빙의될때와 해제될때 호출되는 함수.
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
 	virtual void BeginPlay() override;
+public:
+	AEnemyController();
+
 
 	void ResetController();
 
@@ -86,6 +89,9 @@ public:
 	FVector GetTargetLoc() { return _lastSensedLoc; }
 
 	class UBehaviorControlComponent* GetBehaviorControl() { return _behaviorControlComponent; }
+
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
 protected:
 	//타겟이 가능한지 확인한다. 타겟어블을 계승해야하고 Enemy가 아니어야하고 죽어있거나 파괴되어있지 않아야함.
 	bool CheckTargetable(AActor* target);

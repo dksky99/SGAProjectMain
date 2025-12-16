@@ -26,6 +26,17 @@ void UMissionResultWidget::InitializeWidget(const FMissionResult& missionResult)
 {
 	_missionResult = missionResult;
 
+	if (missionResult._isMissionCleared)
+	{
+		_missionResultTitle->SetText(FText::FromString(TEXT("MISSION CLEARED")));
+		_missionResultTitle->SetColorAndOpacity(FSlateColor(FLinearColor::Yellow));
+	}
+	else
+	{
+		_missionResultTitle->SetText(FText::FromString(TEXT("MISSION FAILED")));
+		_missionResultTitle->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+	}
+
 	_rewardPanel->SetVisibility(ESlateVisibility::Visible);
 	_xpBox->SetVisibility(ESlateVisibility::Visible);
 	_requisitionBox->SetVisibility(ESlateVisibility::Visible);

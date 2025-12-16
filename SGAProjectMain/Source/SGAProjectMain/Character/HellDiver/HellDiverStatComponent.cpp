@@ -13,6 +13,13 @@
 //		_hpChanged.Broadcast(_curHp / _maxHp);
 //}
 
+void UHellDiverStatComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	_curStamina = _maxStamina;
+}
+
 void UHellDiverStatComponent::ConsumeStamina(float deltaTime)
 {
 	_curStamina -= deltaTime * 50.f;//* 5.f;

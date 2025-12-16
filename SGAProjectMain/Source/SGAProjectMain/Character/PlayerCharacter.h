@@ -141,6 +141,7 @@ public:
 	void OnItemNonInteractable(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 	
 	void CheckInitialOverlaps(); // BeginPlay() 에서만
+	void FindSceneCapturer(); // BeginPlay() 에서만
 	void FindBestItem();
 
 
@@ -337,6 +338,10 @@ protected:
 	TSubclassOf<UUserWidget> _timerWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
 	class UMissionTimerWidget* _timerWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> _playerStatusWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Widget", meta = (AllowPrivateAccess = "true"))
+	class UPlayerStatusWidget* _playerStatusWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Camera", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* _camera;
@@ -376,6 +381,8 @@ protected:
 	// 위젯 -> 지도보기
 	bool _isDraggingMap = false;
 
+	FVector _cachedCenterLoc = FVector::ZeroVector;
+
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")
 	class USphereComponent* _itemDetectionSphere; // 아이템 감지 범위
@@ -392,10 +399,5 @@ protected:
 	UPROPERTY()
 	ATerminalConsole* _curTerminal;
 
-
-	uint64 _lastAimTargetFrame = 0;
-
-	// 캐시된 조준점 위치
-	FVector _cachedAimTarget;
 
 };

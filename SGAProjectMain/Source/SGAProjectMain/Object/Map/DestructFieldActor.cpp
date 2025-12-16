@@ -10,27 +10,23 @@
 void ADestructFieldActor::ActivateField(const FVector& Position, float Radius, float Strength)
 {
 
-    // 스칼라 데미지 필드 (RadialFalloff를 Magnitude로 사용)
+    // 스칼라 데미지 필드
     URadialFalloff* DamageFalloff = NewObject<URadialFalloff>(GetTransientPackage());
     DamageFalloff->Magnitude = Strength; // Strength를 직접 Magnitude로 사용
     DamageFalloff->MinRange = 0.f;
     DamageFalloff->MaxRange = Radius;
     DamageFalloff->Default = 0.f;
-    DamageFalloff->Radius = Radius; // Falloff의 Radius와 동일하게 설정
+    DamageFalloff->Radius = Radius;
     DamageFalloff->Position = Position;
     DamageFalloff->Falloff = EFieldFalloffType::Field_Falloff_Linear; // 선형 감쇠
     
-    // 필드를 적용할 Geometry Collection 컴포넌트 (선택 사항: 특정 컴포넌트에만 적용하고 싶다면)
-    // UGeometryCollectionComponent* TargetGCComponent = ...; // 여기에 대상 컴포넌트를 가져오는 로직 추가
-    
     if (FieldSystemComponent)
-        {
-        // Field_DynamicState를 사용하여 해당 영역의 조각들을 동적 상태로 만들고, 파괴를 유도
-        // 이는 직접적인 '데미지' 필드라기보다는 물리적 상태를 변경하여 파괴가 가능하게 함
+    {
+		// 필드 시스템 컴포넌트에 물리 필드 적용
         FieldSystemComponent->ApplyPhysicsField(
-            true, // Enable
-            EFieldPhysicsType::Field_ExternalClusterStrain, // 동적 상태 필드
-            nullptr, // 특정 컴포넌트 타겟팅: 모든 Geometry Collection에 영향을 주려면 nullptr 유지, 아니면 TargetGCComponent
+            true, // 활성화
+			EFieldPhysicsType::Field_ExternalClusterStrain, // 스칼라 값을 GC의 파괴강도에 적용
+			nullptr, // 필터 없음
             DamageFalloff // 이 스칼라 필드의 Magnitude가 DynamicState의 값을 결정 (높을수록 강하게 적용)
         );
     }

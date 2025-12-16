@@ -31,6 +31,7 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	//현재 애니메이션 변환 상태를 확인.
 	void GetCurrentMoveNode();
 
 	UFUNCTION()
@@ -108,7 +109,7 @@ protected:
 
 	//목표위치
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	FVector _targetPos = FVector();
+	FVector _targetPos = FVector(0.f,400.f,200.f);
 
 	//총구의 위치->총 메쉬의 루트로부터=오른손 소켓으로부터-> 오른손소캣트랜스폼에 이걸 곱하면 총구의 트랜스폼을 얻을수있다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

@@ -66,6 +66,9 @@ struct FStratagemSlot : public FTableRowBase
 	// 설명 텍스트 (UI 용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")
 	FText Description;
+
+	UPROPERTY(EditAnywhere)
+	UTexture2D* PreviewImage = nullptr;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

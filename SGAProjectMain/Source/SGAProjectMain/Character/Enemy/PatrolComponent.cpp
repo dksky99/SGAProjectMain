@@ -41,6 +41,7 @@ void UPatrolComponent::UpdateNextIndex()
 
 	if (_path == nullptr)return;
 
+	UE_LOG(LogTemp, Display, TEXT("Get Next Index"));
 	int32 count = _path->GetSpline()->GetNumberOfSplinePoints();
 
 	//¡§πÊ«‚

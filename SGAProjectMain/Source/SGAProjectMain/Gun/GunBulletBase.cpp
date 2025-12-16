@@ -4,6 +4,7 @@
 #include "GunBulletBase.h"
 
 #include "Components/SphereComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -30,7 +31,6 @@ AGunBulletBase::AGunBulletBase()
     _projectileMovement->MaxSpeed = _projectileData._initialSpeed * 100.f;
     _projectileMovement->bRotationFollowsVelocity = true;
     _projectileMovement->SetUpdatedComponent(_collisionComp);
-    _projectileMovement->ProjectileGravityScale = _projectileData._gravityScale * 0.01f;
 
     // 폭발 컴포넌트
     _explosionComponent = CreateDefaultSubobject<UExplosionComponent>(TEXT("ExplosionComponent"));
@@ -102,20 +102,6 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
         if (OtherComp->GetCollisionProfileName() != FName(TEXT("HitBox")))
             return; // 히트박스 콜리전만 공격
 
-        // 피직스 머티리얼 가져오기
-        //UPhysicalMaterial* PM = SweepResult.PhysMaterial.Get();
-        //EPhysicalSurface surface = SurfaceType_Default;
-        //if (!PM && OtherComp) // 비어있으면 타겟 컴포넌트의 BodyInstance에서 직접 가져오기
-        //{
-        //    if (FBodyInstance* BI = OtherComp->GetBodyInstance())
-        //    {
-        //        PM = BI->GetSimplePhysicalMaterial(); // Override된 PM 받기
-        //        surface = PM->SurfaceType;
-        //    }
-        //}
-
-        // Armor Value 계산
-        //int32 armorValue = SurfaceToAV(surface);
 		int32 armorValue = 0;
         if (auto character = Cast<ACharacterBase>(OtherActor))
             armorValue = character->GetPartArmorValue(OtherComp);
@@ -152,8 +138,10 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 		// StatComponent에서 Durability 비율로 섞어도 최종 크기는 유지됩니다.
 		damageEvent.BaseDamage = finalBaseDamage;
 		damageEvent.DurabilityDamage = finalDurabilityDamage;
-		damageEvent.DemolitionDamage = 0;
+		damageEvent.DemolitionDamage = _projectileData._demolitionDamage;
 		damageEvent.PenetrationLevel = ap; 
+		damageEvent.Stagger = _projectileData._stagger;
+		damageEvent.PushForce = _projectileData._pushForce;
 
 		damageEvent.IsExplosionDamage = false;     // 총알은 폭발이 아님
 		damageEvent.ColComp = OtherComp;
@@ -169,12 +157,16 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
 			this                         // 데미지 발생 주체 (총알)
 		);
 
+		PlayImpactEffect(SweepResult);
+
         UE_LOG(LogTemp, Warning, TEXT("DamageAmount: %d"), finalBaseDamage);
 
         if (_bulletHitEvent.IsBound())
             _bulletHitEvent.Broadcast(outcome);
 
         _hitComponents.Add(OtherComp); // 공격한 부위 저장 -> 중복 방지
+
+        ProcessHitOutcome(outcome, SweepResult);
 
         if (_projectileData._type == EGunProjectileType::Explosive)
         {
@@ -183,8 +175,6 @@ void AGunBulletBase::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, A
             if (!IsActorBeingDestroyed() && !IsPendingKillPending())
                 Destroy();
         }
-
-        ProcessHitOutcome(outcome, SweepResult);
     }
 
     UE_LOG(LogTemp, Log, TEXT("Bullet Hit!"));
@@ -197,7 +187,27 @@ void AGunBulletBase::OnBulletHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 
     if (!OtherComp || _isExploded) return;
 
+	FVector velocity = _projectileMovement->Velocity;
     _projectileMovement->StopMovementImmediately();
+
+    int32 finalBaseDamage = _projectileData._baseDamage * (velocity.Size() / _baseSpeed);
+
+	// 몬스터의 경우 OnBulletOverlap에서 커스텀 데미지 이벤트 사용
+    // 몬스터를 제외한 오브젝트는 포인트 데미지이벤트 사용
+    FPointDamageEvent damageEvent;
+    damageEvent.Damage = finalBaseDamage;
+    damageEvent.ShotDirection = velocity.GetSafeNormal();
+    damageEvent.HitInfo = Hit;
+    damageEvent.DamageTypeClass = UCDamageType::StaticClass();
+
+    OtherActor->TakeDamage(
+        finalBaseDamage,
+        damageEvent,
+        GetInstigatorController(),
+        this
+    );
+
+	PlayImpactEffect(Hit);
     
     if (_projectileData._type == EGunProjectileType::Explosive)
     {
@@ -341,6 +351,19 @@ int32 AGunBulletBase::SurfaceToAV(EPhysicalSurface surface)
     }
 }
 
+void AGunBulletBase::PlayImpactEffect(const FHitResult& HitResult)
+{
+    if (_effect)
+    {
+        UParticleSystemComponent* PSC =
+            UGameplayStatics::SpawnEmitterAtLocation(
+            GetWorld(),
+            _effect,
+			HitResult.ImpactPoint
+        );
+    }
+}
+
 void AGunBulletBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (_collisionComp)
@@ -357,10 +380,9 @@ void AGunBulletBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGunBulletBase::InitializeProjectile(FGunProjectileData data)
 {
     _projectileData = data;
-    _projectileMovement->InitialSpeed = data._initialSpeed;// *100.f;
+    _projectileMovement->InitialSpeed = data._initialSpeed * 100.f;
     _projectileMovement->MaxSpeed = data._initialSpeed * 100.f;
     _baseSpeed = _projectileMovement->InitialSpeed;
-    _projectileMovement->ProjectileGravityScale = data._gravityScale * 0.01f;
     _prevLoc = GetActorLocation();
 }
 

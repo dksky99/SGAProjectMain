@@ -65,7 +65,9 @@ void AEscapePlane::OnTriggerBoxOverlap(UPrimitiveComponent* OverlappedComp, AAct
     _helldiverExtractEvent.Broadcast();
 	_extractedHellDivers.Add(hellDiver);
 
-	StartTimerToTakeOff(); // 1명이라도 탑승하면 이륙 타이머 시작
+    TakeOff();
+
+	//StartTimerToTakeOff(); // 1명이라도 탑승하면 이륙 타이머 시작
 }
 
 void AEscapePlane::TakeOff()

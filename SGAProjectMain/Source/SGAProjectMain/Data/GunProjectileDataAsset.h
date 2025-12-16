@@ -63,13 +63,12 @@ struct FGunProjectileData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _falloffPenetration = 0.25f;
 
-	// 중력 계수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _gravityScale = 1.f; // 중력 계수 100% = 1.f
-
-	// 총알 구경
+	float _demolitionDamage = 10.f; // 철거 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _caliber = 0.55; // cm단위
+	float _stagger = 15.f; // 비틀거림 유발
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float _pushForce = 10.f; // 밀치기 위력
 };
 
 UCLASS()

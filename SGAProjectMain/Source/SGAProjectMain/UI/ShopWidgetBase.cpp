@@ -58,10 +58,7 @@ void UShopWidgetBase::InitializeWidget()
     _stgDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 	_gunDetailPanel->SetVisibility(ESlateVisibility::Collapsed);
 
-    // 임시
-    FPlayerCurrency startingCurrency;
-    startingCurrency._requisitionSlips = 5000; // 시작 자금
-    GI->AddRewardCurrency(startingCurrency);
+    OnSlotPicked(_shopSlots[0]);
 }
 
 void UShopWidgetBase::SetPlayerCurrencyDisplay(FPlayerCurrency currency)
@@ -114,15 +111,15 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
         return;
 	}
 
-    /*if (auto scrollBox = Cast<UScrollBox>(_slotPanel))
+    if (_scrollBox)
     {
-        scrollBox->ScrollWidgetIntoView(
+        _scrollBox->ScrollWidgetIntoView(
             slot,
             true,
             EDescendantScrollDestination::IntoView,
             0.15f
         );
-    }*/
+    }
 
 	auto GI = GetWorld()->GetGameInstance<UCGameInstance>();
     if (!GI) return;
@@ -143,7 +140,7 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Green);
         _buttonText->SetText(FText::FromString(TEXT("OWNED")));
-		//_buttonText->SetColorAndOpacity(FLinearColor::Green);
+		_buttonText->SetColorAndOpacity(FSlateColor(FLinearColor::Green));
         _purchaseButton->SetIsEnabled(false);
         return;
 	}
@@ -152,7 +149,7 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Red);
         _buttonText->SetText(FText::FromString(TEXT("LOCKED")));
-		//_buttonText->SetColorAndOpacity(FLinearColor::Red);
+		_buttonText->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
         _purchaseButton->SetIsEnabled(false);
 		return;
     }
@@ -161,14 +158,14 @@ void UShopWidgetBase::OnSlotPicked(UShopSlotWidgetBase* slot)
     {
         _buttonBorder->SetBrushColor(FLinearColor::Yellow);
         _buttonText->SetText(FText::FromString(TEXT("PURCHASE")));
-        //_buttonText->SetColorAndOpacity(FLinearColor::Yellow);
+		_buttonText->SetColorAndOpacity(FSlateColor(FLinearColor::Yellow));
         _purchaseButton->SetIsEnabled(true);
     }
     else
     {
         _buttonBorder->SetBrushColor(FLinearColor::Red);
         _buttonText->SetText(FText::FromString(TEXT("LOW FUNDS")));
-        //_buttonText->SetColorAndOpacity(FLinearColor::Red);
+		_buttonText->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
         _purchaseButton->SetIsEnabled(false);
 	}
 }
@@ -192,6 +189,10 @@ void UShopWidgetBase::PurchaseItem()
 			shopType = slot->GetShopType();
             auto data = GI->GetShopItemByID(shopType, slot->GetItemID());
 			slot->InitializeSlot(data);
+			// 선택된 슬롯이면 다시 선택 상태로 설정
+            if (slot == _selectedSlot)
+                slot->SetSelected(true);
+			
 		}
 		// 플레이어 재화 표시 갱신
 		SetPlayerCurrencyDisplay(GI->GetCurrentCurrency());

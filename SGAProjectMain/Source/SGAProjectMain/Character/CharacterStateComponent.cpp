@@ -111,7 +111,8 @@ void UCharacterStateComponent::AddAbnormality(EAbnormality abnormality)
 	//임계치가 최소임계치를 넘어 상태이상이 생김.
 	if (curWeight > minState)
 	{
-		_remainTimes[state] = data->_stateDruration;
+
+		_remainTimes.FindOrAdd(state, data->_stateDruration) ;
 		_activeAbnormalities |= temp;
 
 	}
@@ -206,6 +207,14 @@ bool UCharacterStateComponent::ActionBegin()
 {
 	if (_isActing)
 		return false;
+
+	UCharacterMovementComponent* MoveComp = _owner->GetCharacterMovement();
+	if (MoveComp)
+	{
+
+		MoveComp->SetAvoidanceEnabled(false);
+	}
+
 	_isActing = true;
 	return true;
 }

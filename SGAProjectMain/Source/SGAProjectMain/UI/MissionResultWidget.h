@@ -32,6 +32,8 @@ public:
 	FOnRewardFlowFinished _rewardFlowFinishedEvent;
 
 protected:
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _missionResultTitle;
 	// 보상 패널
 	UPROPERTY(meta = (BindWidget))
 	class UVerticalBox* _rewardPanel;
@@ -74,8 +76,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _missionCheck3;
 
-	TArray<UImage*> _missionIcons;
-	TArray<UImage*> _missionChecks;
+	TArray<class UImage*> _missionIcons;
+	TArray<class UImage*> _missionChecks;
 
 	UPROPERTY(meta = (BindWidget))
 	class UVerticalBox* _bonusBox1;
