@@ -109,6 +109,8 @@ void AGalacticPlanetGlobe::BeginPlay()
 
 void AGalacticPlanetGlobe::InitializeOperations()
 {
+    int32 opIndex = 0;
+
     for (FOperationData& opData : _operations)
     {
         if (!opData.OperationSiteClass)
@@ -133,6 +135,8 @@ void AGalacticPlanetGlobe::InitializeOperations()
             FRotator lookRotation = (-localPos).Rotation();
             opSite->SetRelativeRotation(lookRotation);
 			APlanetOperationSite* opSiteActor = Cast<APlanetOperationSite>(opSite->GetChildActor());
+			if (opSiteActor)
+				opSiteActor->SetOperationIndex(opIndex++);
         }
     }
 }
@@ -196,7 +200,38 @@ void AGalacticPlanetGlobe::EnterFocusByOperation(UOperationDataAsset* operation)
     _curSite = site;
     _curIcon = nullptr;
 
+    FVector siteLoc = _curSite->GetActorLocation(); // 선택한 지점 위치
+    FVector globeCenter = _mesh->GetComponentLocation();
+
+    // 현재 사이트 방향
+    FVector siteDir = (siteLoc - globeCenter).GetSafeNormal();
+
+    // 브라우즈 카메라에서부터 글로브만 맞는 채널로 라인트레이스
+    FVector rayOrigin = _browseCamera->GetComponentLocation() - FVector(0.f, 0.f, 50.f); // 글로브의 움직임을 고려해 약간 아래에서 시작
+    FVector rayDir = _browseCamera->GetChildActor()->GetActorForwardVector();
+    FHitResult hit;
+    GetWorld()->LineTraceSingleByChannel(hit, rayOrigin, rayOrigin + rayDir * 100000.f, ECC_GameTraceChannel4);
+
+	FQuat tempQuat;
+    FVector tempLoc;
+    // 맞았으면 글로브 browse 모드 회전 목표 저장
+    if (hit.bBlockingHit)
+    {
+        FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
+        FQuat deltaQuat = FQuat::FindBetweenNormals(siteDir, surfaceNormal); // 사이트가 보이도록 회전하는 쿼터니언
+        tempQuat = deltaQuat * _globeRoot->GetComponentQuat(); // 메시 대신 루트 회전
+    }
+    else
+        tempQuat = _globeRoot->GetComponentQuat();
+
+    tempLoc = _globeRoot->GetComponentLocation() + FVector(0.f, 0.f, 50.f);  // 약간 위로
+
 	EnterFocus();
+
+	// EnterFocus에서 변경된 값을 원래대로 복구
+	_startGlobeLoc = tempLoc;
+	_startGlobeQuat = tempQuat;
+
 	SetCameraView(EPlanetGlobeMode::None);
 }
 
@@ -272,18 +307,18 @@ void AGalacticPlanetGlobe::EnterFocus()
     // 현재 사이트 방향
     FVector siteDir = (siteLoc - globeCenter).GetSafeNormal();
 
-    // 카메라에서부터 글로브만 맞는 채널로 라인트레이스
+    // 포커스 카메라에서부터 글로브만 맞는 채널로 라인트레이스
     FVector rayOrigin = _focusCamera->GetComponentLocation() + FVector(0.f, 0.f, 50.f); // 글로브의 이후 움직임을 고려해 약간 위에서 시작
     FVector rayDir = _focusCamera->GetChildActor()->GetActorForwardVector();
     FHitResult hit;
     GetWorld()->LineTraceSingleByChannel(hit, rayOrigin, rayOrigin + rayDir * 100000.f, ECC_GameTraceChannel4);
 
-    // 맞았으면 사이트가 보이도록 글로브 회전
+    // 맞았으면 사이트가 보이도록 글로브 회전 목표 지정
     if (hit.bBlockingHit)
     {
         FVector surfaceNormal = hit.ImpactNormal.GetSafeNormal();
         FQuat deltaQuat = FQuat::FindBetweenNormals(siteDir, surfaceNormal); // 사이트가 보이도록 회전하는 쿼터니언
-        _focusedGlobeRotation = deltaQuat * _mesh->GetComponentQuat();
+        _focusedGlobeRotation = deltaQuat * _mesh->GetComponentQuat(); // 포커스 모드에서의 글로브 기본 회전 상태
         _targetGlobeQuat = deltaQuat * _globeRoot->GetComponentQuat(); // 메시 대신 루트 회전
     }
     else

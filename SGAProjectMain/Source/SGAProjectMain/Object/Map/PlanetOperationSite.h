@@ -29,6 +29,9 @@ public:
 
 	class UOperationDataAsset* GetOperationData() const { return _operationData; }
 
+	void SetOperationIndex(int32 index) { _operationIndex = index; }
+	int32 GetOperationIndex() const { return _operationIndex; }
+
 protected:
 	void ShowMissionIcons(bool bShow);
 
@@ -57,4 +60,6 @@ protected:
 
 	UPROPERTY(EditAnyWhere, Category = "Game/Icons")
 	int32 _iconCount = 3;
+
+	int32 _operationIndex = -1;
 };

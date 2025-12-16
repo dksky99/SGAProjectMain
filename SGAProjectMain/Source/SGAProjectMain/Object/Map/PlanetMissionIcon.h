@@ -26,6 +26,9 @@ public:
 	void SetMissionData(class UMissionDataAsset* mission);
 	class UMissionDataAsset* GetMissionData() { return _missionData; }
 
+	void SetMissionIndex(int32 index) { _missionIndex = index; }
+	int32 GetMissionIndex() { return _missionIndex; }
+
 protected:
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* _mesh;
@@ -33,4 +36,5 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UMissionDataAsset* _missionData;
 
+	int32 _missionIndex = -1;
 };
