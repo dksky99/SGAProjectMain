@@ -76,5 +76,6 @@ void UPreDeploymentFlow::HandleLaunch()
 
     UWidgetBlueprintLibrary::SetFocusToGameViewport();
 
-    UGameplayStatics::OpenLevel(this, FName("LeveL_Proto3"));
+    //UGameplayStatics::OpenLevel(this, FName("LeveL_Proto3"));
+    UGameplayStatics::OpenLevel(this, FName("FirstPersonMap"));
 }

@@ -6,27 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "StratagemComponent.generated.h"
 
-// 변경 전 스트라타젬 슬롯 필요없으면 지워주세요
-
-//USTRUCT(BlueprintType)
-//struct FStratagemSlot : public FTableRowBase
-//{
-//	GENERATED_BODY();
-//
-//	UPROPERTY(EditAnywhere)
-//	FName StratagemID;
-//
-//	UPROPERTY(EditAnywhere)
-//	TSubclassOf<class AStratagem> StratagemClass;
-//
-//	UPROPERTY(EditAnywhere)
-//	float Cooldown = 10.f;
-//
-//	float LastUsedTime = -9999.f;
-//
-//	UPROPERTY(EditAnywhere)
-//	FText Description;
-//};
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentChargeChanged, int32);
 
 USTRUCT(BlueprintType)
 struct FStratagemSlot : public FTableRowBase
@@ -62,6 +42,8 @@ struct FStratagemSlot : public FTableRowBase
 
 	// 현재 남은 탄수 (런타임 전용, ApplyLoadOut 등에서 초기화)
 	int32 CurrentCharges = 0;
+
+	mutable FOnCurrentChargeChanged _onCurrentChargeChanged; // 현재 탄수 변경 이벤트
 
 	// 설명 텍스트 (UI 용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Stratagem")

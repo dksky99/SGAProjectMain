@@ -223,6 +223,7 @@ void UStratagemComponent::CommitStratagemUse()
 	if (slot.MaxCharges > 0 && slot.CurrentCharges > 0)
 	{
 		slot.CurrentCharges -= 1;
+		slot._onCurrentChargeChanged.Broadcast(slot.CurrentCharges);
 	}
 
 	// 그룹 쿨 시작 (이글 등 공유 쿨 그룹)
@@ -341,6 +342,7 @@ void UStratagemComponent::ApplyEagleRearm()
 		if (slot.CooldownGroup == targetGroup && slot.MaxCharges > 0)
 		{
 			slot.CurrentCharges = slot.MaxCharges;
+			slot._onCurrentChargeChanged.Broadcast(slot.CurrentCharges);
 		}
 	}
 }

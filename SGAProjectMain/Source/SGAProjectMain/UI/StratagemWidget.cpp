@@ -14,10 +14,20 @@ void UStratagemWidget::InitializeWidget(const TArray<FStratagemSlot>& stgSlots)
 	for (const FStratagemSlot& stgSlot : stgSlots)
 	{
 		auto stgClass = stgSlot.StratagemClass;
+		if (!stgClass)
+			continue;
+
 		const AStratagem* stg = stgClass->GetDefaultObject<AStratagem>();
 
 		UStratagemSlotWidget* slot = CreateWidget<UStratagemSlotWidget>(this, _slotWidgetClass);
 		slot->InitializeSlot(stg, this);
+
+		if (stgSlot.MaxCharges > 0)
+		{
+			stgSlot._onCurrentChargeChanged.AddUObject(slot, &UStratagemSlotWidget::UpdateCurrentCharges);
+			slot->UpdateCurrentCharges(stgSlot.CurrentCharges);
+		}
+
 		_stgSlots->AddChild(slot);
 	}
 }
@@ -74,8 +84,12 @@ void UStratagemWidget::SetWidgetCooldownState(int32 index, float remainingTime)
 	auto slots = _stgSlots->GetAllChildren();
 	auto stgSlot = Cast<UStratagemSlotWidget>(slots[index]);
 		
-	if (stgSlot->GetSlotState() == EStgSlotWgtState::Operating)
+	//if (stgSlot->GetSlotState() == EStgSlotWgtState::Operating)
+	if (stgSlot->GetSlotState() != EStgSlotWgtState::Cooldown)
+	{
 		stgSlot->SetSlotCooldownState(remainingTime);
+		OpenWidget(false);
+	}
 
 	stgSlot->SetCooldown(remainingTime);
 }
