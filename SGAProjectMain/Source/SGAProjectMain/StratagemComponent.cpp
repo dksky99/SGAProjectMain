@@ -6,6 +6,8 @@
 #include "Game/PreDeployment/PreDeploymentState.h"
 #include "CGameInstance.h"
 
+DECLARE_DELEGATE(FOnStratagemInitialized)
+
 // Sets default values for this component's properties
 UStratagemComponent::UStratagemComponent()
 {
@@ -34,27 +36,19 @@ void UStratagemComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
 	if (!GI) return;
 
 	TArray<int32> stratagemIDs = preDeployState->GetStratagemIDs();
-	TArray<int32> defaultIDs = { -1, -1, -1, -1 }; // 임시
-	if (stratagemIDs == defaultIDs) // state에 세팅이 안 되어있을 경우 기본값 사용
-		return;
+	TArray<int32> defaultIDs = { -1, -1, -1, -1 }; // 세팅이 되어있지 않을 경우 기본값
+	if (stratagemIDs != defaultIDs) // state에 세팅이 되어있을 경우 
+		StratagemSlots.Empty(); // 미리 세팅해 둔 기본값 삭제
 
-	StratagemSlots.Empty(); // 되어있을 경우 기본값 삭제
-	/*for (int32 id : stratagemIDs)
+	for (int32 id : stratagemIDs)
 	{
 		if (id < 0) continue;
 		FStratagemSlot stratagemSlot = GI->GetStratagemSlotFromTable(id);
 		StratagemSlots.Add(stratagemSlot);
-	}*/
+	}
 
-	for (int32 id : stratagemIDs)
+	for (auto& stratagemSlot : StratagemSlots)
 	{
-		if (id < 0)
-		{
-			continue;
-		}
-
-		FStratagemSlot stratagemSlot = GI->GetStratagemSlotFromTable(id);
-
 		// 게임 시작 시점에는 "아직 한 번도 사용한 적 없음" 상태로 초기화
 		stratagemSlot.LastUsedTime = -9999.0f;
 
@@ -64,7 +58,6 @@ void UStratagemComponent::ApplyLoadOut(UPreDeploymentState* preDeployState)
 			stratagemSlot.CurrentCharges = stratagemSlot.MaxCharges;
 		}
 
-		StratagemSlots.Add(stratagemSlot);
 	}
 }
 
