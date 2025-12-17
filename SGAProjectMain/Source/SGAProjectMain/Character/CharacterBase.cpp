@@ -167,7 +167,7 @@ void ACharacterBase::Critical()
 {
 	auto main = _statComponent->GetCoreStat();
 
-	_statComponent->ChangeHp(main, (float)(main->_partHP));
+	_statComponent->ChangeHp(main, (float)(-main->_partHP));
 	
 }
 
@@ -231,7 +231,6 @@ void ACharacterBase::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 	float zVelocity = GetCharacterMovement()->Velocity.Z;
 
-	UE_LOG(LogTemp, Log, TEXT("Landing Z Velocity: %f"), zVelocity);
 
 	if (zVelocity < -1200.f)
 	{
@@ -765,7 +764,10 @@ EBodyPart ACharacterBase::GetHittedPart(const FCDamageEvent* DamageEvent)
 	{
 		
 		auto HitComponent = DamageEvent->ColComp;
+		if(HitComponent)
 		{
+
+			
 
 			for (auto tag : HitComponent->ComponentTags)
 			{
@@ -809,7 +811,14 @@ FUnitPartStat* ACharacterBase::GetHittedPartStat(EBodyPart part, const UPrimitiv
 
 float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-
+	UAISense_Damage::ReportDamageEvent(
+		GetWorld(),                                // 월드 컨텍스트
+		this,                                      // 데미지 입은 액터 (나 자신)
+		EventInstigator ? EventInstigator->GetPawn() : DamageCauser, // 가해자 (Instigator가 컨트롤러라면 폰을 가져옴)
+		DamageAmount,                              // 데미지 양
+		DamageCauser ? DamageCauser->GetActorLocation() : GetActorLocation(), // 가해자의 위치 (추정)
+		GetActorLocation()                         // 타격 위치 (정확한 히트 위치를 모를 경우 내 위치)
+	);
 	//커스텀 데미지이벤트. 이곳에 피해를 입은 부위와 일반피해, 내구피해, 철거력, 관통력 등을 가져올 수 있다.그리고 상태이상을 유발한다면 얼마나가중할지도 포함된다.
 	if (DamageEvent.GetTypeID() == FCDamageEvent::ClassID)
 	{
@@ -818,9 +827,21 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		const FCDamageEvent* CustomEvent = static_cast<const FCDamageEvent*>(&DamageEvent);
 		//데미지타입을 가져온다 여기에는 피해의 속성과 이것이 추가적인상태이상수치를 유발하는지 여부를 가져온다.
 		//데미지타입이 있다면 그것으로하고 없다면 기본클래스를 만들어 사용.
-		const UCDamageType* CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())!=nullptr ?
-			Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject())  :
-			Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
+		
+
+		if (CustomEvent == nullptr)
+			return 0.0f;
+		const UCDamageType* CustomDamageType = nullptr;
+		if (CustomEvent->DamageTypeClass != nullptr)
+		{
+
+			CustomDamageType = Cast<UCDamageType>(CustomEvent->DamageTypeClass->GetDefaultObject());
+		}
+		if (CustomDamageType == nullptr)
+		{
+			CustomDamageType = Cast<UCDamageType>(UCDamageType::StaticClass()->GetDefaultObject());
+		}
+		
 
 		//상태이상부여가 걸려있다면 상태이상을 건다.
 		if (CustomDamageType->_abnormalityType != EAbnormality::Max)
