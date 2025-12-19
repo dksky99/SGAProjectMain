@@ -58,22 +58,23 @@ void APlanetOperationSite::BeginPlay()
         _bUseB = missionCount >= 2;
         _bUseC = missionCount >= 3;
 
-        auto InitIcon = [](UChildActorComponent* iconComp, UMissionDataAsset* missionData)
+        auto InitIcon = [](UChildActorComponent* iconComp, UMissionDataAsset* missionData, int32 index)
             {
                 if (!iconComp) return;
                 if (APlanetMissionIcon* icon = Cast<APlanetMissionIcon>(iconComp->GetChildActor()))
                 {
                     icon->SetMissionData(missionData);
+					icon->SetMissionIndex(index);
                 }
 			};
 
         // 미션 데이터 푸시
         if (_bUseA && missions.IsValidIndex(0))
-            InitIcon(_iconA, missions[0]);
+            InitIcon(_iconA, missions[0], 0);
         if (_bUseB && missions.IsValidIndex(1))
-            InitIcon(_iconB, missions[1]);
+            InitIcon(_iconB, missions[1], 1);
         if (_bUseC && missions.IsValidIndex(2))
-            InitIcon(_iconC, missions[2]);
+            InitIcon(_iconC, missions[2], 2);
     }
 
     ShowMissionIcons(false);

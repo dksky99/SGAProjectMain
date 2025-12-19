@@ -4,6 +4,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../../Character/HellDiver/HellDiver.h"
 #include "Offensive/BombardmentController.h"
+#include "Offensive/EagleStrikeController.h"
 #include "../../UI/StratagemEtaWidget.h"
 
 AStratagem::AStratagem()
@@ -41,7 +42,7 @@ void AStratagem::Tick(float DeltaTime)
 		if (_impactRemain <= 0.0f)
 		{
 			// 공격형: 첫 폭격까지 끝났고, 폭격 구간 시간이 남아 있다면 한 번만 교체
-			if (_isAttackStratagem && _bombardRemain > 0.0f)
+			if (_type == EStratagemType::Offensive && _bombardRemain > 0.0f)
 			{
 				_impactRemain = _bombardRemain;
 				_bombardRemain = 0.0f;
@@ -70,7 +71,7 @@ void AStratagem::DeployStratagem()
 
 	const FVector targetLocation = GetActorLocation();
 
-	if (_isAttackStratagem)
+	if (_type == EStratagemType::Offensive)
 	{
 		// 공격형: 폭격 컨트롤러 처리 전용 헬퍼
 		SetupOffensiveStratagem(targetLocation, sp);
@@ -108,7 +109,7 @@ void AStratagem::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimit
 
 		const FVector targetLocation = GetActorLocation();
 
-		if (_isAttackStratagem)
+		if (_type == EStratagemType::Offensive)
 		{
 			// 공격형: 바로 배치(컨트롤러 스폰 + 타이밍 계산)
 			DeployStratagem();
@@ -217,19 +218,23 @@ void AStratagem::SpawnNonAttackDropPod(const FVector& targetLocation, const FAct
 
 void AStratagem::SetupOffensiveStratagem(const FVector& targetLocation, const FActorSpawnParameters& sp)
 {
-	// 공격형: 폭격 컨트롤러를 신호기 위치에 바로 스폰
 	const FVector spawnLocation = targetLocation;
 	const FRotator spawnRotation = FRotator::ZeroRotator;
 
-	if (ABombardmentController* bc = GetWorld()->SpawnActor<ABombardmentController>(_objectToSpawn, spawnLocation, spawnRotation, sp))
+	// 일단 액터로 스폰
+	AActor* spawned = GetWorld()->SpawnActor<AActor>(_objectToSpawn, spawnLocation, spawnRotation, sp);
+	if (!spawned)
 	{
-		// _deployDelay 후에 폭격 시작하도록 컨트롤러 초기화
+		return;
+	}
+
+	// 먼저 궤도 폭격 컨트롤러인지 확인
+	if (ABombardmentController* bc = Cast<ABombardmentController>(spawned))
+	{
+		// _deployDelay 후 폭격 시작
 		bc->InitializeBombardment(_deployDelay);
 
-		// 지금 시점(신호기 부착 직후) 기준 첫 폭격까지 걸리는 시간
 		const float firstImpactDelay = bc->GetEstimatedFirstImpactDelay();
-
-		// 첫 폭격 이후 → 마지막 폭격까지 걸리는 시간
 		const float bombardDuration = bc->GetEstimatedBombardDuration();
 
 		// 1단계: 첫 폭격까지
@@ -237,6 +242,23 @@ void AStratagem::SetupOffensiveStratagem(const FVector& targetLocation, const FA
 
 		// 2단계: 폭격 구간
 		_bombardRemain = bombardDuration;
+
+		return;
+	}
+
+	// 궤도 폭격이 아니라면, 이글 컨트롤러인지 확인
+	if (AEagleStrikeController* ec = Cast<AEagleStrikeController>(spawned))
+	{
+		// 이글 공격 초기화
+		ec->InitializeStrike(_deployDelay);
+
+		// 첫 폭탄 ETA
+		const float firstImpactDelay = ec->ComputeEtaToFirstImpact();
+
+		_impactRemain = firstImpactDelay;
+		_bombardRemain = 0.0f; // 이글은 "지속 폭격 시간" 개념이 별도로 없으면 0.0f
+
+		return;
 	}
 }
 

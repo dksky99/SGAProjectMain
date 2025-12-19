@@ -7,17 +7,17 @@
 
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/Border.h"
 #include "StratagemWidget.h"
 
 void UStratagemSlotWidget::InitializeSlot(const AStratagem* stg, UStratagemWidget* parentWidget)
 {
 	TArray<FKey> combo = stg->GetInputSequence();
-
     Super::InitializeSlot(combo);
 
     _stgNameText->SetText(FText::FromName(stg->GetStgName()));
-
     _stgIcon->SetBrushFromTexture(stg->GetStgIcon());
+    _countBorder->SetVisibility(ESlateVisibility::Collapsed);
 
     _parentWidget = parentWidget;
     ResetSlot();
@@ -40,6 +40,8 @@ void UStratagemSlotWidget::UpdateSlot(int32 comboNum)
 
 void UStratagemSlotWidget::SetCooldown(float remainingTime)
 {
+    _widgetSwitcher->SetActiveWidgetIndex(1);
+
     int32 minutes = FMath::FloorToInt(remainingTime / 60.0f);
     int32 seconds = FMath::FloorToInt(FMath::Fmod(remainingTime, 60.0f));
     
@@ -66,6 +68,7 @@ void UStratagemSlotWidget::SetSlotOperatingState()
 
 void UStratagemSlotWidget::SetSlotCooldownState(float remainingTime)
 {
+    _isForcedShowing = true;
     _slotState = EStgSlotWgtState::Cooldown;
 
     _widgetSwitcher->SetActiveWidgetIndex(1);
@@ -112,4 +115,11 @@ void UStratagemSlotWidget::SetSlotOpacity(float opacity)
 
     _stgNameText->SetRenderOpacity(opacity);
     _stgIcon->SetRenderOpacity(opacity);
+}
+
+void UStratagemSlotWidget::UpdateCurrentCharges(int32 currentCharges)
+{
+    _countBorder->SetVisibility(ESlateVisibility::Visible);
+    FString countText = FString::Printf(TEXT("%d"), currentCharges);
+    _countText->SetText(FText::FromString(countText));
 }

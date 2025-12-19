@@ -34,6 +34,8 @@ public:
 
 	void SetSlotOpacity(float opacity) override;
 
+	void UpdateCurrentCharges(int32 currentCharges);
+
 	bool IsForcedShowing() { return _isForcedShowing; }
 	void SetForcedShowing(bool isForcedShowing) { _isForcedShowing = isForcedShowing; }
 
@@ -50,6 +52,12 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* _stgIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* _countBorder;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* _countText;
 
 	EStgSlotWgtState _slotState = EStgSlotWgtState::Normal;
 
