@@ -354,7 +354,7 @@ UMissionDataAsset* UCGameInstance::GetMissionDataAsset(FName missionID)
 	return nullptr;
 }
 
-void UCGameInstance::SetOperationAndMission(UOperationDataAsset* operation, UMissionDataAsset* mission)
+void UCGameInstance::SetOperationAndMission(int32 operationIndex, int32 missionIndex, UOperationDataAsset* operationData, UMissionDataAsset* missionData)
 {
 	if (!_preDeployState)
 		_preDeployState = NewObject<UPreDeploymentState>(this);
@@ -363,18 +363,22 @@ void UCGameInstance::SetOperationAndMission(UOperationDataAsset* operation, UMis
 		LoadGame();
 
 	// 저장은 작전 ID만
-	if (operation)
-		_curSaveGame->SetCurOperationID(operation->GetOperationID());
+	if (operationIndex && operationData)
+	{
+		_curSaveGame->SetCurOperation(operationIndex, operationData->GetOperationID());
+	}
 	else
-		_curSaveGame->SetCurOperationID(NAME_None);
+	{
+		_curSaveGame->SetCurOperation(-1, NAME_None);
+	}
 
 	SaveGame();
 	_preDeployState->ApplySaveGameData(_curSaveGame);
 
 	// 해당 operation에 존재하는 미션인지 확인 후 설정
-	if (mission && !operation->GetMissions().Contains(mission))
-		mission = nullptr;
-	_preDeployState->SetCurMission(mission); 	// 미션은 state에 직접 설정
+	if (missionData && !operationData->GetMissions().Contains(missionData))
+		missionData = nullptr;
+	_preDeployState->SetCurMission(missionData); 	// 미션은 state에 직접 설정
 }
 
 void UCGameInstance::ApplyMissionResult(const FMissionResult& missionResult)

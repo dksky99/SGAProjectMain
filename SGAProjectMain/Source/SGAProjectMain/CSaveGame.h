@@ -22,7 +22,7 @@ public:
 	const FPlayerCurrency& GetPlayerCurrency() { return _playerCurrency; }
 
 	void ResetOperationData();
-	void SetCurOperationID(FName operationID);
+	void SetCurOperation(int32 operationIndex, FName operationID);
 	void AddCompletedMissionID(FName missionID) { _completedMissionIDs.Add(missionID); }
 
 	FName GetCurOperationID() const { return _curOperationID; }
@@ -46,6 +46,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
 	FPlayerCurrency _playerCurrency; // 플레이어가 보유한 화폐 정보
 
+	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
+	int32 _curOperationIndex; // 현재 진행 중인 임무 index
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
 	FName _curOperationID; // 현재 진행 중인 임무 ID
 
