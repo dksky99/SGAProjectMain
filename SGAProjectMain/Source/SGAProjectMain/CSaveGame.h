@@ -22,11 +22,13 @@ public:
 	const FPlayerCurrency& GetPlayerCurrency() { return _playerCurrency; }
 
 	void ResetOperationData();
-	void SetCurOperation(int32 operationIndex, FName operationID);
+	void SetCurOperation(int32 operationIndex);//, FName operationID);
 	void AddCompletedMissionID(FName missionID) { _completedMissionIDs.Add(missionID); }
 
 	FName GetCurOperationID() const { return _curOperationID; }
+	int32 GetCurOperationIndex() const { return _curOperationIndex; }
 	TSet<FName>& GetCompletedMissionIDs() { return _completedMissionIDs; }
+	TSet<int32>& GetCompletedMissionIndexes() { return _completedMissionIndexes; }
 
 	void AddPurchasedShopItem(EShopType type, int32 id);
 	bool IsShopItemPurchased(EShopType type, int32 id);
@@ -51,6 +53,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
 	FName _curOperationID; // 현재 진행 중인 임무 ID
 
+	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
+	TSet<int32> _completedMissionIndexes; // _curOperation에 속한 미션 중 완료한 미션 인덱스
 	UPROPERTY(VisibleAnywhere, Category = "Game/SaveGame")
 	TSet<FName> _completedMissionIDs; // _curOperation에 속한 미션 중 완료한 미션 목록
 

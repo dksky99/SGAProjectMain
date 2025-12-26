@@ -20,16 +20,13 @@ void UCSaveGame::ResetOperationData()
 	_completedMissionIDs.Empty();
 }
 
-void UCSaveGame::SetCurOperation(int32 operationIndex, FName operationID)
+void UCSaveGame::SetCurOperation(int32 operationIndex)//, FName operationID)
 {
 	if (operationIndex == _curOperationIndex)
-		return;
-	if (operationID == _curOperationID)
 		return;
 
 	// 현재 진행 중인 임무 ID가 변경되었을 경우에만 갱신
 	ResetOperationData();
-	_curOperationID = operationID;
 	_curOperationIndex = operationIndex;
 }
 

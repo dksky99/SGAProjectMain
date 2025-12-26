@@ -267,10 +267,17 @@ void AGalacticPlanetGlobe::StopInteracting()
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
 
-    if (!_curSite || !_curIcon)
-		GI->SetOperationAndMission(nullptr, nullptr);
-    else
-		GI->SetOperationAndMission(_curSite->GetOperationData(), _curIcon->GetMissionData());
+    if (_curSite && _curIcon)
+    {
+		GI->SetOperation(_curSite->GetOperationIndex(), _curSite->GetOperationData());
+		GI->SetMission(_curIcon->GetMissionIndex(), _curIcon->GetMissionData());
+    }
+	else
+		GI->SetMission(-1, nullptr);
+  //  if (!_curSite || !_curIcon)
+		//GI->SetOperationAndMission(nullptr, nullptr);
+  //  else
+		//GI->SetOperationAndMission(_curSite->GetOperationData(), _curIcon->GetMissionData());
 
 	_isInteracting = false;
     _globeWidget->RemoveFromParent();

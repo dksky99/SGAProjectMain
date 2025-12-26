@@ -18,21 +18,33 @@ void UPreDeploymentState::ApplySaveGameData(UCSaveGame* saveGame)
 
 	if (!saveGame) return;
 
-	FName curOpID = saveGame->GetCurOperationID();
-	if (curOpID.IsNone()) return;
+	int32 operationIndex = saveGame->GetCurOperationIndex();
+	if (operationIndex < 0) return;
+	//FName curOpID = saveGame->GetCurOperationID();
+	//if (curOpID.IsNone()) return;
 	
 	auto GI = Cast<UCGameInstance>(GetWorld()->GetGameInstance());
 	if (!GI) return;
 
-	auto opData = GI->GetOperationDataAsset(curOpID);
+	/*auto opData = GI->GetOperationDataAsset(curOpID);*/
+	auto opData = GI->GetOperationDataAssetByIndex(operationIndex);
 	SetCurOperation(opData);
 
-	for (auto& pair : _missions)
+	auto clearedMissionIndexes = saveGame->GetCompletedMissionIndexes();
+	for (int32 index : clearedMissionIndexes)
 	{
-		UMissionDataAsset* mission = pair.Key;
-		if (saveGame->GetCompletedMissionIDs().Contains(mission->GetMissionID()))
-			_missions[mission] = EMissionState::Cleared;
+		if (_missionStates.IsValidIndex(index))
+		{
+			_missionStates[index] = EMissionState::Cleared;
+		}
 	}
+
+	//for (auto& pair : _missions)
+	//{
+	//	UMissionDataAsset* mission = pair.Key;
+	//	if (saveGame->GetCompletedMissionIDs().Contains(mission->GetMissionID()))
+	//		_missions[mission] = EMissionState::Cleared;
+	//}
 
 	_curMission = nullptr;
 }
@@ -56,30 +68,50 @@ void UPreDeploymentState::SetStratagemID(int32 index, int32 id)
 void UPreDeploymentState::SetCurOperation(UOperationDataAsset* op)
 {
 	_curOperation = op;
+	_missionStates.Empty();
+	SetCurMission(-1, nullptr);
 
 	if (op)
 	{
-		_curMission = nullptr;
-		_missions.Empty();
+		TArray<UMissionDataAsset*> missions = op->GetMissions();
+		_missionStates.Init(EMissionState::Available, missions.Num());
+		//_missions.Empty();
 
-		auto missions = _curOperation->GetMissions();
-		for (auto mission : missions)
-		{
-			_missions.Add(mission, EMissionState::Available);
-		}
+		//auto missions = _curOperation->GetMissions();
+		//for (auto mission : missions)
+		//{
+		//	_missions.Add(mission, EMissionState::Available);
+		//}
 	}
-	else
-		_missions.Empty();
 }
 
-void UPreDeploymentState::SetCurMission(UMissionDataAsset* mission)
+void UPreDeploymentState::SetCurMission(int32 index, UMissionDataAsset* mission)
 {
-	_curMission = mission;
+	if (!_curOperation)
+	{
+		_curMission = nullptr;
+		_curMissionIndex = -1;
+		if (_missionSelectedEvent.IsBound())
+			_missionSelectedEvent.Broadcast(false);
+		return;
+	}
 
-	bool hasMission = (_curMission != nullptr);
+	const auto& missions = _curOperation->GetMissions();
+	if (!missions.IsValidIndex(index) || missions[index] != mission)
+	{
+		// 잘못된 인덱스/포인터면 선택 해제
+		_curMission = nullptr;
+		_curMissionIndex = -1;
+		if (_missionSelectedEvent.IsBound())
+			_missionSelectedEvent.Broadcast(false);
+		return;
+	}
+
+	_curMission = mission;
+	_curMissionIndex = index;
 
 	if (_missionSelectedEvent.IsBound())
-		_missionSelectedEvent.Broadcast(hasMission);
+		_missionSelectedEvent.Broadcast(true);
 }
 
 void UPreDeploymentState::ApplyMissionResult(UMissionDataAsset* mission, bool isCleared)

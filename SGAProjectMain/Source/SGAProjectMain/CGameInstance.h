@@ -133,8 +133,11 @@ public:
 
 	// 임무 및 미션
 	class UOperationDataAsset* GetOperationDataAsset(FName operationID);
+	class UOperationDataAsset* GetOperationDataAssetByIndex(int32 index);
 	class UMissionDataAsset* GetMissionDataAsset(FName missionID);
-	void SetOperationAndMission(UOperationDataAsset* operation, UMissionDataAsset* mission);
+	void SetOperation(int32 operationIndex, UOperationDataAsset* operationData);
+	void SetMission(int32 missionIndex, UMissionDataAsset* missionData);
+	//void SetOperationAndMission(int32 operationIndex, int32 missionIndex, UOperationDataAsset* operationData, UMissionDataAsset* missionData);
 	void ApplyMissionResult(const FMissionResult& missionResult);
 
 	//유닛

@@ -45,7 +45,7 @@ public:
 	void SetCurOperation(class UOperationDataAsset* op);
 	class UOperationDataAsset* GetCurOperation() const { return _curOperation; }
 
-	void SetCurMission(class UMissionDataAsset* mission);
+	void SetCurMission(int32 index, class UMissionDataAsset* mission);
 	class UMissionDataAsset* GetCurMission() const { return _curMission; }
 
 	FOnMissionSelected _missionSelectedEvent;
@@ -58,7 +58,7 @@ public:
 	bool IsMissionCleared(UMissionDataAsset* mission);
 
 	int32 GetClearedMissionsNum();
-	TMap<UMissionDataAsset*, EMissionState> GetMissionStates() { return _missions; }
+	TArray<EMissionState> GetMissionStates() { return _missionStates; }
 
 private:
 	int32 _primaryGunID = 1;
@@ -71,6 +71,8 @@ private:
 	class UOperationDataAsset* _curOperation;
 	UPROPERTY()
 	class UMissionDataAsset* _curMission;
+	int32 _curMissionIndex = -1;
 	UPROPERTY()
-	TMap<UMissionDataAsset*, EMissionState> _missions;
+	TArray<EMissionState> _missionStates;
+	//TMap<UMissionDataAsset*, EMissionState> _missions;
 };
