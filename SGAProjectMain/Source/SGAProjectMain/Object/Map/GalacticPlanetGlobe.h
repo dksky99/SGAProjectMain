@@ -16,7 +16,7 @@ enum class EPlanetGlobeMode : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FOperationData
+struct FSiteLocationData
 {
 	GENERATED_BODY()
 
@@ -128,7 +128,7 @@ protected:
 	float _globeSensitivity = 5.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FOperationData> _operations;
+	TArray<FSiteLocationData> _siteLocationData;
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<UChildActorComponent*> _operationSites;

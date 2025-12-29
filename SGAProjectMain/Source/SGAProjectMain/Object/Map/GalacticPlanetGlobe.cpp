@@ -96,37 +96,51 @@ void AGalacticPlanetGlobe::BeginPlay()
 	auto GI = Cast<UCGameInstance>(GetGameInstance());
 	if (!GI) return;
 
-    if (auto save = GI->GetCurrentSave())
+    if (auto* save = GI->GetCurrentSave())
     {
+        int32 opIndex = save->GetCurOperationIndex();
+
         // 현재 저장된 임무가 있으면 글로브 포커스 모드 진입
-        if (save->GetCurOperationID().IsValid())
+        if (_operationSites.IsValidIndex(opIndex))
         {
-            auto opData = GI->GetOperationDataAsset(save->GetCurOperationID());
-            EnterFocusByOperation(opData);
+            if (UChildActorComponent* site = _operationSites[opIndex])
+            {
+                _curSite = Cast<APlanetOperationSite>(site->GetChildActor());
+                EnterFocus();
+            }
         }
     }
 }
 
 void AGalacticPlanetGlobe::InitializeOperations()
 {
-    int32 opIndex = 0;
+    UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
+    if (!GI) return;
 
-    for (FOperationData& opData : _operations)
+    const TArray<UOperationDataAsset*>& opAssets = GI->GetAllOperations();
+    int32 opCount = opAssets.Num();
+    int32 siteCount = _siteLocationData.Num();
+    int32 count = FMath::Min(opCount, siteCount);
+
+    for (int32 i = 0; i < count; ++i)
     {
-        if (!opData.OperationSiteClass)
+        FSiteLocationData& siteData = _siteLocationData[i];
+        UOperationDataAsset* opData = opAssets[i];
+
+        if (!siteData.OperationSiteClass || !opData)
             continue;
 
         UChildActorComponent* opSite = NewObject<UChildActorComponent>(this);
         if (opSite)
         {
             opSite->SetupAttachment(_mesh);
-            opSite->SetChildActorClass(opData.OperationSiteClass);
+            opSite->SetChildActorClass(siteData.OperationSiteClass);
             opSite->RegisterComponent();
             _operationSites.Add(opSite);
 
             FVector localPos = CalculateGlobePosition(
-                opData._latitude,
-                opData._longitude,
+                siteData._latitude,
+                siteData._longitude,
                 _globeRadius
             );
             opSite->SetRelativeLocation(localPos);
@@ -135,8 +149,11 @@ void AGalacticPlanetGlobe::InitializeOperations()
             FRotator lookRotation = (-localPos).Rotation();
             opSite->SetRelativeRotation(lookRotation);
 			APlanetOperationSite* opSiteActor = Cast<APlanetOperationSite>(opSite->GetChildActor());
-			if (opSiteActor)
-				opSiteActor->SetOperationIndex(opIndex++);
+            if (opSiteActor)
+            {
+				opSiteActor->SetOperationIndex(i);
+                opSiteActor->SetOperationData(opData);
+            }
         }
     }
 }

@@ -340,7 +340,7 @@ FPlayerCurrency UCGameInstance::GetCurrentCurrency()
 	return _curSaveGame->GetPlayerCurrency();
 }
 
-UOperationDataAsset* UCGameInstance::GetOperationDataAsset(FName operationID)
+UOperationDataAsset* UCGameInstance::GetOperationDataAssetByID(FName operationID)
 {
 	if (UOperationDataAsset** operation = _operationMap.Find(operationID))
 		return *operation;

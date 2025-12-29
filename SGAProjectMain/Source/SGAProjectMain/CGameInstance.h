@@ -132,7 +132,8 @@ public:
 	FPlayerCurrency GetCurrentCurrency();
 
 	// 임무 및 미션
-	class UOperationDataAsset* GetOperationDataAsset(FName operationID);
+	TArray<class UOperationDataAsset*>& GetAllOperations() { return _operations; }
+	class UOperationDataAsset* GetOperationDataAssetByID(FName operationID);
 	class UOperationDataAsset* GetOperationDataAssetByIndex(int32 index);
 	class UMissionDataAsset* GetMissionDataAsset(FName missionID);
 	void SetOperation(int32 operationIndex, UOperationDataAsset* operationData);

@@ -27,6 +27,7 @@ public:
 	void ChangeToFocusMode();
 	void ChangeToBrowseMode();
 
+	void SetOperationData(class UOperationDataAsset* operationData) { _operationData = operationData; }
 	class UOperationDataAsset* GetOperationData() const { return _operationData; }
 
 	void SetOperationIndex(int32 index) { _operationIndex = index; }
