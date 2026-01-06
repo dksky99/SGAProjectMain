@@ -130,7 +130,6 @@ void AMainGameMode::EndBattle() // 게임이 끝났을 경우
     if (!GI) return;
 
 	auto preDeployState = GI->GetPreDeployState();
-    //preDeployState->ApplyMissionResult(_missionProgress._isMissionCleared);
 
 	_missionResult._operation = preDeployState->GetCurOperation();
     _missionResult._mission = _missionProgress._curMission;

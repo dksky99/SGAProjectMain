@@ -171,31 +171,34 @@ void UMissionResultWidget::ShowOperationStatus()
 
 		const auto& missions = operation->GetMissions();
 		const auto& rewardMedals = operation->GetRewardMedals();
-		const TMap<UMissionDataAsset*, EMissionState>& missionStates = GI->GetPreDeployState()->GetMissionStates();
+		//const TMap<UMissionDataAsset*, EMissionState>& missionStates = GI->GetPreDeployState()->GetMissionStates();
+		const TArray<EMissionState>& missionStates = GI->GetPreDeployState()->GetMissionStates();
 
+		int32 count = FMath::Min(missions.Num(), missionStates.Num());
 		for (int32 i = 0; i < missions.Num(); i++)
 		{
 			if (i >= _missionIcons.Num()) break;
 
 			auto missionData = missions[i];
 			if (!missionData) continue;
+			if (!missionStates.IsValidIndex(i)) continue;
+			if (!_missionIcons.IsValidIndex(i)) continue;
 
 			// 미션 아이콘 설정
 			_missionIcons[i]->SetBrushFromTexture(missionData->GetMissionIcon());
 			_missionIcons[i]->SetVisibility(ESlateVisibility::Visible);
-			if (const EMissionState* state = missionStates.Find(missionData))
+
+			const EMissionState state = missionStates[i];
+			if (state == EMissionState::Cleared)
 			{
-				if (*state == EMissionState::Cleared)
-				{
-					_missionChecks[i]->SetVisibility(ESlateVisibility::Hidden);	// 미리 공간 차지한 채로 숨김
-					// 클리어된 미션은 2초 후에 체크 표시
-					FTimerHandle checkTimerHandle;
-					GetWorld()->GetTimerManager().SetTimer(checkTimerHandle, 
-						FTimerDelegate::CreateWeakLambda(this, [this, i]()
+				_missionChecks[i]->SetVisibility(ESlateVisibility::Hidden);	// 미리 공간 차지한 채로 숨김
+				// 클리어된 미션은 2초 후에 체크 표시
+				FTimerHandle checkTimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(checkTimerHandle,
+					FTimerDelegate::CreateWeakLambda(this, [this, i]()
 						{
 							_missionChecks[i]->SetVisibility(ESlateVisibility::Visible);
 						}), 2.f, false);
-				}
 			}
 
 			if (_bonusBoxes.IsValidIndex(i))

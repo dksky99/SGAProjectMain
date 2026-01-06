@@ -389,7 +389,7 @@ void AGalacticPlanetGlobe::SelectMission()
 	auto state = GI->GetPreDeployState();
     if (!mission || !state) return;
 
-    if (state->IsMissionCleared(mission))
+    if (state->IsMissionCleared(_curIcon->GetMissionIndex()))
 		return; // 이미 클리어한 미션은 선택 불가
 
     if (_exitTimeline && _timelineCurve)

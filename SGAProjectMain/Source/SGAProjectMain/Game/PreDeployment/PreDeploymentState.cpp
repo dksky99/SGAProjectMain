@@ -116,58 +116,72 @@ void UPreDeploymentState::SetCurMission(int32 index, UMissionDataAsset* mission)
 
 void UPreDeploymentState::ApplyMissionResult(UMissionDataAsset* mission, bool isCleared)
 {
-	if (!mission) return;
-	if (!_missions.Contains(mission)) return;
+	if (!mission && !_curOperation)
+		return;
+
+	if (mission != _curMission)
+		return;
+
+	if (!_missionStates.IsValidIndex(_curMissionIndex))
+		return;
+
 	EMissionState state = isCleared ? EMissionState::Cleared : EMissionState::Failed;
-	_missions[mission] = state;
+	_missionStates[_curMissionIndex] = state;
+
+	// 선택 해제
 	_curMission = nullptr;
+	_curMissionIndex = -1;
+
+	if (_missionSelectedEvent.IsBound())
+		_missionSelectedEvent.Broadcast(false);
 }
 
 void UPreDeploymentState::ResetOperation()
 {
 	_curOperation = nullptr;
 	_curMission = nullptr;
-	_missions.Empty();
+	_missionStates.Empty();
 }
 
 bool UPreDeploymentState::IsOperationCleared()
 {
-	if (_missions.Num() == 0) return false;
+	if (_missionStates.Num() == 0) return false;
 
-	for (auto& pair : _missions)
+	for (EMissionState state : _missionStates)
 	{
-		if (pair.Value != EMissionState::Cleared)
+		if (state != EMissionState::Cleared)
 			return false;
 	}
+
 	return true;
 }
 
 bool UPreDeploymentState::IsOperationFailed()
 {
-	for (auto& pair : _missions)
+	for (EMissionState state : _missionStates)
 	{
-		if (pair.Value == EMissionState::Failed)
+		if (state == EMissionState::Failed)
 			return true;
 	}
 
 	return false;
 }
 
-bool UPreDeploymentState::IsMissionCleared(UMissionDataAsset* mission)
+bool UPreDeploymentState::IsMissionCleared(int32 index)
 {
-	if (_missions.Contains(mission))
-		return _missions[mission] == EMissionState::Cleared;
-	
-	return false;
+	if (!_missionStates.IsValidIndex(index))
+		return false;
+
+	return _missionStates[index] == EMissionState::Cleared;
 }
 
 int32 UPreDeploymentState::GetClearedMissionsNum()
 {
 	int32 clearedCount = 0;
 
-	for (auto& pair : _missions)
+	for (EMissionState state : _missionStates)
 	{
-		if (pair.Value == EMissionState::Cleared)
+		if (state == EMissionState::Cleared)
 			clearedCount++;
 	}
 

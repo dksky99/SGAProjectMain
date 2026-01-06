@@ -55,7 +55,8 @@ public:
 
 	bool IsOperationCleared();
 	bool IsOperationFailed();
-	bool IsMissionCleared(UMissionDataAsset* mission);
+	//bool IsMissionCleared(UMissionDataAsset* mission);
+	bool IsMissionCleared(int32 index);
 
 	int32 GetClearedMissionsNum();
 	TArray<EMissionState> GetMissionStates() { return _missionStates; }
