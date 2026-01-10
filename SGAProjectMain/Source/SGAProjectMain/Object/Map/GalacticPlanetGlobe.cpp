@@ -107,6 +107,7 @@ void AGalacticPlanetGlobe::BeginPlay()
             {
                 _curSite = Cast<APlanetOperationSite>(site->GetChildActor());
                 EnterFocus();
+                StopInteracting();
             }
         }
     }
@@ -117,6 +118,7 @@ void AGalacticPlanetGlobe::InitializeOperations()
     UCGameInstance* GI = Cast<UCGameInstance>(GetGameInstance());
     if (!GI) return;
 
+	// 모든 작전 데이터 에셋 가져오기
     const TArray<UOperationDataAsset*>& opAssets = GI->GetAllOperations();
     int32 opCount = opAssets.Num();
     int32 siteCount = _siteLocationData.Num();
@@ -127,14 +129,33 @@ void AGalacticPlanetGlobe::InitializeOperations()
         FSiteLocationData& siteData = _siteLocationData[i];
         UOperationDataAsset* opData = opAssets[i];
 
-        if (!siteData.OperationSiteClass || !opData)
+        if (!opData)
             continue;
 
+		// 미션 개수에 따른 사이트 클래스 선택
+        TSubclassOf<APlanetOperationSite> siteClass = nullptr;
+		int32 missionCount = opData->GetMissions().Num();
+        switch (missionCount)
+        {
+        case 1:
+            siteClass = _siteClassFor1Mission;
+            break;
+        case 2:
+            siteClass = _siteClassFor2Missions;
+            break;
+        case 3:
+            siteClass = _siteClassFor3Missions;
+            break;
+        }
+        if (!siteClass)
+			continue;
+
+		// 사이트 컴포넌트 생성 및 배치
         UChildActorComponent* opSite = NewObject<UChildActorComponent>(this);
         if (opSite)
         {
             opSite->SetupAttachment(_mesh);
-            opSite->SetChildActorClass(siteData.OperationSiteClass);
+            opSite->SetChildActorClass(siteClass);
             opSite->RegisterComponent();
             _operationSites.Add(opSite);
 

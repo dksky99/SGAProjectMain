@@ -25,9 +25,6 @@ struct FSiteLocationData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float _longitude = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class APlanetOperationSite> OperationSiteClass;
 };
 
 UCLASS()
@@ -129,6 +126,13 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSiteLocationData> _siteLocationData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class APlanetOperationSite> _siteClassFor1Mission;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class APlanetOperationSite> _siteClassFor2Missions;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class APlanetOperationSite> _siteClassFor3Missions;
 
 	UPROPERTY(VisibleAnywhere)
 	TArray<UChildActorComponent*> _operationSites;
