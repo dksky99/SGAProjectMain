@@ -22,6 +22,8 @@
 #include "../Character/HellDiver/HellDiver.h"
 #include "../Character/HellDiver/HellDiverStateComponent.h"
 
+#include "../Interface/HelldiverAnimInterface.h"
+
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 
@@ -231,26 +233,68 @@ void AGunBase::DeactivateGun()
 	for (auto attachComp : _attachmentComps)
 		attachComp->ActivateAttachment(false);
 }
-
-void AGunBase::AttachToHand()
-{
-	if (_owner)
-	{
-		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh())
-		{
-			// 물리 & 충돌 비활성화
-			if (_gunMesh)
-			{
-				_gunMesh->SetSimulatePhysics(false);
-				_gunMesh->SetEnableGravity(false);
+void AGunBase::AttachToHand() 
+{ 
+	if (_owner) 
+	{ 
+		if (USkeletalMeshComponent* characterMesh = _owner->GetMesh()) 
+		{ 
+			if (_gunMesh) 
+			{ 
+				_gunMesh->SetSimulatePhysics(false); 
+				_gunMesh->SetEnableGravity(false);   
 				_gunMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			}
+			} 
 
-			DetachRootComponentFromParent();
-			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket"));
+			DetachRootComponentFromParent(); 
+
+			AttachToComponent(characterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("cc_weaponbone_r_socket")); 
+			if (_gunMesh) 
+			{ 
+				
+
+				CalculateMuzzleToHand_R();
+			} 
+		} 
+	} 
+} 
+
+void AGunBase::CalculateMuzzleToHand_R()
+{
+	// 1. 소유자(캐릭터)와 무기 메쉬가 모두 정상적으로 존재하는지 확인합니다.
+	if (_owner && _gunMesh)
+	{
+		if (USkeletalMeshComponent* CharacterMesh = _owner->GetMesh())
+		{
+			// 1. 캐릭터 메쉬 내에서 hand_r과 WeaponSocket의 순수 뼈대 좌표를 구합니다. (월드 X, 컴포넌트 기준 O)
+			FTransform HandCompTx = CharacterMesh->GetSocketTransform(TEXT("hand_r"), RTS_Component);
+			FTransform WeaponSocketCompTx = CharacterMesh->GetSocketTransform(TEXT("cc_weaponbone_r_socket"), RTS_Component);
+
+			// 2. hand_r을 기준으로 WeaponSocket이 어디 있는지 '로컬 오프셋'을 구합니다.
+			FTransform SocketRelativeToHand = WeaponSocketCompTx.GetRelativeTransform(HandCompTx);
+
+			// 3. 총기 메쉬 내에서 루트(0,0,0)를 기준으로 Muzzle이 어디 있는지 '로컬 오프셋'을 구합니다.
+			// (총기는 루트 자체가 기준이므로, RTS_Component를 쓰면 그것이 곧 루트 기준 오프셋입니다)
+			FTransform MuzzleRelativeToGunRoot = _gunMesh->GetSocketTransform(TEXT("Muzzle"), RTS_Component);
+
+			// 4. 대망의 합성! (Muzzle 공간 -> Gun 공간 -> Hand 공간)
+			// 언리얼에서 트랜스폼 곱셈(A * B)은 'B의 공간 위에 A를 얹는다'는 뜻입니다.
+			FTransform FinalHandToMuzzleOffset = MuzzleRelativeToGunRoot * SocketRelativeToHand;
+			//  스케일 오염을 원천 차단합니다! 
+			FinalHandToMuzzleOffset.SetScale3D(FVector(1.0f, 1.0f, 1.0f));
+
+			// 5. 애님 인스턴스에 전달!
+			if (UAnimInstance* animInst = CharacterMesh->GetAnimInstance())
+			{
+				if (IHelldiverAnimInterface* MyAnim = Cast<IHelldiverAnimInterface>(animInst))
+				{
+					MyAnim->SetWeaponOffset(FinalHandToMuzzleOffset, true);
+				}
+			}
 		}
 	}
 }
+
 
 void AGunBase::Reload()
 {

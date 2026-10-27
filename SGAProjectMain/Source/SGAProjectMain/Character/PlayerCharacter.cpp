@@ -202,7 +202,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	FindBestItem();
 
-	_cachedCenterLoc= GetCenterLoc();
+	_focusingLoc= GetCenterLoc();
 
 	if (_stratagemComponent && _stratagemWidget)
 	{
@@ -238,6 +238,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	UEnhancedInputComponent* enhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	if (enhancedInputComponent)
 	{
+		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Started, this, &APlayerCharacter::MoveStart);
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		enhancedInputComponent->BindAction(_moveAction, ETriggerEvent::Completed, this, &APlayerCharacter::MoveFinish);
 		enhancedInputComponent->BindAction(_lookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
@@ -511,6 +512,11 @@ FRotator APlayerCharacter::Focusing_Legacy()
 }
 
 
+
+void APlayerCharacter::MoveStart(const FInputActionValue& value)
+{
+
+}
 
 void APlayerCharacter::Move(const FInputActionValue& value)
 {
@@ -837,12 +843,15 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 			_staminaBarWidget->SetVisibility(ESlateVisibility::Visible);
 		break;
 	case ECharacterState::Sprinting:
+		//달리는중에 벽을 만나면 파쿠르 시도
 		_pakourComponent->TriggerPakour();
 		break;
 	case ECharacterState::Crouching:
+		//크라우치 상태에선 달리려면 크라우치를 푼다.
 		FinishCrouch();
 		break;
 	case ECharacterState::Proning:
+		//누운상태에선 달리려면 일어서야한다.
 		FinishProne();
 		break;
 	case ECharacterState::Knockdown:
@@ -853,29 +862,31 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 }
 void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
+	//우클릭
 	if (_isGunSettingMode)
 	{
 		TryChangeFireMode(value);
 		return;
 	}
-
+	//맵채킹중에는 핑을찍는다.
 	if (_stateComponent->IsCheckingMap())
 	{
 		_sceneCapturer->StartDraggingMap();
 		_isDraggingMap = true;
 		return;
 	}
-
+	//상호작용중이면 조준 모드 불가.
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 		return;
-
+	//일반상태에서 이동중일때 조준을 한다면 캐릭터방향을 앞으로돌림.
 	if (GetCharacterMovement()->bOrientRotationToMovement == true)
 	{
 		ViewTurnBack();
 	}
+	//달리는중이라면 달리기를 멈춤
 	if (_stateComponent->GetCharacterState() == ECharacterState::Sprinting)
 		FinishSprint();
-	_stateComponent->SetAiming(true);
+
 	SetTPSZoomView();
 	switch (_stateComponent->GetWeaponState())
 	{
@@ -912,6 +923,7 @@ void APlayerCharacter::StopSprint(const FInputActionValue& value)
 		break;
 	}
 }
+//에이밍중이라면 딱히하는게 없는듯?
 void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 {
 	if (_isGunSettingMode || _stateComponent->IsCheckingMap())
@@ -935,6 +947,7 @@ void APlayerCharacter::WhileAiming(const FInputActionValue& value)
 		break;
 	}
 }
+
 
 void APlayerCharacter::TryCrouch(const FInputActionValue& value)
 {
@@ -1261,7 +1274,7 @@ void APlayerCharacter::CalcPitch()
 	temp.SetLocation(aimTransform.GetLocation());
 	//본의 정면 벡터를 가져옴.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
-	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
+	FVector controlForward = _focusingLoc - aimTransform.GetLocation();
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+aimFwd*50.f, 50.0f, FColor::Green, false, 0.1f, 0, 2.0f);
 	//DrawDebugDirectionalArrow(GetWorld(), aimTransform.GetLocation(), aimTransform.GetLocation()+ controlForward *50.f, 50.0f, FColor::Yellow, false, 0.1f, 0, 2.0f);
 	//기준이 될 선.
@@ -1318,7 +1331,7 @@ void APlayerCharacter::CalcYaw()
 	//본의 정면 벡터를 가져옴.
 	FVector aimFwd = temp.GetUnitAxis(EAxis::Y).GetSafeNormal();
 
-	FVector controlForward = _cachedCenterLoc - aimTransform.GetLocation();
+	FVector controlForward = _focusingLoc - aimTransform.GetLocation();
 	FVector charForward = aimFwd;
 	controlForward=controlForward.GetSafeNormal();
 	charForward=charForward.GetSafeNormal();
@@ -1559,6 +1572,8 @@ FVector APlayerCharacter::GetCenterLoc()
 	}
 
 
+
+
 	return AimTarget;
 
 }
@@ -1566,13 +1581,13 @@ bool APlayerCharacter::GetTargetLook(FVector& loc, FVector& dir)
 {
 	
 	loc = GetActorLocation();
-	dir = _cachedCenterLoc - loc;
+	dir = _focusingLoc - loc;
 
 	return true;
 }
 FVector APlayerCharacter::GetTargetLoc()
 {
-	return _cachedCenterLoc;
+	return _focusingLoc;
 }
 void APlayerCharacter::ViewTurnBack()
 {
@@ -1685,6 +1700,13 @@ void APlayerCharacter::UnitRecoverFromUnable()
 		controller->EnableInput(controller);
 	}
 }
+
+void APlayerCharacter::CalcFocusingLoc()
+{
+	_focusingLoc = GetCenterLoc();
+}
+
+
 
 void APlayerCharacter::OnPreSwitchGun(AGunBase* prevGun)
 {

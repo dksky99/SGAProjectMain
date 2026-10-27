@@ -40,7 +40,7 @@ bool UHellDiverStateComponent::StartSprint()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartSprint"));
 	_characterState = ECharacterState::Sprinting;
-	_waitingMove = "Sprinting";
+	//_waitingMove = "Sprinting";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -64,7 +64,7 @@ bool UHellDiverStateComponent::FinishSprint()
 	UE_LOG(LogTemp, Error, TEXT("FinishSprint"));
 	_isMotionChange = true;
 	_characterState = ECharacterState::Standing;
-	_waitingMove = "Standing";
+	//_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -86,7 +86,7 @@ bool UHellDiverStateComponent::StartCrouch()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartCrouch"));
 	_characterState = ECharacterState::Crouching;
-	_waitingMove = "Crouching";
+	//_waitingMove = "Crouching";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -108,7 +108,7 @@ bool UHellDiverStateComponent::FinishCrouch()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishCrouch"));
 	_characterState = ECharacterState::Standing;
-	_waitingMove = "Standing";
+	//_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -130,7 +130,7 @@ bool UHellDiverStateComponent::StartProne()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("StartProne"));
 	_characterState = ECharacterState::Proning;
-	_waitingMove = "Proning";
+	//_waitingMove = "Proning";
 	if (_characterStateChanged.IsBound())
 	{
 		_characterStateChanged.Broadcast(_characterState);
@@ -152,7 +152,7 @@ bool UHellDiverStateComponent::FinishProne()
 		return false;
 	UE_LOG(LogTemp, Error, TEXT("FinishProne"));
 	_characterState = ECharacterState::Standing;
-	_waitingMove = "Standing";
+	//_waitingMove = "Standing";
 	if (_characterStateChanged.IsBound())
 	{
 
@@ -300,45 +300,45 @@ bool UHellDiverStateComponent::IsMovable()
 	return false;
 }
 
-void UHellDiverStateComponent::MoveChangeFinish(FString newState)
-{
-	//행동입력을 받고 바로 상태가 바뀌지 않도록 아직 일어나지않았는데 이동속도가 일어나있는 상태의 수준이 되선 안된다.
-	UE_LOG(LogTemp, Error, TEXT("Try Move UnLock"));
-	if (_isMotionChange == false)
-		return;
+//void UHellDiverStateComponent::MoveChangeFinish(FString newState)
+//{
+//	//행동입력을 받고 바로 상태가 바뀌지 않도록 아직 일어나지않았는데 이동속도가 일어나있는 상태의 수준이 되선 안된다.
+//	UE_LOG(LogTemp, Error, TEXT("Try Move UnLock"));
+//	if (_isMotionChange == false)
+//		return;
+//
+//	if (_waitingMove.IsEmpty())
+//		return;
+//	if (_waitingMove != newState)
+//	{
+//		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"),*_waitingMove,*newState);
+//
+//		return;
+//	}
+//	_waitingMove.Empty();
+//	_isMotionChange = false;
+//	UE_LOG(LogTemp, Error, TEXT("Move UnLock"));
+//}
 
-	if (_waitingMove.IsEmpty())
-		return;
-	if (_waitingMove != newState)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"),*_waitingMove,*newState);
-
-		return;
-	}
-	_waitingMove.Empty();
-	_isMotionChange = false;
-	UE_LOG(LogTemp, Error, TEXT("Move UnLock"));
-}
-
-void UHellDiverStateComponent::LookChangeFinish(FString newState)
-{
-	//무기 교체가 안됬는데도 마찬가지.
-	UE_LOG(LogTemp, Error, TEXT("Try Look UnLock"));
-	if (_isWeaponChange == false)
-		return;
-	if (_waitingLook.IsEmpty())
-		return;
-	if (_waitingLook != newState)
-	{
-
-		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"), *_waitingLook, *newState);
-		return;
-	}
-	_waitingLook.Empty();
-	_isWeaponChange = false;
-	UE_LOG(LogTemp, Error, TEXT("Look UnLock"));
-
-}
+//void UHellDiverStateComponent::LookChangeFinish(FString newState)
+//{
+//	//무기 교체가 안됬는데도 마찬가지.
+//	UE_LOG(LogTemp, Error, TEXT("Try Look UnLock"));
+//	if (_isWeaponChange == false)
+//		return;
+//	if (_waitingLook.IsEmpty())
+//		return;
+//	if (_waitingLook != newState)
+//	{
+//
+//		UE_LOG(LogTemp, Error, TEXT("NotMatch : %s, %s"), *_waitingLook, *newState);
+//		return;
+//	}
+//	_waitingLook.Empty();
+//	_isWeaponChange = false;
+//	UE_LOG(LogTemp, Error, TEXT("Look UnLock"));
+//
+//}
 
 bool UHellDiverStateComponent::StartTPSAiming()
 {
@@ -355,17 +355,21 @@ bool UHellDiverStateComponent::FinishTPSAiming()
 //행동 변경중엔 다른 상태로 변경이 안됬으면 
 bool UHellDiverStateComponent::TryMotionChange()
 {
-	if (_isMotionChange)
-		return true;
-	_isMotionChange = true;
+	//임시... 애님인스턴스 구조를 변경하며 무거운 짐덩이가되버림
 	return false;
+	//if (_isMotionChange)
+	//return true;
+	//_isMotionChange = true;
+	//return false;
 }
 //무기 교체중엔 추가적인 무기교체 입력이 불가.
 bool UHellDiverStateComponent::TryWeaponChange()
 {
-	if (_isWeaponChange)
-		return true;
-	_isWeaponChange = true;
+	//임시... 애님인스턴스 구조를 변경하며 무거운 짐덩이가되버림
 	return false;
+	//if (_isWeaponChange)
+	//	return true;
+	//_isWeaponChange = true;
+	//return false;
 }
 

@@ -54,6 +54,8 @@ public:
 	void DeactivateGun();
 	void AttachToHand();
 
+	void CalculateMuzzleToHand_R();
+
 	virtual void Reload();
 	virtual void OnReloadSectionEnded(); // 장전 몽타주 끝날 때마다 호출
 	void CancelReload();
@@ -100,7 +102,7 @@ public:
 	void ShowHitMarker(EHitOutcome hitOutcome);
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Game/Gun")
+	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Game/Gun")
 	TObjectPtr<USkeletalMeshComponent> _gunMesh;
 
 	UPROPERTY()

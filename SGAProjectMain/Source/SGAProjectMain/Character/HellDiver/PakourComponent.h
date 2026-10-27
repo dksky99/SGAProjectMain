@@ -67,6 +67,9 @@ public:
 	FOnMontageEnded _montageEnded;
 	FOnMontageBlendingOutStarted _montageBlendOutStarted;
 
+
+	void UpdateHandIKLocation();
+
 private:
 	//벽 바로앞. 캐릭터와 벽이 만나는 지점
 	FHitResult _facedWallHitResult;
@@ -79,6 +82,7 @@ private:
 	FHitResult _vaultLandingHitResult;
 	//벽의 정면 로테이션.
 	FRotator _wallRotation;
+
 
 	float _wallHeight;
 
@@ -111,4 +115,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* _highMantle;
 	bool _canPakour = true;
+
+
 };

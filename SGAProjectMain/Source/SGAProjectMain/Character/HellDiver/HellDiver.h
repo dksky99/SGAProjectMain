@@ -5,10 +5,15 @@
 #include "CoreMinimal.h"
 #include "../CharacterBase.h"
 #include "HellDiverStateComponent.h"
+#include "../../Interface/HelldiverAnimInterface.h"
 #include "HellDiver.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int32, int32);
 
+//헬다이버의 변경할 내용...
+//무브먼트 컴포넌트를 오버라이드 한것으로 교체할 예정. 엎드림 상태까지 있는 커스텀 무브먼트 컴포넌트로 교체하는 편이 좋다고 본다.
+// 
+//
 UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public ACharacterBase
 {
@@ -123,6 +128,9 @@ public:
 
 	virtual void StrongStagger(float time) override;
 
+	virtual void TryChangeLayer(int32 n) override;
+
+
 protected:
 
 	virtual void PossessedBy(AController* NewController) override;
@@ -151,8 +159,25 @@ protected:
 private:
 	void ClearThrowSpline(); 
 	void DrawThrowSplineMeshes();
+	void UpdateRotationSettings();
+	void SetIdleType();
+	void SetDefaultIdle();
+	void SetProneIdle();
+	void SetMoveType();
+	void SetFocusMove();
+	void SetDefaultMove();
 
 protected: 
+	UPROPERTY()
+	TScriptInterface<IHelldiverAnimInterface> _cachedHelldiverAnimInterface;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation/AnimLayer", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class UCharacterAnimLayerInstance>  _pistolAnimLayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation/AnimLayer", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class UCharacterAnimLayerInstance>  _rifleAnimLayer;
 
 	FTimerHandle _rollingTimerHandle;
 

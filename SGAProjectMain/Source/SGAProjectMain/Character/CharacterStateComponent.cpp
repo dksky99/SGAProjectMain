@@ -377,3 +377,8 @@ void UCharacterStateComponent::CheckStagger( const struct FCDamageEvent* damageE
 	}
 }
 
+void UCharacterStateComponent::RecieveMotionFinish()
+{
+	_isMotionChange = false;
+}
+

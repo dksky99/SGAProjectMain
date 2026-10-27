@@ -35,6 +35,18 @@
 
 */
 
+
+UENUM(BlueprintType)
+enum class ECharacterState : uint8
+{
+	Standing,
+	Sprinting,
+	Crouching,
+	Proning,
+	Knockdown,
+	MAX
+};
+
 UENUM()
 enum class EAbnormalityState : uint32
 {
@@ -52,6 +64,8 @@ enum class EAbnormalityState : uint32
 
 	Max
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterStateChanged, ECharacterState, newState);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SGAPROJECTMAIN_API UCharacterStateComponent : public UActorComponent
@@ -71,6 +85,13 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+
+	ECharacterState GetCharacterState() { return _characterState; }
+
+	void SetCharacterState(ECharacterState state) { _characterState = state; }
+
+
 
 	void AddAbnormality(EAbnormality abnormality);
 	void SubAbnormality(EAbnormality abnormality);
@@ -103,11 +124,15 @@ public:
 	virtual void Reset();
 	
 	void CheckStagger(const struct FCDamageEvent* damageEvent);
-	
 
+	FOnCharacterStateChanged _characterStateChanged;
+	void RecieveMotionFinish();
 protected:
 
 	class ACharacterBase* _owner;
+
+	
+	ECharacterState _characterState = ECharacterState::Standing;
 
 	FTimerHandle _dotTickTimer;
 
@@ -133,4 +158,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool _isUnable = false;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool _isMotionChange = false;
 };

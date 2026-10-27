@@ -15,6 +15,7 @@
 #include "CharacterStateComponent.h"
 #include "CharacterAnimInstance.h"
 
+#include "CharacterAnimLayerInstance.h"
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
@@ -28,12 +29,16 @@
 
 #include "../Data/UnitAttackDataAsset.h"
 
+
+
+
 #include "../Object/Corpse.h"
 //#include "../Object/CDamageType.h"
 
 #include "../CGameInstance.h"
 
 #include "Kismet/GameplayStatics.h"
+
 
 const FName ACharacterBase::StatComponentName = "StatComponent";
 
@@ -103,7 +108,29 @@ void ACharacterBase::BeginPlay()
 
 		PartInit();
 	}
+	if (_stateComp->IsValidLowLevel())
+	{
+		_stateComp->_characterStateChanged.AddDynamic(this, &ACharacterBase::OnCharacterStateChange_Handler);
+	}
+
+
+	UCharacterAnimInstance* AnimInst = GetMesh() ? Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
+
+	if (AnimInst && AnimInst->GetClass()->ImplementsInterface(UAnimInstanceInterface::StaticClass()))
+	{
+
+		_cachedAnimInterface = AnimInst;
+
+		if (_defaultAnimLayer)
+		{
+			ChangeAnimLayer(_defaultAnimLayer);
+		}
+		//상태를 변환하는 애니메이션이 종료됨을 확인받는 델리게이트.
+		AnimInst->_motionFinished.AddDynamic(_stateComp, &UCharacterStateComponent::RecieveMotionFinish);
+
+	}
 	
+
 }
 
 void ACharacterBase::InitUnit()
@@ -171,10 +198,83 @@ void ACharacterBase::Critical()
 	
 }
 
+void ACharacterBase::CalcGroundDistance()
+{
+	if (GetCharacterMovement()->IsFalling() == false)
+		return;
+	if (_cachedAnimInterface == nullptr)
+	{
+
+		UAnimInstance* AnimInst = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+
+		if (AnimInst && AnimInst->GetClass()->ImplementsInterface(UAnimInstanceInterface::StaticClass()))
+		{
+
+			_cachedAnimInterface = AnimInst;
+		}
+		if (_cachedAnimInterface == nullptr)
+			return;
+
+	}
+
+	FVector Start = GetActorLocation();
+	Start.Z -= GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+
+	FVector End = Start - FVector(0.f, 0.f, 300.f);
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this); // 자신 제외
+
+	// 구체 모양 설정 (반지름 5)
+	FCollisionShape SphereShape = FCollisionShape::MakeSphere(5.0f);
+
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,           // 결과 저장
+		Start,               // 시작 지점
+		End,                 // 종료 지점
+		FQuat::Identity,     // 회전 없음
+		ECC_Visibility,      // 가시성 채널
+		SphereShape,         // 구체 형태
+		Params               // 쿼리 파라미터
+	);
+
+	if (bHit)
+	{
+		// 지면까지의 실제 거리 계산
+		float DistanceToGround = HitResult.Distance;
+
+		_cachedAnimInterface->RecieveGroundDistance(DistanceToGround);
+		
+
+	}
+		
+	
+}
+
+void ACharacterBase::ChangeAnimLayer(TSubclassOf<UCharacterAnimLayerInstance> animLayer)
+{
+	if (animLayer == nullptr)
+		return;
+		
+	
+	GetMesh()->LinkAnimClassLayers(animLayer);
+}
+
+void ACharacterBase::TryChangeLayer(int32 n)
+{
+
+	ChangeAnimLayer(_defaultAnimLayer);
+}
+
+
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	CalcGroundDistance();
+	CalcFocusingLoc();
 }
 
 void ACharacterBase::UpDown(float value)
@@ -499,6 +599,11 @@ void ACharacterBase::UnitActivate()
 	SetActorTickEnabled(true);
 }
 
+void ACharacterBase::CalcFocusingLoc()
+{
+	_focusingLoc = GetActorLocation() + GetActorForwardVector() * 200.f;
+}
+
 
 
 bool ACharacterBase::IsReadyToSpawn()
@@ -606,6 +711,11 @@ void ACharacterBase::OnDeath_Handler()
 
 	// 사망 시 로그 출력
 	UE_LOG(LogTemp, Error, TEXT("%s: Character Dead"), *GetName());
+}
+
+void ACharacterBase::OnCharacterStateChange_Handler(ECharacterState state)
+{
+	_cachedAnimInterface->RecieveCharacterStateChange((int32)state);
 }
 
 bool ACharacterBase::IsTargetable() const

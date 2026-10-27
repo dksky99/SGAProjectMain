@@ -69,9 +69,11 @@ void AHellDiver::BeginPlay()
     auto anim = Cast<UHellDiverAnimInstance>(GetMesh()->GetAnimInstance());
     if (anim != nullptr)
     {
+        _cachedHelldiverAnimInterface=anim;
+
         //상태 변화가 있을시 호출되는 함수를 바인드.
-        anim->_moveChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::MoveChangeFinish);
-        anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
+       // anim->_moveChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::MoveChangeFinish);
+       // anim->_lookChanged.AddDynamic(this->_stateComponent, &UHellDiverStateComponent::LookChangeFinish);
     }
 
     //if (_gunClass1 && _gunClass2 && _gunClass3)
@@ -138,6 +140,8 @@ void AHellDiver::EquipGrenade()
     if (_curGrenade <= 0)
         return;
     //사용전에 총을 돌려놓는다.
+
+    TryChangeLayer(0);
     UnequipGun();
 
     SaveLastState(3);
@@ -166,6 +170,7 @@ void AHellDiver::EquipStratagem()
 		return;
 
     UnequipGun();
+    TryChangeLayer(0);
 	GetStateComponent()->SetWeaponState(EWeaponType::StratagemDevice);
 
 	FActorSpawnParameters params;
@@ -308,6 +313,85 @@ void AHellDiver::DrawThrowSplineMeshes()
 
 		_trajectoryMeshPool.Add(mesh);
 	}
+}
+
+void AHellDiver::UpdateRotationSettings()
+{
+    if (_stateComp->GetCharacterState() == ECharacterState::Proning)
+    {
+        SetProneIdle();
+        return;
+    }
+    if (_stateComponent->IsFiring() || _stateComponent->IsAiming())
+    {
+        SetFocusMove();
+    }
+    else
+    {
+        SetDefaultMove();
+    }
+}
+
+void AHellDiver::SetIdleType()
+{
+    if (_stateComp->GetCharacterState() == ECharacterState::Proning)
+    {
+        SetProneIdle();
+    }
+    else
+    {
+        SetDefaultIdle();
+    }
+}
+
+void AHellDiver::SetDefaultIdle()
+{
+    bUseControllerRotationYaw = false;
+
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
+}
+
+void AHellDiver::SetProneIdle()
+{
+
+    bUseControllerRotationYaw = false;
+
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
+}
+
+void AHellDiver::SetMoveType()
+{
+    if (_stateComponent->IsFiring() || _stateComponent->IsAiming())
+    {
+        SetFocusMove();
+    }
+    else
+    {
+        SetDefaultMove();
+    }
+}
+
+void AHellDiver::SetFocusMove()
+{
+    bUseControllerRotationYaw = false;
+
+    GetCharacterMovement()->bOrientRotationToMovement = false;
+
+    GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+}
+
+void AHellDiver::SetDefaultMove()
+{
+    bUseControllerRotationYaw = false;
+
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+
+    GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
 
 void AHellDiver::StartThrowPreview()
@@ -494,6 +578,8 @@ void AHellDiver::Proning()
 {
     auto statComponent = GetStatComponent();
 
+    
+
     SetCollisionState(_stateComponent->GetCharacterState());
 
     _statComp->ChangeSpeed(statComponent->GetProneSpeed());
@@ -565,7 +651,7 @@ void AHellDiver::SwitchGun(int32 index)
     newGun->ActivateGun();
 
     _stateComponent->SetEquipIndex(index);
-
+    TryChangeLayer(index);
     if (wasAiming) // 에임 중이었을 경우 유지
         StartAiming();
 
@@ -586,6 +672,7 @@ void AHellDiver::UnequipGun()
     prevGun->DeactivateGun();
     _invenComponent->PutBackWeapon(prevGun);
     OnPreSwitchGun(prevGun);
+    _cachedHelldiverAnimInterface->SetWeaponOffset(FTransform(), false);
 }
 
 void AHellDiver::SaveLastState(int32 index)
@@ -749,7 +836,7 @@ void AHellDiver::Landed(const FHitResult& Hit)
     if (_stateComponent->IsRolling())
     {
         //이정도는 피해조차 입지않는다.
-        if (zVelocity < -200.f)
+        if (zVelocity < -600.f)
         {
             // 땅에부딪히고 조금있다 롤링상태 해제
             GetWorld()->GetTimerManager().SetTimer(
@@ -768,23 +855,12 @@ void AHellDiver::Landed(const FHitResult& Hit)
         if (zVelocity < -1200.f)
         {
 
-
-
-
-        }
-        else if (zVelocity < -600.f)
-        {
             HardLanding();
-        }
 
-        else if (zVelocity < -200.f)
-        {
-            //피해를 안입고 그냥 가벼운 착지.
-            SoftLanding();
-            return;
+
+
         }
-        else
-            return;
+        
     }
     else
     {
@@ -1062,6 +1138,32 @@ void AHellDiver::StrongStagger(float time)
 {
     Super::StrongStagger(time);
     KnockDown(time);
+}
+
+void AHellDiver::TryChangeLayer(int32 n)
+{
+    if (n > 3)
+        return;
+    switch (n)
+    {
+    case 0:
+    case 2:
+        ChangeAnimLayer(_rifleAnimLayer);
+
+        break;
+    case 1:
+        ChangeAnimLayer(_pistolAnimLayer);
+
+        break;
+    case 3:
+        ChangeAnimLayer(_defaultAnimLayer);
+        break;
+
+
+    default:
+        break;
+    }
+
 }
 
 void AHellDiver::PossessedBy(AController* NewController)

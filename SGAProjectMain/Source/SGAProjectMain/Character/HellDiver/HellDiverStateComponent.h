@@ -1,21 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "../CharacterStateComponent.h"
 #include "HellDiverStateComponent.generated.h"
 
-UENUM(BlueprintType)
-enum class ECharacterState : uint8
-{
-	Standing,
-	Sprinting,
-	Crouching,
-	Proning,
-	Knockdown,
-	MAX
-};
 
 UENUM(BlueprintType)
 enum class EActionState : uint8
@@ -46,7 +34,6 @@ enum class ELifeState : uint8
 	Respawning
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterStateChanged, ECharacterState, newState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActionStateChanged, EActionState, newState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponStateChanged, EWeaponType, newState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLifeStateChanged, ELifeState, newState);
@@ -87,8 +74,6 @@ public:
 	bool StartPakour();
 	bool FinishPakour();
 
-	ECharacterState GetCharacterState() { return _characterState; }
-	void SetCharacterState(ECharacterState state) { _characterState = state; }
 	EActionState GetActionState() { return _actionState; }
 	void SetActionState(EActionState state) { _actionState = state; }
 	ELifeState GetLifeState() { return _lifeState; }
@@ -123,10 +108,10 @@ public:
 	void Dead();
 	bool IsActionable();
 	bool IsMovable();
-	UFUNCTION()
-	void MoveChangeFinish(FString newState);
-	UFUNCTION()
-	void LookChangeFinish(FString newState);
+	//UFUNCTION()
+	//void MoveChangeFinish(FString newState);
+	//UFUNCTION()
+	//void LookChangeFinish(FString newState);
 
 	bool StartTPSAiming();
 	bool FinishTPSAiming();
@@ -137,7 +122,6 @@ public:
 	void SetEquipIndex(uint8 index) { _curEquipIndex = index; }
 	uint8 GetEquipIndex() { return _curEquipIndex; }
 
-	FOnCharacterStateChanged _characterStateChanged;
 	FOnActionStateChanged _actionStateChanged;
 	FOnWeaponStateChanged _weaponStateChanged;
 	FOnLifeStateChanged _lifeStateChanged;
@@ -149,7 +133,6 @@ protected:
 
 
 
-	ECharacterState _characterState=ECharacterState::Standing;
 
 	EActionState _actionState = EActionState::None;
 
@@ -164,11 +147,10 @@ protected:
 	bool _isAiming = false;
 	bool _isCookingGrenade = false;
 	bool _isShocking = false;
-	bool _isMotionChange = false;
 	bool _isWeaponChange = false;
 	uint8 _curEquipIndex = 0;
 
-	FString _waitingMove;
-	FString _waitingLook;
+	//FString _waitingMove;
+	//FString _waitingLook;
 		
 };

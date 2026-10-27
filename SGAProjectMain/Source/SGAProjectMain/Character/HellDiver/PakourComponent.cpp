@@ -14,6 +14,7 @@
 #include "MotionWarpingComponent.h"
 #include "Animation/AnimInstance.h"             // UAnimInstance, Montage_Play(), GetActiveInstanceForMontage()
 #include "Animation/AnimMontage.h"              // UAnimMontage
+#include "Kismet/KismetSystemLibrary.h"
 // Sets default values for this component's properties
 UPakourComponent::UPakourComponent()
 {
@@ -512,6 +513,99 @@ UAnimMontage* UPakourComponent::HighMantle()
 	_motionWarp->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("VaultEnd"), temp2, rot);
 
 	return _highMantle;
+}
+
+void UPakourComponent::UpdateHandIKLocation()
+{
+
+
+	FHitResult wallHitResultBytHandLocal;
+	FRotator wallRotationLocal;
+	bool findWallHit = false;
+
+	FHitResult handHitResultLocal;
+	bool findHandHit = false;
+	FVector handLocation;
+
+
+	for (int i = 0; i < 5; i++)
+	{
+		
+		auto temp=H_Vector::MoveVectorRight(_mesh->GetSocketLocation(TEXT("ik_hand_l")), _capsule->GetComponentRotation(), i * 3 + 10);
+		FVector start=H_Vector::MoveVectorBackward(temp,_capsule->GetComponentRotation(),0.f);
+		FVector end=H_Vector::MoveVectorForward(temp, _capsule->GetComponentRotation(), 0.f);
+		float radius = 10.f;
+
+		// Trace 채널 설정 (ECC_Visibility, ECC_Camera, ECC_Pawn 등)
+		ETraceTypeQuery traceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
+
+		FHitResult outHit;
+
+		bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+			GetWorld(),
+			start,
+			end,
+			radius,
+			traceChannel,
+			false,          // bTraceComplex
+			TArray<AActor*>(), // ActorsToIgnore
+			EDrawDebugTrace::None, // 디버그 라인 형태
+			outHit,
+			true          // bIgnoreSelf
+		);
+
+		
+		if (outHit.bBlockingHit && outHit.bStartPenetrating)
+		{
+			wallHitResultBytHandLocal = outHit;
+			wallRotationLocal= H_Vector::ReverseNormal(wallHitResultBytHandLocal.ImpactNormal);
+
+			findWallHit = true;
+			break;
+			
+
+
+		}
+		
+	}
+	if (findWallHit == false)
+		return;
+	for (int j = 0; j < 6; j++)
+	{
+		FVector start = H_Vector::MoveVectorUpward(H_Vector::MoveVectorForward(wallHitResultBytHandLocal.ImpactPoint, _wallRotation, 2.f), j * 10);
+		FVector end = H_Vector::MoveVectorDownward(start, 75);
+
+		ETraceTypeQuery traceChannel = UEngineTypes::ConvertToTraceType(ECC_Visibility);
+		FHitResult outHit;
+
+		float radius = 5.f;
+
+		bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+			GetWorld(),
+			start,
+			end,
+			radius,
+			traceChannel,
+			false,          // bTraceComplex
+			TArray<AActor*>(), // ActorsToIgnore
+			EDrawDebugTrace::None, // 디버그 라인 형태
+			outHit,
+			true          // bIgnoreSelf
+		);
+
+		if (outHit.bStartPenetrating == false && outHit.bBlockingHit)
+		{
+			handHitResultLocal = outHit;
+			findHandHit = true;
+			break;
+		}
+	}
+	if (findHandHit == false)
+		return;
+
+	 handLocation= H_Vector::MoveVectorBackward( H_Vector::MoveVectorDownward(handHitResultLocal.ImpactPoint, 7),wallRotationLocal,5.f );
+	
+
 }
 
 

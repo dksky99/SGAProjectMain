@@ -49,6 +49,8 @@ public:
 	// Called every frame
 
 	UFUNCTION()
+	void MoveStart(const  FInputActionValue& value);
+	UFUNCTION()
 	void Move(const  FInputActionValue& value);
 
 	UFUNCTION()
@@ -208,6 +210,7 @@ public:
 	virtual void UnitUnable() override;
 	virtual void UnitRecoverFromUnable() override;
 
+	virtual void CalcFocusingLoc() override;
 
 protected:
 	void OnPreSwitchGun(AGunBase* prevGun) override;
@@ -381,7 +384,6 @@ protected:
 	// 위젯 -> 지도보기
 	bool _isDraggingMap = false;
 
-	FVector _cachedCenterLoc = FVector::ZeroVector;
 
 	// 아이템 감지용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Interaction")

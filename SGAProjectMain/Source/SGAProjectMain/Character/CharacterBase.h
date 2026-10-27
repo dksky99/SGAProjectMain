@@ -11,6 +11,7 @@
 
 #include "../SGAProjectMain.h"
 
+#include "../Interface/AnimInstanceInterface.h"
 #include "../Object/CDamageType.h"
 
 #include "CharacterBase.generated.h"
@@ -52,11 +53,15 @@ protected:
 	//부위파괴시 사망해야하지만 몇초정도 유예기간을 받는 함수.추가체력을 받고 몇초에걸쳐 피해를 입다 사망하게된다.
 	virtual void TimeLimit() {}
 
+	
+	void CalcGroundDistance();
 
-
+	void ChangeAnimLayer(TSubclassOf<class UCharacterAnimLayerInstance> animLayer) ;
+	virtual void TryChangeLayer(int32 n);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
 	void UpDown(float value);
 	void RightLeft(float value);
 
@@ -103,7 +108,9 @@ public:
 	virtual void UnitActivate();
 	virtual FVector GetTargetLoc() { return FVector(); }
 
+	virtual void CalcFocusingLoc();
 
+	FVector GetFocusingLoc() { return _focusingLoc; }
 	// ITargetable을(를) 통해 상속됨
 	virtual bool GetTargetLook(FVector& loc,FVector& dir)  override;
 
@@ -128,6 +135,10 @@ public:
 
 	UFUNCTION()
 	virtual void OnDeath_Handler(); // 상속받아서 죽었을 시 동작 구현
+
+
+	UFUNCTION()
+	virtual void OnCharacterStateChange_Handler(ECharacterState state); // 상속받아서 죽었을 시 동작 구현
 
 	// ITargetable을(를) 통해 상속됨
 	bool IsTargetable() const override;
@@ -235,6 +246,10 @@ protected:
 	float _pitch = 0.0f;
 	bool _isViewTurnCenter=false;
 
+
+	FVector _focusingLoc = FVector::ZeroVector;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/State", meta = (AllowPrivateAccess = "true"))
 	class UCharacterStateComponent* _stateComp;
 
@@ -269,9 +284,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game/Squad", meta = (AllowPrivateAccess = "true"))
 	float _respawnCoolDown;
 
+	UPROPERTY() // GC 추적을 위해 필수
+	TScriptInterface<IAnimInstanceInterface> _cachedAnimInterface;
 
 
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game/Animation/AnimLayer", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class UCharacterAnimLayerInstance>  _defaultAnimLayer;
 
 };

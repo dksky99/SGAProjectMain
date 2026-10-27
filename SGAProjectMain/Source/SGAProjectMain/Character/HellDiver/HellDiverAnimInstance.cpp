@@ -53,15 +53,15 @@ void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			_muzzleTrans_Relation = _hellDiver->GetMuzzleTransform_Relative();
 			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
 			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
-			_targetPos = _hellDiver->GetTargetLoc();
-			GetAimOffset(DeltaSeconds);
+			 
+			//GetAimOffset(DeltaSeconds);
 			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
 			IsUsingLeftHand();
 			IsUsingFocusing();
 			AimFocus(DeltaSeconds);
-			GetCurrentMoveNode();
+			//GetCurrentMoveNode();
 
-
+			DrawDebugs();
 		}
 	}
 }
@@ -88,6 +88,15 @@ void UHellDiverAnimInstance::AnimNotify_FootStep()
 	
 	if (!_hellDiver) return;
 	_hellDiver->MakeSound(_speed / _hellDiver->GetStatComponent()->GetDefaultSpeed(), "Footstep");
+
+}
+
+void UHellDiverAnimInstance::SetWeaponOffset(FTransform offset,bool useAim)
+{
+	_bUseAim = useAim;
+
+	_weaponOffset = offset;
+
 
 }
 
@@ -289,7 +298,7 @@ void UHellDiverAnimInstance::CalcYaw()
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
 
-	FVector controlForward = (_targetPos - aimTransform.GetLocation()).GetSafeNormal();
+	FVector controlForward = (_targetPos_Mesh - aimTransform.GetLocation()).GetSafeNormal();
 	FVector charForward = spineFwd.GetSafeNormal();
 
 	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
@@ -324,7 +333,7 @@ void UHellDiverAnimInstance::CalcPitch()
 	FTransform temp = spineTransform;
 	temp.SetLocation(aimTransform.GetLocation());
 
-	FVector controlForward = (_targetPos - aimTransform.GetLocation()).GetSafeNormal();
+	FVector controlForward = (_targetPos_Mesh - aimTransform.GetLocation()).GetSafeNormal();
 	FVector charForward = spineFwd.GetSafeNormal();
 
 	charForward = FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
@@ -357,7 +366,7 @@ void UHellDiverAnimInstance::CalcAimPitch(float deltaTime)
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
 
 	FVector charForward = gunTrans.GetRotation().Vector().GetSafeNormal();
-	FVector controlForward = (_targetPos - gunTrans.GetLocation()).GetSafeNormal();
+	FVector controlForward = (_targetPos_Mesh - gunTrans.GetLocation()).GetSafeNormal();
 
 	charForward = FVector::VectorPlaneProject(charForward, spineRight).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineRight).GetSafeNormal();
@@ -393,7 +402,7 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 	FVector spineRight = spineTransform.GetUnitAxis(EAxis::X).GetSafeNormal();
 
 	FVector charForward = gunTrans.GetRotation().Vector().GetSafeNormal();
-	FVector controlForward = (_targetPos - gunTrans.GetLocation()).GetSafeNormal();
+	FVector controlForward = (_targetPos_Mesh - gunTrans.GetLocation()).GetSafeNormal();
 
 	charForward = FVector::VectorPlaneProject(charForward, spineUp).GetSafeNormal();
 	controlForward = FVector::VectorPlaneProject(controlForward, spineUp).GetSafeNormal();
@@ -408,4 +417,39 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 
 	_addYaw += signedAngle * 100.f * (1.1 - dot) * (1.1 - dot);
 	_addYaw = FMath::Clamp(_addYaw, -45.f, 45.f);
+}
+
+void UHellDiverAnimInstance::DrawDebugs()
+{
+	if (_pawn->GetController() == nullptr)
+		return;
+	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
+	if (!mesh) return;
+	FTransform handTransform = mesh->GetSocketTransform(TEXT("hand_r"), RTS_World);
+	FTransform muzzleTransform = _weaponOffset * handTransform;
+	DrawDebugLine(GetWorld(), handTransform.GetLocation(), muzzleTransform.GetLocation(), FColor::Red);
+
+	FVector muzzleEnd = muzzleTransform.GetLocation() + muzzleTransform.GetUnitAxis(EAxis::X) * 100.f;
+	DrawDebugLine(GetWorld(),  muzzleTransform.GetLocation(), muzzleEnd, FColor::Green);
+
+
+		DrawDebugSphere(
+			GetWorld(),
+			_targetPos_Mesh,          // 우리가 눈으로 확인할 그 문제의 타겟 좌표!
+			15.0f,              // 구의 크기 (반지름)
+			12,                 // 구의 디테일 (세그먼트 수)
+			FColor::Red,        // 색상 (눈에 띄는 빨간색 추천)
+			false,              // 영구 지속 여부 (매 프레임 업데이트 할 것이므로 false)
+			-1.0f,              // 화면에 유지되는 시간 (-1.0f로 두면 한 프레임만 보이고 사라집니다)
+			0,                  // Depth Priority (0이면 물체에 가려지고, 1이상이면 벽을 뚫고 보입니다)
+			2.0f                // 선 두께
+		);
+	
+
+
+}
+
+bool UHellDiverAnimInstance::SetLeftHandLocation(FVector inHandLocation)
+{
+	return false;
 }

@@ -34,6 +34,18 @@
 		{
 			"Name": "FieldSystemPlugin",
 			"Enabled": true
+		},
+		{
+			"Name": "AnimationLocomotionLibrary",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationWarping",
+			"Enabled": true
 		}
 	]
 }

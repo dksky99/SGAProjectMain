@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "../CharacterAnimInstance.h"
 #include "HellDiverStateComponent.h"
+#include "../../Interface/HelldiverAnimInterface.h"
 #include "HellDiverAnimInstance.generated.h"
 
 /*
@@ -21,7 +22,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoveAnimStateChanged, FString, ne
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLookAnimStateChanged, FString, newState);
 
 UCLASS()
-class SGAPROJECTMAIN_API UHellDiverAnimInstance : public UCharacterAnimInstance
+class SGAPROJECTMAIN_API UHellDiverAnimInstance : public UCharacterAnimInstance,public IHelldiverAnimInterface
 {
 	GENERATED_BODY()
 public:
@@ -45,6 +46,7 @@ public:
 	FOnMoveAnimStateChanged _moveChanged;
 	FOnLookAnimStateChanged _lookChanged;
 
+	virtual void SetWeaponOffset(FTransform offset, bool useAim=true) override;
 
 protected:
 	bool MoveStateChanged(FString curState);
@@ -62,6 +64,8 @@ protected:
 	void CalcPitch();
 	void CalcAimPitch(float deltaTime);
 	void CalcAimYaw(float deltaTime);
+
+	void DrawDebugs();
 
 protected:
 	UPROPERTY(Transient)
@@ -107,9 +111,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FTransform _muzzleTrans = FTransform();
 
-	//목표위치
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
-	FVector _targetPos = FVector(0.f,400.f,200.f);
 
 	//총구의 위치->총 메쉬의 루트로부터=오른손 소켓으로부터-> 오른손소캣트랜스폼에 이걸 곱하면 총구의 트랜스폼을 얻을수있다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
@@ -176,6 +177,12 @@ protected:
 	FString _currentMoveState;
 	FString _currentLookState;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	FTransform _weaponOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool _bUseAim = false;
 
+	// IHelldiverAnimInterface을(를) 통해 상속됨
+	bool SetLeftHandLocation(FVector inHandLocation) override;
 
 };
