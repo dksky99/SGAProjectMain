@@ -2,10 +2,12 @@
 
 
 #include "CharacterAnimInstance.h"
+#include "CharacterAimMath.h"
 
 #include "CharacterBase.h"
 #include "PlayerCharacter.h"
 #include "CharacterStateComponent.h"
+#include "HellDiver/HellDiverStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Animation/AnimMontage.h"
@@ -22,7 +24,21 @@ void UCharacterAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 
-	TryGetCBOwner();
+	_pawn = Cast<ACharacterBase>(TryGetPawnOwner());
+	_hasLocationSnapshot = false;
+	_proneSector = 0;
+	_pronePoseDirection = ELocomotionDirections::Forward;
+	_stanceTransitionSource = _currentState;
+	_hasAimSnapshot = false;
+	_hasObservedActorYaw = false;
+	_hasValidAimDirection = false;
+	_observedActorYawDelta = 0.f;
+	_aimYawFullRange = 0.f;
+    _stanceTransitionRequested = false;
+    _stanceTransitionComplete = false;
+    _stanceTransitionRequestId = 0;
+    _stanceTransitionPlaying = false;
+    _stanceTransitionEvaluated = false;
 
 }
 
@@ -30,10 +46,43 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (_pawn == nullptr)
+	ACharacterBase* currentOwner = Cast<ACharacterBase>(TryGetPawnOwner());
+	if (!IsValid(currentOwner)) currentOwner = nullptr;
+	if (_pawn != currentOwner)
 	{
-		_pawn = Cast<ACharacterBase>(TryGetPawnOwner());
+		_pawn = currentOwner;
+		_hasLocationSnapshot = false;
+		_hasObservedActorYaw = false;
+		_rootYawOffset = 0.f;
+	}
 
+    _stanceTransitionEvaluated = false;
+    _stanceTransitionMoving = _pawn && _pawn->GetVelocity().SizeSquared2D() > 9.f;
+    const auto* StanceState = _pawn ? Cast<UHellDiverStateComponent>(_pawn->GetStateComponent()) : nullptr;
+    if (StanceState && StanceState->IsMotionChanging())
+    {
+        if (_stanceTransitionRequestId != StanceState->GetMotionChangeId())
+        {
+            _stanceTransitionRequestId = StanceState->GetMotionChangeId();
+            _stanceTransitionRequested = true;
+            _stanceTransitionComplete = false;
+            _stanceTransitionPlaying = false;
+            _stanceTransitionSource = StanceState->GetMotionChangeSource();
+        }
+    }
+    else
+    {
+        _stanceTransitionRequested = false;
+        if (_stanceTransitionPlaying) _stanceTransitionComplete = true;
+        _stanceTransitionPlaying = false;
+    }
+	_hasAimSnapshot = false;
+	_observedActorYawDelta = 0.f;
+	if (!_pawn)
+	{
+		_hasObservedActorYaw = false;
+		_hasLocationSnapshot = false;
+		_hasValidAimDirection = false;
 	}
 
 	if (_pawn)
@@ -61,21 +110,49 @@ void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		_acceleration = _pawn->GetCharacterMovement()->GetCurrentAcceleration();
 		
 
-		_lastFrameWorldLocation = _worldLocation;
-		_worldLocation= _pawn->GetActorLocation();
+		const FVector currentLocation = _pawn->GetActorLocation();
+		_lastFrameWorldLocation = _hasLocationSnapshot ? _worldLocation : currentLocation;
+		_worldLocation = currentLocation;
+		_hasLocationSnapshot = true;
 
 		_worldRotation = _pawn->GetActorRotation();
+
+		const float currentActorWorldYaw = static_cast<float>(_worldRotation.Yaw);
+		_observedActorYawDelta = _hasObservedActorYaw
+			? CharacterAimMath::CalculateActorYawDelta(_previousObservedActorYaw, currentActorWorldYaw)
+			: 0.f;
+		_previousObservedActorYaw = currentActorWorldYaw;
+		_hasObservedActorYaw = true;
 		//타겟이 바라봐야할 위치. 월드 좌표로 오겠지만 애님인스턴스나 컨트롤릭에서 쓰려면 메쉬 스페이스로 변환해줘야함.
 		_targetPos_World = _pawn->GetFocusingLoc();
 
 		_targetPos_Mesh = _pawn->GetMesh()->GetComponentTransform().InverseTransformPosition(_targetPos_World);
-		
-		_aimPitch = UKismetMathLibrary::NormalizeAxis(_pawn->GetBaseAimRotation().Pitch);
 
+		// Capture the bone position on the game thread; worker updates use values only.
+		_aimOriginWorld = GetAimBone().GetLocation();
+		_hasAimSnapshot = true;
+		
+		// _aimPitch retains its filtered result between animation updates.
+
+		_incommingState = _pawn->GetStateComponent()->GetCharacterState();
 		GetCharacterState(DeltaSeconds);
 
 
 	}
+}
+
+void UCharacterAnimInstance::NativePostEvaluateAnimation()
+{
+    Super::NativePostEvaluateAnimation();
+    // Worker node callbacks report values only. Gameplay locks are changed here on the game thread.
+    auto* State = _pawn ? Cast<UHellDiverStateComponent>(_pawn->GetStateComponent()) : nullptr;
+    if (_stanceTransitionPlaying && (_stanceTransitionComplete || !_stanceTransitionEvaluated))
+    {
+        if (State) State->FinishMotionChange(_stanceTransitionRequestId);
+        _stanceTransitionComplete = true;
+        _stanceTransitionRequested = false;
+        _stanceTransitionPlaying = false;
+    }
 }
 
 void UCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -181,43 +258,46 @@ void UCharacterAnimInstance::GetAccelerationData()
 
 void UCharacterAnimInstance::GetLocationData()
 {
+	if (!_hasLocationSnapshot)
+	{
+		_deltaLocation = 0.f;
+		return;
+	}
 	FVector temp = _worldLocation - _lastFrameWorldLocation;
-	_deltaLocation = temp.Length();
+	const float horizontalDistance = temp.Size2D();
+	// Spawning and teleporting must not advance a distance-matched clip.
+	_deltaLocation = FMath::IsFinite(horizontalDistance) && horizontalDistance < 1000.f
+		? horizontalDistance : 0.f;
 }
 
 void UCharacterAnimInstance::GetRotationData(float deltaTime)
 {
-	// 1. 회전 속도(Delta) 계산을 위해 이전 프레임의 Yaw 값을 미리 저장해 둡니다.
 	_lastFrameActorYaw = _actorYaw;
+	_deltaActorYaw = _observedActorYawDelta;
+	CharacterAimMath::FAimAngles aimAngles;
+	_hasValidAimDirection = _hasAimSnapshot && CharacterAimMath::TryCalculateAimAngles(
+		_aimOriginWorld, _targetPos_World, _worldRotation, aimAngles);
+	if (!_hasValidAimDirection)
+	{
+		return;
+	}
 
+	_aimYawFullRange = aimAngles.Yaw;
+	// Existing prone AO samples use absolute actor-relative yaw (right=90, rear=180).
+	_actorYaw = _currentState == ECharacterState::Proning
+		? CharacterAimMath::InterpolateFullAimYaw(_actorYaw, aimAngles.Yaw, deltaTime)
+		: CharacterAimMath::InterpolateLimitedAimAngle(_actorYaw, aimAngles.Yaw, deltaTime);
+	_aimPitch = CharacterAimMath::InterpolateLimitedAimAngle(_aimPitch, aimAngles.Pitch, deltaTime);
 
-	FTransform aimTransform = GetAimBone();
-	// 2. 시선의 시작점을 캐릭터 위치(혹은 머리/총구 소켓 위치)로 설정합니다.
-	FVector CharacterAimStart = aimTransform.GetLocation();
-
-	// 3. 시작점에서 목표 지점을 바라보기 위한 절대적인 월드 회전값(LookAt)을 구합니다.
-	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(CharacterAimStart, _targetPos_World);
-
-	// 4. 캐릭터의 현재 몸통 방향을 기준으로 목표 지점이 상하좌우로 얼마나 꺾여있는지 상대 각도(-180 ~ 180도)를 구합니다.
-	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(LookAtRotation, _worldRotation);
-
-	// 5. [순서 변경] 보간을 하기 전에, 목표로 하는 상하 각도(Pitch)와 좌우 각도(Yaw)가 한계치(-90도 ~ 90도)를 넘지 않도록 먼저 제한(Clamp)합니다.
-	// 이렇게 해야 캐릭터가 고개를 돌릴 수 없는 등 뒤의 각도를 향해 억지로 회전을 시도하지 않습니다.
-	float TargetPitch = FMath::Clamp(DeltaRotator.Pitch, -90.0f, 90.0f);
-	float TargetYaw = FMath::Clamp(DeltaRotator.Yaw, -90.0f, 90.0f);
-
-	// 6. [순서 변경] 현재 각도에서, 방금 제한(Clamp)을 걸어둔 안전한 목표 각도(Target)로 부드럽게 보간(Interp)하여 값을 갱신합니다.
-	// 5.0f는 고개가 돌아가는 속도입니다. 이 값을 조절하여 타격감에 맞는 속도를 찾으시면 됩니다.
-	_aimPitch = FMath::FInterpTo(_aimPitch, TargetPitch, deltaTime, 5.0f);
-	_actorYaw = FMath::FInterpTo(_actorYaw, TargetYaw, deltaTime, 5.0f);
-
-	// 7. [순서 변경] 최종적으로 Clamp와 Interp가 모두 적용된 안전한 현재 프레임의 Yaw 값과, 
-	// 아까 1번에서 저장해둔 이전 프레임의 Yaw 값의 차이를 구하여 실제 회전 변화량을 도출합니다.
-	_deltaActorYaw = _actorYaw - _lastFrameActorYaw;
-
-	// 8. 구한 변화량을 델타 타임으로 나누어 초당 회전 속도를 구하고, 필요한 스케일(여기서는 5)로 나누어 임시 변수에 담습니다.
-	float temp = _deltaActorYaw / deltaTime;
-	temp /= 5;
+	// Pose selection and the additive AO consume the same filtered heading.
+	const float proneHeading = _currentState == ECharacterState::Proning ? _actorYaw : _aimYawFullRange;
+	_proneSector = CharacterAimMath::SelectProneSector(proneHeading, _proneSector);
+	static const ELocomotionDirections directions[] = {
+		ELocomotionDirections::Forward, ELocomotionDirections::Right,
+		ELocomotionDirections::Backward, ELocomotionDirections::Left };
+	_pronePoseDirection = directions[_proneSector];
+	// Diagnostic only: do not feed residual coordinates to absolute-yaw AO assets.
+	_proneResidualYaw = CharacterAimMath::CalculateProneResidualYaw(proneHeading, _proneSector);
 }
 void UCharacterAnimInstance::UpdateOrientationData()
 {
@@ -285,14 +365,24 @@ ELocomotionDirections UCharacterAnimInstance::CalculateLocomotionDirection(float
 
 }
 
+void UCharacterAnimInstance::UpdateStanceState()
+{
+	_lastFrameState = _currentState;
+	if (_currentState != _incommingState)
+	{
+		_stanceTransitionSource = _currentState;
+	}
+	_currentState = _incommingState;
+	_bIsStateChanged = _currentState != _lastFrameState;
+
+}
+
 void UCharacterAnimInstance::GetCharacterState(float deltaTime)
 {
 	//상태변환 이전 프레임과 상태가 변화하면 알수 있음. 
 	//이전프레임의 상태와 이번에들어온 상태, 현재상태를 갖고있음. 블루프린트에서 cpp로 옮기면서 절차가 살짝 바뀔수밖에 없었는데 그것때문에 문제가 생길수 있음.
 	//
-	_lastFrameState = _currentState;
-	_currentState = _incommingState;
-	_bIsStateChanged = _currentState != _lastFrameState;
+	UpdateStanceState();
 
 
 
@@ -302,10 +392,10 @@ void UCharacterAnimInstance::GetCharacterState(float deltaTime)
 	if (_bIsJumping)
 	{
 		//Todo : 최고점 도달 시간 설정. 0으로 나누면 안되는데 이걸 어떻게 설정해야할까 예외처리시 어떻게 해야할까 최대값으로 해야할까 0으로해야할까 
-		float temp = _pawn->GetCharacterMovement()->GetGravityZ() * _pawn->GetCharacterMovement()->GravityScale;
+		float temp = _pawn->GetCharacterMovement()->GetGravityZ();
 		if ( FMath::Abs(temp) > 0.1f)
 		{
-			_timeToJumpApex = UKismetMathLibrary::SafeDivide( _characterVelocity.Z , temp);
+			_timeToJumpApex = UKismetMathLibrary::SafeDivide(_characterVelocity.Z, -temp);
 
 		}
 		else
@@ -336,6 +426,14 @@ void UCharacterAnimInstance::GetCharacterState(float deltaTime)
 
 void UCharacterAnimInstance::UpdateRootYawOffset(float deltaTime)
 {
+	// Prone direction is represented by the body pose, not a standing root twist.
+	if (_currentState == ECharacterState::Proning)
+	{
+		SetRootYawOffset(0.f);
+		_rootYawOffsetSpringState.Reset();
+		_rootYawOffsetMode = ERootYawOffsetMode::Hold;
+		return;
+	}
 	if (_rootYawOffsetMode == ERootYawOffsetMode::Accumulate)
 	{
 		SetRootYawOffset(_rootYawOffset + (_deltaActorYaw * -1));
@@ -362,59 +460,19 @@ void UCharacterAnimInstance::UpdateIdleState(const FAnimUpdateContext& Context, 
 void UCharacterAnimInstance::ProcessTurnYawCurve()
 {
 	_lastFrameTurnYawCurveValue = _turnYawCurveValue;
-
-	// 1. 턴 애니메이션이 종료되었거나 재생 중이 아니면 값 초기화
-	if (GetCurveValue(TEXT("IsTurning")) < 1.f)
+	const float turningWeight = GetCurveValue(TEXT("IsTurning"));
+	if (_currentState == ECharacterState::Proning || turningWeight < 1.f)
 	{
 		_turnYawCurveValue = 0.f;
 		_lastFrameTurnYawCurveValue = 0.f;
 		return;
 	}
-
-	// 2. 현재 프레임의 커브 값 도출
-	_turnYawCurveValue = UKismetMathLibrary::SafeDivide(GetCurveValue(TEXT("root_rotation_Z")), GetCurveValue(TEXT("IsTurning")));
-
-	// 첫 프레임 스킵 (Delta 값이 비정상적으로 튀는 것 방지)
-	if (_lastFrameTurnYawCurveValue != 0.f)
+	_turnYawCurveValue = GetCurveValue(TEXT("root_rotation_Z")) / turningWeight;
+	if (!FMath::IsNearlyZero(_lastFrameTurnYawCurveValue))
 	{
-		// 3. 이번 틱에 커브가 지시하는 '회전 변화량(Delta)' 계산
-		float DeltaYaw = _turnYawCurveValue - _lastFrameTurnYawCurveValue;
-
-		// 4. 오버슛 판별을 위한 임시 변수 할당
-		float PreviousOffset = _rootYawOffset;
-		float NextOffset = PreviousOffset - DeltaYaw;
-
-		// 5. [오버슛 체크] Offset이 0을 스쳐 지나가서 부호가 바뀌었는가?
-		if (FMath::Sign(PreviousOffset) != FMath::Sign(NextOffset) || FMath::IsNearlyZero(PreviousOffset))
-		{
-			// ==========================================
-			// [목표 도달 시점] 오버슛 방지!
-			// ==========================================
-
-			// 캡슐을 커브값(DeltaYaw)만큼 돌리지 말고, 딱 '남은 잔여 각도(PreviousOffset)' 만큼만 회전시켜 정확히 맞춥니다.
-			if (APawn* OwningPawn = TryGetPawnOwner())
-			{
-				OwningPawn->AddActorWorldRotation(FRotator(0.f, PreviousOffset, 0.f));
-			}
-
-			// 허리 비틀림(Offset)은 깔끔하게 0으로 스냅 (함수 활용)
-			SetRootYawOffset(0.f);
-		}
-		else
-		{
-			// ==========================================
-			// [정상 회전 중] 
-			// ==========================================
-
-			// 허리 비틀림 값을 깎아냅니다. (회원님 기존 로직과 동일)
-			SetRootYawOffset(NextOffset);
-
-			// 깎아낸 만큼 캡슐(Actor)을 물리적으로 회전시킵니다.
-			if (APawn* OwningPawn = TryGetPawnOwner())
-			{
-				OwningPawn->AddActorWorldRotation(FRotator(0.f, DeltaYaw, 0.f));
-			}
-		}
+		// This callback can run on a worker. Movement owns the actor transform.
+		SetRootYawOffset(CharacterAimMath::ConsumeTurnCurve(
+			_rootYawOffset, _turnYawCurveValue - _lastFrameTurnYawCurveValue));
 	}
 }
 

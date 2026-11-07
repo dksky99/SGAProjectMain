@@ -111,7 +111,7 @@ void UGunAmmoComponent::Reload()
 
 	if (UCharacterAnimInstance* animInstance = Cast<UCharacterAnimInstance>(owner->GetMesh()->GetAnimInstance()))
 	{
-		owner->GetStateComponent()->StartReload();
+		if (!owner->GetStateComponent()->StartReload()) return;
 		animInstance->PlayAnimMontage(_reloadMontage);
 
 		// 재생 후 인스턴스 가져오기

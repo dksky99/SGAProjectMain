@@ -37,6 +37,7 @@ void UPakourComponent::BeginPlay()
 
 void UPakourComponent::ReadyPakour(UAnimMontage* Montage, bool bInterrupted)
 {
+    ActiveColNMove(Montage, bInterrupted);
 	_ownerCharacter->GetStateComponent()->FinishPakour();
 	_canPakour = true;
 	UE_LOG(LogTemp, Display, TEXT("Call ReadyPakour"));
@@ -340,12 +341,10 @@ void UPakourComponent::TryPakour()
 
 void UPakourComponent::TryVault(EVaultType_C type)
 {
+	if (!_ownerCharacter->GetStateComponent()->StartPakour()) return;
 	_canPakour = false;
-
-	DeactiveColNMove();
-	_ownerCharacter->GetStateComponent()->StartPakour();
 	UHellDiverAnimInstance* animInstance = Cast<UHellDiverAnimInstance>(_mesh->GetAnimInstance());
-	if (!animInstance) return;
+	if (!animInstance) { ReadyPakour(nullptr, true); return; }
 	UAnimMontage* selectedMontage = nullptr;
 
 	switch (type)
@@ -386,17 +385,19 @@ void UPakourComponent::TryVault(EVaultType_C type)
 	}
 
 	default:
+        ReadyPakour(nullptr, true);
 		return;
 	}
 
 	if (selectedMontage == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to find montage"));
-
+        ReadyPakour(nullptr, true);
 		return;
 	}
 	;
 
+	DeactiveColNMove();
 	_ownerCharacter->SetAnimRootMotionTranslationScale(1.0f);
 	// 애니메이션 재생
 	const float Duration = _ownerCharacter->PlayAnimMontage(selectedMontage);
@@ -404,6 +405,7 @@ void UPakourComponent::TryVault(EVaultType_C type)
 	if (Duration <= 0.0f)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to play montage: %s"), *selectedMontage->GetName());
+        ReadyPakour(nullptr, true);
 		return;
 	}
 
@@ -432,6 +434,8 @@ void UPakourComponent::TryVault(EVaultType_C type)
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to get MontageInstance for %s"), *selectedMontage->GetName());
+        animInstance->Montage_Stop(0.f, selectedMontage);
+        ReadyPakour(nullptr, true);
 	}
 }
 

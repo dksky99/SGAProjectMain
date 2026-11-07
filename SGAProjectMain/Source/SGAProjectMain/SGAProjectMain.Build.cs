@@ -10,6 +10,8 @@ public class SGAProjectMain : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "NavigationSystem", "AIModule", "AnimGraphRuntime", "AnimationLocomotionLibraryRuntime", "GameplayTasks", "Niagara", "SlateCore", "MotionWarping", "GeometryCollectionEngine", "ChaosSolverEngine" });
 
+        PrivateDependencyModuleNames.Add("AnimationCore"); // Same-frame left-hand two-bone IK.
+
     
 
     }

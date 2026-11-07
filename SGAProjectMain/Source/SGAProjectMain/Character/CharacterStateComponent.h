@@ -126,6 +126,8 @@ public:
 	void CheckStagger(const struct FCDamageEvent* damageEvent);
 
 	FOnCharacterStateChanged _characterStateChanged;
+	// Dynamic animation completion delegates require a reflected receiver.
+	UFUNCTION()
 	void RecieveMotionFinish();
 protected:
 

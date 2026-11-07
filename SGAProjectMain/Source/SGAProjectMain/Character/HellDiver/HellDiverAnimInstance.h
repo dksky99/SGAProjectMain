@@ -25,12 +25,33 @@ UCLASS()
 class SGAPROJECTMAIN_API UHellDiverAnimInstance : public UCharacterAnimInstance,public IHelldiverAnimInterface
 {
 	GENERATED_BODY()
+	friend class FHelldiverAnimEquipChangeTest;
 public:
 	UHellDiverAnimInstance();
 
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+    // Game-thread snapshots consumed by the final component-space aiming node.
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Aim") float _upperBodyAimAlpha = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Aim") FVector _aimBodyForwardMesh = FVector(0,1,0);
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Aim") FVector _aimBodyUpMesh = FVector::UpVector;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Aim") FTransform _upperBodyLeftGripInHand = FTransform::Identity;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Aim") float _upperBodyLeftHandAlpha = 0.f;
+
+
+	// Value-only getters for AnimGraph; all UObject/socket reads happen on the game thread.
+	UFUNCTION(BlueprintPure, Category = "Game/Anim/HandIK", meta = (BlueprintThreadSafe))
+	FVector GetLeftHandIKTargetWorld() const { return _leftHandIKTargetWorld; }
+
+	UFUNCTION(BlueprintPure, Category = "Game/Anim/HandIK", meta = (BlueprintThreadSafe))
+	float GetLeftHandIKAlpha() const { return _leftHandIKAlpha; }
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Aim", meta = (BlueprintThreadSafe))
+	float GetAimRigAlpha() const { return _aimRigAlpha; }
+
+	UFUNCTION(BlueprintPure, Category = "Game/Anim/HandIK", meta = (BlueprintThreadSafe))
+	bool HasValidLeftHandIKTarget() const { return _hasValidLeftHandIKTarget; }
 
 	//현재 애니메이션 변환 상태를 확인.
 	void GetCurrentMoveNode();
@@ -66,29 +87,33 @@ protected:
 	void CalcAimYaw(float deltaTime);
 
 	void DrawDebugs();
+	void ResetRuntimeSnapshot();
+	void UpdateLeftHandIKSnapshot();
+	bool _refreshWeaponOffsetOnNextUpdate = false;
+	bool _weaponOffsetExplicitlyDisabled = false;
 
 protected:
 	UPROPERTY(Transient)
-	class AHellDiver* _hellDiver;
+	class AHellDiver* _hellDiver = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	ECharacterState _characterState;
+	ECharacterState _characterState = ECharacterState::Standing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	EActionState _actionState;
+	EActionState _actionState = EActionState::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	EWeaponType _weaponState;
+	EWeaponType _weaponState = EWeaponType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	ELifeState _lifeState;
+	ELifeState _lifeState = ELifeState::Alive;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	FRotator _focusRotate=FRotator();
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	class AGunBase* _curWeapon;
+	class AGunBase* _curWeapon = nullptr;
 
 
 	//알파가 1이면 조준 0이면 평범한 애니메이션
@@ -100,6 +125,19 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _useLeftHand = false;
+
+	// World-space IK_left target. Never substitute the hand_r-local LeftGrip transform.
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/HandIK")
+	FVector _leftHandIKTargetWorld = FVector::ZeroVector;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/HandIK")
+	float _leftHandIKAlpha = 0.f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Aim")
+	float _aimRigAlpha = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/HandIK")
+	bool _hasValidLeftHandIKTarget = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	bool _changeWeapon = false;
@@ -162,7 +200,7 @@ protected:
 
 
 
-	float _prevActorYaw;
+	float _prevActorYaw = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	float _addYaw=0.0f;

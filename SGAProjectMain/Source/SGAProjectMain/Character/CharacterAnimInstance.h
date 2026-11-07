@@ -36,6 +36,8 @@ class SGAPROJECTMAIN_API UCharacterAnimInstance : public UAnimInstance,public IA
 {
 	GENERATED_BODY()
 	friend class UCharacterAnimLayerInstance;
+	friend class FCharacterStanceTransitionTest;
+	friend class FCharacterAnimLayerRegressionTest;
 public:
 	UCharacterAnimInstance();
 
@@ -45,6 +47,13 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+    virtual void NativePostEvaluateAnimation() override;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Stance") bool _stanceTransitionRequested = false;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Stance") bool _stanceTransitionComplete = false;
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Stance") bool _stanceTransitionMoving = false;
+    uint32 _stanceTransitionRequestId = 0;
+    bool _stanceTransitionPlaying = false;
+    bool _stanceTransitionEvaluated = false;
 
 
 	UFUNCTION()
@@ -66,6 +75,8 @@ public:
 	void RecieveCharacterStateChange(int32 n)  override;
 
 	ECharacterState GetCurrentState() { return _currentState; }
+	ECharacterState GetStanceTransitionSource() const { return _stanceTransitionSource; }
+	ELocomotionDirections GetPronePoseDirection() const { return _pronePoseDirection; }
 	ELocomotionDirections GetVelocityLocomotionDirection() { return _velocityLocomotionDirection; }
 	ELocomotionDirections GetAccelerationLocomotionDirection() { return _accelerationLocomotionDirection; }
 	ERootYawOffsetMode GetRootYawOffsetMode() { return _rootYawOffsetMode; }
@@ -85,6 +96,7 @@ protected:
 	void UpdateOrientationData();
 	ELocomotionDirections CalculateLocomotionDirection(float currentLocomotionAngle,ELocomotionDirections currentDirection,float backwardMin=-130.f, float backwardMax=130.f, float forwardMin=-50.f, float forwardMax=50.f, float deadZone=20.f);
 	virtual void GetCharacterState(float deltaTime);
+	void UpdateStanceState();
 	void UpdateRootYawOffset(float deltaTime);
 	void SetRootYawOffset(float angle);
 	
@@ -202,6 +214,33 @@ protected:
 	float _leanAngle = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Anim/RotationData", meta = (AllowPrivateAccess = "true"))
 	float _aimPitch = 0.f;
+
+	// Game-thread aim origin snapshot consumed by worker-thread calculations.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/AimDiagnostics", meta = (AllowPrivateAccess = "true"))
+	FVector _aimOriginWorld = FVector::ZeroVector;
+
+	// Full actor-relative yaw used to select the prone body direction.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/AimDiagnostics", meta = (AllowPrivateAccess = "true"))
+	float _aimYawFullRange = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/AimDiagnostics", meta = (AllowPrivateAccess = "true"))
+	float _observedActorYawDelta = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/AimDiagnostics", meta = (AllowPrivateAccess = "true"))
+	bool _hasValidAimDirection = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/Prone")
+	ELocomotionDirections _pronePoseDirection = ELocomotionDirections::Forward;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game/Anim/Prone")
+	float _proneResidualYaw = 0.f;
+
+	ECharacterState _stanceTransitionSource = ECharacterState::Standing;
+	int32 _proneSector = 0;
+	bool _hasLocationSnapshot = false;
+	bool _hasAimSnapshot = false;
+	bool _hasObservedActorYaw = false;
+	float _previousObservedActorYaw = 0.f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Anim/LocomotionData", meta = (AllowPrivateAccess = "true"))

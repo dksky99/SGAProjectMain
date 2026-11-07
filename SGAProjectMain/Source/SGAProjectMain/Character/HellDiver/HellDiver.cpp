@@ -90,6 +90,7 @@ void AHellDiver::BeginPlay()
 void AHellDiver::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    UpdateAnimationChanges();
 
     auto statComponent = GetStatComponent();
 
@@ -133,6 +134,7 @@ UHellDiverInvenComponent* AHellDiver::GetInvenComponent()
 
 void AHellDiver::EquipGrenade()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return;
     
 	if (_heldThrowable || !_grenadeClass)
 		return; // 이미 들고있다
@@ -162,6 +164,7 @@ void AHellDiver::EquipGrenade()
 
 void AHellDiver::EquipStratagem()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return;
 	if (_heldThrowable)
 		return;
 
@@ -377,6 +380,11 @@ void AHellDiver::SetMoveType()
 
 void AHellDiver::SetFocusMove()
 {
+    if (_stateComponent && _stateComponent->GetCharacterState() == ECharacterState::Proning)
+    {
+        SetProneIdle();
+        return;
+    }
     bUseControllerRotationYaw = false;
 
     GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -417,6 +425,7 @@ void AHellDiver::StopThrowPreview()
 
 bool AHellDiver::AttackMelee()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return false;
     UCharacterAnimInstance* anim = Cast<UCharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 
@@ -486,7 +495,8 @@ void AHellDiver::StartCrouch()
 {
     if (_stateComponent->StartCrouch() == false)
         return;
-    Crouch();
+    Crouching();
+    PrepareMotionChange();
 }
 
 void AHellDiver::FinishCrouch()
@@ -495,6 +505,7 @@ void AHellDiver::FinishCrouch()
         return;
 
     Standing();
+    PrepareMotionChange();
 }
 
 void AHellDiver::StartProne()
@@ -502,6 +513,7 @@ void AHellDiver::StartProne()
     if (_stateComponent->StartProne() == false)
         return;
     Proning();
+    PrepareMotionChange();
 }
 
 void AHellDiver::FinishProne()
@@ -509,6 +521,7 @@ void AHellDiver::FinishProne()
     if (_stateComponent->FinishProne() == false)
         return;
     Standing();
+    PrepareMotionChange();
 }
 
 void AHellDiver::Rolling()
@@ -611,14 +624,11 @@ void AHellDiver::PickupGun(AGunBase* gun)
     _stateComponent->SetWeaponState(EWeaponType::Gun);
 }
 
-void AHellDiver::SwitchGun(int32 index)
+bool AHellDiver::CommitWeaponChange(int32 index)
 {
-    if (!_invenComponent->CanSwitchGun(index))
-        return; // 바꿀 수 없으면 중단하고 리턴 false
-
-    // 바꿀 수 있다면 장전 중단
+    if (!_invenComponent->CanSwitchGun(index) || _invenComponent->GetGunInSlot(index) != _pendingSwitchGun.Get()) return false;
     if (_stateComponent->IsReloading())
-        _invenComponent->GetEquippedGun()->CancelReload();
+        if (IsValid(_invenComponent->GetEquippedGun())) _invenComponent->GetEquippedGun()->CancelReload();
 
     if (_heldThrowable)
     {
@@ -628,8 +638,6 @@ void AHellDiver::SwitchGun(int32 index)
     }
 
     // 현재 상태 저장 후
-    bool wasAiming = _stateComponent->IsAiming();
-    bool wasFiring = _stateComponent->IsFiring();
 
     // 하던 행동 중단
     _stateComponent->SetAiming(false);
@@ -637,9 +645,14 @@ void AHellDiver::SwitchGun(int32 index)
 
     // 이전 총 비활성화
     auto prevGun = _invenComponent->GetEquippedGun();
+    if (IsValid(prevGun))
+    {
+    prevGun->StopFire();
+    prevGun->StopAiming();
     prevGun->DeactivateGun();
     _invenComponent->PutBackWeapon(prevGun);
     OnPreSwitchGun(prevGun);
+    }
     // 총 변경
     EquipGun(index); 
     SaveLastState(index);
@@ -652,11 +665,7 @@ void AHellDiver::SwitchGun(int32 index)
 
     _stateComponent->SetEquipIndex(index);
     TryChangeLayer(index);
-    if (wasAiming) // 에임 중이었을 경우 유지
-        StartAiming();
-
-    if (wasFiring) // 사격 중이었을 경우 유지
-        StartFiring();
+    return true;
 }
 
 AGunBase* AHellDiver::GetEquippedGun()
@@ -701,6 +710,8 @@ void AHellDiver::BackupLastState()
 
 void AHellDiver::StartFiring()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return;
+    if (!IsValid(_invenComponent->GetEquippedGun())) return;
     _stateComponent->SetFiring(true);
     _invenComponent->GetEquippedGun()->StartFire();
 }
@@ -713,6 +724,8 @@ void AHellDiver::StopFiring()
 
 void AHellDiver::StartAiming()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return;
+    if (!IsValid(_invenComponent->GetEquippedGun())) return;
     _stateComponent->SetAiming(true);
     _invenComponent->GetEquippedGun()->StartAiming();
 
@@ -726,6 +739,7 @@ void AHellDiver::StopAiming()
 
 void AHellDiver::Reload()
 {
+    if (!_stateComponent->CanStartExclusiveAction()) return;
     if (_stateComponent->IsReloading()) return;
 
     auto equippedGun = _invenComponent->GetEquippedGun();
@@ -835,20 +849,10 @@ void AHellDiver::Landed(const FHitResult& Hit)
     //롤링중이라면 거의 평지에서 뛰었다면 평범하게 끝나고 아니라면 낮은 높이에서도 높은 충격을 입는다.
     if (_stateComponent->IsRolling())
     {
-        //이정도는 피해조차 입지않는다.
-        if (zVelocity < -600.f)
-        {
-            // 땅에부딪히고 조금있다 롤링상태 해제
-            GetWorld()->GetTimerManager().SetTimer(
-                _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2, false
-            );
-
-            return;
-        }
-        
-
+        GetWorld()->GetTimerManager().SetTimer(
+            _rollingTimerHandle, this, &AHellDiver::FinishRolling, 0.2f, false);
+        if (zVelocity < -600.f) return;
     }
-    //스탠딩 혹은 스프린트 상태에서만 랜딩모션이 있음 나머지는 바로 녹다운.
     else if(_stateComponent->GetCharacterState() == ECharacterState::Standing || _stateComponent->GetCharacterState() == ECharacterState::Sprinting)
     {
         //이정도높이에선 녹다운이된다. 

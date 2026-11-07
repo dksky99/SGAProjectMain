@@ -41,7 +41,7 @@ struct FShopItemData : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _itemID;
+	int32 _itemID = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString _itemName;
@@ -50,7 +50,7 @@ struct FShopItemData : public FTableRowBase
 	FPlayerCurrency _price;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 _condition;
+	int32 _condition = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EShopType _shopType = EShopType::None;

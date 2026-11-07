@@ -6,6 +6,8 @@
 #include "../../Gun/GunBase.h"
 #include "HellDiverStateComponent.h"
 #include "HellDiverStatComponent.h"
+#include "HellDiverInvenComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimNode_StateMachine.h"
 #include "Animation/AnimInstanceProxy.h"
@@ -21,55 +23,203 @@ UHellDiverAnimInstance::UHellDiverAnimInstance()
 void UHellDiverAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-
-	auto pawn = TryGetPawnOwner();
-	if (pawn)
+	_hellDiver = Cast<AHellDiver>(TryGetPawnOwner());
+	const FTransform suppliedWeaponOffset = _weaponOffset;
+	const bool suppliedUseAim = _bUseAim;
+	ResetRuntimeSnapshot();
+	if (IsValid(_hellDiver))
 	{
-		_hellDiver = Cast<AHellDiver>(pawn);
-
+		// Do not overwrite an offset already supplied for this animation instance.
+		_weaponOffset = suppliedWeaponOffset;
+		_bUseAim = suppliedUseAim;
 	}
+	_refreshWeaponOffsetOnNextUpdate = !_bUseAim && !_weaponOffsetExplicitlyDisabled;
+	UpdateLeftHandIKSnapshot();
 }
 
 void UHellDiverAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (_hellDiver)
+	// A preview instance, a replaced pawn, or a destroyed owner must not retain a weapon.
+	_hellDiver = Cast<AHellDiver>(TryGetPawnOwner());
+	UHellDiverStateComponent* state = IsValid(_hellDiver) ? _hellDiver->GetStateComponent() : nullptr;
+	UHellDiverInvenComponent* inventory = IsValid(_hellDiver) ? _hellDiver->GetInvenComponent() : nullptr;
+	if (!IsValid(state) || !IsValid(inventory))
 	{
-		if (_hellDiver != nullptr)
-		{
-			_characterState= _hellDiver->GetStateComponent()->GetCharacterState();
-			_actionState= _hellDiver->GetStateComponent()->GetActionState();
-			_weaponState= _hellDiver->GetStateComponent()->GetWeaponState();
-			_curWeapon = _hellDiver->GetEquippedGun();
-			_lifeState= _hellDiver->GetStateComponent()->GetLifeState();
-			_isFiring= _hellDiver->GetStateComponent()->IsFiring();
-			_isReloading= _hellDiver->GetStateComponent()->IsReloading();
-			_isRolling= _hellDiver->GetStateComponent()->IsRolling();
-			_isFocusing = _hellDiver->GetStateComponent()->IsFocusing();
-			_isAiming= _hellDiver->GetStateComponent()->IsAiming();
-			
-			_muzzleTrans = _hellDiver->GetMuzzleTransform();
-			_muzzleTrans_Relation = _hellDiver->GetMuzzleTransform_Relative();
-			_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
-			_jointTargetLoc = _hellDiver->GetJointTargetLocation();
-			 
-			//GetAimOffset(DeltaSeconds);
-			CheckEquipChange(_hellDiver->GetStateComponent()->GetEquipIndex());
-			IsUsingLeftHand();
-			IsUsingFocusing();
-			AimFocus(DeltaSeconds);
-			//GetCurrentMoveNode();
+		ResetRuntimeSnapshot();
+		UpdateLeftHandIKSnapshot();
+		return;
+	}
 
-			DrawDebugs();
+	_characterState = state->GetCharacterState();
+	_actionState = state->GetActionState();
+	_weaponState = state->GetWeaponState();
+	_lifeState = state->GetLifeState();
+	_isFiring = state->IsFiring();
+	_isReloading = state->IsReloading();
+	_isRolling = state->IsRolling();
+	_isFocusing = state->IsFocusing();
+	_isAiming = state->IsAiming();
+
+	AGunBase* equippedGun = inventory->GetEquippedGun();
+	_curWeapon = IsValid(equippedGun) ? equippedGun : nullptr;
+	USkeletalMeshComponent* gunMesh = IsValid(_curWeapon) ? _curWeapon->GetMesh() : nullptr;
+	if (_refreshWeaponOffsetOnNextUpdate)
+	{
+		_refreshWeaponOffsetOnNextUpdate = false;
+		USkeletalMeshComponent* characterMesh = _hellDiver->GetMesh();
+		// Reinitialization may happen while the weapon is already held. Refresh once,
+		// only after checking the same attachment contract used by AttachToHand.
+		if (!_bUseAim && !_weaponOffsetExplicitlyDisabled
+			&& _weaponState == EWeaponType::Gun && !state->IsWeaponChanging()
+			&& IsValid(gunMesh) && IsValid(characterMesh)
+			&& _curWeapon->GetOwnerCharacter() == _hellDiver
+			&& gunMesh->GetAttachParent() == characterMesh
+			&& gunMesh->GetAttachSocketName() == FName(TEXT("cc_weaponbone_r_socket"))
+			&& characterMesh->GetAnimInstance() == this)
+		{
+			_curWeapon->CalculateMuzzleToHand_R();
 		}
 	}
+	_muzzleTrans = FTransform::Identity;
+	_muzzleTrans_Relation = FTransform::Identity;
+	_leftHandTrans = FTransform::Identity;
+	_jointTargetLoc = FVector::ZeroVector;
+	if (IsValid(gunMesh) && IsValid(_hellDiver->GetMesh()))
+	{
+		// Legacy fields retain their original contracts, including hand_r-local LeftGrip.
+		_muzzleTrans = _hellDiver->GetMuzzleTransform();
+		_muzzleTrans_Relation = _hellDiver->GetMuzzleTransform_Relative();
+		_leftHandTrans = _hellDiver->GetLeftHandSocketTransform();
+		_jointTargetLoc = _hellDiver->GetJointTargetLocation();
+	}
+	else
+	{
+		// An unequipped/destroyed weapon must not keep the previous muzzle offset active.
+		_weaponOffset = FTransform::Identity;
+		_bUseAim = false;
+	}
+
+	// GetAimOffset/GetCurrentMoveNode remain disabled legacy paths.
+	CheckEquipChange(state->GetEquipIndex());
+	IsUsingLeftHand();
+	if (state->IsWeaponChanging() || state->IsMotionChanging())
+	{
+		_useLeftHand = false;
+	}
+	UpdateLeftHandIKSnapshot();
+	IsUsingFocusing();
+	AimFocus(DeltaSeconds);
+	// Right-hand aiming is independent of the animated left-hand release curve.
+	_aimRigAlpha = _weaponState == EWeaponType::Gun && _bUseAim && _isFocusing
+		&& _lifeState == ELifeState::Alive && IsValid(gunMesh) && !state->IsWeaponChanging()
+		? 1.f : 0.f;
+    _upperBodyAimAlpha = _characterState != ECharacterState::Proning && !_isRolling && !_isActing
+        && !state->IsMotionChanging() ? _aimRigAlpha : 0.f;
+    _upperBodyLeftHandAlpha = 0.f;
+    _upperBodyLeftGripInHand = FTransform::Identity;
+    if (_upperBodyAimAlpha > 0.f && _hasValidLeftHandIKTarget
+        && gunMesh->DoesSocketExist(TEXT("Muzzle")))
+    {
+        // Use weapon-local socket geometry, not the previous evaluated world-space hand.
+        const FTransform GripInGun = gunMesh->GetSocketTransform(TEXT("IK_left"), RTS_Component);
+        const FTransform MuzzleInGun = gunMesh->GetSocketTransform(TEXT("Muzzle"), RTS_Component);
+        const FTransform GripInHand = GripInGun.GetRelativeTransform(MuzzleInGun) * _weaponOffset;
+        if (!GripInHand.ContainsNaN())
+        {
+            _upperBodyLeftGripInHand = GripInHand;
+            _upperBodyLeftHandAlpha = _leftHandIKAlpha;
+            // Do not overwrite the same-frame solve with the legacy world-space snapshot.
+            _leftHandIKAlpha = 0.f;
+        }
+    }
+    const FTransform MeshWorld = _hellDiver->GetMesh()->GetComponentTransform();
+    _aimBodyForwardMesh = MeshWorld.InverseTransformVectorNoScale(_hellDiver->GetActorForwardVector()).GetSafeNormal();
+    _aimBodyUpMesh = MeshWorld.InverseTransformVectorNoScale(_hellDiver->GetActorUpVector()).GetSafeNormal();
+	DrawDebugs();
+}
+
+void UHellDiverAnimInstance::ResetRuntimeSnapshot()
+{
+	_aimRigAlpha = 0.f;
+    _upperBodyAimAlpha = 0.f;
+    _upperBodyLeftHandAlpha = 0.f;
+    _upperBodyLeftGripInHand = FTransform::Identity;
+    _aimBodyForwardMesh = FVector(0,1,0);
+    _aimBodyUpMesh = FVector::UpVector;
+	_refreshWeaponOffsetOnNextUpdate = false;
+	_curWeapon = nullptr;
+	_characterState = ECharacterState::Standing;
+	_actionState = EActionState::None;
+	_weaponState = EWeaponType::None;
+	_lifeState = ELifeState::Alive;
+	_isFiring = false;
+	_isReloading = false;
+	_isRolling = false;
+	_isFocusing = false;
+	_isAiming = false;
+	_useLeftHand = false;
+	_useLeftHandIk = false;
+	_useFocusing = false;
+	_changeWeapon = false;
+	_curEquipIndex = 0;
+	_focusRotate = FRotator::ZeroRotator;
+	_focusAlpha = 0.f;
+	_weaponOffset = FTransform::Identity;
+	_bUseAim = false;
+	_leftHandTrans = FTransform::Identity;
+	_muzzleTrans = FTransform::Identity;
+	_muzzleTrans_Relation = FTransform::Identity;
+	_jointTargetLoc = FVector::ZeroVector;
+	_currentMoveState.Empty();
+	_currentLookState.Empty();
+}
+
+void UHellDiverAnimInstance::UpdateLeftHandIKSnapshot()
+{
+	// Called only from NativeInitialize/NativeUpdateAnimation on the game thread.
+	_leftHandIKTargetWorld = FVector::ZeroVector;
+	_leftHandIKAlpha = 0.f;
+	_hasValidLeftHandIKTarget = false;
+
+	USkeletalMeshComponent* characterMesh = GetSkelMeshComponent();
+	if (IsValid(characterMesh))
+	{
+		const FVector fallbackWorld = characterMesh->DoesSocketExist(TEXT("hand_l"))
+			? characterMesh->GetSocketLocation(TEXT("hand_l"))
+			: characterMesh->GetComponentLocation();
+		if (!fallbackWorld.ContainsNaN())
+		{
+			_leftHandIKTargetWorld = fallbackWorld;
+		}
+	}
+
+	USkeletalMeshComponent* gunMesh = IsValid(_curWeapon) ? _curWeapon->GetMesh() : nullptr;
+	if (IsValid(_hellDiver) && IsValid(gunMesh) && gunMesh->DoesSocketExist(TEXT("IK_left")))
+	{
+		const FVector targetWorld = gunMesh->GetSocketLocation(TEXT("IK_left"));
+		if (!targetWorld.ContainsNaN())
+		{
+			_leftHandIKTargetWorld = targetWorld;
+			_hasValidLeftHandIKTarget = true;
+			// Preserve the existing animated release/reacquisition curve.
+			const float disableLeftHandIK = GetCurveValue(TEXT("DisableLeftHandIK"));
+			const float curveAlpha = FMath::IsFinite(disableLeftHandIK)
+				? FMath::Clamp(1.f - disableLeftHandIK, 0.f, 1.f) : 0.f;
+			_leftHandIKAlpha = _useLeftHand ? curveAlpha : 0.f;
+		}
+	}
+
+	// Keep the eligibility flag separate from the left-hand release weight.
 }
 
 void UHellDiverAnimInstance::GetCurrentMoveNode()
 {
-	FString temp1 = GetCurrentStateName(GetStateMachineIndex(TEXT("Move"))).ToString();
-	FString temp2 = GetCurrentStateName(GetStateMachineIndex(TEXT("Look"))).ToString();
+	const int32 moveIndex = GetStateMachineIndex(TEXT("Move"));
+	const int32 lookIndex = GetStateMachineIndex(TEXT("Look"));
+	FString temp1 = moveIndex != INDEX_NONE ? GetCurrentStateName(moveIndex).ToString() : FString();
+	FString temp2 = lookIndex != INDEX_NONE ? GetCurrentStateName(lookIndex).ToString() : FString();
 	MoveStateChanged(temp1);
 	LookStateChanged(temp2);
 }
@@ -77,22 +227,30 @@ void UHellDiverAnimInstance::GetCurrentMoveNode()
 void UHellDiverAnimInstance::AnimNotify_Reload()
 {
 	UE_LOG(LogTemp, Log, TEXT("ReloadNotify"));
-	if (AGunBase* gun = Cast<AGunBase>(_hellDiver->GetEquippedGun()))
+	if (IsValid(_hellDiver))
 	{
-		gun->OnReloadSectionEnded();
+		if (AGunBase* gun = _hellDiver->GetEquippedGun(); IsValid(gun))
+		{
+			gun->OnReloadSectionEnded();
+		}
 	}
 }
 
 void UHellDiverAnimInstance::AnimNotify_FootStep()
 {
 	
-	if (!_hellDiver) return;
-	_hellDiver->MakeSound(_speed / _hellDiver->GetStatComponent()->GetDefaultSpeed(), "Footstep");
+	if (!IsValid(_hellDiver) || !IsValid(_hellDiver->GetStatComponent())) return;
+	const float defaultSpeed = _hellDiver->GetStatComponent()->GetDefaultSpeed();
+	if (defaultSpeed <= SMALL_NUMBER) return;
+	_hellDiver->MakeSound(_speed / defaultSpeed, "Footstep");
 
 }
 
 void UHellDiverAnimInstance::SetWeaponOffset(FTransform offset,bool useAim)
 {
+	// An explicit holster/disable event must win over deferred initialization.
+	_refreshWeaponOffsetOnNextUpdate = false;
+	_weaponOffsetExplicitlyDisabled = !useAim;
 	_bUseAim = useAim;
 
 	_weaponOffset = offset;
@@ -191,7 +349,7 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 		return false;
 	if (_isActing)
 		return false;
-	if (gun == nullptr)
+	if (!IsValid(gun))
 		return false;
 	if (_weaponState!=EWeaponType::Gun)
 	{
@@ -204,6 +362,8 @@ bool UHellDiverAnimInstance::IsUsingLeftHand()
 bool UHellDiverAnimInstance::IsUsingFocusing()
 {
 	_useFocusing = false;
+	if (!IsValid(_hellDiver) || !IsValid(_hellDiver->GetStateComponent()))
+		return false;
 	if (_lifeState != ELifeState::Alive)
 		return false;
 	if (_characterState == ECharacterState::Knockdown)
@@ -421,7 +581,7 @@ void UHellDiverAnimInstance::CalcAimYaw(float deltaTime)
 
 void UHellDiverAnimInstance::DrawDebugs()
 {
-	if (_pawn->GetController() == nullptr)
+	if (!IsValid(_pawn) || !IsValid(_hellDiver) || !_pawn->GetController() || !GetWorld())
 		return;
 	USkeletalMeshComponent* mesh = _hellDiver->GetMesh();
 	if (!mesh) return;

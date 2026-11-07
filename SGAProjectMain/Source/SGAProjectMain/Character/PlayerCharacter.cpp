@@ -528,7 +528,7 @@ void APlayerCharacter::Move(const FInputActionValue& value)
 		return;
 	if (_stateComponent->IsActionable() == false)
 		return;
-	if (_stateComponent->IsRolling() )
+	if (_stateComponent->IsRolling() || _stateComponent->IsMotionChanging())
 		return;
 	if (AGunBase* gun = _invenComponent->GetEquippedGun())
 	{
@@ -649,6 +649,7 @@ void APlayerCharacter::TryPakour(const FInputActionValue& value)
 
 void APlayerCharacter::StartFiring(const FInputActionValue& value)
 {
+	if (!_stateComponent->CanStartExclusiveAction()) return;
 	if (_stateComponent->IsCheckingMap()) // 지도를 보고있는 상태이고
 	{
 		if (_sceneCapturer->PingOnMap()) // 핑을 찍을 수 있는 상태라면
@@ -862,6 +863,7 @@ void APlayerCharacter::TrySprint(const FInputActionValue& value)
 }
 void APlayerCharacter::StartAiming(const FInputActionValue& value)
 {
+	if (!_stateComponent->CanStartExclusiveAction()) return;
 	//우클릭
 	if (_isGunSettingMode)
 	{
@@ -879,7 +881,9 @@ void APlayerCharacter::StartAiming(const FInputActionValue& value)
 	if (_stateComponent->GetActionState() == EActionState::InterActing)
 		return;
 	//일반상태에서 이동중일때 조준을 한다면 캐릭터방향을 앞으로돌림.
-	if (GetCharacterMovement()->bOrientRotationToMovement == true)
+	if (GetCharacterMovement()->bOrientRotationToMovement == true
+		&& _stateComponent->GetCharacterState() != ECharacterState::Proning
+		&& !_stateComponent->IsRolling())
 	{
 		ViewTurnBack();
 	}
@@ -1235,6 +1239,17 @@ void APlayerCharacter::DefaultLook()
 
 
 
+		// Prone aim selects a body pose; stale controller rotation must not turn it.
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		if (_stateComponent->GetCharacterState() == ECharacterState::Proning)
+		{
+			// Crawling may face movement, but stationary aim must not face the camera.
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+		_isViewTurnCenter = false;
+		_isTurnLeft = false;
+		_isTurnRight = false;
 		return;
 	}
 
@@ -1591,6 +1606,12 @@ FVector APlayerCharacter::GetTargetLoc()
 }
 void APlayerCharacter::ViewTurnBack()
 {
+	// MoveFinish and StartFiring also reach this path, without a Look event.
+	if (_stateComponent && (_stateComponent->GetCharacterState() == ECharacterState::Proning || _stateComponent->IsRolling()))
+	{
+		DefaultLook();
+		return;
+	}
 	UE_LOG(LogTemp, Display, TEXT("TurnBack"));
 	AddActorWorldRotation(FRotator(0, 1, 0));
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;

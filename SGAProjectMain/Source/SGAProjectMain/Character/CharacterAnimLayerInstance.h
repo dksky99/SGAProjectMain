@@ -14,13 +14,13 @@ struct FDirectionalAnimations
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations") 
-	UAnimSequenceBase* Forward;
+	UAnimSequenceBase* Forward = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations") 
-	UAnimSequenceBase* Backward;
+	UAnimSequenceBase* Backward = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations") 
-	UAnimSequenceBase* Right;
+	UAnimSequenceBase* Right = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations") 
-	UAnimSequenceBase* Left;
+	UAnimSequenceBase* Left = nullptr;
 
 public:
 	
@@ -63,6 +63,11 @@ class SGAPROJECTMAIN_API UCharacterAnimLayerInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+
+    UPROPERTY(BlueprintReadOnly, Category="Game/Animation/Actions")
+    float _actionAimAlpha = 1.f;
+
+    UAnimSequenceBase* SelectStanceTransitionAnimation(ECharacterState Source, ECharacterState Target) const;
 
 	//
 	UFUNCTION(BlueprintCallable, Category = "Game/Animation/Idle",  meta = (BlueprintThreadSafe))
@@ -130,22 +135,34 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game/Animation/Transition", meta = (BlueprintThreadSafe))
 	void SetupStanceTransitionAnims(const struct FAnimUpdateContext& Context, const struct FAnimNodeReference& Node);
+    UFUNCTION(BlueprintCallable, Category="Game/Animation/Transition", meta=(BlueprintThreadSafe))
+    void UpdateStanceTransitionAnims(const struct FAnimUpdateContext& Context, const struct FAnimNodeReference& Node);
 	
 protected:
 	virtual void NativeInitializeAnimation() override;
+    virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void SetBaseAnim();
+    UAnimSequenceBase* SelectIdleAnimation(UCharacterAnimInstance* Base);
+    UAnimSequenceBase* SelectStopAnimation(UCharacterAnimInstance* Base);
+    static bool CanUseDistanceMatching(const UAnimSequenceBase* Animation, FName CurveName);
+    void AdvanceDistanceOrTime(const FAnimUpdateContext& Context, const struct FSequenceEvaluatorReference& Evaluator, float Distance);
+    void MatchDistanceOrTime(const FAnimUpdateContext& Context, const struct FSequenceEvaluatorReference& Evaluator, float Distance);
+    ELocomotionDirections _dodgeDirection = ELocomotionDirections::Forward;
+    bool _hasDodgeDirection = false;
+    float _predictedStopDistance = 0.f;
+    float _predictedPivotDistance = 0.f;
+    void SetBaseAnim();
 
 	class UCharacterAnimInstance* GetBaseAnim();
 
 
 protected:
 	UPROPERTY(Transient,BlueprintReadOnly, Category = "Cache")
-	class UCharacterAnimInstance* _baseAnimInst;
+	class UCharacterAnimInstance* _baseAnimInst = nullptr;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Idle", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _idleAnim;
+	UAnimSequenceBase* _idleAnim = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Cycle", meta = (AllowPrivateAccess = "true"))
 	FDirectionalAnimations _walkCycleAnims;
@@ -172,20 +189,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
 	bool _bShouldTurnLeft = false;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _turnRight90;
+	UAnimSequenceBase* _turnRight90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _turnRight180;
+	UAnimSequenceBase* _turnRight180 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _turnLeft90;
+	UAnimSequenceBase* _turnLeft90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _turnLeft180;
+	UAnimSequenceBase* _turnLeft180 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
 	float _turnInPlaceTime = 0.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game/Animation/TurnInPlace", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _finalTurnAnim;
+	UAnimSequenceBase* _finalTurnAnim = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchIdleAnim;
+	UAnimSequenceBase* _crouchIdleAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
 	FDirectionalAnimations _crouchStartAnims;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
@@ -195,13 +212,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
 	FDirectionalAnimations _crouchPivotAnims;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchTurnRight90;
+	UAnimSequenceBase* _crouchTurnRight90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchTurnRight180;
+	UAnimSequenceBase* _crouchTurnRight180 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchTurnLeft90;
+	UAnimSequenceBase* _crouchTurnLeft90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Crouch", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchTurnLeft180;
+	UAnimSequenceBase* _crouchTurnLeft180 = nullptr;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
@@ -215,27 +232,31 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
 	FDirectionalAnimations _pronePivotAnims;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneTurnRight90;
+	UAnimSequenceBase* _proneTurnRight90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneTurnRight180;
+	UAnimSequenceBase* _proneTurnRight180 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneTurnLeft90;
+	UAnimSequenceBase* _proneTurnLeft90 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneTurnLeft180;
+	UAnimSequenceBase* _proneTurnLeft180 = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	ELocomotionDirections _proneDirection;
+	ELocomotionDirections _proneDirection = ELocomotionDirections::Forward;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Prone", meta = (AllowPrivateAccess = "true"))
-	FRotator _proneRotation;
+	FRotator _proneRotation = FRotator::ZeroRotator;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _jumpApex;
+	UAnimSequenceBase* _jumpApex = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _jumpFallLoop;
+	UAnimSequenceBase* _jumpStart = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _jumpFallLand;
+	UAnimSequenceBase* _jumpStartLoop = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _jumpFallLandAdditiveRecovery;
+	UAnimSequenceBase* _jumpFallLoop = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
+	UAnimSequenceBase* _jumpFallLand = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Jump", meta = (AllowPrivateAccess = "true"))
+	UAnimSequenceBase* _jumpFallLandAdditiveRecovery = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Dodge", meta = (AllowPrivateAccess = "true"))
 	FDirectionalAnimations _dodgeStartAnims;
@@ -245,40 +266,40 @@ protected:
 	FDirectionalAnimations _dodgeEndAnims;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Dodge", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _finaldodgeAnim;
+	UAnimSequenceBase* _finaldodgeAnim = nullptr;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoStandUp;
+	UBlendSpace* _aoStandUp = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoCrouch;
+	UBlendSpace* _aoCrouch = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoProneFwd;
+	UBlendSpace* _aoProneFwd = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoProneBwd;
+	UBlendSpace* _aoProneBwd = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoProneLeft;
+	UBlendSpace* _aoProneLeft = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/AO", meta = (AllowPrivateAccess = "true"))
-	UBlendSpace* _aoProneRight;
+	UBlendSpace* _aoProneRight = nullptr;
 
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _standToCrouchAnim;
+	UAnimSequenceBase* _standToCrouchAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchToStandAnim;
+	UAnimSequenceBase* _crouchToStandAnim = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _standToProneAnim;
+	UAnimSequenceBase* _standToProneAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneToStandAnim;
+	UAnimSequenceBase* _proneToStandAnim = nullptr;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _proneToCrouchAnim;
+	UAnimSequenceBase* _proneToCrouchAnim = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game/Animation/Transition", meta = (AllowPrivateAccess = "true"))
-	UAnimSequenceBase* _crouchToProneAnim;
+	UAnimSequenceBase* _crouchToProneAnim = nullptr;
 
 
 

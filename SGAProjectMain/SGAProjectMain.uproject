@@ -17,6 +17,11 @@
 				"NavigationSystem",
 				"PhysicsCore"
 			]
+		},
+		{
+			"Name": "SGAProjectMainEditorTools",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

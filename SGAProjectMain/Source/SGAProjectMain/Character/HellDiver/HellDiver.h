@@ -8,6 +8,8 @@
 #include "../../Interface/HelldiverAnimInterface.h"
 #include "HellDiver.generated.h"
 
+class UAnimSequenceBase;
+
 DECLARE_MULTICAST_DELEGATE_TwoParams(FGrenadeChanged, int32, int32);
 
 //헬다이버의 변경할 내용...
@@ -18,6 +20,8 @@ UCLASS()
 class SGAPROJECTMAIN_API AHellDiver : public ACharacterBase
 {
 	GENERATED_BODY()
+	friend class FProneRotationPolicyTest;
+    friend class FActionTransitionPlaybackTest;
 public:
 
 	AHellDiver(const FObjectInitializer& ObjectInitializer);
@@ -97,6 +101,18 @@ public:
 	void StratagemInputting();
 
 	void MotionChangeFinish();
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+private:
+    void PrepareMotionChange();
+    void UpdateAnimationChanges();
+    void CancelAnimationChanges();
+
+    void OnWeaponChangeEnded(UAnimMontage* Montage, bool bInterrupted, uint32 RequestId, bool bEquipping);
+    bool PlayWeaponChangePhase(bool bEquipping, uint32 RequestId);
+    bool CommitWeaponChange(int32 Index);
+    UAnimSequenceBase* GetWeaponChangeAnimation(int32 Index, bool bEquipping) const;
+    UAnimMontage* PlayChangeAnimation(UAnimSequenceBase* Sequence, FName Slot);
+public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
@@ -272,4 +288,23 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game/Animation", meta = (AllowPrivateAccess = "true"))
 	class UUnitAttackDataAsset* _twoHandedMelee;
+
+private:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Animation/WeaponChange")
+	TSoftObjectPtr<UAnimSequenceBase> _rifleEquipAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Blueprints/HellDiver/Animation/Retargeted_Anim/MM_Rifle_Equip_Retargeted.MM_Rifle_Equip_Retargeted")));
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Animation/WeaponChange")
+	TSoftObjectPtr<UAnimSequenceBase> _rifleUnequipAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Blueprints/HellDiver/Animation/Retargeted_Anim/MM_Rifle_Unequip_Retargeted.MM_Rifle_Unequip_Retargeted")));
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Animation/WeaponChange")
+	TSoftObjectPtr<UAnimSequenceBase> _pistolEquipAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Blueprints/HellDiver/Animation/Retargeted_Anim/MM_Pistol_Equip_Retargeted.MM_Pistol_Equip_Retargeted")));
+	UPROPERTY(EditDefaultsOnly, Category = "Game/Animation/WeaponChange")
+	TSoftObjectPtr<UAnimSequenceBase> _pistolUnequipAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Blueprints/HellDiver/Animation/Retargeted_Anim/MM_Pistol_Unequip_Retargeted.MM_Pistol_Unequip_Retargeted")));
+	int32 _pendingSwitchIndex = INDEX_NONE;
+	uint32 _playingMotionChangeId = 0;
+	uint32 _playingWeaponChangeId = 0;
+
+	UPROPERTY(Transient) UAnimMontage* _weaponChangeMontage = nullptr;
+	TWeakObjectPtr<UAnimInstance> _changeAnimationHost;
+	TWeakObjectPtr<AGunBase> _pendingSwitchGun;
+
 };

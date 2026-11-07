@@ -98,7 +98,7 @@ public:
 	void SetCheckingMap(bool isCheckingMap) { if (isCheckingMap) _actionState = EActionState::ViewMap;
 											  else _actionState = EActionState::None; }
 
-	bool IsMotionChanging() { return _isMotionChange; }
+	bool IsMotionChanging() const { return _isMotionChange; }
 	bool IsWeaponChanging() { return _isWeaponChange; }
 	void KnockDown();
 	void KnockDownRecovery();
@@ -128,6 +128,22 @@ public:
 protected:
 	bool TryMotionChange();
 	bool TryWeaponChange();
+public:
+    // Accepted requests own their lock until their matching animation completes.
+    bool BeginWeaponChange();
+    bool FinishWeaponChange(uint32 RequestId);
+    bool FinishMotionChange(uint32 RequestId);
+    void CancelAnimationChanges();
+    uint32 GetMotionChangeId() const { return _motionChangeId; }
+    uint32 GetWeaponChangeId() const { return _weaponChangeId; }
+    ECharacterState GetMotionChangeSource() const { return _motionChangeSource; }
+    bool CanStartExclusiveAction();
+    virtual void Reset() override;
+private:
+    void BeginMotionChange(ECharacterState Target);
+    uint32 _motionChangeId = 0;
+    uint32 _weaponChangeId = 0;
+    ECharacterState _motionChangeSource = ECharacterState::Standing;
 protected:
 
 
@@ -147,6 +163,9 @@ protected:
 	bool _isAiming = false;
 	bool _isCookingGrenade = false;
 	bool _isShocking = false;
+
+	// _isMotionChange is inherited from UCharacterStateComponent.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Game/State", meta=(AllowPrivateAccess="true"))
 	bool _isWeaponChange = false;
 	uint8 _curEquipIndex = 0;
 

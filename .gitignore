@@ -475,3 +475,6 @@ SGAProjectMain/Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 SGAProjectMain/DerivedDataCache/*
+
+# Local project documentation
+/docs/
